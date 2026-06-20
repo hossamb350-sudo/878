@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "News": {
+      "title": "News",
+      "description": "A news article",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "content": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "category": { "type": "string" },
+        "isBreaking": { "type": "boolean" },
+        "createdAt": { "type": "number", "description": "Timestamp in ms" }
+      },
+      "required": ["title", "shortDescription", "content", "category", "createdAt"]
+    },
+    "Video": {
+      "title": "Video",
+      "description": "A video entry in the Watch section",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "url": { "type": "string" },
+        "thumbnailUrl": { "type": "string" },
+        "duration": { "type": "string" },
+        "views": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "url", "createdAt"]
+    },
+    "LiveStream": {
+      "title": "LiveStream Settings",
+      "description": "Current live stream properties",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["isActive"]
+    },
+    "LeaderContent": {
+      "title": "Leader Content",
+      "description": "Content for the leader section",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "type": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "type", "content", "createdAt"]
+    },
+    "QuranContent": {
+      "title": "Quran Content",
+      "description": "Link for Quran section",
+      "type": "object",
+      "properties": {
+        "link": { "type": "string" },
+        "isActive": { "type": "boolean" }
+      },
+      "required": ["isActive"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "Event calendar entry",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "date": { "type": "number" },
+        "type": { "type": "string" }
+      },
+      "required": ["title", "date", "type"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Notifications to display",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "body", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/news/{newsId}": {
+      "schema": { "$ref": "News" },
+      "description": "News articles"
+    },
+    "/videos/{videoId}": {
+      "schema": { "$ref": "Video" },
+      "description": "Videos in Watch section"
+    },
+    "/settings/livestream": {
+      "schema": { "$ref": "LiveStream" },
+      "description": "Live stream config"
+    },
+    "/settings/quran": {
+      "schema": { "$ref": "QuranContent" },
+      "description": "Quran section config"
+    },
+    "/leader/{contentId}": {
+      "schema": { "$ref": "LeaderContent" },
+      "description": "Content chunks for leader section"
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "Event" },
+      "description": "Events and occasions"
+    },
+    "/notifications/{notifId}": {
+      "schema": { "$ref": "Notification" },
+      "description": "System Notifications"
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "منصة تعز",
+  "description": "منصة إخبارية ثقافية",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
