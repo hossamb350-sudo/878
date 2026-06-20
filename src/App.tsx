@@ -2,7 +2,7 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
@@ -13,6 +13,7 @@ import { Quran } from "./pages/Quran";
 import { Events } from "./pages/Events";
 import { Admin } from "./pages/Admin";
 import { Search } from "./pages/Search";
+import { AnimatePresence } from "motion/react";
 
 function Splash() {
   return (
@@ -23,6 +24,27 @@ function Splash() {
        <h1 className="text-5xl font-black mb-3 tracking-tight drop-shadow-lg">منصة تعز</h1>
        <p className="text-blue-100 text-lg font-medium tracking-wide">منصة إخبارية ثقافية</p>
     </div>
+  );
+}
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      {/* @ts-ignore */}
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="search" element={<Search />} />
+          <Route path="news/:id" element={<NewsDetail />} />
+          <Route path="watch" element={<Watch />} />
+          <Route path="leader" element={<Leader />} />
+          <Route path="quran" element={<Quran />} />
+          <Route path="events" element={<Events />} />
+          <Route path="admin" element={<Admin />} />
+        </Route>
+      </Routes>
+    </AnimatePresence>
   );
 }
 
@@ -43,18 +65,7 @@ export default function App() {
            <Splash />
         </div>
       )}
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="search" element={<Search />} />
-          <Route path="news/:id" element={<NewsDetail />} />
-          <Route path="watch" element={<Watch />} />
-          <Route path="leader" element={<Leader />} />
-          <Route path="quran" element={<Quran />} />
-          <Route path="events" element={<Events />} />
-          <Route path="admin" element={<Admin />} />
-        </Route>
-      </Routes>
+      <AnimatedRoutes />
     </BrowserRouter>
   );
 }

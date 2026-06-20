@@ -51,7 +51,13 @@ export function Leader() {
                </span>
                {item.type === 'video' ? (
                  <div className="aspect-video w-full bg-black rounded-lg overflow-hidden my-4">
-                    <iframe src={item.content} className="w-full h-full border-0" allowFullScreen></iframe>
+                    <iframe 
+                      src={item.content.includes('almasirah.net.ye/video?id=') 
+                        ? item.content.replace('/video?id=', '/player?id=') 
+                        : item.content} 
+                      className="w-full h-full border-0" 
+                      allowFullScreen
+                    ></iframe>
                  </div>
                ) : (
                  <div className="prose dark:prose-invert text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">

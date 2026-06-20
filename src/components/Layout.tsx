@@ -1,6 +1,110 @@
 import { Outlet, NavLink, Link, useNavigate } from "react-router-dom";
-import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, Search as SearchIcon, Menu, LogIn, Moon, Sun } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, Search as SearchIcon, Menu, LogIn, Moon, Sun, AlertTriangle, X } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
+import { UrgentNews } from "../types";
+import { motion, AnimatePresence } from "motion/react";
+
+function UrgentNewsBanner() {
+  const [urgentNews, setUrgentNews] = useState<UrgentNews | null>(null);
+  const audioContextReft = useRef<AudioContext | null>(null);
+
+  const playAlertSound = () => {
+    try {
+      if (!audioContextReft.current) {
+        audioContextReft.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioContextReft.current;
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+      
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.5);
+      
+      gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.5);
+    } catch (e) {
+      console.log("Audio play failed", e);
+    }
+  };
+
+  useEffect(() => {
+    // Check Notification API permission
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
+
+    const q = query(collection(db, "urgentNews"), orderBy("createdAt", "desc"), limit(1));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (!snapshot.empty) {
+        const data = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as UrgentNews;
+        
+        // Check if expired
+        const now = Date.now();
+        if (data.expiresAt > now) {
+           setUrgentNews(data);
+           playAlertSound();
+           
+           if ("Notification" in window && Notification.permission === "granted") {
+             new Notification("خبر عاجل 🔴", { body: data.text });
+           }
+           
+           // Automatically hide when expires 
+           const timeRemaining = data.expiresAt - now;
+           const timer = setTimeout(() => {
+             setUrgentNews(null);
+           }, timeRemaining);
+           
+           return () => clearTimeout(timer);
+        } else {
+           setUrgentNews(null);
+        }
+      } else {
+        setUrgentNews(null);
+      }
+    }, (error) => {
+      console.error("Firestore snapshot error:", error);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  return (
+    <AnimatePresence>
+       {urgentNews && (
+         <motion.div 
+           initial={{ y: -50, opacity: 0 }}
+           animate={{ y: 0, opacity: 1 }}
+           exit={{ y: -50, opacity: 0 }}
+           className="bg-red-600 text-white shadow-md relative z-50 overflow-hidden"
+         >
+            <div className="absolute top-0 left-0 bottom-0 w-1 bg-white opacity-40 animate-pulse"></div>
+            <div className="max-w-[800px] mx-auto px-4 py-3 flex items-center justify-between min-w-0 gap-2">
+               <div className="flex items-center gap-3 w-full min-w-0">
+                  <div className="bg-white/20 p-1.5 rounded-sm shrink-0 shadow-inner">
+                     <AlertTriangle className="w-5 h-5 text-white animate-pulse" />
+                  </div>
+                  <h3 className="font-extrabold text-sm sm:text-base md:text-lg leading-tight w-full text-right truncate whitespace-normal line-clamp-2">
+                    <span className="font-black text-xs sm:text-sm bg-white text-red-600 px-1.5 py-0.5 rounded-sm ml-2 hidden sm:inline-block">عاجل</span>
+                    {urgentNews.text}
+                  </h3>
+               </div>
+               <button onClick={() => setUrgentNews(null)} className="p-1 hover:bg-white/20 rounded-full shrink-0 mr-2 transition">
+                 <X className="w-5 h-5" />
+               </button>
+            </div>
+         </motion.div>
+       )}
+    </AnimatePresence>
+  );
+}
 
 export function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -31,6 +135,7 @@ export function Layout() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <UrgentNewsBanner />
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white dark:bg-gray-800 shadow-sm px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -125,7 +230,7 @@ export function Layout() {
       )}
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+      <main className="flex-1 overflow-y-auto pb-20 md:pb-0 min-w-0 w-full overflow-x-hidden">
         <Outlet />
       </main>
 

@@ -9,37 +9,42 @@ service cloud.firestore {
       allow read, write: if false; 
     }
     
-    match /news/{newsId} {
+    match /news/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /videos/{videoId} {
+    match /videos/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /settings/livestream {
+    match /settings/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /settings/quran {
+    match /livestreams/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /leader/{contentId} {
+    match /leader/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /events/{eventId} {
+    match /events/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
     
-    match /notifications/{notifId} {
+    match /urgentNews/{document=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /notifications/{document=**} {
       allow read: if true;
       allow write: if isSignedIn();
     }
