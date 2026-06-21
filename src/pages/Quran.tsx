@@ -35,21 +35,31 @@ export function Quran() {
       </p>
 
       {loading ? (
-        <span className="text-gray-500">جاري التحميل...</span>
+        <div className="flex justify-center items-center py-10">
+           <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
       ) : !quranInfo?.isActive || !quranInfo?.link ? (
-        <div className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-6 py-3 rounded-lg">
-           القسم غير مفعل حالياً أو الرابط غير متوفر
+        <div className="bg-gray-100 dark:bg-gray-800 text-gray-500 px-6 py-4 rounded-2xl border border-dashed border-gray-200 dark:border-gray-700">
+           هذا القسم سيكون متاحاً قريباً، شكراً لانتظاركم.
         </div>
       ) : (
-        <a 
-          href={quranInfo.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all hover:-translate-y-1"
-        >
-          الانتقال إلى المادة
-          <ExternalLink className="w-5 h-5" />
-        </a>
+        <div className="space-y-4">
+           <a 
+             href={quranInfo.link}
+             target="_blank"
+             rel="noopener noreferrer"
+             className="inline-flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-5 rounded-2xl font-black text-xl shadow-xl shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all hover:-translate-y-1 active:scale-95 group"
+           >
+             {quranInfo.link.toLocaleLowerCase().endsWith('.apk') ? 'تحميل تطبيق القرآن (APK)' : 'الانتقال إلى المادة'}
+             <ExternalLink className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+           </a>
+           
+           {quranInfo.link.toLocaleLowerCase().endsWith('.apk') && (
+             <p className="text-xs font-bold text-gray-400 dark:text-gray-500">
+               * بعد التحميل، قم بتثبيت التطبيق على هاتفك الأندرويد.
+             </p>
+           )}
+        </div>
       )}
     </div>
   );

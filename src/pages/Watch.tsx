@@ -5,7 +5,7 @@ import { VideoItem, LiveStream } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { PlayCircle, MonitorPlay, Radio, X } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 
 export function Watch() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -192,7 +192,7 @@ export function Watch() {
           ) : (
              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                {videos.map(vid => (
-               <div key={vid.id} className="group block cursor-pointer" onClick={() => setActiveVideoUrl(vid.url)}>
+               <Link to={`/watch/${vid.id}`} key={vid.id} className="group block cursor-pointer">
                   <div className="relative aspect-video rounded-xl overflow-hidden bg-gray-900 mb-3 shadow-md border border-gray-100 dark:border-gray-800">
                      {vid.thumbnailUrl ? (
                         <img src={vid.thumbnailUrl} alt={vid.title} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" loading="lazy" />
@@ -212,7 +212,7 @@ export function Watch() {
                         <span>{format(vid.createdAt || Date.now(), "dd MMMM yyyy", { locale: ar })}</span>
                      </div>
                   </div>
-               </div>
+               </Link>
                ))}
              </div>
           )}

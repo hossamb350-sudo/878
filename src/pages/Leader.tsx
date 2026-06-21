@@ -4,7 +4,8 @@ import { db } from "../firebase";
 import { LeaderContent } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Quote } from "lucide-react";
+import { Quote, PlayCircle, FileText, ArrowLeft, Eye } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export function Leader() {
   const [content, setContent] = useState<LeaderContent[]>([]);
@@ -25,46 +26,68 @@ export function Leader() {
   }, []);
 
   return (
-    <div className="max-w-3xl mx-auto w-full p-4 pb-12">
-      <div className="bg-emerald-800 text-white p-8 rounded-2xl mb-8 flex items-center justify-between shadow-lg relative overflow-hidden">
-         <div className="relative z-10">
-            <h1 className="text-3xl font-extrabold mb-2 text-emerald-50">السيد القائد</h1>
-            <p className="text-emerald-200">توجيهات، خطابات، ودروس</p>
+    <div className="max-w-4xl mx-auto w-full p-4 pb-12 animate-fade-in">
+      <div className="bg-emerald-800 text-white p-8 md:p-12 rounded-3xl mb-8 flex items-center justify-between shadow-2xl relative overflow-hidden">
+         <div className="relative z-10 w-full max-w-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="bg-emerald-600/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/50">توجيهات وخطابات</span>
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight text-white drop-shadow-sm">السيد القائد</h1>
+            <p className="text-emerald-100 text-lg md:text-xl font-medium leading-relaxed opacity-90">الخطابات، الدروس، والتوجيهات</p>
          </div>
          {/* Decorative Element */}
-         <div className="absolute left-0 top-0 opacity-10 pointer-events-none">
-            <Quote className="w-48 h-48 -ml-10 -mt-10" />
+         <div className="absolute left-[-20%] top-[-20%] opacity-10 pointer-events-none rotate-12">
+            <Quote className="w-96 h-96" />
          </div>
+         <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-gradient-to-l from-emerald-900/50 to-transparent pointer-events-none"></div>
       </div>
 
       {loading ? (
-        <div className="text-center py-10">جاري التحميل...</div>
+        <div className="flex justify-center items-center py-20">
+           <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
       ) : content.length === 0 ? (
-        <div className="text-center py-20 text-gray-500">لا يوجد محتوى حالياً</div>
+        <div className="text-center py-20 text-gray-500 bg-gray-50 dark:bg-gray-800/20 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">لا يوجد محتوى حالياً</div>
       ) : (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
           {content.map(item => (
-            <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
-               <h2 className="text-xl font-bold mb-3">{item.title}</h2>
-               <span className="text-xs text-gray-500 mb-4 block">
-                 {format(item.createdAt, "dd MMMM yyyy", { locale: ar })}
-               </span>
-               {item.type === 'video' ? (
-                 <div className="aspect-video w-full bg-black rounded-lg overflow-hidden my-4">
-                    <iframe 
-                      src={item.content.includes('almasirah.net.ye/video?id=') 
-                        ? item.content.replace('/video?id=', '/player?id=') 
-                        : item.content} 
-                      className="w-full h-full border-0" 
-                      allowFullScreen
-                    ></iframe>
+            <Link 
+              to={`/leader/${item.id}`} 
+              key={item.id} 
+              className="group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl border border-gray-100 dark:border-gray-700 hover:border-emerald-500/30 transition-all duration-300 flex flex-col justify-between"
+            >
+               <div>
+                 <div className="flex items-center gap-2 mb-4">
+                    {item.type === 'video' ? (
+                      <span className="flex items-center gap-1.5 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 text-xs font-bold px-2.5 py-1 rounded-md">
+                        <PlayCircle className="w-3.5 h-3.5" /> فيديو
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold px-2.5 py-1 rounded-md">
+                        <FileText className="w-3.5 h-3.5" /> مقال / نص
+                      </span>
+                    )}
                  </div>
-               ) : (
-                 <div className="prose dark:prose-invert text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-wrap">
-                    {item.content}
+                 <h2 className="text-xl font-bold mb-3 text-gray-900 dark:text-white leading-snug group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors line-clamp-3">{item.title}</h2>
+               </div>
+               
+               <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100 dark:border-gray-700/50">
+                 <div className="flex items-center gap-3">
+                   <span className="text-xs text-gray-500 font-medium">
+                     {format(item.createdAt, "dd MMMM yyyy", { locale: ar })}
+                   </span>
+                   {item.views !== undefined && (
+                     <span className="flex items-center gap-1 text-xs text-gray-400 font-medium bg-gray-50 dark:bg-gray-800 px-1.5 py-0.5 rounded">
+                       <Eye className="w-3 h-3" /> {item.views}
+                     </span>
+                   )}
                  </div>
-               )}
-            </div>
+                 
+                 <div className="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all transform group-hover:-translate-x-1">
+                   <ArrowLeft className="w-4 h-4" />
+                 </div>
+               </div>
+            </Link>
           ))}
         </div>
       )}

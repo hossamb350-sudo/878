@@ -9,6 +9,8 @@ import { Home } from "./pages/Home";
 import { NewsDetail } from "./pages/NewsDetail";
 import { Watch } from "./pages/Watch";
 import { Leader } from "./pages/Leader";
+import { LeaderItem } from "./pages/LeaderItem";
+import { WatchItem } from "./pages/WatchItem";
 import { Quran } from "./pages/Quran";
 import { Events } from "./pages/Events";
 import { Admin } from "./pages/Admin";
@@ -38,7 +40,9 @@ function AnimatedRoutes() {
           <Route path="search" element={<Search />} />
           <Route path="news/:id" element={<NewsDetail />} />
           <Route path="watch" element={<Watch />} />
+          <Route path="watch/:id" element={<WatchItem />} />
           <Route path="leader" element={<Leader />} />
+          <Route path="leader/:id" element={<LeaderItem />} />
           <Route path="quran" element={<Quran />} />
           <Route path="events" element={<Events />} />
           <Route path="admin" element={<Admin />} />

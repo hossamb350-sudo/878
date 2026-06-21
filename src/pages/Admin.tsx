@@ -3,7 +3,7 @@ import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User 
 import { auth, db } from "../firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
 import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart } from "lucide-react";
-import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile } from "../types";
+import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile, LeaderContent } from "../types";
 
 export function Admin() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -708,6 +708,7 @@ function AdminVideos() {
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "videos"), orderBy("createdAt", "desc"));
@@ -721,10 +722,18 @@ function AdminVideos() {
     if(!title || !url) return alert("بيانات ناقصة");
     setSaving(true);
     try {
-      await addDoc(collection(db, "videos"), {
-         title, url, thumbnailUrl: thumb, views: 0, createdAt: Date.now()
-      });
-      alert("تم إضافة الفيديو بنجاح"); setTitle(""); setUrl(""); setThumb("");
+      if (editingId) {
+         await updateDoc(doc(db, "videos", editingId), {
+            title, url, thumbnailUrl: thumb
+         });
+         alert("تم تعديل الفيديو بنجاح");
+      } else {
+         await addDoc(collection(db, "videos"), {
+            title, url, thumbnailUrl: thumb, views: 0, createdAt: Date.now()
+         });
+         alert("تم إضافة الفيديو بنجاح"); 
+      }
+      setTitle(""); setUrl(""); setThumb(""); setEditingId(null);
     } catch(e) { console.error(e); alert("حدث خطأ"); } finally { setSaving(false); }
   };
 
@@ -739,16 +748,36 @@ function AdminVideos() {
     }
   };
 
+  const handleEdit = (video: VideoItem) => {
+    setTitle(video.title);
+    setUrl(video.url);
+    setThumb(video.thumbnailUrl || "");
+    setEditingId(video.id);
+  };
+
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h2 className="text-xl font-bold text-[#111827] dark:text-white flex items-center gap-2"><Video className="w-5 h-5 text-red-600"/> إضافة فيديو</h2>
+        <h2 className="text-xl font-bold text-[#111827] dark:text-white flex items-center gap-2"><Video className="w-5 h-5 text-red-600"/> {editingId ? "تعديل فيديو" : "إضافة فيديو"}</h2>
+        
+        <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-4 rounded-lg text-sm border border-blue-100 dark:border-blue-900">
+           <strong className="block mb-1 text-blue-800 dark:text-blue-200">تعليمات هامة:</strong>
+           لرفع الفيديو، يرجى زيارة موقع <a href="https://catbox.moe" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-blue-500 transition-colors">Catbox</a>، ثم رفع ملف الفيديو ونسخ الرابط المباشر (Direct Link) ولصقه في الحقل المخصص داخل النظام.
+        </div>
+        
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="العنوان" value={title} onChange={e=>setTitle(e.target.value)} />
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط الفيديو (YouTube, MP4...)" value={url} onChange={e=>setUrl(e.target.value)} />
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط الصورة المصغرة (اختياري)" value={thumb} onChange={e=>setThumb(e.target.value)} />
-        <button onClick={save} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg transition-colors font-bold w-full sm:w-auto">
-          {saving ? "جاري الحفظ..." : "حفظ الفيديو"}
-        </button>
+        <div className="flex gap-3">
+          <button onClick={save} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg transition-colors font-bold w-full sm:w-auto">
+            {saving ? "جاري الحفظ..." : (editingId ? "حفظ التعديلات" : "حفظ الفيديو")}
+          </button>
+          {editingId && (
+            <button onClick={() => {setTitle(""); setUrl(""); setThumb(""); setEditingId(null);}} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2.5 rounded-lg font-bold">
+               إلغاء التعديل
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-8">
@@ -766,10 +795,14 @@ function AdminVideos() {
                 )}
                 <div className="flex flex-col gap-1">
                   <span className="font-bold text-[#111827] dark:text-white line-clamp-1">{video.title}</span>
-                  <span className="text-xs text-gray-500">{new Date(video.createdAt).toLocaleDateString()}</span>
+                  <div className="text-xs text-gray-500 flex gap-2">
+                    <span>{new Date(video.createdAt).toLocaleDateString()}</span>
+                    <span>•</span>
+                    <span>{video.views || 0} مشاهدة</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 {deletingId === video.id ? (
                   <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg">
                     <span className="text-xs font-bold text-red-600 dark:text-red-400 px-2">تأكيد الحذف؟</span>
@@ -777,12 +810,17 @@ function AdminVideos() {
                     <button onClick={() => setDeletingId(null)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded text-sm font-bold transition-colors">لا</button>
                   </div>
                 ) : (
-                  <button 
-                    onClick={() => setDeletingId(video.id)}
-                    className="text-red-500 hover:text-red-700 px-4 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 font-bold text-sm transition-colors flex items-center gap-1"
-                  >
-                    <Trash2 className="w-4 h-4"/> حذف
-                  </button>
+                  <>
+                    <button onClick={() => handleEdit(video)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium">
+                      <Edit className="w-4 h-4"/> تعديل
+                    </button>
+                    <button 
+                      onClick={() => setDeletingId(video.id)}
+                      className="text-red-500 hover:text-red-700 px-4 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 font-bold text-sm transition-colors flex items-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4"/> حذف
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -944,11 +982,21 @@ function AdminLive() {
 
 function AdminLeader() {
   const [title, setTitle] = useState("");
-  const [type, setType] = useState("video");
+  const [type, setType] = useState<"video" | "text">("video");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [leaderContents, setLeaderContents] = useState<LeaderContent[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Quick helper for the requested URL
+  useEffect(() => {
+    const q = query(collection(db, "leader"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      setLeaderContents(snap.docs.map(d => ({ id: d.id, ...d.data() } as LeaderContent)));
+    }, (error) => console.error("Error fetching leader content:", error));
+    return () => unsub();
+  }, []);
+
   const quickFix = () => {
     setTitle("كلمة السيد القائد حول آخر التطورات - الخميس 18 يونيو 2026م");
     setType("video");
@@ -959,27 +1007,57 @@ function AdminLeader() {
     if(!title || !content) return alert("يرجى تعبئة جميع الحقول");
     setSaving(true);
     try {
-      await addDoc(collection(db, "leader"), { 
-        title, 
-        type, 
-        content, 
-        createdAt: Date.now() 
-      });
-      alert("تمت الإضافة بنجاح!"); 
-      setTitle(""); 
-      setContent("");
+      if (editingId) {
+        await updateDoc(doc(db, "leader", editingId), { title, type, content });
+        alert("تم التعديل بنجاح!"); 
+      } else {
+        await addDoc(collection(db, "leader"), { 
+          title, 
+          type, 
+          content,
+          views: 0,
+          createdAt: Date.now() 
+        });
+        alert("تمت الإضافة بنجاح!"); 
+      }
+      resetForm();
     } catch(e) { 
       console.error(e); 
-      alert("حدث خطأ أثناء الإضافة");
+      alert("حدث خطأ أثناء الحفظ");
     } finally {
       setSaving(false);
+    }
+  };
+  
+  const resetForm = () => {
+    setTitle(""); 
+    setContent("");
+    setType("video");
+    setEditingId(null);
+  }
+  
+  const handleEdit = (item: LeaderContent) => {
+    setTitle(item.title);
+    setContent(item.content);
+    setType(item.type);
+    setEditingId(item.id);
+  };
+  
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, "leader", id));
+      alert("تم الحذف بنجاح");
+      setDeletingId(null);
+    } catch (e) {
+      console.error(e);
+      alert("خطأ في الحذف");
     }
   };
 
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center justify-between border-b dark:border-gray-700 pb-3">
-         <h2 className="text-xl font-bold">إدارة محتوى السيد القائد</h2>
+         <h2 className="text-xl font-bold">{editingId ? "تعديل محتوى السيد القائد" : "إضافة محتوى السيد القائد"}</h2>
          <button 
            onClick={quickFix}
            className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-3 py-1.5 rounded-full font-bold hover:bg-emerald-200 transition"
@@ -1004,7 +1082,7 @@ function AdminLeader() {
           <select 
             className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500" 
             value={type} 
-            onChange={e=>setType(e.target.value)}
+            onChange={e=>setType(e.target.value as "video" | "text")}
           >
              <option value="text">نص (مقال / درس)</option>
              <option value="video">فيديو (YouTube / Al-Masirah)</option>
@@ -1024,13 +1102,64 @@ function AdminLeader() {
           )}
         </div>
 
-        <button 
-          onClick={save} 
-          disabled={saving}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50"
-        >
-          {saving ? "جاري الحفظ..." : "إضافة المحتوى الآن"}
-        </button>
+        <div className="flex gap-3 mt-4">
+          <button 
+            onClick={save} 
+            disabled={saving}
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50"
+          >
+            {saving ? "جاري الحفظ..." : (editingId ? "حفظ التعديلات" : "إضافة المحتوى الآن")}
+          </button>
+          {editingId && (
+            <button onClick={resetForm} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2.5 rounded-xl font-bold">
+               إلغاء
+            </button>
+          )}
+        </div>
+      </div>
+      
+      <div className="mt-8">
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><List className="w-5 h-5 text-gray-500"/> المحتوى المضاف</h3>
+        <div className="space-y-3">
+          {leaderContents.map(item => (
+            <div key={item.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
+              <div className="flex flex-col gap-1">
+                <span className="font-bold text-[#111827] dark:text-white line-clamp-1">{item.title}</span>
+                <div className="text-xs text-gray-500 flex gap-2">
+                  <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+                  <span>•</span>
+                  <span>{item.type === 'video' ? 'فيديو' : 'مقال/نص'}</span>
+                  <span>•</span>
+                  <span>{item.views || 0} مشاهدة</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {deletingId === item.id ? (
+                  <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg">
+                    <span className="text-xs font-bold text-red-600 dark:text-red-400 px-2">تأكيد الحذف؟</span>
+                    <button onClick={() => handleDelete(item.id)} className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-sm font-bold transition-colors">نعم</button>
+                    <button onClick={() => setDeletingId(null)} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded text-sm font-bold transition-colors">لا</button>
+                  </div>
+                ) : (
+                  <>
+                    <button onClick={() => handleEdit(item)} className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium">
+                      <Edit className="w-4 h-4"/> تعديل
+                    </button>
+                    <button 
+                      onClick={() => setDeletingId(item.id)}
+                      className="text-red-500 hover:text-red-700 px-4 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 font-bold text-sm transition-colors flex items-center gap-1"
+                    >
+                      <Trash2 className="w-4 h-4"/> حذف
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+          {leaderContents.length === 0 && (
+            <p className="text-gray-500 text-sm text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">لا يوجد محتوى مضاف بعد.</p>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1040,23 +1169,60 @@ function AdminQuran() {
   const [link, setLink] = useState("");
   const [active, setActive] = useState(false);
 
+  useEffect(() => {
+    const fetch = async () => {
+      const d = await getDoc(doc(db, "settings", "quran"));
+      if (d.exists()) {
+        const data = d.data();
+        setLink(data.link || "");
+        setActive(data.isActive || false);
+      }
+    };
+    fetch();
+  }, []);
+
   const save = async () => {
      try {
-        const { setDoc } = await import("firebase/firestore");
         await setDoc(doc(db, "settings", "quran"), { link, isActive: active });
-        alert("تم الحفظ");
-     } catch(e) { console.error(e); }
+        alert("تم الحفظ بنجاح");
+     } catch(e) { console.error(e); alert("حدث خطأ أثناء الحفظ"); }
   };
 
   return (
-    <div className="space-y-4 max-w-2xl">
-      <h2 className="text-xl font-bold mb-4">إعدادات قسم القرآن</h2>
-      <input className="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600" placeholder="الرابط الخارجي" value={link} onChange={e=>setLink(e.target.value)} />
-      <label className="flex items-center gap-2 cursor-pointer">
-         <input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} className="w-4 h-4" />
-         <span className="font-bold text-emerald-500">تفعيل القسم</span>
-      </label>
-      <button onClick={save} className="bg-blue-600 text-white px-6 py-2 rounded">حفظ</button>
+    <div className="space-y-6 max-w-2xl">
+      <div className="flex items-center gap-2 border-b dark:border-gray-700 pb-3">
+         <BookOpen className="w-5 h-5 text-emerald-600" />
+         <h2 className="text-xl font-bold">إعدادات قسم القرآن</h2>
+      </div>
+
+      <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-5 rounded-2xl border border-blue-100 dark:border-blue-900 text-sm leading-relaxed">
+         <strong className="block mb-2 text-blue-800 dark:text-blue-200 text-base">تحويل تطبيق الأندرويد إلى رابط:</strong>
+         إذا كان لديك تطبيق "من هدي القرآن" بصيغة APK، يمكنك رفعه على <a href="https://catbox.moe" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-blue-500">موقع Catbox</a>، ثم نسخ "الرابط المباشر" ووضعه في الحقل أدناه ليتمكن المستخدمون من تحميل التطبيق مباشرة من موقعك.
+      </div>
+
+      <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
+         <div>
+            <label className="block text-sm font-bold mb-2">رابط التطبيق أو المادة:</label>
+            <input 
+               className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-emerald-500" 
+               placeholder="قم بلصق رابط الـ APK أو الموقع هنا" 
+               value={link} 
+               onChange={e=>setLink(e.target.value)} 
+            />
+         </div>
+
+         <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl cursor-pointer border border-gray-100 dark:border-gray-800 hover:border-emerald-500/50 transition-colors">
+            <input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} className="w-5 h-5 accent-emerald-600 rounded" />
+            <span className="font-bold text-gray-700 dark:text-gray-200">تفعيل القسم وعرضه للمستخدمين</span>
+         </label>
+
+         <button 
+            onClick={save} 
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
+         >
+            حفظ الإعدادات
+         </button>
+      </div>
     </div>
   );
 }

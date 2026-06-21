@@ -5,7 +5,7 @@ import { db } from "../firebase";
 import { NewsItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Share2, Bookmark, ArrowRight, Clock, User, ChevronRight, ChevronLeft, X } from "lucide-react";
+import { Share2, Bookmark, ArrowRight, Clock, User, ChevronRight, ChevronLeft, X, Eye } from "lucide-react";
 import { motion } from "motion/react";
 
 const FONT_SIZES = {
@@ -48,6 +48,16 @@ export function NewsDetail() {
         if (d.exists()) {
           const newsData = { id: d.id, ...d.data() } as NewsItem;
           setNews(newsData);
+          
+          // Increment views
+          try {
+            const { updateDoc, increment } = await import("firebase/firestore");
+            await updateDoc(doc(db, "news", id), {
+              views: increment(1)
+            });
+          } catch(e) {
+            console.warn("Could not increment views", e);
+          }
           
           // Fetch related
           let catQuery = query(collection(db, "news"), where("category", "==", newsData.category), limit(4));
@@ -213,6 +223,8 @@ export function NewsDetail() {
                  <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><User className="w-3.5 h-3.5"/> {news.author}</span>
                </>
              )}
+             <span className="text-gray-300 dark:text-gray-700">|</span>
+             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"><Eye className="w-3.5 h-3.5"/> {(news.views || 0) + 1}</span>
           </div>
           {isModified && modInfo && (
             <div className="mb-8 -mt-5 text-[11px] font-medium text-gray-400 opacity-80 flex items-center gap-1">

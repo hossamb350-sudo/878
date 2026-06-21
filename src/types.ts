@@ -19,6 +19,7 @@ export interface NewsItem {
   createdAt: number;
   updatedAt?: number;
   author?: string;
+  views?: number;
   liveUpdates?: LiveUpdate[];
 }
 
@@ -53,6 +54,7 @@ export interface LeaderContent {
   title: string;
   type: "text" | "video";
   content: string;
+  views?: number;
   createdAt: number;
 }
 

@@ -19,11 +19,13 @@ service cloud.firestore {
     
     match /news/{document=**} {
       allow read: if true;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
       allow write: if isAdmin();
     }
     
     match /videos/{document=**} {
       allow read: if true;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
       allow write: if isAdmin();
     }
     
@@ -39,6 +41,7 @@ service cloud.firestore {
     
     match /leader/{document=**} {
       allow read: if true;
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
       allow write: if isAdmin();
     }
     
