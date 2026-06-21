@@ -1,43 +1,128 @@
 import { useState, useEffect } from "react";
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User } from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "../firebase";
-import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc } from "firebase/firestore";
-import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock } from "lucide-react";
-import { NewsItem, VideoItem, LiveStream, EventItem } from "../types";
+import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
+import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart } from "lucide-react";
+import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile } from "../types";
 
 export function Admin() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("news");
   
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, setUser);
+    const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
+      setUser(firebaseUser);
+      if (firebaseUser) {
+        await checkProfile(firebaseUser);
+      } else {
+        setProfile(null);
+        setLoading(false);
+      }
+    });
     return unsub;
   }, []);
 
-  const login = () => signInWithPopup(auth, new GoogleAuthProvider());
+  const checkProfile = async (firebaseUser: FirebaseUser) => {
+    setLoading(true);
+    try {
+      const userRef = doc(db, "users", firebaseUser.uid);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const data = userSnap.data() as UserProfile;
+        setProfile(data);
+        // Update last login using setDoc with merge to be more robust
+        try {
+          await setDoc(userRef, { lastLogin: Date.now() }, { merge: true });
+        } catch (updateErr) {
+          console.warn("Could not update last login timestamp:", updateErr);
+        }
+      } else {
+        // Create new profile for common user
+        const newProfile: UserProfile = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          displayName: firebaseUser.displayName || "مستخدم",
+          photoURL: firebaseUser.photoURL || undefined,
+          role: "user",
+          createdAt: Date.now(),
+          lastLogin: Date.now()
+        };
+        await setDoc(userRef, newProfile);
+        setProfile(newProfile);
+      }
+    } catch (e) {
+      console.error("Error fetching profile:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async () => {
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (error: any) {
+       if (error.code === 'auth/operation-not-allowed') {
+         alert("تسجيل الدخول عبر جوجل غير مفعل حالياً. يرجى التواصل مع الإدارة.");
+       } else {
+         alert("حدث خطأ أثناء تسجيل الدخول: " + error.message);
+       }
+    }
+  };
   const logout = () => signOut(auth);
+
+  if (loading && user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-gray-500 font-bold">جاري التحقق من صلاحيات الدخول...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-         <Shield className="w-16 h-16 text-blue-600 mb-6" />
-         <h1 className="text-2xl font-bold mb-6">لوحة الإدارة</h1>
-         <button onClick={login} className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition">
-           تسجيل الدخول
+      <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
+         <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-6">
+            <User className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+         </div>
+         <h1 className="text-3xl font-black mb-2 text-gray-900 dark:text-white">مرحباً بك في منصة تعز</h1>
+         <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm">سجل دخولك عبر حساب جوجل للوصول إلى تفضيلاتك وإدارة حسابك الشخصي.</p>
+         
+         <button 
+           onClick={login} 
+           className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white px-8 py-4 rounded-2xl font-bold hover:shadow-lg transition-all flex items-center gap-3 active:scale-95"
+         >
+           <img src="https://www.google.com/favicon.ico" className="w-5 h-5" alt="" />
+           تسجيل الدخول عبر جوجل
          </button>
       </div>
     );
   }
 
+  // If user is logged in but not an admin
+  if (profile?.role === 'user') {
+    return <UserProfileView user={user} profile={profile} logout={logout} />;
+  }
+
+  // Admin View
   return (
-    <div className="max-w-6xl mx-auto p-4 pb-12 flex flex-col md:flex-row gap-6">
+    <div className="max-w-6xl mx-auto p-4 pb-12 flex flex-col md:flex-row gap-6 animate-fade-in">
        {/* Admin Sidebar */}
-       <div className="w-full md:w-64 shrink-0 flex flex-col gap-2">
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm mb-4">
-             <div className="text-sm text-gray-500 mb-1">حساب الإدارة</div>
-             <div className="font-bold truncate">{user.email}</div>
-             <button onClick={logout} className="mt-4 flex items-center gap-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-3 py-1.5 rounded transition">
-               <LogOut className="w-4 h-4" /> تسجيل خروج
+       <div className="w-full md:w-72 shrink-0 flex flex-col gap-2">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm mb-4">
+             <div className="flex items-center gap-3 mb-4">
+                <img src={user.photoURL || ""} className="w-12 h-12 rounded-full border-2 border-blue-600 p-0.5" alt="" />
+                <div className="min-w-0">
+                   <div className="font-extrabold truncate text-gray-900 dark:text-white">{user.displayName}</div>
+                   <div className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full inline-block">مدير المنصة</div>
+                </div>
+             </div>
+             <div className="text-xs text-gray-400 truncate mb-4">{user.email}</div>
+             <button onClick={logout} className="w-full flex items-center justify-center gap-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 py-2.5 rounded-xl transition">
+               <LogOut className="w-4 h-4" /> تسجيل الخروج
              </button>
           </div>
           
@@ -72,6 +157,67 @@ export function Admin() {
           {activeTab === "leader" && <AdminLeader />}
           {activeTab === "quran" && <AdminQuran />}
           {activeTab === "events" && <AdminEvents />}
+       </div>
+    </div>
+  );
+}
+
+function UserProfileView({ user, profile, logout }: { user: FirebaseUser, profile: UserProfile, logout: () => void }) {
+  return (
+    <div className="max-w-4xl mx-auto p-4 py-12 animate-fade-in">
+       <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-none">
+          <div className="h-32 bg-gradient-to-r from-blue-600 to-blue-400"></div>
+          <div className="px-6 pb-10">
+             <div className="relative -mt-16 mb-6 flex justify-between items-end">
+                <img src={user.photoURL || ""} className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover bg-gray-100" alt="" />
+                <button onClick={logout} className="mb-2 flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors">
+                   <LogOut className="w-4 h-4" /> تسجيل الخروج
+                </button>
+             </div>
+             
+             <div>
+                <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-1">{profile.displayName}</h2>
+                <div className="flex items-center gap-2 mb-6">
+                   <span className="text-xs font-bold text-gray-400 dark:text-gray-500">{profile.email}</span>
+                   <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
+                   <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full inline-block">حساب قارئ</span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+                   <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center gap-3 mb-4">
+                         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <Settings className="w-5 h-5" />
+                         </div>
+                         <h3 className="font-bold text-lg">إدارة الحساب</h3>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-6">يمكنك التحكم في إعدادات خصوصيتك وكيفية ظهور حسابك في التعليقات والتنبيهات.</p>
+                      <button className="w-full py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition opacity-50 cursor-not-allowed">
+                         قريباً: تعديل الملف الشخصي
+                      </button>
+                   </div>
+                   
+                   <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                      <div className="flex items-center gap-3 mb-4">
+                         <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-xl flex items-center justify-center text-pink-600 dark:text-pink-400">
+                            <Heart className="w-5 h-5" />
+                         </div>
+                         <h3 className="font-bold text-lg">المفضلة</h3>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-6">الأخبار والمقالات التي قمت بحفظها للرجوع إليها لاحقاً ستظهر في هذا القسم.</p>
+                      <button className="w-full py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition opacity-50 cursor-not-allowed">
+                         لا توجد مفضلات حالياً
+                      </button>
+                   </div>
+                </div>
+                
+                <div className="mt-12 p-8 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-3xl text-center">
+                   <AlertTriangle className="w-12 h-12 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
+                   <h3 className="font-bold text-gray-400 dark:text-gray-600">منطقة للمديرين فقط</h3>
+                   <p className="text-xs text-gray-400 dark:text-gray-600 mt-2 max-w-xs mx-auto">عذراً، هذا الحساب ليس لديه صلاحيات الوصول إلى لوحة الإدارة. يمكنك الاستمتاع بتصفح المنصة من الواجهة العامة.</p>
+                </div>
+             </div>
+          </div>
        </div>
     </div>
   );

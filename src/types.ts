@@ -80,3 +80,13 @@ export interface NotificationItem {
   body: string;
   createdAt: number;
 }
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  role: 'admin' | 'user';
+  createdAt: number;
+  lastLogin?: number;
+}

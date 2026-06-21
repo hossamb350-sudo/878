@@ -110,28 +110,21 @@ export function Home() {
       className="max-w-[760px] mx-auto w-full pb-16 bg-white dark:bg-gray-950 transition-colors"
     >
       
-      {/* Brand Header Banner - Al Jazeera Style with Calligraphy Droplet */}
+      {/* Brand Header Banner - Taiz Media Style with Calligraphy Droplet */}
       <div className="w-full bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-900 pt-5 pb-0 sticky top-0 z-30 px-4">
         <div className="flex items-center justify-between max-w-[720px] mx-auto mb-3">
-          {/* Left Side: Dynamic World Cup Badge */}
-          <div className="bg-[#2563eb] text-white text-xs font-bold px-3 py-1.5 rounded-sm tracking-wide select-none">
-            كأس العالم 2026
-          </div>
-          
-          {/* Right Side: Beautiful Al Jazeera Brand Logo Calligraphy representation */}
-          <div className="flex items-center gap-1 select-none">
-            <svg viewBox="0 0 240 70" className="h-10 w-auto text-black dark:text-white" fill="currentColor">
-              {/* Gold/White Calligraphy Drop Shape representation */}
-              <path d="M210 15c0 0 25 30 25 42 0 11-9 20-20 20s-20-9-20-20c0-12 25-42 25-42zm-35 30c0 10-8 18-18 18s-18-8-18-18 8-18 18-18 18 8 18 18z" fill="#C99700" />
-              {/* Calligraphy curves resembling Arabic text */}
-              <path d="M140 25c-5-5-15-5-20 0s-5 15 0 20 15 5 20 0zM100 25C95 20 85 20 80 25s-5 15 0 20 15 5 20 0z" />
-              <path d="M50 25c-5-5-15-5-20 0s-5 15 0 20 15 5 20 0z" />
-            </svg>
-            <div className="flex flex-col text-right pr-1">
-              <span className="font-[900] text-xl tracking-tight leading-none text-gray-950 dark:text-white">الجزيرة</span>
-              <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">الأخبار والآراء</span>
+          {/* Left Side: Simple Text Branding */}
+          <div className="flex items-center select-none py-1">
+            <div className="flex flex-col text-left">
+              <span className="font-[900] text-2xl tracking-tighter leading-none text-gray-950 dark:text-white">منصة تعز الإعلامية</span>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">إخبارية ثقافية |</span>
+                <span className="text-[9px] font-bold text-blue-600 dark:text-blue-500 tracking-[0.15em] uppercase">Taiz Media Platform</span>
+              </div>
             </div>
           </div>
+
+          <div></div>
         </div>
         
         {/* Tab Navigation Underlines */}

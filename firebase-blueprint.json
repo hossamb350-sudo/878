@@ -83,9 +83,27 @@
         "createdAt": { "type": "number" }
       },
       "required": ["title", "body", "createdAt"]
+    },
+    "User": {
+      "title": "User",
+      "description": "Platform user information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] },
+        "createdAt": { "type": "number" },
+        "lastLogin": { "type": "number" }
+      },
+      "required": ["email", "role", "createdAt"]
     }
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User profiles and roles"
+    },
     "/news/{newsId}": {
       "schema": { "$ref": "News" },
       "description": "News articles"
