@@ -30,10 +30,10 @@ export function Leader() {
       <div className="bg-emerald-800 text-white p-8 md:p-12 rounded-3xl mb-8 flex items-center justify-between shadow-2xl relative overflow-hidden">
          <div className="relative z-10 w-full max-w-lg">
             <div className="flex items-center gap-3 mb-4">
-              <span className="bg-emerald-600/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/50">توجيهات وخطابات</span>
+              <span className="bg-emerald-600/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-emerald-500/50">محاضرات ودروس</span>
             </div>
             <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight text-white drop-shadow-sm">السيد القائد</h1>
-            <p className="text-emerald-100 text-lg md:text-xl font-medium leading-relaxed opacity-90">الخطابات، الدروس، والتوجيهات</p>
+            <p className="text-emerald-100 text-lg md:text-xl font-medium leading-relaxed opacity-90">الدروس والمحاضرات</p>
          </div>
          {/* Decorative Element */}
          <div className="absolute left-[-20%] top-[-20%] opacity-10 pointer-events-none rotate-12">
@@ -64,7 +64,7 @@ export function Leader() {
                       </span>
                     ) : (
                       <span className="flex items-center gap-1.5 bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-xs font-bold px-2.5 py-1 rounded-md">
-                        <FileText className="w-3.5 h-3.5" /> مقال / نص
+                        <FileText className="w-3.5 h-3.5" /> محاضرات ودروس
                       </span>
                     )}
                  </div>

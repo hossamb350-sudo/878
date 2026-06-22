@@ -16,6 +16,7 @@ export interface NewsItem {
   additionalImages?: string[];
   category: string;
   isBreaking: boolean;
+  isPinned?: boolean;
   createdAt: number;
   updatedAt?: number;
   author?: string;
@@ -36,6 +37,7 @@ export interface VideoItem {
   url: string;
   thumbnailUrl?: string;
   duration?: string;
+  category?: string;
   views: number;
   createdAt: number;
 }
@@ -54,6 +56,7 @@ export interface LeaderContent {
   title: string;
   type: "text" | "video";
   content: string;
+  description?: string;
   views?: number;
   createdAt: number;
 }

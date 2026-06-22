@@ -86,18 +86,21 @@ export function Home() {
     ? news.filter(n => savedArticles.includes(n.id))
     : [...news];
 
-  // Pin breaking news at top
-  const breakingNewsIndex = filteredNews.findIndex(n => n.isBreaking);
+  // Pin manually-pinned news at top
+  const pinnedNewsIndex = filteredNews.findIndex(n => n.isPinned);
   let heroItem = filteredNews[0];
   let listItems = filteredNews.slice(1);
 
-  if (breakingNewsIndex > 0) {
-    heroItem = filteredNews[breakingNewsIndex];
-    listItems = [...filteredNews.slice(0, breakingNewsIndex), ...filteredNews.slice(breakingNewsIndex + 1)];
-  } else if (breakingNewsIndex === 0) {
+  if (pinnedNewsIndex > 0) {
+    heroItem = filteredNews[pinnedNewsIndex];
+    listItems = [...filteredNews.slice(0, pinnedNewsIndex), ...filteredNews.slice(pinnedNewsIndex + 1)];
+  } else if (pinnedNewsIndex === 0) {
     heroItem = filteredNews[0];
     listItems = filteredNews.slice(1);
   }
+
+  // Define breakingNewsIndex as fallback or kept as empty if not needed
+  const breakingNewsIndex = -1;
 
   const breakingItems = news.filter(n => n.isBreaking).slice(0, 3); // For the vertical timeline under hero
 
@@ -207,13 +210,28 @@ export function Home() {
                   {/* Info Row: Blinking Live coverage + Bookmark */}
                   <div className="flex items-center justify-between mb-4 mt-2">
                     {/* Pulsing Live Cover */}
-                    <div className="flex items-center gap-1.5 text-red-600 dark:text-red-500 font-extrabold text-[15px] select-none">
-                      <span className="relative flex h-2.5 w-2.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
-                      </span>
-                      تغطية مباشرة
-                    </div>
+                    {heroItem.isBreaking ? (
+                      <div className="flex items-center gap-1.5 text-red-600 dark:text-red-500 font-extrabold text-[14px] select-none">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
+                        </span>
+                        تغطية مباشرة
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-0.5 rounded-full font-black border border-emerald-500/10">
+                          {heroItem.category || "مادة بارزة"}
+                        </span>
+                        <span className="text-stone-400 dark:text-zinc-500 text-xs font-bold leading-none">
+                          {new Date(heroItem.createdAt).toLocaleDateString("ar-YE", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Bookmark on the left */}
                     <button 

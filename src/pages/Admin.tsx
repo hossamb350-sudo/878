@@ -400,6 +400,7 @@ function AdminNews() {
   const [cat, setCat] = useState("محلية");
   const [customCat, setCustomCat] = useState("");
   const [isBreaking, setIsBreaking] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
   const [liveUpdatesText, setLiveUpdatesText] = useState("");
   
   const [saving, setSaving] = useState(false);
@@ -478,6 +479,7 @@ function AdminNews() {
     setCat("محلية");
     setCustomCat("");
     setIsBreaking(false);
+    setIsPinned(false);
     setLiveUpdatesText("");
     setEditingId(null);
   };
@@ -505,6 +507,7 @@ function AdminNews() {
     }
     
     setIsBreaking(!!item.isBreaking);
+    setIsPinned(!!item.isPinned);
     
     if (item.liveUpdates && Array.isArray(item.liveUpdates)) {
       setLiveUpdatesText(item.liveUpdates.map(u => {
@@ -547,6 +550,7 @@ function AdminNews() {
       additionalImages: additionalImages || null,
       category: finalCat,
       isBreaking,
+      isPinned,
       liveUpdates: parsedUpdates || null,
       updatedAt: Date.now()
     };
@@ -688,9 +692,24 @@ function AdminNews() {
                </div>
             </div>
             
-            <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl cursor-pointer" onClick={() => setIsBreaking(!isBreaking)}>
-               <input type="checkbox" checked={isBreaking} onChange={e=>setIsBreaking(e.target.checked)} className="w-5 h-5 text-red-600 rounded" />
-               <span className="font-bold text-lg text-red-600 dark:text-red-500">تمكين التغطية المباشرة (تثبيت أعلى الصفحة وتسليط الضوء)</span>
+            <div className="space-y-4">
+              {/* Pinning Option */}
+              <div className="flex items-center gap-3 p-4 bg-emerald-50/70 dark:bg-emerald-950/10 border border-emerald-100 dark:border-emerald-900/30 rounded-xl cursor-pointer shadow-sm" onClick={() => setIsPinned(!isPinned)}>
+                 <input type="checkbox" checked={isPinned} onChange={e=>setIsPinned(e.target.checked)} className="w-5 h-5 text-emerald-600 rounded" onClick={(e) => e.stopPropagation()} />
+                 <div>
+                   <span className="font-bold text-base text-emerald-700 dark:text-emerald-400 block">تثبيت الخبر كأعلى مادة في الصفحة (الخبر الرئيسي والبارز)</span>
+                   <span className="text-xs text-stone-500 dark:text-zinc-400 mt-0.5 block">عند اختيار هذا، سيظهر الخبر دائمًا في أعلى الواجهة كخبر رئيسي بارز.</span>
+                 </div>
+              </div>
+
+              {/* Live Coverage/Updates Option */}
+              <div className="flex items-center gap-3 p-4 bg-red-50/70 dark:bg-red-900/10 border border-red-100 dark:border-red-900/30 rounded-xl cursor-pointer shadow-sm" onClick={() => setIsBreaking(!isBreaking)}>
+                 <input type="checkbox" checked={isBreaking} onChange={e=>setIsBreaking(e.target.checked)} className="w-5 h-5 text-red-600 rounded" onClick={(e) => e.stopPropagation()} />
+                 <div>
+                   <span className="font-bold text-base text-red-600 dark:text-red-500 block">تمكين التغطية المباشرة وقائمة التحديثات السريعة</span>
+                   <span className="text-xs text-stone-500 dark:text-zinc-400 mt-0.5 block">يتيح لك هذا الرمز إضافة شريط وبث تخاطبي مباشر بالترتيب الزمني مع تحديثات فورية بجانب الخبر.</span>
+                 </div>
+              </div>
             </div>
             
             {isBreaking && (
@@ -805,6 +824,7 @@ function AdminVideos() {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [thumb, setThumb] = useState("");
+  const [category, setCategory] = useState("");
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -818,22 +838,30 @@ function AdminVideos() {
     return () => unsub();
   }, []);
 
+  const resetForm = () => {
+    setTitle("");
+    setUrl("");
+    setThumb("");
+    setCategory("");
+    setEditingId(null);
+  };
+
   const save = async () => {
     if(!title || !url) return alert("بيانات ناقصة");
     setSaving(true);
     try {
       if (editingId) {
          await updateDoc(doc(db, "videos", editingId), {
-            title, url, thumbnailUrl: thumb
+            title, url, thumbnailUrl: thumb, category: category.trim()
          });
          alert("تم تعديل الفيديو بنجاح");
       } else {
          await addDoc(collection(db, "videos"), {
-            title, url, thumbnailUrl: thumb, views: 0, createdAt: Date.now()
+            title, url, thumbnailUrl: thumb, category: category.trim(), views: 0, createdAt: Date.now()
          });
          alert("تم إضافة الفيديو بنجاح"); 
       }
-      setTitle(""); setUrl(""); setThumb(""); setEditingId(null);
+      resetForm();
     } catch(e) { console.error(e); alert("حدث خطأ"); } finally { setSaving(false); }
   };
 
@@ -852,6 +880,7 @@ function AdminVideos() {
     setTitle(video.title);
     setUrl(video.url);
     setThumb(video.thumbnailUrl || "");
+    setCategory(video.category || "");
     setEditingId(video.id);
   };
 
@@ -868,12 +897,38 @@ function AdminVideos() {
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="العنوان" value={title} onChange={e=>setTitle(e.target.value)} />
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط الفيديو (YouTube, MP4...)" value={url} onChange={e=>setUrl(e.target.value)} />
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط الصورة المصغرة (اختياري)" value={thumb} onChange={e=>setThumb(e.target.value)} />
-        <div className="flex gap-3">
+        
+        <div className="space-y-2">
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">التصنيف (اكتب التصنيف يدوياً أو اختر من المقترحة):</label>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input 
+              className="flex-1 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm" 
+              placeholder="التصنيف (مثال: تقارير ميدانية، زوامل، محاضرات...)" 
+              value={category} 
+              onChange={e=>setCategory(e.target.value)} 
+            />
+            <select
+              className="p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-xs font-bold"
+              onChange={e => {
+                if (e.target.value) setCategory(e.target.value);
+              }}
+              value=""
+            >
+              <option value="" disabled>تصنيفات مقترحة</option>
+              <option value="تقارير ميدانية">تقارير ميدانية</option>
+              <option value="زوامل وأناشيد">زوامل وأناشيد</option>
+              <option value="محاضرات ودروس">محاضرات ودروس</option>
+              <option value="أفلام وثائقية">أفلام وثائقية</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-2">
           <button onClick={save} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg transition-colors font-bold w-full sm:w-auto">
             {saving ? "جاري الحفظ..." : (editingId ? "حفظ التعديلات" : "حفظ الفيديو")}
           </button>
           {editingId && (
-            <button onClick={() => {setTitle(""); setUrl(""); setThumb(""); setEditingId(null);}} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2.5 rounded-lg font-bold">
+            <button onClick={resetForm} className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2.5 rounded-lg font-bold">
                إلغاء التعديل
             </button>
           )}
@@ -895,10 +950,16 @@ function AdminVideos() {
                 )}
                 <div className="flex flex-col gap-1">
                   <span className="font-bold text-[#111827] dark:text-white line-clamp-1">{video.title}</span>
-                  <div className="text-xs text-gray-500 flex gap-2">
+                  <div className="text-xs text-gray-500 flex items-center gap-2">
                     <span>{new Date(video.createdAt).toLocaleDateString()}</span>
                     <span>•</span>
                     <span>{video.views || 0} مشاهدة</span>
+                    {video.category && (
+                      <>
+                        <span>•</span>
+                        <span className="bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 px-2 py-0.5 rounded text-[10px] font-black">{video.category}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1084,6 +1145,7 @@ function AdminLeader() {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"video" | "text">("video");
   const [content, setContent] = useState("");
+  const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [notify, setNotify] = useState(true);
   const [leaderContents, setLeaderContents] = useState<LeaderContent[]>([]);
@@ -1102,6 +1164,7 @@ function AdminLeader() {
     setTitle("كلمة السيد القائد حول آخر التطورات - الخميس 18 يونيو 2026م");
     setType("video");
     setContent("https://almasirah.net.ye/video?id=297027");
+    setDescription("يمكنكم متابعة المحاضرة أو التوجيه المبارك بالكامل من خلال المشغل أعلاه. هذا المقطع يركز على الدروس والعِبَر الروحية المستمدة من آيات الله والوقائع المعاصرة لبناء المجتمع القرآني المتمسك بهويته الدينية في مواجهة الطغيان.");
   };
 
   const save = async () => {
@@ -1109,13 +1172,19 @@ function AdminLeader() {
     setSaving(true);
     try {
       if (editingId) {
-        await updateDoc(doc(db, "leader", editingId), { title, type, content });
+        await updateDoc(doc(db, "leader", editingId), { 
+          title, 
+          type, 
+          content,
+          description: type === 'video' ? description.trim() : ""
+        });
         alert("تم التعديل بنجاح!"); 
       } else {
         await addDoc(collection(db, "leader"), { 
           title, 
           type, 
           content,
+          description: type === 'video' ? description.trim() : "",
           views: 0,
           createdAt: Date.now() 
         });
@@ -1144,6 +1213,7 @@ function AdminLeader() {
   const resetForm = () => {
     setTitle(""); 
     setContent("");
+    setDescription("");
     setType("video");
     setEditingId(null);
   }
@@ -1151,6 +1221,7 @@ function AdminLeader() {
   const handleEdit = (item: LeaderContent) => {
     setTitle(item.title);
     setContent(item.content);
+    setDescription(item.description || "");
     setType(item.type);
     setEditingId(item.id);
   };
@@ -1172,7 +1243,7 @@ function AdminLeader() {
          <h2 className="text-xl font-bold">{editingId ? "تعديل محتوى السيد القائد" : "إضافة محتوى السيد القائد"}</h2>
          <button 
            onClick={quickFix}
-           className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-3 py-1.5 rounded-full font-bold hover:bg-emerald-200 transition"
+           className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 px-3 py-1.5 rounded-full font-bold hover:bg-emerald-200 transition"
          >
            تحميل بيانات الرابط المرسل (297027)
          </button>
@@ -1182,7 +1253,7 @@ function AdminLeader() {
         <div>
           <label className="block text-sm font-bold mb-2">العنوان:</label>
           <input 
-            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500" 
+            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 font-bold" 
             placeholder="مثال: كلمة السيد القائد حول آخر التطورات" 
             value={title} 
             onChange={e=>setTitle(e.target.value)} 
@@ -1192,12 +1263,12 @@ function AdminLeader() {
         <div>
           <label className="block text-sm font-bold mb-2">النوع:</label>
           <select 
-            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500" 
+            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 font-bold" 
             value={type} 
             onChange={e=>setType(e.target.value as "video" | "text")}
           >
-             <option value="text">نص (مقال / درس)</option>
-             <option value="video">فيديو (YouTube / Al-Masirah)</option>
+             <option value="text">محاضرات ودروس</option>
+             <option value="video">ضع رابط الفيديو</option>
           </select>
         </div>
 
@@ -1213,6 +1284,18 @@ function AdminLeader() {
             <p className="text-[11px] text-emerald-600 mt-2 font-medium">سيتم تحويل الرابط تلقائياً إلى مشغل الفيديو عند العرض.</p>
           )}
         </div>
+
+        {type === 'video' && (
+          <div>
+            <label className="block text-sm font-bold mb-2">وصف الفيديو:</label>
+            <textarea 
+              className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl h-24 focus:outline-blue-500 text-sm" 
+              placeholder="اكتب وصفاً مناسباً للفيديو يعرض للمستخدمين..." 
+              value={description} 
+              onChange={e=>setDescription(e.target.value)} 
+            />
+          </div>
+        )}
 
         <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-500/30 transition-colors">
           <input type="checkbox" checked={notify} onChange={e=>setNotify(e.target.checked)} className="w-5 h-5 accent-blue-600 rounded" />
@@ -1245,7 +1328,7 @@ function AdminLeader() {
                 <div className="text-xs text-gray-500 flex gap-2">
                   <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                   <span>•</span>
-                  <span>{item.type === 'video' ? 'فيديو' : 'مقال/نص'}</span>
+                  <span>{item.type === 'video' ? 'فيديو' : 'محاضرات ودروس'}</span>
                   <span>•</span>
                   <span>{item.views || 0} مشاهدة</span>
                 </div>

@@ -41,7 +41,7 @@ function NotificationCenter() {
   };
 
   return (
-    <div className="fixed top-4 left-4 sm:top-6 sm:left-6 z-[60]">
+    <div className="fixed bottom-24 left-4 z-[60]">
       <button 
         onClick={toggle} 
         className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-lg border border-white dark:border-gray-700 hover:scale-105 active:scale-95 transition-all group"
@@ -63,10 +63,10 @@ function NotificationCenter() {
                className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40"
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: -20, x: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -20, x: -20 }}
-              className="absolute left-0 mt-3 w-[85vw] max-w-[340px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white dark:border-gray-800 z-50 overflow-hidden rtl"
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="absolute left-0 bottom-full mb-3 w-[85vw] max-w-[340px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white dark:border-gray-800 z-50 overflow-hidden rtl"
               dir="rtl"
             >
               <div className="p-5 border-b dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
