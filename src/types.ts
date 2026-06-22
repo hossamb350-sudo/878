@@ -92,3 +92,63 @@ export interface UserProfile {
   createdAt: number;
   lastLogin?: number;
 }
+
+export interface QuranSeries {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  order: number;
+  createdAt: number;
+}
+
+export interface QuranLesson {
+  id: string;
+  seriesId: string;
+  title: string;
+  content: string; // The text content of the lesson
+  order: number;
+  createdAt: number;
+}
+
+export interface QuranSyllabus {
+  id: string;
+  title: string;
+  description?: string;
+  content?: string;
+  order: number;
+  createdAt: number;
+}
+
+export interface QuranExcerpt {
+  id: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  order: number;
+  createdAt: number;
+}
+
+export interface QuranLastRead {
+  lessonId: string;
+  seriesId: string;
+  scrollY: number;
+  timestamp: number;
+  lessonTitle?: string;
+  seriesTitle?: string;
+}
+
+export interface LessonProgress {
+  lessonId: string;
+  completionPercentage: number; // 0 to 100
+  lastUpdated: number;
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string;
+  category: "quran" | "leader" | "general" | "news";
+  link?: string;
+  createdAt: number;
+}

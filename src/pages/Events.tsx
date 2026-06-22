@@ -98,7 +98,7 @@ export function Events() {
         <div>
           <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400 mb-2">
             <CalendarIcon className="w-8 h-8" />
-            <h1 className="text-3xl font-black">تقويم الفعاليات والمناسبات</h1>
+            <h1 className="text-3xl font-black">تقويم المناسبات</h1>
           </div>
           <p className="text-gray-500 dark:text-gray-400 font-medium font-sans">تغطية شاملة لأهم المناسبات الدينية والوطنية والتاريخية بشكل تفاعلي</p>
         </div>

@@ -15,6 +15,20 @@ service cloud.firestore {
       allow create, update: if isSignedIn() && request.auth.uid == userId;
       allow list, delete: if isAdmin();
       allow read: if isAdmin();
+
+      // User reading platform data rules
+      match /bookmarks/{bookmarkId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+      match /notes/{noteId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+      match /highlights/{highlightId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+      match /stats/{statId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
     }
     
     match /news/{document=**} {
@@ -56,6 +70,26 @@ service cloud.firestore {
     }
     
     match /notifications/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /quran_series/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /quran_lessons/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /quran_syllabuses/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    match /quran_excerpts/{document=**} {
       allow read: if true;
       allow write: if isAdmin();
     }

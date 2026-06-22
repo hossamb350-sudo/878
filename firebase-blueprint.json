@@ -97,12 +97,78 @@
         "lastLogin": { "type": "number" }
       },
       "required": ["email", "role", "createdAt"]
+    },
+    "QuranBookmark": {
+      "title": "Quran Bookmark",
+      "description": "Bookmarks in Quran lessons",
+      "type": "object",
+      "properties": {
+        "lessonId": { "type": "string" },
+        "seriesId": { "type": "string" },
+        "paragraphIndex": { "type": "number" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["lessonId", "seriesId", "paragraphIndex", "createdAt"]
+    },
+    "QuranNote": {
+      "title": "Quran Note",
+      "description": "Personal annotations on lesson paragraphs",
+      "type": "object",
+      "properties": {
+        "lessonId": { "type": "string" },
+        "paragraphIndex": { "type": "number" },
+        "noteText": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["lessonId", "paragraphIndex", "noteText", "createdAt"]
+    },
+    "QuranHighlight": {
+      "title": "Quran Highlight",
+      "description": "Highlighted text chunks in lessons",
+      "type": "object",
+      "properties": {
+        "lessonId": { "type": "string" },
+        "paragraphIndex": { "type": "number" },
+        "color": { "type": "string", "enum": ["yellow", "green", "underline"] },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["lessonId", "paragraphIndex", "color", "createdAt"]
+    },
+    "QuranReaderStats": {
+      "title": "Quran Reader Stats",
+      "description": "User reading metrics and progress logs",
+      "type": "object",
+      "properties": {
+        "lessonsReadCount": { "type": "number" },
+        "totalReadingTimeMinutes": { "type": "number" },
+        "lastReadTimestamp": { "type": "number" },
+        "progressLog": { "type": "array" }
+      },
+      "required": ["lessonsReadCount", "totalReadingTimeMinutes", "lastReadTimestamp"]
     }
   },
   "firestore": {
     "/users/{userId}": {
       "schema": { "$ref": "User" },
       "description": "User profiles and roles"
+    },
+    "/users/{userId}/bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "QuranBookmark" },
+      "description": "User saved bookmarks"
+    },
+    "/users/{userId}/notes/{noteId}": {
+      "schema": { "$ref": "QuranNote" },
+      "description": "User notes and thoughts"
+    },
+    "/users/{userId}/highlights/{highlightId}": {
+      "schema": { "$ref": "QuranHighlight" },
+      "description": "User highlighted text"
+    },
+    "/users/{userId}/stats/reader": {
+      "schema": { "$ref": "QuranReaderStats" },
+      "description": "Global user reader progress"
     },
     "/news/{newsId}": {
       "schema": { "$ref": "News" },

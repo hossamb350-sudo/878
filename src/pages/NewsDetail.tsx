@@ -22,7 +22,7 @@ export function NewsDetail() {
   const [loading, setLoading] = useState(true);
   
   // Customization states
-  const [fontSize, setFontSize] = useState<"sm" | "md" | "lg">("md");
+  const [fontSize, setFontSize] = useState<"sm" | "md" | "lg">("sm");
   const [savedArticles, setSavedArticles] = useState<string[]>([]);
   const [imgGalleryIndex, setImgGalleryIndex] = useState<number | null>(null);
   
@@ -159,49 +159,55 @@ export function NewsDetail() {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="max-w-[800px] mx-auto w-full bg-white dark:bg-gray-950 min-h-screen font-sans"
     >
-       {/* Top Navigation Bar */}
-       <div className="sticky top-16 z-20 bg-white/95 dark:bg-gray-950/95 backdrop-blur-md border-b border-gray-100 dark:border-gray-900 px-4 py-3 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-black dark:text-white font-extrabold hover:text-blue-600 dark:hover:text-amber-400 transition">
-             <ArrowRight className="w-5 h-5" />
-             العودة
-          </button>
-          <div className="flex items-center gap-3">
-             <div className="flex items-center bg-gray-50 dark:bg-gray-900 rounded-lg p-1 text-sm font-bold ml-2">
-                <button 
-                  onClick={() => setFontSize("sm")}
-                  className={`px-3 py-1 rounded ${fontSize === "sm" ? "bg-white dark:bg-gray-700 shadow" : "text-gray-500"}`}
-                >
-                  أ-
-                </button>
-                <button 
-                  onClick={() => setFontSize("md")}
-                  className={`px-3 py-1 rounded ${fontSize === "md" ? "bg-white dark:bg-gray-700 shadow" : "text-gray-500"}`}
-                >
-                  أ
-                </button>
-                <button 
-                  onClick={() => setFontSize("lg")}
-                  className={`px-3 py-1 rounded text-lg ${fontSize === "lg" ? "bg-white dark:bg-gray-700 shadow" : "text-gray-500"}`}
-                >
-                  أ+
-                </button>
-             </div>
-             <button onClick={toggleBookmark} className="p-2 text-gray-500 hover:text-black dark:hover:text-white rounded-full bg-gray-50 dark:bg-gray-900 transition">
-                <Bookmark className={`w-5 h-5 ${savedArticles.includes(news.id) ? "fill-black text-black dark:fill-white dark:text-white" : ""}`} />
-             </button>
-             <button onClick={handleShare} className="p-2 text-gray-500 hover:text-black dark:hover:text-white rounded-full bg-gray-50 dark:bg-gray-900 transition">
-                <Share2 className="w-5 h-5" />
-             </button>
-          </div>
-       </div>
-
        <article className="p-4 sm:p-6 md:p-8">
           
           {news.imageUrl && (
-             <div className="mb-6 w-full bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800">
+             <div className="mb-6 w-full bg-gray-100 dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800">
                 <img src={news.imageUrl} alt={news.title} className="w-full h-auto object-cover max-h-[500px]" />
              </div>
           )}
+          
+          {/* New Minimal Article Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl border border-gray-100 dark:border-gray-800/50">
+             <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 font-bold hover:text-black dark:hover:text-white px-3 py-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
+                <ArrowRight className="w-5 h-5" />
+                <span>العودة</span>
+             </button>
+
+             <div className="flex items-center gap-2">
+                <div className="flex items-center bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700 shadow-sm font-bold">
+                   <button 
+                     onClick={() => setFontSize("sm")}
+                     className={`px-3 py-1.5 rounded-lg transition-colors ${fontSize === "sm" ? "bg-gray-100 dark:bg-gray-700 text-black dark:text-white" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}
+                   >
+                     أ-
+                   </button>
+                   <button 
+                     onClick={() => setFontSize("md")}
+                     className={`px-3 py-1.5 rounded-lg transition-colors ${fontSize === "md" ? "bg-gray-100 dark:bg-gray-700 text-black dark:text-white" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}
+                   >
+                     أ
+                   </button>
+                   <button 
+                     onClick={() => setFontSize("lg")}
+                     className={`px-3 py-1.5 rounded-lg transition-colors text-lg leading-none pt-2 ${fontSize === "lg" ? "bg-gray-100 dark:bg-gray-700 text-black dark:text-white" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}
+                   >
+                     أ+
+                   </button>
+                </div>
+                
+                <div className="h-8 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
+
+                <div className="flex items-center gap-1">
+                   <button onClick={toggleBookmark} className={`p-2.5 rounded-xl transition-colors ${savedArticles.includes(news.id) ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : "text-gray-500 hover:bg-white dark:hover:bg-gray-800 hover:text-black dark:hover:text-white"}`}>
+                      <Bookmark className={`w-5 h-5 ${savedArticles.includes(news.id) ? "fill-current" : ""}`} />
+                   </button>
+                   <button onClick={handleShare} className="p-2.5 text-gray-500 hover:bg-white dark:hover:bg-gray-800 hover:text-black dark:hover:text-white rounded-xl transition-colors">
+                      <Share2 className="w-5 h-5" />
+                   </button>
+                </div>
+             </div>
+          </div>
 
           {/* Title */}
           <h1 className={`font-extrabold mb-4 text-[#111827] dark:text-[#f3f4f6] tracking-tight leading-[1.3] ${fontSize === 'lg' ? 'text-4xl sm:text-5xl' : fontSize === 'md' ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'}`}>

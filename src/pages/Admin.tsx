@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
-import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart } from "lucide-react";
+import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid } from "lucide-react";
 import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile, LeaderContent } from "../types";
+import { motion, AnimatePresence } from "motion/react";
 
 export function Admin() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("news");
+  const [activeTab, setActiveTab] = useState("dashboard");
   
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -107,56 +108,155 @@ export function Admin() {
     return <UserProfileView user={user} profile={profile} logout={logout} />;
   }
 
-  // Admin View
+   // Admin View
+   return (
+     <div className="w-full max-w-7xl mx-auto p-4 md:p-8 pb-32 flex flex-col md:flex-row gap-6 md:gap-8 animate-fade-in overflow-x-hidden">
+        {/* Admin Sidebar */}
+        <div className="w-full md:w-80 shrink-0 flex flex-col gap-3">
+           <div className="bg-white dark:bg-gray-800 p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-xl mb-2 md:mb-6 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -translate-x-10 -translate-y-10 group-hover:scale-125 transition-transform duration-700"></div>
+              <div className="flex items-center gap-4 mb-5 relative z-10 text-right">
+                 <div className="relative shrink-0">
+                    <img src={user.photoURL || ""} className="w-14 h-14 md:w-16 md:h-16 rounded-2xl border-2 border-blue-500 shadow-lg object-cover" alt="" />
+                    <div className="absolute -bottom-1 -left-1 w-4 h-4 md:w-5 md:h-5 bg-green-500 border-4 border-white dark:border-gray-800 rounded-full"></div>
+                 </div>
+                 <div className="min-w-0">
+                    <div className="font-black text-base md:text-lg truncate text-gray-900 dark:text-white">{user.displayName}</div>
+                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 dark:bg-blue-900/40 px-2.5 py-1 rounded-full w-max mt-1">
+                       <Shield className="w-3 h-3" /> مدير النظام
+                    </div>
+                 </div>
+              </div>
+              <button 
+                onClick={logout} 
+                className="w-full flex items-center justify-center gap-2 text-sm font-black text-white bg-red-500 hover:bg-red-600 px-5 py-3 md:py-3.5 rounded-2xl shadow-lg shadow-red-500/30 transition-all active:scale-95 relative z-10"
+              >
+                <LogOut className="w-4 h-4" /> تسجيل الخروج
+              </button>
+           </div>
+           
+           <nav className="flex md:flex-col gap-2 overflow-x-auto pb-4 md:pb-0 px-1 snap-x scrollbar-hide max-w-full">
+              <div className="hidden md:flex items-center justify-end gap-2 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4 mb-2 mt-4 opacity-70 shrink-0">
+                 نظام الإدارة
+                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+              </div>
+              <button
+                onClick={() => setActiveTab("dashboard")}
+                className={`snap-center shrink-0 flex items-center justify-end gap-3 p-3.5 md:p-4 rounded-[1.25rem] transition-all whitespace-nowrap group md:hover:bg-white/80 dark:md:hover:bg-gray-700/50 ${activeTab === "dashboard" ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 md:translate-x-2" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-sm border border-gray-100 dark:border-gray-800"}`}
+              >
+                 <span className="text-sm font-black">الرئيسية</span>
+                 <LayoutGrid className={`w-5 h-5 shrink-0 ${activeTab === "dashboard" ? 'scale-110' : 'md:group-hover:scale-110 transition-transform'}`} />
+              </button>
+
+              <div className="hidden md:flex items-center justify-end gap-2 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4 mb-2 mt-4 opacity-70 shrink-0">
+                 إدارة المحتوى
+                 <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
+              </div>
+              {[
+                { id: "news", icon: FileText, label: "الأخبار" },
+                { id: "urgent", icon: AlertTriangle, label: "الأخبار العاجلة" },
+                { id: "videos", icon: Video, label: "الفيديوهات" },
+                { id: "live", icon: Radio, label: "البث المباشر" },
+                { id: "leader", icon: Shield, label: "السيد القائد" },
+                { id: "quran", icon: BookOpen, label: "هدي القرآن" },
+                { id: "events", icon: CalendarIcon, label: "تقويم المناسبات" }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`snap-center shrink-0 flex items-center justify-end gap-3 p-3.5 md:p-4 rounded-[1.25rem] transition-all whitespace-nowrap group md:hover:bg-white/80 dark:md:hover:bg-gray-700/50 ${activeTab === tab.id ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 md:translate-x-2" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-sm border border-gray-100 dark:border-gray-800"}`}
+                >
+                   <span className="text-sm font-black">{tab.label}</span>
+                   <tab.icon className={`w-5 h-5 shrink-0 ${activeTab === tab.id ? 'scale-110' : 'md:group-hover:scale-110 transition-transform'}`} />
+                </button>
+              ))}
+           </nav>
+        </div>
+
+        {/* Tab Content Area */}
+        <div className="flex-1 w-full min-w-0">
+           <AnimatePresence mode="wait">
+             <motion.div
+               key={activeTab}
+               initial={{ opacity: 0, scale: 0.98 }}
+               animate={{ opacity: 1, scale: 1 }}
+               exit={{ opacity: 0, scale: 0.98 }}
+               transition={{ duration: 0.3, ease: "easeOut" }}
+               className="bg-white dark:bg-gray-800 p-4 sm:p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 min-h-[600px] overflow-hidden w-full"
+             >
+                {activeTab === "dashboard" && <AdminSummaryDashboard />}
+                {activeTab === "news" && <AdminNews />}
+                {activeTab === "urgent" && <AdminUrgentNews />}
+                {activeTab === "videos" && <AdminVideos />}
+                {activeTab === "live" && <AdminLive />}
+                {activeTab === "leader" && <AdminLeader />}
+                {activeTab === "quran" && <AdminQuran />}
+                {activeTab === "events" && <AdminEvents />}
+             </motion.div>
+           </AnimatePresence>
+        </div>
+     </div>
+   );
+}
+
+function AdminSummaryDashboard() {
+  const [stats, setStats] = useState({
+    news: 0,
+    videos: 0,
+    leader: 0,
+    quran: 0,
+  });
+
+  useEffect(() => {
+    // Basic stats fetching
+    const collectionsMap = { news: 'news', videos: 'videos', leader: 'leader', quran: 'quran_lessons' };
+    const unsubs = Object.entries(collectionsMap).map(([key, col]) => {
+      return onSnapshot(collection(db, col), (snap) => {
+        setStats(prev => ({ ...prev, [key]: snap.size }));
+      });
+    });
+    return () => unsubs.forEach(u => u());
+  }, []);
+
   return (
-    <div className="max-w-6xl mx-auto p-4 pb-12 flex flex-col md:flex-row gap-6 animate-fade-in">
-       {/* Admin Sidebar */}
-       <div className="w-full md:w-72 shrink-0 flex flex-col gap-2">
-          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm mb-4">
-             <div className="flex items-center gap-3 mb-4">
-                <img src={user.photoURL || ""} className="w-12 h-12 rounded-full border-2 border-blue-600 p-0.5" alt="" />
-                <div className="min-w-0">
-                   <div className="font-extrabold truncate text-gray-900 dark:text-white">{user.displayName}</div>
-                   <div className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full inline-block">مدير المنصة</div>
-                </div>
-             </div>
-             <div className="text-xs text-gray-400 truncate mb-4">{user.email}</div>
-             <button onClick={logout} className="w-full flex items-center justify-center gap-2 text-sm font-bold text-red-600 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 py-2.5 rounded-xl transition">
-               <LogOut className="w-4 h-4" /> تسجيل الخروج
-             </button>
+    <div className="space-y-6 md:space-y-10 w-full" dir="rtl">
+       <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-700 p-6 md:p-12 rounded-[1.5rem] md:rounded-[2.5rem] text-white shadow-2xl animate-fade-in">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full translate-x-32 -translate-y-32 blur-3xl"></div>
+          <div className="relative z-10 text-right">
+             <h1 className="text-2xl md:text-5xl font-black mb-2 md:mb-4">أهلاً بك يا مدير ⚡️</h1>
+             <p className="text-blue-100 text-sm md:text-lg font-bold max-w-xl leading-relaxed">
+                من هنا يمكنك التحكم في جميع محتويات المنصة بسلاسة تامة. يمكنك إضافة الأخبار، الدروس، وتقويم المناسبات، والتواصل الفوري مع المستخدمين.
+             </p>
           </div>
-          
-          <nav className="flex md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0">
-             {[
-               { id: "news", icon: FileText, label: "إدارة الأخبار" },
-               { id: "urgent", icon: AlertTriangle, label: "الأخبار العاجلة والمباشرة" },
-               { id: "videos", icon: Video, label: "إدارة الفيديوهات" },
-               { id: "live", icon: Radio, label: "البث المباشر" },
-               { id: "leader", icon: Shield, label: "السيد القائد" },
-               { id: "quran", icon: BookOpen, label: "من هدي القرآن" },
-               { id: "events", icon: CalendarIcon, label: "المناسبات" }
-             ].map(tab => (
-               <button
-                 key={tab.id}
-                 onClick={() => setActiveTab(tab.id)}
-                 className={`flex flex-col md:flex-row items-center gap-3 p-3 rounded-xl transition-colors whitespace-nowrap ${activeTab === tab.id ? "bg-blue-600 text-white shadow-md shadow-blue-500/20" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-transparent dark:border-gray-700"} ${tab.id === 'urgent' && activeTab !== 'urgent' ? 'text-red-500 hover:text-red-600' : ''}`}
-               >
-                  <tab.icon className="w-5 h-5 shrink-0" />
-                  <span className="text-sm md:text-base font-medium">{tab.label}</span>
-               </button>
-             ))}
-          </nav>
        </div>
 
-       {/* Admin Content Area */}
-       <div className="flex-1 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-4 md:p-6 shadow-sm overflow-hidden min-h-[600px]">
-          {activeTab === "news" && <AdminNews />}
-          {activeTab === "urgent" && <AdminUrgentNews />}
-          {activeTab === "videos" && <AdminVideos />}
-          {activeTab === "live" && <AdminLive />}
-          {activeTab === "leader" && <AdminLeader />}
-          {activeTab === "quran" && <AdminQuran />}
-          {activeTab === "events" && <AdminEvents />}
+       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 text-right w-full">
+          {[
+            { label: "الأخبار بنظامنا", value: stats.news, icon: FileText, color: "blue" },
+            { label: "فيديوهات شاهد", value: stats.videos, icon: Video, color: "red" },
+            { label: "محتوى القائد", value: stats.leader, icon: Shield, color: "indigo" },
+            { label: "دروس القرآن", value: stats.quran, icon: BookOpen, color: "emerald" },
+          ].map((s, i) => (
+            <div key={i} className="bg-gray-50/50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-800 p-5 md:p-8 rounded-[1.25rem] md:rounded-[2.5rem] hover:scale-105 transition-all shadow-sm group">
+               <div className={`w-10 h-10 md:w-14 md:h-14 bg-white dark:bg-gray-800 shadow-lg rounded-xl md:rounded-2xl flex items-center justify-center mb-4 md:mb-6 text-${s.color}-600 group-hover:rotate-12 transition-transform`}>
+                  <s.icon className="w-5 h-5 md:w-7 md:h-7" />
+               </div>
+               <div className="text-2xl md:text-4xl font-black text-gray-900 dark:text-white mb-1">{s.value}</div>
+               <div className="text-[10px] md:text-xs font-black text-gray-400 uppercase tracking-widest">{s.label}</div>
+            </div>
+          ))}
+       </div>
+
+       <div className="bg-blue-50/50 dark:bg-blue-900/10 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border border-blue-100 dark:border-blue-800/50 text-right w-full">
+          <h3 className="font-black text-lg md:text-xl text-blue-900 dark:text-blue-100 mb-4 flex items-center justify-end gap-3">
+             <AlertTriangle className="w-5 h-5 md:w-6 md:h-6 text-amber-500 shrink-0" />
+             توجيهات الإشراف
+          </h3>
+          <ul className="space-y-3 md:space-y-4 text-xs md:text-sm font-bold text-blue-700/80 dark:text-blue-300/80">
+             <li className="flex items-start gap-2 justify-end"><span>تأكد دائماً من صحة المصادر قبل النشر الرسمي</span> <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 shrink-0"></span></li>
+             <li className="flex items-start gap-2 justify-end"><span>الأخبار العاجلة تظهر لجميع الزوار فوراً وتصدر تنبيهاً صوتياً</span> <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 shrink-0"></span></li>
+             <li className="flex items-start gap-2 justify-end"><span>استخدم التنبيهات فقط للمحتوى الهام جداً لتجنب إزعاج المستخدمين</span> <span className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-1.5 shrink-0"></span></li>
+          </ul>
        </div>
     </div>
   );
@@ -985,6 +1085,7 @@ function AdminLeader() {
   const [type, setType] = useState<"video" | "text">("video");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+  const [notify, setNotify] = useState(true);
   const [leaderContents, setLeaderContents] = useState<LeaderContent[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -1018,6 +1119,17 @@ function AdminLeader() {
           views: 0,
           createdAt: Date.now() 
         });
+        
+        if (notify) {
+          await addDoc(collection(db, "notifications"), {
+            title: "تحديث في قسم السيد القائد",
+            body: `تم إضافة محتوى جديد: "${title}"`,
+            category: "leader",
+            link: "/leader",
+            createdAt: Date.now()
+          });
+        }
+
         alert("تمت الإضافة بنجاح!"); 
       }
       resetForm();
@@ -1102,6 +1214,11 @@ function AdminLeader() {
           )}
         </div>
 
+        <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-500/30 transition-colors">
+          <input type="checkbox" checked={notify} onChange={e=>setNotify(e.target.checked)} className="w-5 h-5 accent-blue-600 rounded" />
+          <span className="font-bold text-sm text-gray-700 dark:text-gray-200">إرسال تنبيه للمشتركين بخصوص هذا المحتوى</span>
+        </label>
+
         <div className="flex gap-3 mt-4">
           <button 
             onClick={save} 
@@ -1165,64 +1282,323 @@ function AdminLeader() {
   );
 }
 
+import { QuranSeries, QuranLesson, QuranSyllabus, QuranExcerpt } from "../types";
+
 function AdminQuran() {
-  const [link, setLink] = useState("");
-  const [active, setActive] = useState(false);
+  const [activeTab, setActiveTab] = useState<'series' | 'lessons' | 'syllabuses' | 'excerpts'>('series');
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-2 border-b dark:border-gray-700 pb-3">
+         <BookOpen className="w-6 h-6 text-emerald-600" />
+         <h2 className="text-xl font-bold">إدارة قسم القرآن</h2>
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto pb-2">
+        {[
+          { id: 'series', label: 'السلاسل' },
+          { id: 'lessons', label: 'الدروس' },
+          { id: 'syllabuses', label: 'المقررات' },
+          { id: 'excerpts', label: 'المقتطفات' }
+        ].map(tab => (
+          <button
+             key={tab.id}
+             onClick={() => setActiveTab(tab.id as any)}
+             className={`px-4 py-2 rounded-lg font-bold text-sm whitespace-nowrap transition-colors ${activeTab === tab.id ? 'bg-emerald-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+          >
+             {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="space-y-6">
+         {activeTab === 'series' && <AdminQuranSeries />}
+         {activeTab === 'lessons' && <AdminQuranLessons />}
+         {activeTab === 'syllabuses' && <AdminQuranSyllabuses />}
+         {activeTab === 'excerpts' && <AdminQuranExcerpts />}
+      </div>
+    </div>
+  );
+}
+
+function AdminQuranSeries() {
+  const [list, setList] = useState<QuranSeries[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [order, setOrder] = useState<number>(0);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
-      const d = await getDoc(doc(db, "settings", "quran"));
-      if (d.exists()) {
-        const data = d.data();
-        setLink(data.link || "");
-        setActive(data.isActive || false);
-      }
-    };
-    fetch();
+    const unsub = onSnapshot(query(collection(db, "quran_series"), orderBy("order", "asc")), (snap) => {
+       setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSeries)));
+    });
+    return unsub;
   }, []);
 
   const save = async () => {
-     try {
-        await setDoc(doc(db, "settings", "quran"), { link, isActive: active });
-        alert("تم الحفظ بنجاح");
-     } catch(e) { console.error(e); alert("حدث خطأ أثناء الحفظ"); }
+    if (!title) return;
+    setSaving(true);
+    try {
+      const payload = { title, description: desc, order: Number(order) };
+      if (editingId) {
+        await updateDoc(doc(db, "quran_series", editingId), payload);
+        alert("تم التعديل بنجاح");
+      } else {
+        await addDoc(collection(db, "quran_series"), { ...payload, createdAt: Date.now() });
+        alert("تمت الإضافة بنجاح");
+      }
+      setEditingId(null); setTitle(""); setDesc(""); setOrder(0);
+    } catch(e) {} finally { setSaving(false); }
+  };
+
+  const del = async (id: string) => {
+    if (confirm("تأكيد الحذف؟")) await deleteDoc(doc(db, "quran_series", id));
   };
 
   return (
-    <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center gap-2 border-b dark:border-gray-700 pb-3">
-         <BookOpen className="w-5 h-5 text-emerald-600" />
-         <h2 className="text-xl font-bold">إعدادات قسم القرآن</h2>
-      </div>
+    <div className="space-y-6">
+       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+          <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">{editingId ? "تعديل سلسلة" : "إضافة سلسلة جديدة"}</h3>
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="عنوان السلسلة" value={title} onChange={e=>setTitle(e.target.value)} />
+          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-20 dark:text-white" placeholder="وصف السلسلة (اختياري)" value={desc} onChange={e=>setDesc(e.target.value)} />
+          <input type="number" className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="الترتيب (رقم)" value={order} onChange={e=>setOrder(Number(e.target.value))} />
+          <div className="flex gap-2">
+            <button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors">{saving ? "جاري..." : "حفظ"}</button>
+            {editingId && <button onClick={()=>{setEditingId(null); setTitle(""); setDesc(""); setOrder(0);}} className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition-colors">إلغاء</button>}
+          </div>
+       </div>
+       <div className="space-y-2 mt-4">
+         {list.map(s => (
+           <div key={s.id} className="flex justify-between items-center p-4 bg-white dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-emerald-500/30 transition-colors group">
+              <div>
+                <span className="font-bold dark:text-white">{s.title}</span> <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md mr-2 text-gray-500">ترتيب: {s.order}</span>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2 sm:mt-0 shrink-0">
+                 <button onClick={()=>{setEditingId(s.id); setTitle(s.title); setDesc(s.description||""); setOrder(s.order);}} className="text-blue-600 hover:text-blue-800 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-lg font-bold text-sm transition-colors flex items-center gap-1"><Edit className="w-4 h-4"/> تعديل</button>
+                 <button onClick={()=>del(s.id)} className="text-red-500 hover:text-red-700 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 px-3 py-1.5 rounded-lg font-bold text-sm transition-colors flex items-center gap-1"><Trash2 className="w-4 h-4"/> حذف</button>
+              </div>
+           </div>
+         ))}
+       </div>
+    </div>
+  );
+}
 
-      <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-5 rounded-2xl border border-blue-100 dark:border-blue-900 text-sm leading-relaxed">
-         <strong className="block mb-2 text-blue-800 dark:text-blue-200 text-base">تحويل تطبيق الأندرويد إلى رابط:</strong>
-         إذا كان لديك تطبيق "من هدي القرآن" بصيغة APK، يمكنك رفعه على <a href="https://catbox.moe" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-blue-500">موقع Catbox</a>، ثم نسخ "الرابط المباشر" ووضعه في الحقل أدناه ليتمكن المستخدمون من تحميل التطبيق مباشرة من موقعك.
-      </div>
+function AdminQuranLessons() {
+  const [seriesList, setSeriesList] = useState<QuranSeries[]>([]);
+  const [list, setList] = useState<QuranLesson[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
+  const [seriesId, setSeriesId] = useState("");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [order, setOrder] = useState<number>(0);
+  const [saving, setSaving] = useState(false);
+  const [notify, setNotify] = useState(true);
 
-      <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm">
-         <div>
-            <label className="block text-sm font-bold mb-2">رابط التطبيق أو المادة:</label>
-            <input 
-               className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-emerald-500" 
-               placeholder="قم بلصق رابط الـ APK أو الموقع هنا" 
-               value={link} 
-               onChange={e=>setLink(e.target.value)} 
-            />
-         </div>
+  useEffect(() => {
+    const unsub1 = onSnapshot(query(collection(db, "quran_series"), orderBy("order", "asc")), (snap) => {
+       const s = snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSeries));
+       setSeriesList(s);
+       if (s.length > 0 && !seriesId) setSeriesId(s[0].id);
+    });
+    const unsub2 = onSnapshot(query(collection(db, "quran_lessons"), orderBy("order", "asc")), (snap) => {
+       setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranLesson)));
+    });
+    return () => { unsub1(); unsub2(); };
+  }, [seriesId]);
 
-         <label className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-xl cursor-pointer border border-gray-100 dark:border-gray-800 hover:border-emerald-500/50 transition-colors">
-            <input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} className="w-5 h-5 accent-emerald-600 rounded" />
-            <span className="font-bold text-gray-700 dark:text-gray-200">تفعيل القسم وعرضه للمستخدمين</span>
-         </label>
+  const save = async () => {
+    if (!title || !seriesId || !content) return alert("أكمل البيانات");
+    setSaving(true);
+    try {
+      const payload = { seriesId, title, content, order: Number(order) };
+      let lessonId = editingId;
+      if (editingId) {
+        await updateDoc(doc(db, "quran_lessons", editingId), payload);
+      } else {
+        const docRef = await addDoc(collection(db, "quran_lessons"), { ...payload, createdAt: Date.now() });
+        lessonId = docRef.id;
+        
+        if (notify) {
+          const series = seriesList.find(s => s.id === seriesId);
+          await addDoc(collection(db, "notifications"), {
+            title: "درس جديد مضاف",
+            body: `تم إضافة درس جديد: "${title}" في سلسلة ${series?.title || ""}`,
+            category: "quran",
+            link: "/quran",
+            createdAt: Date.now()
+          });
+        }
+      }
+      setEditingId(null); setTitle(""); setContent(""); setOrder(0);
+    } catch(e) {} finally { setSaving(false); }
+  };
 
-         <button 
-            onClick={save} 
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95"
-         >
-            حفظ الإعدادات
-         </button>
-      </div>
+  const del = async (id: string) => {
+    if (confirm("تأكيد الحذف؟")) await deleteDoc(doc(db, "quran_lessons", id));
+  };
+
+  return (
+    <div className="space-y-6">
+       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+          <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">{editingId ? "تعديل درس" : "إضافة درس جديد"}</h3>
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-gray-500 pr-1">السلسلة التابع لها</label>
+            <select className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg font-bold dark:text-white" value={seriesId} onChange={e=>setSeriesId(e.target.value)}>
+               {seriesList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+            </select>
+          </div>
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="عنوان الدرس" value={title} onChange={e=>setTitle(e.target.value)} />
+          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white" placeholder="محتوى الدرس كاملًا" value={content} onChange={e=>setContent(e.target.value)} />
+          <input type="number" className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="الترتيب (رقم)" value={order} onChange={e=>setOrder(Number(e.target.value))} />
+          
+          <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-emerald-500/30 transition-colors">
+            <input type="checkbox" checked={notify} onChange={e=>setNotify(e.target.checked)} className="w-4 h-4 accent-emerald-600 rounded" />
+            <span className="text-sm font-bold text-gray-700 dark:text-gray-200">إرسال تنبيه بهذا الدرس</span>
+          </label>
+
+          <div className="flex gap-2">
+            <button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors">{saving ? "جاري..." : "حفظ"}</button>
+            {editingId && <button onClick={()=>{setEditingId(null); setTitle(""); setContent(""); setOrder(0);}} className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition-colors">إلغاء</button>}
+          </div>
+       </div>
+       <div className="space-y-2 mt-4">
+         {list.filter(l => l.seriesId === seriesId).map(l => (
+           <div key={l.id} className="flex justify-between items-center p-4 bg-white dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-emerald-500/30 transition-colors group">
+              <div><span className="font-bold dark:text-white">{l.title}</span> <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md mr-2 text-gray-500">ترتيب: {l.order}</span></div>
+              <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                 <button onClick={()=>{setEditingId(l.id); setSeriesId(l.seriesId); setTitle(l.title); setContent(l.content); setOrder(l.order);}} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
+                 <button onClick={()=>del(l.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+              </div>
+           </div>
+         ))}
+       </div>
+    </div>
+  );
+}
+
+function AdminQuranSyllabuses() {
+  const [list, setList] = useState<QuranSyllabus[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [desc, setDesc] = useState("");
+  const [content, setContent] = useState("");
+  const [order, setOrder] = useState<number>(0);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const unsub = onSnapshot(query(collection(db, "quran_syllabuses"), orderBy("order", "asc")), (snap) => {
+       setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSyllabus)));
+    });
+    return unsub;
+  }, []);
+
+  const save = async () => {
+    if (!title) return;
+    setSaving(true);
+    try {
+      const payload = { title, description: desc, content, order: Number(order) };
+      if (editingId) {
+        await updateDoc(doc(db, "quran_syllabuses", editingId), payload);
+      } else {
+        await addDoc(collection(db, "quran_syllabuses"), { ...payload, createdAt: Date.now() });
+      }
+      setEditingId(null); setTitle(""); setDesc(""); setContent(""); setOrder(0);
+    } catch(e) {} finally { setSaving(false); }
+  };
+
+  const del = async (id: string) => {
+    if (confirm("تأكيد الحذف؟")) await deleteDoc(doc(db, "quran_syllabuses", id));
+  };
+
+  return (
+    <div className="space-y-6">
+       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+          <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">{editingId ? "تعديل مقرر" : "إضافة مقرر جديد"}</h3>
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="عنوان المقرر" value={title} onChange={e=>setTitle(e.target.value)} />
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="وصف قصير" value={desc} onChange={e=>setDesc(e.target.value)} />
+          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white" placeholder="محتوى المقرر / تفاصيله" value={content} onChange={e=>setContent(e.target.value)} />
+          <input type="number" className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="الترتيب (رقم)" value={order} onChange={e=>setOrder(Number(e.target.value))} />
+          <div className="flex gap-2">
+            <button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors">{saving ? "جاري..." : "حفظ"}</button>
+            {editingId && <button onClick={()=>{setEditingId(null); setTitle(""); setDesc(""); setContent(""); setOrder(0);}} className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition-colors">إلغاء</button>}
+          </div>
+       </div>
+       <div className="space-y-2 mt-4">
+         {list.map(s => (
+           <div key={s.id} className="flex justify-between items-center p-4 bg-white dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-emerald-500/30 transition-colors group">
+              <div><span className="font-bold dark:text-white">{s.title}</span> <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md mr-2 text-gray-500">ترتيب: {s.order}</span></div>
+              <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                 <button onClick={()=>{setEditingId(s.id); setTitle(s.title); setDesc(s.description||""); setContent(s.content||""); setOrder(s.order);}} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
+                 <button onClick={()=>del(s.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+              </div>
+           </div>
+         ))}
+       </div>
+    </div>
+  );
+}
+
+function AdminQuranExcerpts() {
+  const [list, setList] = useState<QuranExcerpt[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [order, setOrder] = useState<number>(0);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const unsub = onSnapshot(query(collection(db, "quran_excerpts"), orderBy("order", "asc")), (snap) => {
+       setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranExcerpt)));
+    });
+    return unsub;
+  }, []);
+
+  const save = async () => {
+    if (!title || !content) return;
+    setSaving(true);
+    try {
+      const payload = { title, content, imageUrl, order: Number(order) };
+      if (editingId) {
+        await updateDoc(doc(db, "quran_excerpts", editingId), payload);
+      } else {
+        await addDoc(collection(db, "quran_excerpts"), { ...payload, createdAt: Date.now() });
+      }
+      setEditingId(null); setTitle(""); setContent(""); setImageUrl(""); setOrder(0);
+    } catch(e) {} finally { setSaving(false); }
+  };
+
+  const del = async (id: string) => {
+    if (confirm("تأكيد الحذف؟")) await deleteDoc(doc(db, "quran_excerpts", id));
+  };
+
+  return (
+    <div className="space-y-6">
+       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
+          <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">{editingId ? "تعديل مقتطف" : "إضافة مقتطف جديد"}</h3>
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="عنوان المقتطف" value={title} onChange={e=>setTitle(e.target.value)} />
+          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white" placeholder="محتوى المقتطف" value={content} onChange={e=>setContent(e.target.value)} />
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="رابط صورة خلفية (اختياري)" value={imageUrl} onChange={e=>setImageUrl(e.target.value)} />
+          <input type="number" className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="الترتيب (رقم)" value={order} onChange={e=>setOrder(Number(e.target.value))} />
+          <div className="flex gap-2">
+            <button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors">{saving ? "جاري..." : "حفظ"}</button>
+            {editingId && <button onClick={()=>{setEditingId(null); setTitle(""); setContent(""); setImageUrl(""); setOrder(0);}} className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition-colors">إلغاء</button>}
+          </div>
+       </div>
+       <div className="space-y-2 mt-4">
+         {list.map(s => (
+           <div key={s.id} className="flex justify-between items-center p-4 bg-white dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-emerald-500/30 transition-colors group">
+              <div><span className="font-bold dark:text-white">{s.title}</span> <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md mr-2 text-gray-500">ترتيب: {s.order}</span></div>
+              <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                 <button onClick={()=>{setEditingId(s.id); setTitle(s.title); setContent(s.content); setImageUrl(s.imageUrl||""); setOrder(s.order);}} className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"><Edit className="w-4 h-4"/></button>
+                 <button onClick={()=>del(s.id)} className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><Trash2 className="w-4 h-4"/></button>
+              </div>
+           </div>
+         ))}
+       </div>
     </div>
   );
 }
@@ -1374,7 +1750,7 @@ function AdminEvents() {
       <div className="flex justify-between items-center">
          <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
            <CalendarIcon className="w-6 h-6 text-blue-600" />
-           إدارة المناسبات والفعاليات
+           إدارة تقويم المناسبات
          </h2>
          <button 
            onClick={seed}
