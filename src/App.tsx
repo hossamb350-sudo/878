@@ -20,52 +20,50 @@ import { Sparkles, Info, ArrowLeft } from "lucide-react";
 
 function Splash({ onEnter }: { onEnter: () => void }) {
   const [imgSrc, setImgSrc] = useState("https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png");
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const startTime = Date.now();
-    const duration = 5000; // Exact 5 seconds
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const calculatedProgress = Math.min(100, (elapsed / duration) * 100);
-      setProgress(calculatedProgress);
-      if (elapsed >= duration) {
-        clearInterval(interval);
-        onEnter();
-      }
-    }, 16); // smooth update
-    return () => clearInterval(interval);
-  }, [onEnter]);
 
   return (
-    <div className="fixed inset-0 bg-white text-zinc-900 z-[100] flex flex-col items-center justify-center p-6 select-none overflow-hidden">
+    <div className="fixed inset-0 bg-white text-zinc-900 z-[100] flex flex-col items-center justify-between p-8 select-none font-sans overflow-hidden">
       
-      {/* Center: Clean Platform Logo ONLY */}
-      <div className="flex flex-col items-center justify-center">
-        <div className="w-64 h-64 md:w-80 md:h-80 flex items-center justify-center p-4">
-          <img 
-            src={imgSrc} 
-            alt="شعار منصة تعز" 
-            className="w-full h-full object-contain" 
-            onError={() => {
-              if (imgSrc === "https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png") {
-                setImgSrc("/logo.png");
-              } else if (imgSrc === "/logo.png") {
-                setImgSrc("/logo.svg");
-              }
-            }} 
-          />
+      {/* Subtle Arabic/Islamic Star Geometry Watermark (extremely faint on white back) */}
+      <div className="absolute inset-0 opacity-[0.02] pointer-events-none overflow-hidden z-0 flex items-center justify-center">
+        <svg width="600" height="600" viewBox="0 0 100 100" className="text-emerald-800 animate-spin-slow">
+          <polygon points="50,0 65,35 100,50 65,65 50,100 35,65 0,50 35,35" fill="currentColor" />
+          <polygon points="50,15 58,42 85,50 58,58 50,85 42,58 15,50 42,42" fill="none" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      </div>
+
+      {/* Main Container */}
+      <div className="my-auto relative z-10 flex flex-col items-center justify-center text-center">
+        {/* Beautiful Logo Container with soft elegant shadows */}
+        <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
+          <div className="absolute -inset-4 bg-emerald-500/5 rounded-full blur-3xl opacity-60" />
+          
+          <div className="relative w-full h-full bg-white rounded-[2.5rem] border border-stone-100 p-8 shadow-xl flex items-center justify-center transition-all duration-500">
+            <img 
+              src={imgSrc} 
+              alt="شعار منصة تعز" 
+              className="w-full h-full object-contain filter drop-shadow-sm select-none" 
+              onError={() => {
+                if (imgSrc === "https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png") {
+                  setImgSrc("/logo.png");
+                } else if (imgSrc === "/logo.png") {
+                  setImgSrc("/logo.svg");
+                }
+              }} 
+            />
+          </div>
         </div>
       </div>
 
-      {/* Bottom: Sleek minimal progress bar (Indicator for 5 seconds) */}
-      <div className="absolute bottom-20 left-0 right-0 max-w-xs mx-auto px-4">
-        <div className="w-full bg-stone-100 rounded-full h-1 overflow-hidden">
-          <div 
-            className="bg-emerald-600 h-1/2 rounded-full transition-all duration-75 ease-out"
-            style={{ width: `${progress}%`, height: "100%" }}
-          />
-        </div>
+      {/* Touch-optimized modern Button titled: 'الدخول' */}
+      <div className="relative z-10 w-full max-w-sm px-4 pb-12 mt-auto">
+        <button 
+          onClick={onEnter}
+          className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white font-black text-lg py-4.5 px-8 rounded-2xl shadow-lg hover:shadow-emerald-600/10 active:shadow-md transition-all duration-300 flex items-center justify-center gap-3 border border-emerald-500/10 cursor-pointer"
+        >
+          <span>الدخول</span>
+          <ArrowLeft className="w-5 h-5 transition-transform" />
+        </button>
       </div>
 
     </div>
