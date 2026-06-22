@@ -15,34 +15,123 @@ import { Quran } from "./pages/Quran";
 import { Events } from "./pages/Events";
 import { Admin } from "./pages/Admin";
 import { Search } from "./pages/Search";
-import { AnimatePresence } from "motion/react";
-import { Sparkles, Info, ArrowLeft } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { Sparkles, ArrowLeft } from "lucide-react";
+
+// Synthetic chime click sound generator via Web Audio API 
+const playPremiumClick = () => {
+  try {
+    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    
+    // Smooth chime sound
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(440, ctx.currentTime); // Standard tuning A4
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1); // Sweeps upwards
+    
+    gainNode.gain.setValueAtTime(0.2, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35); // decay smoothly
+    
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.4);
+  } catch (err) {
+    console.warn("Audio feedback blocked or not supported yet:", err);
+  }
+};
 
 function Splash({ onEnter }: { onEnter: () => void }) {
   const [imgSrc, setImgSrc] = useState("https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png");
+  const [clicked, setClicked] = useState(false);
+
+  const handleAction = () => {
+    if (clicked) return;
+    setClicked(true);
+    playPremiumClick();
+    setTimeout(() => {
+      onEnter();
+    }, 400); // Wait for the visual pop and chime to peak
+  };
 
   return (
     <div className="fixed inset-0 bg-white text-zinc-900 z-[100] flex flex-col items-center justify-between p-8 select-none font-sans overflow-hidden">
       
-      {/* Subtle Arabic/Islamic Star Geometry Watermark (extremely faint on white back) */}
-      <div className="absolute inset-0 opacity-[0.02] pointer-events-none overflow-hidden z-0 flex items-center justify-center">
-        <svg width="600" height="600" viewBox="0 0 100 100" className="text-emerald-800 animate-spin-slow">
+      {/* Decorative Rotating Geometric Background Star (Faint Islamic Art Motif) */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none overflow-hidden z-0 flex items-center justify-center">
+        <motion.svg 
+          width="750" 
+          height="750" 
+          viewBox="0 0 100 100" 
+          className="text-emerald-800"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+        >
           <polygon points="50,0 65,35 100,50 65,65 50,100 35,65 0,50 35,35" fill="currentColor" />
-          <polygon points="50,15 58,42 85,50 58,58 50,85 42,58 15,50 42,42" fill="none" stroke="currentColor" strokeWidth="2" />
-        </svg>
+          <polygon points="50,15 58,42 85,50 58,58 50,85 42,58 15,50 42,42" fill="none" stroke="currentColor" strokeWidth="1.5" />
+        </motion.svg>
       </div>
 
-      {/* Main Container */}
-      <div className="my-auto relative z-10 flex flex-col items-center justify-center text-center">
-        {/* Beautiful Logo Container with soft elegant shadows */}
-        <div className="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center">
-          <div className="absolute -inset-4 bg-emerald-500/5 rounded-full blur-3xl opacity-60" />
+      {/* Subtle modern warm ambient particles */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-[20%] left-[15%] w-2 h-2 rounded-full bg-emerald-500/20 blur-[1px] animate-pulse" />
+        <div className="absolute bottom-[25%] right-[20%] w-3 h-3 rounded-full bg-amber-500/15 blur-[2px] animate-bounce" />
+        <div className="absolute top-[60%] right-[10%] w-2 h-2 rounded-full bg-teal-500/25 blur-[1px] animate-pulse" />
+      </div>
+
+      {/* Top Welcome Title */}
+      <motion.div 
+        initial={{ opacity: 0, y: -15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.8 }}
+        className="relative z-10 w-full max-w-sm text-center pt-4"
+      >
+        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-800 px-4 py-2 rounded-full border border-emerald-500/10 shadow-sm inline-flex items-center gap-1.5 leading-none">
+          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          مرحباً بكم في منصة تعز الكبرى
+        </span>
+      </motion.div>
+
+      {/* Center Showcase Area */}
+      <div className="my-auto relative z-10 flex flex-col items-center justify-center text-center max-w-lg px-4">
+        
+        {/* Animated circular plate framing the logo */}
+        <div className="relative w-64 h-64 sm:w-76 sm:h-76 flex items-center justify-center">
           
-          <div className="relative w-full h-full bg-white rounded-[2.5rem] border border-stone-100 p-8 shadow-xl flex items-center justify-center transition-all duration-500">
+          {/* Pulsing Aura */}
+          <motion.div 
+            className="absolute -inset-6 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-full blur-3xl opacity-70"
+            animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0.8, 0.6] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          />
+
+          {/* Golden/Emerald Outer Rotating Ring line */}
+          <motion.div 
+            className="absolute -inset-1.5 rounded-full border-2 border-dashed border-emerald-600/15"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          />
+
+          {/* Thin static gold/amber accent ring */}
+          <div className="absolute -inset-3 rounded-full border border-amber-500/10" />
+
+          {/* Pure Premium Logo Plate Card */}
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            whileHover={{ scale: 1.03 }}
+            className="relative w-full h-full bg-white rounded-[2.5rem] border border-stone-100 p-8 shadow-2xl shadow-stone-200/60 flex items-center justify-center transition-all duration-300 pointer-events-auto"
+          >
             <img 
               src={imgSrc} 
               alt="شعار منصة تعز" 
-              className="w-full h-full object-contain filter drop-shadow-sm select-none" 
+              className="w-full h-full object-contain filter drop-shadow-md select-none" 
               onError={() => {
                 if (imgSrc === "https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png") {
                   setImgSrc("/logo.png");
@@ -51,20 +140,54 @@ function Splash({ onEnter }: { onEnter: () => void }) {
                 }
               }} 
             />
-          </div>
+          </motion.div>
         </div>
+
+        {/* Elegant typography details */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="mt-8 space-y-2"
+        >
+          <h1 className="text-2.5xl sm:text-3xl font-black text-stone-900 leading-tight tracking-tight">
+            منصة تعز التعليمية والثقافية
+          </h1>
+          <p className="text-xs sm:text-sm text-stone-500 max-w-xs mx-auto leading-relaxed">
+            البوابة الذكية لمحاضرات ودروس الثقافة القرآنية ومعرض الكتب الرقمية والمناسبات
+          </p>
+        </motion.div>
       </div>
 
-      {/* Touch-optimized modern Button titled: 'الدخول' */}
-      <div className="relative z-10 w-full max-w-sm px-4 pb-12 mt-auto">
+      {/* Button to click 'الدخول' with sound and beautiful motion feedback */}
+      <motion.div 
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="relative z-10 w-full max-w-sm px-4 pb-8 sm:pb-12 mt-auto"
+      >
         <button 
-          onClick={onEnter}
-          className="w-full bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 active:scale-95 text-white font-black text-lg py-4.5 px-8 rounded-2xl shadow-lg hover:shadow-emerald-600/10 active:shadow-md transition-all duration-300 flex items-center justify-center gap-3 border border-emerald-500/10 cursor-pointer"
+          onClick={handleAction}
+          disabled={clicked}
+          className={`w-full relative overflow-hidden font-black text-lg py-4 sm:py-4.5 px-8 rounded-2xl shadow-xl hover:shadow-emerald-600/10 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 border border-emerald-500/10 cursor-pointer ${
+            clicked 
+              ? "bg-stone-100 text-stone-400 scale-[0.98] border-transparent" 
+              : "bg-gradient-to-r from-emerald-600 to-teal-700 text-white hover:from-emerald-700 hover:to-teal-800"
+          }`}
         >
-          <span>الدخول</span>
-          <ArrowLeft className="w-5 h-5 transition-transform" />
+          {clicked ? (
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-stone-400 animate-ping" />
+              جاري دخول المنصة...
+            </span>
+          ) : (
+            <>
+              <span>الدخول</span>
+              <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+            </>
+          )}
         </button>
-      </div>
+      </motion.div>
 
     </div>
   );
@@ -110,16 +233,27 @@ export default function App() {
     sessionStorage.setItem("quran_splash_seen", "true");
     setTimeout(() => {
       setShowSplash(false);
-    }, 500);
+    }, 450); // Match transit delay
   };
 
   return (
     <BrowserRouter>
-      {showSplash && (
-        <div className={`transition-opacity duration-500 ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'} fixed inset-0 z-[100]`}>
-           <Splash onEnter={handleEnter} />
-        </div>
-      )}
+      <AnimatePresence>
+        {showSplash && (
+          <motion.div 
+            initial={{ opacity: 1, scale: 1 }}
+            exit={{ 
+              opacity: 0,
+              scale: 1.08,
+              filter: "blur(8px)",
+              transition: { duration: 0.65, ease: "easeInOut" }
+            }}
+            className="fixed inset-0 z-[100]"
+          >
+            <Splash onEnter={handleEnter} />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AnimatedRoutes />
     </BrowserRouter>
   );
