@@ -55,8 +55,6 @@ export function QuranReader({
 
   // Focus and helpers
   const [focusMode, setFocusMode] = useState(false);
-  const [readingRuler, setReadingRuler] = useState(false);
-  const [rulerTop, setRulerTop] = useState(45); // vertical position percentage
   const [showSettings, setShowSettings] = useState(false);
 
   // Scroll details state
@@ -243,13 +241,6 @@ export function QuranReader({
 
           <div className="flex items-center gap-2">
             <button 
-              onClick={() => setReadingRuler(!readingRuler)} 
-              className={`p-2 rounded-xl transition duration-200 ${readingRuler ? 'bg-amber-600 text-white' : 'bg-white/5 hover:bg-white/10'}`}
-              title="مسطرة التركيز"
-            >
-              <Sparkles className="w-5 h-5" />
-            </button>
-            <button 
               onClick={() => { setFocusMode(true); }} 
               className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition duration-200"
               title="وضع التركيز"
@@ -341,31 +332,6 @@ export function QuranReader({
             <span>خروج من وضع التركيز</span>
           </button>
         </div>
-      )}
-
-      {/* Reading Ruler Adjustable Slider overlay */}
-      {readingRuler && (
-        <div className="absolute top-18 right-4 z-40 bg-black/75 hover:bg-black text-white p-2.5 rounded-2xl flex flex-col items-center gap-1 gap-2 shadow-xl border border-gray-700 min-w-[70px]">
-          <span className="text-[10px] font-extrabold text-amber-500">موقع المَسطرة</span>
-          <input 
-            type="range" 
-            min="15" 
-            max="80" 
-            value={rulerTop} 
-            onChange={e => setRulerTop(parseInt(e.target.value))} 
-            className="h-28 accent-yellow-500 rounded-lg cursor-pointer" 
-            style={{ writingMode: "bt-lr", appearance: "slider-vertical" }}
-          />
-          <button onClick={() => setReadingRuler(false)} className="text-[10px] text-red-400 font-bold px-1.5 hover:underline">إخفاء</button>
-        </div>
-      )}
-
-      {/* Visual Ruler Guide Overlay Line */}
-      {readingRuler && (
-        <div 
-          className="fixed left-0 right-0 h-10 pointer-events-none bg-yellow-500/10 dark:bg-yellow-400/10 border-y border-yellow-500/30 z-30 shadow-[0_0_15px_rgba(245,158,11,0.15)] transition-all"
-          style={{ top: `${rulerTop}%` }}
-        />
       )}
 
       {/* Jump Restore Prompt */}

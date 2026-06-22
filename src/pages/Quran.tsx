@@ -614,11 +614,11 @@ export function Quran() {
             </div>
 
             <div className="flex-1 overflow-y-auto py-4 bg-gray-50 dark:bg-gray-950">
-              <SidebarItem icon={<Library className="w-5 h-5 text-blue-500" />} label="دروس الهدى" active={activeView === 'series' || activeView === 'lessons'} onClick={() => { setActiveView('series'); setIsSidebarOpen(false); }} />
-              <SidebarItem icon={<Sparkles className="w-5 h-5 text-emerald-500 fill-emerald-500/10" />} label="لوحة تحصيلي العلمي" active={activeView === 'stats'} onClick={() => { setActiveView('stats'); setIsSidebarOpen(false); }} />
-              <SidebarItem icon={<Undo2 className="w-5 h-5 rotate-180 text-amber-500" />} label="آخر قراءة" onClick={handleLastReadClick} />
-              <SidebarItem icon={<Calendar className="w-5 h-5 text-purple-500" />} label="مقرر المراسيم" active={activeView === 'syllabuses' || activeView === 'syllabus-detail'} onClick={() => { setActiveView('syllabuses'); setIsSidebarOpen(false); }} />
-              <SidebarItem icon={<Quote className="w-5 h-5 text-rose-500" />} label="بديع المقتطفات" active={activeView === 'excerpts' || activeView === 'excerpt-detail'} onClick={() => { setActiveView('excerpts'); setIsSidebarOpen(false); }} />
+              <SidebarItem icon={<Library className="w-5 h-5 text-blue-500" />} label="دروس الهدى" description="قائمة السلاسل والدروس الكاملة" active={activeView === 'series' || activeView === 'lessons'} onClick={() => { setActiveView('series'); setIsSidebarOpen(false); }} />
+              <SidebarItem icon={<Sparkles className="w-5 h-5 text-emerald-500 fill-emerald-500/10" />} label="لوحة التقدم" description="متابعة إنجازك وإحصائيات القراءة" active={activeView === 'stats'} onClick={() => { setActiveView('stats'); setIsSidebarOpen(false); }} />
+              <SidebarItem icon={<Undo2 className="w-5 h-5 rotate-180 text-amber-500" />} label="آخر قراءة" description="العودة لأخر درس توقفت عنده" onClick={handleLastReadClick} />
+              <SidebarItem icon={<Calendar className="w-5 h-5 text-purple-500" />} label="مقرر الدروس" description="المقررات الدراسية المحددة" active={activeView === 'syllabuses' || activeView === 'syllabus-detail'} onClick={() => { setActiveView('syllabuses'); setIsSidebarOpen(false); }} />
+              <SidebarItem icon={<Quote className="w-5 h-5 text-rose-500" />} label="المقتطفات" description="الجواهر المنتقاة من الدروس" active={activeView === 'excerpts' || activeView === 'excerpt-detail'} onClick={() => { setActiveView('excerpts'); setIsSidebarOpen(false); }} />
             </div>
           </motion.div>
         </>
@@ -626,10 +626,13 @@ export function Quran() {
     </AnimatePresence>
   );
 
-  const SidebarItem = ({ icon, label, active = false, onClick }: { icon: any, label: string, active?: boolean, onClick: () => void }) => (
+  const SidebarItem = ({ icon, label, description, active = false, onClick }: { icon: any, label: string, description?: string, active?: boolean, onClick: () => void }) => (
     <button onClick={onClick} className={`w-full flex items-center gap-4 px-6 py-4 transition-colors text-right focus:outline-none ${active ? 'bg-gray-200 dark:bg-zinc-800' : 'hover:bg-gray-100 dark:hover:bg-zinc-900/60'}`}>
-      <span className={`p-2 rounded-xl bg-white dark:bg-zinc-800 shadow-sm ${active ? 'ring-2 ring-emerald-500' : ''}`}>{icon}</span>
-      <span className={`text-base font-black ${active ? 'text-gray-950 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{label}</span>
+      <span className={`p-2 rounded-xl bg-white dark:bg-zinc-800 shadow-sm shrink-0 ${active ? 'ring-2 ring-emerald-500' : ''}`}>{icon}</span>
+      <div className="flex flex-col text-right">
+        <span className={`text-base font-black leading-tight ${active ? 'text-gray-950 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{label}</span>
+        {description && <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold mt-1 whitespace-nowrap">{description}</span>}
+      </div>
     </button>
   );
 
@@ -826,16 +829,16 @@ export function Quran() {
             transition={{ duration: 0.2 }}
             className="absolute inset-0 flex flex-col z-10"
           >
-            {isSearching ? <QuranSearchView /> : (
+            {isSearching ? QuranSearchView() : (
               <>
-                {activeView === 'series' && <SeriesView />}
-                {activeView === 'lessons' && <LessonsView />}
-                {activeView === 'lesson-detail' && <LessonDetailView />}
-                {activeView === 'syllabuses' && <SyllabusesView />}
-                {activeView === 'syllabus-detail' && <SyllabusDetailView />}
-                {activeView === 'excerpts' && <ExcerptsView />}
-                {activeView === 'excerpt-detail' && <ExcerptDetailView />}
-                {activeView === 'stats' && <StatsView />}
+                {activeView === 'series' && SeriesView()}
+                {activeView === 'lessons' && LessonsView()}
+                {activeView === 'lesson-detail' && LessonDetailView()}
+                {activeView === 'syllabuses' && SyllabusesView()}
+                {activeView === 'syllabus-detail' && SyllabusDetailView()}
+                {activeView === 'excerpts' && ExcerptsView()}
+                {activeView === 'excerpt-detail' && ExcerptDetailView()}
+                {activeView === 'stats' && StatsView()}
               </>
             )}
           </motion.div>

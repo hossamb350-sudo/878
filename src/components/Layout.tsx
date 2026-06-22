@@ -41,7 +41,7 @@ function NotificationCenter() {
   };
 
   return (
-    <div className="fixed bottom-24 left-4 z-[60]">
+    <div className="fixed top-4 left-4 sm:top-6 sm:left-6 z-[60]">
       <button 
         onClick={toggle} 
         className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-lg border border-white dark:border-gray-700 hover:scale-105 active:scale-95 transition-all group"
@@ -63,10 +63,10 @@ function NotificationCenter() {
                className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40"
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="absolute left-0 bottom-full mb-3 w-[85vw] max-w-[340px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white dark:border-gray-800 z-50 overflow-hidden rtl"
+              initial={{ opacity: 0, scale: 0.9, y: -20, x: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0, x: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: -20, x: -20 }}
+              className="absolute left-0 mt-3 w-[85vw] max-w-[340px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white dark:border-gray-800 z-50 overflow-hidden rtl"
               dir="rtl"
             >
               <div className="p-5 border-b dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
@@ -207,6 +207,28 @@ function UrgentNewsBanner() {
 }
 
 export function Layout() {
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
+        setIsKeyboardVisible(true);
+      } else {
+        setIsKeyboardVisible(false);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    document.addEventListener('focusin', handleResize);
+    document.addEventListener('focusout', () => setIsKeyboardVisible(false));
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.removeEventListener('focusin', handleResize);
+      document.removeEventListener('focusout', () => setIsKeyboardVisible(false));
+    };
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <NotificationCenter />
@@ -218,7 +240,7 @@ export function Layout() {
       </main>
 
       {/* Navigation for All Devices */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 px-1 flex justify-center items-center z-40 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_10px_rgba(0,0,0,0.2)]">
+      <nav className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 px-1 flex justify-center items-center z-40 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_10px_rgba(0,0,0,0.2)] transition-transform duration-300 ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
         <div className="grid grid-cols-6 w-full max-w-[600px] justify-items-center">
           {[
             { to: "/", icon: Newspaper, label: "الأخبار" },
