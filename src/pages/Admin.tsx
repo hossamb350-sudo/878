@@ -88,7 +88,7 @@ export function Admin() {
        if (error.code === 'auth/operation-not-allowed') {
          alert("تسجيل الدخول عبر جوجل غير مفعل حالياً. يرجى التواصل مع الإدارة.");
        } else {
-         alert("حدث خطأ أثناء تسجيل الدخول: " + error.message);
+         alert("حدث خطأ أثناء تسجيل الدخول: " + JSON.stringify(error) + " | " + error.message);
        }
     }
   };
