@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
-import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCredential, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "../firebase";
+import { Capacitor } from '@capacitor/core';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
 import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid } from "lucide-react";
 import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile, LeaderContent } from "../types";
@@ -13,6 +15,14 @@ export function Admin() {
   const [activeTab, setActiveTab] = useState("dashboard");
   
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      GoogleAuth.initialize({
+        clientId: '565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com',
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
+      });
+    }
+
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
@@ -63,7 +73,17 @@ export function Admin() {
 
   const login = async () => {
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await GoogleAuth.signIn();
+        if (googleUser.authentication.idToken) {
+           const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+           await signInWithCredential(auth, credential);
+        } else {
+           throw new Error("No ID Token found");
+        }
+      } else {
+        await signInWithPopup(auth, new GoogleAuthProvider());
+      }
     } catch (error: any) {
        if (error.code === 'auth/operation-not-allowed') {
          alert("تسجيل الدخول عبر جوجل غير مفعل حالياً. يرجى التواصل مع الإدارة.");
