@@ -1,6 +1,6 @@
 {
 	"appId": "com.taiz.platform",
-	"appName": "TaizPlatform",
+	"appName": "المنصة الإعلامية",
 	"webDir": "dist",
 	"plugins": {
 		"GoogleAuth": {
