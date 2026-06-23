@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
-          node -e "const fs = require('fs'); const file = 'node_modules/@southdevs/capacitor-google-auth/android/build.gradle'; fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace(/jcenter\(\)/g, 'mavenCentral()'));"
+          sed -i 's/jcenter()/mavenCentral()/g' node_modules/@southdevs/capacitor-google-auth/android/build.gradle
 
       - name: Build Web App
         run: npm run build
