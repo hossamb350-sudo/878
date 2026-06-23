@@ -6,11 +6,10 @@ android {
 
     signingConfigs {
         debug {
-            storeFile file('debug.p12')
+            storeFile file('debug.keystore')
             storePassword 'android'
             keyAlias 'androiddebugkey'
             keyPassword 'android'
-            storeType 'pkcs12'
         }
     }
 
