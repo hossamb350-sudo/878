@@ -46,8 +46,17 @@ export function Watch() {
 
     const fetchVideos = async () => {
       try {
-        const vids = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc")));
-        setVideos(vids.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem)));
+        const vids = await getDocs(collection(db, "videos"));
+        const data = vids.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem));
+        data.sort((a, b) => {
+          const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+          const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
+          return b.createdAt - a.createdAt;
+        });
+        setVideos(data);
       } catch (err) {
         console.error(err);
       } finally {

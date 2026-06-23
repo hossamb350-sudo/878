@@ -825,15 +825,25 @@ function AdminVideos() {
   const [url, setUrl] = useState("");
   const [thumb, setThumb] = useState("");
   const [category, setCategory] = useState("");
+  const [order, setOrder] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, "videos"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "videos"));
     const unsub = onSnapshot(q, (snap) => {
-      setVideos(snap.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem)));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem));
+      data.sort((a, b) => {
+        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.createdAt - a.createdAt;
+      });
+      setVideos(data);
     }, (error) => console.error("Error fetching admin videos:", error));
     return () => unsub();
   }, []);
@@ -843,21 +853,23 @@ function AdminVideos() {
     setUrl("");
     setThumb("");
     setCategory("");
+    setOrder("");
     setEditingId(null);
   };
 
   const save = async () => {
     if(!title || !url) return alert("بيانات ناقصة");
     setSaving(true);
+    const parsedOrder = order.trim() ? Number(order) : 9999;
     try {
       if (editingId) {
          await updateDoc(doc(db, "videos", editingId), {
-            title, url, thumbnailUrl: thumb, category: category.trim()
+            title, url, thumbnailUrl: thumb, category: category.trim(), order: parsedOrder
          });
          alert("تم تعديل الفيديو بنجاح");
       } else {
          await addDoc(collection(db, "videos"), {
-            title, url, thumbnailUrl: thumb, category: category.trim(), views: 0, createdAt: Date.now()
+            title, url, thumbnailUrl: thumb, category: category.trim(), order: parsedOrder, views: 0, createdAt: Date.now()
          });
          alert("تم إضافة الفيديو بنجاح"); 
       }
@@ -881,6 +893,7 @@ function AdminVideos() {
     setUrl(video.url);
     setThumb(video.thumbnailUrl || "");
     setCategory(video.category || "");
+    setOrder(video.order !== undefined && video.order !== null ? String(video.order) : "");
     setEditingId(video.id);
   };
 
@@ -898,6 +911,18 @@ function AdminVideos() {
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط الفيديو (YouTube, MP4...)" value={url} onChange={e=>setUrl(e.target.value)} />
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط الصورة المصغرة (اختياري)" value={thumb} onChange={e=>setThumb(e.target.value)} />
         
+        <div className="space-y-2">
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">ترتيب العرض والأولوية (الأصغر يظهر أولاً):</label>
+          <input 
+            type="number"
+            className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm font-bold" 
+            placeholder="مثال: 1 للظهور أولاً، 2 للظهور ثانياً، 3 للظهور ثالثاً..." 
+            value={order} 
+            onChange={e=>setOrder(e.target.value)} 
+          />
+          <p className="text-[11px] text-emerald-600 font-medium">كلما كان الرقم أصغر كلما تمت موازنته والظهور في المقدمة (رقم 1 في البداية). يُرتب تلقائياً حسب الأقدم/الأحدث إذا كان فارغاً.</p>
+        </div>
+
         <div className="space-y-2">
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">التصنيف (اكتب التصنيف يدوياً أو اختر من المقترحة):</label>
           <div className="flex flex-col sm:flex-row gap-2">
@@ -950,7 +975,7 @@ function AdminVideos() {
                 )}
                 <div className="flex flex-col gap-1">
                   <span className="font-bold text-[#111827] dark:text-white line-clamp-1">{video.title}</span>
-                  <div className="text-xs text-gray-500 flex items-center gap-2">
+                  <div className="text-xs text-gray-400 dark:text-gray-400 flex flex-wrap gap-2 items-center">
                     <span>{new Date(video.createdAt).toLocaleDateString()}</span>
                     <span>•</span>
                     <span>{video.views || 0} مشاهدة</span>
@@ -958,6 +983,12 @@ function AdminVideos() {
                       <>
                         <span>•</span>
                         <span className="bg-red-50 text-red-600 dark:bg-red-950/20 dark:text-red-400 px-2 py-0.5 rounded text-[10px] font-black">{video.category}</span>
+                      </>
+                    )}
+                    {video.order !== undefined && video.order !== 9999 && (
+                      <>
+                        <span>•</span>
+                        <span className="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-500/15">الترتيب: {video.order}</span>
                       </>
                     )}
                   </div>
@@ -1146,6 +1177,8 @@ function AdminLeader() {
   const [type, setType] = useState<"video" | "text">("video");
   const [content, setContent] = useState("");
   const [description, setDescription] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [order, setOrder] = useState<string>("");
   const [saving, setSaving] = useState(false);
   const [notify, setNotify] = useState(true);
   const [leaderContents, setLeaderContents] = useState<LeaderContent[]>([]);
@@ -1153,9 +1186,18 @@ function AdminLeader() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = query(collection(db, "leader"), orderBy("createdAt", "desc"));
+    const q = query(collection(db, "leader"));
     const unsub = onSnapshot(q, (snap) => {
-      setLeaderContents(snap.docs.map(d => ({ id: d.id, ...d.data() } as LeaderContent)));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as LeaderContent));
+      data.sort((a, b) => {
+        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.createdAt - a.createdAt;
+      });
+      setLeaderContents(data);
     }, (error) => console.error("Error fetching leader content:", error));
     return () => unsub();
   }, []);
@@ -1165,18 +1207,23 @@ function AdminLeader() {
     setType("video");
     setContent("https://almasirah.net.ye/video?id=297027");
     setDescription("يمكنكم متابعة المحاضرة أو التوجيه المبارك بالكامل من خلال المشغل أعلاه. هذا المقطع يركز على الدروس والعِبَر الروحية المستمدة من آيات الله والوقائع المعاصرة لبناء المجتمع القرآني المتمسك بهويته الدينية في مواجهة الطغيان.");
+    setThumbnailUrl("https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png");
+    setOrder("1");
   };
 
   const save = async () => {
     if(!title || !content) return alert("يرجى تعبئة جميع الحقول");
     setSaving(true);
+    const parsedOrder = order.trim() ? Number(order) : 9999;
     try {
       if (editingId) {
         await updateDoc(doc(db, "leader", editingId), { 
           title, 
           type, 
           content,
-          description: type === 'video' ? description.trim() : ""
+          description: type === 'video' ? description.trim() : "",
+          thumbnailUrl: thumbnailUrl.trim(),
+          order: parsedOrder
         });
         alert("تم التعديل بنجاح!"); 
       } else {
@@ -1185,6 +1232,8 @@ function AdminLeader() {
           type, 
           content,
           description: type === 'video' ? description.trim() : "",
+          thumbnailUrl: thumbnailUrl.trim(),
+          order: parsedOrder,
           views: 0,
           createdAt: Date.now() 
         });
@@ -1214,6 +1263,8 @@ function AdminLeader() {
     setTitle(""); 
     setContent("");
     setDescription("");
+    setThumbnailUrl("");
+    setOrder("");
     setType("video");
     setEditingId(null);
   }
@@ -1222,6 +1273,8 @@ function AdminLeader() {
     setTitle(item.title);
     setContent(item.content);
     setDescription(item.description || "");
+    setThumbnailUrl(item.thumbnailUrl || "");
+    setOrder(item.order !== undefined && item.order !== null ? String(item.order) : "");
     setType(item.type);
     setEditingId(item.id);
   };
@@ -1276,12 +1329,12 @@ function AdminLeader() {
           <label className="block text-sm font-bold mb-2">{type === 'text' ? "المحتوى:" : "رابط الفيديو:"}</label>
           <textarea 
             className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl h-32 focus:outline-blue-500" 
-            placeholder={type === 'text' ? "اكتب المحتوى هنا..." : "ضع رابط الفيديو هنا (almasirah.net.ye/video?id=...)"} 
+            placeholder={type === 'text' ? "اكتب المحتوى هنا..." : "ضع رابط الفيديو هنا (يدعم يوتيوب، درايف، تيليجرام، والمسيرة)..."} 
             value={content} 
             onChange={e=>setContent(e.target.value)} 
           />
-          {type === 'video' && content.includes('almasirah.net.ye') && (
-            <p className="text-[11px] text-emerald-600 mt-2 font-medium">سيتم تحويل الرابط تلقائياً إلى مشغل الفيديو عند العرض.</p>
+          {type === 'video' && (
+            <p className="text-[11px] text-emerald-600 mt-2 font-medium">يدعم الروابط المباشرة واليوتيوب (YouTube)، جوجل درايف (Drive)، تيليجرام (Telegram)، والمسيرة (Almasirah) وسيتم معالجتها تلقائياً للعرض بالشكل الصحيح.</p>
           )}
         </div>
 
@@ -1297,9 +1350,45 @@ function AdminLeader() {
           </div>
         )}
 
-        <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-500/30 transition-colors">
+        <div>
+          <label className="block text-sm font-bold mb-2">رابط الصورة المصغرة (اختياري):</label>
+          <input 
+            type="text"
+            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 text-sm" 
+            placeholder="ضع رابط الصورة المصغرة (مثال: https://...)" 
+            value={thumbnailUrl} 
+            onChange={e=>setThumbnailUrl(e.target.value)} 
+          />
+          {thumbnailUrl.trim() && (
+            <div className="mt-2 text-center bg-gray-100 dark:bg-gray-800 p-2 rounded-xl">
+              <span className="block text-[10px] text-gray-500 mb-1">معاينة الصورة المصغرة:</span>
+              <img 
+                src={thumbnailUrl} 
+                alt="معاينة الصورة المصغرة" 
+                className="max-h-32 rounded-lg mx-auto object-cover border"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "https://placehold.co/600x400/047857/FFFFFF?text=Preview";
+                }}
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold mb-2">ترتيب العرض والأولوية (الأصغر يظهر أولاً):</label>
+          <input 
+            type="number"
+            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 text-sm font-bold" 
+            placeholder="مثال: 1 للظهور أولاً، 2 للظهور ثانياً، 3 للظهور ثالثاً..." 
+            value={order} 
+            onChange={e=>setOrder(e.target.value)} 
+          />
+          <p className="text-[11px] text-emerald-600 mt-2 font-medium">كلما كان الرقم أصغر كلما تمت موازنته والظهور في المقدمة (رقم 1 في البداية). يُرتب تلقائياً حسب الأقدم/الأحدث إذا كان فارغاً.</p>
+        </div>
+
+        <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-500/30 transition-colors font-bold text-sm">
           <input type="checkbox" checked={notify} onChange={e=>setNotify(e.target.checked)} className="w-5 h-5 accent-blue-600 rounded" />
-          <span className="font-bold text-sm text-gray-700 dark:text-gray-200">إرسال تنبيه للمشتركين بخصوص هذا المحتوى</span>
+          <span className="text-gray-700 dark:text-gray-200">إرسال تنبيه للمشتركين بخصوص هذا المحتوى</span>
         </label>
 
         <div className="flex gap-3 mt-4">
@@ -1319,18 +1408,24 @@ function AdminLeader() {
       </div>
       
       <div className="mt-8">
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><List className="w-5 h-5 text-gray-500"/> المحتوى المضاف</h3>
+        <h3 className="text-lg font-bold mb-4 flex items-center gap-2"><List className="w-5 h-5 text-gray-500"/> المحتوى المضاف مرتباً حسب الأولويات والعرض</h3>
         <div className="space-y-3">
           {leaderContents.map(item => (
             <div key={item.id} className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
               <div className="flex flex-col gap-1">
                 <span className="font-bold text-[#111827] dark:text-white line-clamp-1">{item.title}</span>
-                <div className="text-xs text-gray-500 flex gap-2">
+                <div className="text-xs text-gray-400 dark:text-gray-400 flex flex-wrap gap-2 items-center">
                   <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                   <span>•</span>
                   <span>{item.type === 'video' ? 'فيديو' : 'محاضرات ودروس'}</span>
                   <span>•</span>
                   <span>{item.views || 0} مشاهدة</span>
+                  {item.order !== undefined && item.order !== 9999 && (
+                    <>
+                      <span>•</span>
+                      <span className="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-500/15">الترتيب: {item.order}</span>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">

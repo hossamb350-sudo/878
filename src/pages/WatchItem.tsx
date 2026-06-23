@@ -66,12 +66,19 @@ export function WatchItem() {
         }
 
         // Fetch other suggestions (excluding current one)
-        const q = query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(8));
-        const snap = await getDocs(q);
+        const snap = await getDocs(collection(db, "videos"));
         const list = snap.docs
           .map(d => ({ id: d.id, ...d.data() } as VideoItem))
           .filter(v => v.id !== id);
-        setRecentVideos(list);
+        list.sort((a, b) => {
+          const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+          const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
+          return b.createdAt - a.createdAt;
+        });
+        setRecentVideos(list.slice(0, 8));
 
       } catch (err) {
         console.error(err);

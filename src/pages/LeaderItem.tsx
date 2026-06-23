@@ -21,6 +21,56 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 
+// Helper function to translate standard video links into embeddable URLs
+const getEmbedUrl = (url: string) => {
+  if (!url) return "";
+  const cleanUrl = url.trim();
+
+  // Youtube match (including watch, shorts, share, embed, mobile, play lists)
+  if (cleanUrl.includes("youtube.com") || cleanUrl.includes("youtu.be")) {
+    if (cleanUrl.includes("/embed/")) {
+      return cleanUrl;
+    }
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
+    const match = cleanUrl.match(regExp);
+    if (match && match[2].length === 11) {
+      const videoId = match[2];
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+    }
+  }
+
+  // Google Drive match
+  if (cleanUrl.includes("drive.google.com") && cleanUrl.includes("/file/d/")) {
+    if (cleanUrl.includes("/view")) {
+      return cleanUrl.replace("/view", "/preview");
+    }
+    if (!cleanUrl.includes("/preview")) {
+      return cleanUrl.endsWith("/") ? `${cleanUrl}preview` : `${cleanUrl}/preview`;
+    }
+  }
+
+  // Telegram post match
+  if (cleanUrl.includes("t.me/") && !cleanUrl.includes("?embed=1")) {
+    if (cleanUrl.includes("?")) {
+      return `${cleanUrl}&embed=1`;
+    } else {
+      return `${cleanUrl}?embed=1`;
+    }
+  }
+
+  // Almasirah standard video player
+  if (cleanUrl.includes("almasirah.net.ye/video?id=")) {
+    return cleanUrl.replace("/video?id=", "/player?id=");
+  }
+
+  // Almasirah or clean Peertube watch link
+  if (cleanUrl.includes("/w/") || cleanUrl.includes("/videos/watch/")) {
+    return cleanUrl.replace("/w/", "/videos/embed/").replace("/videos/watch/", "/videos/embed/");
+  }
+
+  return cleanUrl;
+};
+
 export function LeaderItem() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -279,6 +329,18 @@ export function LeaderItem() {
           </div>
         </div>
 
+        {content.thumbnailUrl && (
+          <div className="w-full aspect-video md:max-h-[380px] rounded-3xl overflow-hidden bg-stone-100 dark:bg-zinc-900/40 border border-stone-200/50 dark:border-zinc-800/50 relative shadow-md my-6 z-10">
+            <img 
+              src={content.thumbnailUrl} 
+              alt={content.title} 
+              className="w-full h-full object-cover"
+              loading="eager"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+        )}
+
         {/* Elegant Reader Controller Box (Font Adjustment and Color Theme Selector) */}
         {content.type !== "video" && (
           <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-stone-200/50 dark:border-zinc-800/60 p-3.5 sm:p-4 rounded-2xl flex flex-wrap gap-4 items-center justify-between my-6 relative z-10 shadow-inner">
@@ -356,11 +418,10 @@ export function LeaderItem() {
               {/* Theater Mode Video Frame Container */}
               <div className="aspect-video w-full bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-stone-100 dark:border-zinc-900 relative">
                 <iframe 
-                  src={content.content.includes('almasirah.net.ye/video?id=') 
-                    ? content.content.replace('/video?id=', '/player?id=') 
-                    : content.content} 
-                  className="w-full h-full border-0 absolute inset-0" 
-                  allowFullScreen
+                   src={getEmbedUrl(content.content)} 
+                   className="w-full h-full border-0 absolute inset-0" 
+                   allowFullScreen
+                   allow="autoplay; encrypted-media; picture-in-picture"
                 ></iframe>
               </div>
               

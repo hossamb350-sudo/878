@@ -47,8 +47,17 @@ export function Home() {
         const _news = await getDocs(query(collection(db, "news"), orderBy("createdAt", "desc"), limit(30)));
         setNews(_news.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem)));
 
-        const _videos = await getDocs(query(collection(db, "videos"), orderBy("createdAt", "desc"), limit(10)));
-        setVideos(_videos.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem)));
+        const _videos = await getDocs(collection(db, "videos"));
+        const videoData = _videos.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem));
+        videoData.sort((a, b) => {
+          const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+          const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+          if (aOrder !== bOrder) {
+            return aOrder - bOrder;
+          }
+          return b.createdAt - a.createdAt;
+        });
+        setVideos(videoData.slice(0, 10));
       } catch (err) {
         console.error("Error fetching data:", err);
       } finally {

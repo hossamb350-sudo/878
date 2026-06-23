@@ -39,6 +39,7 @@ export interface VideoItem {
   duration?: string;
   category?: string;
   views: number;
+  order?: number;
   createdAt: number;
 }
 
@@ -58,6 +59,8 @@ export interface LeaderContent {
   content: string;
   description?: string;
   views?: number;
+  thumbnailUrl?: string;
+  order?: number;
   createdAt: number;
 }
 
