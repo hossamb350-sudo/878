@@ -16,7 +16,11 @@ import { Events } from "./pages/Events";
 import { Admin } from "./pages/Admin";
 import { Search } from "./pages/Search";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, LogOut } from "lucide-react";
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { auth } from "./firebase";
+import { SplashCarousel } from "./components/SplashCarousel";
+import { AuthModals } from "./components/AuthModals";
 
 // Synthetic chime click sound generator via Web Audio API 
 const playPremiumClick = () => {
@@ -49,78 +53,145 @@ const playPremiumClick = () => {
 function Splash({ onEnter }: { onEnter: () => void }) {
   const [imgSrc, setImgSrc] = useState("https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png");
   const [clicked, setClicked] = useState(false);
+  const [carouselIndex, setCarouselIndex] = useState(0);
+
+  // Authentication State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalTab, setAuthModalTab] = useState<"login" | "register">("login");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return unsubscribe;
+  }, []);
 
   const handleAction = () => {
+    if (currentUser) {
+      // User is logged in, directly enters the platform
+      if (clicked) return;
+      setClicked(true);
+      playPremiumClick();
+      setTimeout(() => {
+        onEnter();
+      }, 400);
+    } else {
+      // User not logged in, show Auth login modal
+      playPremiumClick();
+      setAuthModalTab("login");
+      setAuthModalOpen(true);
+    }
+  };
+
+  const handleRegisterClick = () => {
+    if (currentUser) {
+      // If logged in, the secondary button becomes Sign Out
+      playPremiumClick();
+      signOut(auth).catch(err => console.error(err));
+    } else {
+      // Otherwise list signup modal
+      playPremiumClick();
+      setAuthModalTab("register");
+      setAuthModalOpen(true);
+    }
+  };
+
+  const handleAuthSuccess = () => {
+    setAuthModalOpen(false);
+    playPremiumClick();
     if (clicked) return;
     setClicked(true);
-    playPremiumClick();
     setTimeout(() => {
       onEnter();
-    }, 400); // Wait for the visual pop and chime to peak
+    }, 450);
   };
 
   return (
-    <div className="fixed inset-0 bg-white text-zinc-900 z-[100] flex flex-col items-center justify-between p-8 select-none font-sans overflow-hidden">
+    <div className="fixed inset-0 bg-white text-zinc-900 z-[100] flex flex-col items-center justify-between py-10 px-6 sm:p-12 select-none font-sans overflow-y-auto overflow-x-hidden leading-relaxed">
+      
+      {/* 1. LUXURY GEOMETRIC ISLAMIC BACKGROUND VECTORS (Matching the design image) */}
       
       {/* Decorative Rotating Geometric Background Star (Faint Islamic Art Motif) */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none overflow-hidden z-0 flex items-center justify-center">
+      <div className="absolute inset-0 opacity-[0.025] pointer-events-none overflow-hidden z-0 flex items-center justify-center">
         <motion.svg 
           width="750" 
           height="750" 
           viewBox="0 0 100 100" 
-          className="text-emerald-800"
+          className="text-[#d49a37]"
           animate={{ rotate: 360 }}
-          transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 55, repeat: Infinity, ease: "linear" }}
         >
           <polygon points="50,0 65,35 100,50 65,65 50,100 35,65 0,50 35,35" fill="currentColor" />
           <polygon points="50,15 58,42 85,50 58,58 50,85 42,58 15,50 42,42" fill="none" stroke="currentColor" strokeWidth="1.5" />
         </motion.svg>
       </div>
 
-      {/* Subtle modern warm ambient particles */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-[20%] left-[15%] w-2 h-2 rounded-full bg-emerald-500/20 blur-[1px] animate-pulse" />
-        <div className="absolute bottom-[25%] right-[20%] w-3 h-3 rounded-full bg-amber-500/15 blur-[2px] animate-bounce" />
-        <div className="absolute top-[60%] right-[10%] w-2 h-2 rounded-full bg-teal-500/25 blur-[1px] animate-pulse" />
+      {/* Top-Left Dots Grid */}
+      <svg viewBox="0 0 100 100" className="absolute top-[4%] left-[4%] w-20 h-20 sm:w-24 sm:h-24 text-[#d49a37]/35 opacity-70 pointer-events-none z-0">
+        {Array.from({ length: 6 }).map((_, r) =>
+          Array.from({ length: 6 }).map((_, c) => (
+            <circle key={`tl-${r}-${c}`} cx={10 + c * 16} cy={10 + r * 16} r="1.5" fill="currentColor" />
+          ))
+        )}
+      </svg>
+
+      {/* Bottom-Right Dots Grid */}
+      <svg viewBox="0 0 100 100" className="absolute bottom-[4%] right-[4%] w-24 h-24 sm:w-32 sm:h-32 text-[#d49a37]/25 opacity-75 pointer-events-none z-0">
+        {Array.from({ length: 8 }).map((_, r) =>
+          Array.from({ length: 8 }).map((_, c) => (
+            <circle key={`br-${r}-${c}`} cx={10 + c * 12} cy={10 + r * 12} r="1.2" fill="currentColor" />
+          ))
+        )}
+      </svg>
+
+      {/* Elegant concentric gold rings */}
+      <div className="absolute top-[8%] right-[-5%] w-36 h-36 rounded-full border border-[#d49a37]/10 pointer-events-none z-0 flex items-center justify-center">
+        <div className="w-28 h-28 rounded-full border border-dashed border-[#d49a37]/8" />
       </div>
 
+      <div className="absolute bottom-[18%] left-[-4%] w-24 h-24 rounded-full border border-[#d49a37]/12 pointer-events-none z-0" />
 
+      {/* Subtle glowing warm amber dust */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-[28%] right-[15%] w-2 h-2 rounded-full bg-[#d49a37]/30 blur-[1px] animate-pulse" />
+        <div className="absolute bottom-[38%] left-[10%] w-1.5 h-1.5 rounded-full bg-[#d49a37]/20 blur-[1.5px] animate-pulse" />
+      </div>
 
-      {/* Center Showcase Area */}
-      <div className="my-auto relative z-10 flex flex-col items-center justify-center text-center max-w-lg px-4">
+      {/* 2. PLATFORM LOGO PLATE CARD (Matches Center of Graphic Design) */}
+      <div className="my-auto relative z-10 flex flex-col items-center justify-center text-center max-w-lg w-full px-2 sm:px-4">
         
-        {/* Animated circular plate framing the logo */}
-        <div className="relative w-64 h-64 sm:w-76 sm:h-76 flex items-center justify-center">
+        <div className="relative w-52 h-52 sm:w-60 sm:h-60 flex items-center justify-center mb-4">
           
           {/* Pulsing Aura */}
           <motion.div 
-            className="absolute -inset-6 bg-gradient-to-r from-emerald-500/5 to-teal-500/5 rounded-full blur-3xl opacity-70"
-            animate={{ scale: [1, 1.08, 1], opacity: [0.6, 0.8, 0.6] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -inset-6 bg-gradient-to-r from-[#d49a37]/5 to-[#b37f2c]/5 rounded-full blur-3xl opacity-60"
+            animate={{ scale: [1, 1.06, 1], opacity: [0.5, 0.7, 0.5] }}
+            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
           />
 
-          {/* Golden/Emerald Outer Rotating Ring line */}
+          {/* Golden Outer Rotating Ring line */}
           <motion.div 
-            className="absolute -inset-1.5 rounded-full border-2 border-dashed border-emerald-600/15"
+            className="absolute -inset-2.5 rounded-full border border-dashed border-[#d49a37]/15"
             animate={{ rotate: 360 }}
-            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
           />
 
-          {/* Thin static gold/amber accent ring */}
-          <div className="absolute -inset-3 rounded-full border border-amber-500/10" />
+          {/* Static outer accent ring */}
+          <div className="absolute -inset-4 rounded-full border border-[#d49a37]/5" />
 
-          {/* Pure Premium Logo Plate Card */}
+          {/* Standard Logo Frame Card Container */}
           <motion.div 
-            initial={{ scale: 0.9, opacity: 0 }}
+            initial={{ scale: 0.94, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            whileHover={{ scale: 1.03 }}
-            className="relative w-full h-full bg-white rounded-[2.5rem] border border-stone-100 p-8 shadow-2xl shadow-stone-200/60 flex items-center justify-center transition-all duration-300 pointer-events-auto"
+            transition={{ duration: 0.9, ease: "easeOut" }}
+            whileHover={{ scale: 1.02 }}
+            className="relative w-full h-full bg-white rounded-[2.5rem] p-7 shadow-2xl shadow-stone-200/80 flex items-center justify-center pointer-events-auto border border-stone-100"
           >
             <img 
               src={imgSrc} 
-              alt="شعار منصة تعز" 
-              className="w-full h-full object-contain filter drop-shadow-md select-none" 
+              alt="شعار منصة تعز الإعلامية" 
+              className="w-full h-full object-contain filter drop-shadow-sm select-none" 
               onError={() => {
                 if (imgSrc === "https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png") {
                   setImgSrc("/logo.png");
@@ -132,38 +203,77 @@ function Splash({ onEnter }: { onEnter: () => void }) {
           </motion.div>
         </div>
 
-
+        {/* 3. FEATURES SLIDING CAROUSEL (Implementing Slide cards and dots from Graphic Design) */}
+        <div className="w-full mt-6 mb-8 transform">
+          <SplashCarousel 
+            activeIndex={carouselIndex} 
+            onChangeIndex={setCarouselIndex} 
+          />
+        </div>
       </div>
 
-      {/* Button to click 'الدخول' with sound and beautiful motion feedback */}
+      {/* 4. PREMIUM ENTRY BUTTONS (Strictly implements the gold flow in mock graphic) */}
       <motion.div 
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="relative z-10 w-full max-w-sm px-4 pb-8 sm:pb-12 mt-auto"
+        transition={{ delay: 0.4 }}
+        className="relative z-10 w-full max-w-sm px-4 pb-4 flex flex-col gap-3.5 mt-auto"
       >
+        {/* GOLD BUTTON: الدخول */}
         <button 
           onClick={handleAction}
           disabled={clicked}
-          className={`w-full relative overflow-hidden font-black text-lg py-4 sm:py-4.5 px-8 rounded-2xl shadow-xl hover:shadow-emerald-600/10 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 border border-emerald-500/10 cursor-pointer ${
+          className={`w-full relative overflow-hidden font-black text-base sm:text-lg py-3.5 rounded-2xl shadow-xl active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 border cursor-pointer ${
             clicked 
-              ? "bg-stone-100 text-stone-400 scale-[0.98] border-transparent" 
-              : "bg-gradient-to-r from-emerald-600 to-teal-700 text-white hover:from-emerald-700 hover:to-teal-800"
+              ? "bg-stone-50 text-stone-300 scale-[0.98] border-stone-100" 
+              : "bg-gradient-to-r from-[#d49a37] to-[#b37f2c] text-white hover:from-[#e3ab4a] hover:to-[#c48f33] border-[#d49e3c]/30 shadow-amber-600/10"
           }`}
         >
           {clicked ? (
             <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-stone-400 animate-ping" />
-              جاري دخول المنصة...
+              <span className="w-2 h-2 rounded-full bg-stone-300 animate-ping" />
+              جاري الدخول...
             </span>
+          ) : currentUser ? (
+            <>
+              <span className="truncate">مرحباً، {currentUser.displayName || "مستخدم"} (دخول منصة تعز)</span>
+              <ArrowLeft className="w-5 h-5 shrink-0 transition-transform group-hover:-translate-x-1" />
+            </>
           ) : (
             <>
               <span>الدخول</span>
-              <ArrowLeft className="w-5 h-5 transition-transform group-hover:-translate-x-1" />
+              <ArrowLeft className="w-5 h-5 shrink-0 transition-transform group-hover:-translate-x-1" />
             </>
           )}
         </button>
+
+        {/* TRANSPARENT / WRAPPED GOLD BUTTON: إنشاء حساب جديد */}
+        <button 
+          onClick={handleRegisterClick}
+          className={`w-full font-black text-sm py-3 rounded-2xl active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 border cursor-pointer bg-white ${
+            currentUser
+              ? "text-red-500 hover:text-red-650 hover:bg-red-50 border-red-200"
+              : "border-[#d49a37] text-[#c28d32] hover:bg-amber-50"
+          }`}
+        >
+          {currentUser ? (
+            <>
+              <LogOut className="w-4.5 h-4.5 shrink-0" />
+              <span>تسجيل الخروج من الحساب</span>
+            </>
+          ) : (
+            <span>إنشاء حساب جديد</span>
+          )}
+        </button>
       </motion.div>
+
+      {/* Secure bottom sheet modal for Registration / Authentication */}
+      <AuthModals 
+        isOpen={authModalOpen} 
+        onClose={() => setAuthModalOpen(false)} 
+        initialTab={authModalTab}
+        onSuccess={handleAuthSuccess}
+      />
 
     </div>
   );

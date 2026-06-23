@@ -73,7 +73,7 @@ export function Admin() {
   const login = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
-        const googleUser = await GoogleAuth.signIn();
+        const googleUser = await (GoogleAuth.signIn as any)();
         if (googleUser.authentication.idToken) {
            const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
            await signInWithCredential(auth, credential);
