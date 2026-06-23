@@ -122,16 +122,16 @@ export function Home() {
       className="max-w-[760px] mx-auto w-full pb-16 bg-white dark:bg-gray-950 transition-colors"
     >
       
-      {/* Brand Header Banner - Taiz Media Style with Calligraphy Droplet */}
+      {/* Brand Header Banner - Islamic/Golden Style with Calligraphy Droplet */}
       <div className="w-full bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-900 pt-5 pb-0 sticky top-0 z-30 px-4">
         <div className="flex items-center justify-between max-w-[720px] mx-auto mb-3">
           {/* Left Side: Simple Text Branding */}
           <div className="flex items-center select-none py-1">
-            <div className="flex flex-col text-left">
-              <span className="font-[900] text-2xl tracking-tighter leading-none text-gray-950 dark:text-white">منصة تعز الإعلامية</span>
+            <div className="flex flex-col text-right">
+              <span className="font-[900] text-2xl tracking-tighter leading-none text-amber-700 dark:text-amber-450">المنصة الإعلامية</span>
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">إخبارية ثقافية |</span>
-                <span className="text-[9px] font-bold text-blue-600 dark:text-blue-500 tracking-[0.15em] uppercase">Taiz Media Platform</span>
+                <span className="text-[9px] font-bold text-[#d49a37] dark:text-[#e5b35c] tracking-[0.15em] uppercase">Al-Elameyah Media Platform</span>
               </div>
             </div>
           </div>
@@ -146,26 +146,26 @@ export function Home() {
               onClick={() => setActiveTab("top")}
               className={`py-3.5 px-4 font-extrabold text-[16px] transition-all relative ${
                 activeTab === "top" 
-                  ? "text-black dark:text-white" 
-                  : "text-gray-400 hover:text-black dark:hover:text-white"
+                  ? "text-amber-700 dark:text-amber-400" 
+                  : "text-gray-400 hover:text-amber-700 dark:hover:text-amber-400"
               }`}
             >
                أهم الأخبار
                {activeTab === "top" && (
-                 <div className="absolute bottom-0 left-4 right-4 h-[3px] bg-black dark:bg-white transition-all"></div>
+                 <div className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#d49a37] transition-all"></div>
                )}
             </button>
             <button 
               onClick={() => setActiveTab("following")}
               className={`py-3.5 px-4 font-extrabold text-[16px] transition-all relative ${
                 activeTab === "following" 
-                  ? "text-black dark:text-white" 
-                  : "text-gray-400 hover:text-black dark:hover:text-white"
+                  ? "text-amber-700 dark:text-amber-400" 
+                  : "text-gray-400 hover:text-amber-700 dark:hover:text-amber-400"
               }`}
             >
                المتابعة
                {activeTab === "following" && (
-                 <div className="absolute bottom-0 left-4 right-4 h-[3px] bg-black dark:bg-white transition-all"></div>
+                 <div className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#d49a37] transition-all"></div>
                )}
             </button>
           </div>
@@ -210,7 +210,7 @@ export function Home() {
                 )}
                 
                 <div className="px-4 sm:px-0">
-                  <Link to={`/news/${heroItem.id}`} className="block hover:text-blue-600 dark:hover:text-amber-400 transition-colors">
+                  <Link to={`/news/${heroItem.id}`} className="block hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
                     <h2 className="font-extrabold text-[20px] sm:text-[24px] text-[#111827] dark:text-[#f3f4f6] leading-[1.3] mb-4 text-right">
                        {heroItem.title}
                     </h2>
@@ -274,7 +274,7 @@ export function Home() {
                           breakingItems.map((bItem) => (
                             <div key={bItem.id} className="relative pr-6">
                               <span className="absolute right-0 top-1.5 w-3.5 h-3.5 rounded-full bg-gray-400 dark:bg-gray-600 border-[3px] border-white dark:border-gray-950 z-10 shadow-sm"></span>
-                              <Link to={`/news/${bItem.id}`} className="hover:text-blue-600 dark:hover:text-amber-400 transition-colors">
+                              <Link to={`/news/${bItem.id}`} className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
                                 <p className="text-[14px] sm:text-[15px] font-bold text-gray-900 dark:text-gray-100 leading-snug">
                                   {bItem.title}
                                 </p>
@@ -304,7 +304,7 @@ export function Home() {
                     {/* Right Side News Content */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between py-1 text-right pr-1">
                        <div>
-                          <h3 className="font-extrabold text-[14px] sm:text-[16px] text-[#111827] dark:text-[#f3f4f6] leading-[1.38] transition-colors hover:text-blue-600 dark:hover:text-amber-400 mb-1 truncate whitespace-normal line-clamp-2">
+                          <h3 className="font-extrabold text-[14px] sm:text-[16px] text-[#111827] dark:text-[#f3f4f6] leading-[1.38] transition-colors hover:text-amber-600 dark:hover:text-amber-400 mb-1 truncate whitespace-normal line-clamp-2">
                             {item.title}
                           </h3>
                           {(item.shortDescription || (item.content && item.content.substring(0, 80))) && (
@@ -327,7 +327,7 @@ export function Home() {
                                 {new Date(item.createdAt).toLocaleDateString("ar-YE", { weekday: "short", day: "numeric", month: "short" })} - {new Date(item.createdAt).toLocaleTimeString("ar-YE", { hour: "numeric", minute: "2-digit" })}
                              </span>
                              <span className="text-gray-300 dark:text-gray-700 shrink-0">•</span>
-                             <span className="text-blue-700 dark:text-blue-400 font-bold shrink-0">{item.category}</span>
+                             <span className="text-amber-700 dark:text-amber-455 font-bold shrink-0">{item.category}</span>
                              {item.author && (
                                <>
                                  <span className="text-gray-300 dark:text-gray-700 shrink-0">•</span>

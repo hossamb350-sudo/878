@@ -16,11 +16,8 @@ import { Events } from "./pages/Events";
 import { Admin } from "./pages/Admin";
 import { Search } from "./pages/Search";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, LogOut } from "lucide-react";
-import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { auth } from "./firebase";
+import { ArrowLeft } from "lucide-react";
 import { SplashCarousel } from "./components/SplashCarousel";
-import { AuthModals } from "./components/AuthModals";
 
 // Synthetic chime click sound generator via Web Audio API 
 const playPremiumClick = () => {
@@ -51,57 +48,14 @@ const playPremiumClick = () => {
 };
 
 function Splash({ onEnter }: { onEnter: () => void }) {
-  const [imgSrc, setImgSrc] = useState("https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png");
+  const [imgSrc, setImgSrc] = useState("/logo.png");
   const [clicked, setClicked] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
-  // Authentication State
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authModalTab, setAuthModalTab] = useState<"login" | "register">("login");
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
-    return unsubscribe;
-  }, []);
-
   const handleAction = () => {
-    if (currentUser) {
-      // User is logged in, directly enters the platform
-      if (clicked) return;
-      setClicked(true);
-      playPremiumClick();
-      setTimeout(() => {
-        onEnter();
-      }, 400);
-    } else {
-      // User not logged in, show Auth login modal
-      playPremiumClick();
-      setAuthModalTab("login");
-      setAuthModalOpen(true);
-    }
-  };
-
-  const handleRegisterClick = () => {
-    if (currentUser) {
-      // If logged in, the secondary button becomes Sign Out
-      playPremiumClick();
-      signOut(auth).catch(err => console.error(err));
-    } else {
-      // Otherwise list signup modal
-      playPremiumClick();
-      setAuthModalTab("register");
-      setAuthModalOpen(true);
-    }
-  };
-
-  const handleAuthSuccess = () => {
-    setAuthModalOpen(false);
-    playPremiumClick();
     if (clicked) return;
     setClicked(true);
+    playPremiumClick();
     setTimeout(() => {
       onEnter();
     }, 450);
@@ -190,7 +144,7 @@ function Splash({ onEnter }: { onEnter: () => void }) {
           >
             <img 
               src={imgSrc} 
-              alt="شعار منصة تعز الإعلامية" 
+              alt="شعار المنصة الإعلامية" 
               className="w-full h-full object-contain filter drop-shadow-sm select-none" 
               onError={() => {
                 if (imgSrc === "https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png") {
@@ -217,13 +171,13 @@ function Splash({ onEnter }: { onEnter: () => void }) {
         initial={{ opacity: 0, y: 15 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="relative z-10 w-full max-w-sm px-4 pb-4 flex flex-col gap-3.5 mt-auto"
+        className="relative z-10 w-full max-w-sm px-4 pb-8 mt-auto"
       >
         {/* GOLD BUTTON: الدخول */}
         <button 
           onClick={handleAction}
           disabled={clicked}
-          className={`w-full relative overflow-hidden font-black text-base sm:text-lg py-3.5 rounded-2xl shadow-xl active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 border cursor-pointer ${
+          className={`w-full relative overflow-hidden font-black text-base sm:text-lg py-4 rounded-2xl shadow-xl active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 border cursor-pointer ${
             clicked 
               ? "bg-stone-50 text-stone-300 scale-[0.98] border-stone-100" 
               : "bg-gradient-to-r from-[#d49a37] to-[#b37f2c] text-white hover:from-[#e3ab4a] hover:to-[#c48f33] border-[#d49e3c]/30 shadow-amber-600/10"
@@ -234,11 +188,6 @@ function Splash({ onEnter }: { onEnter: () => void }) {
               <span className="w-2 h-2 rounded-full bg-stone-300 animate-ping" />
               جاري الدخول...
             </span>
-          ) : currentUser ? (
-            <>
-              <span className="truncate">مرحباً، {currentUser.displayName || "مستخدم"} (دخول منصة تعز)</span>
-              <ArrowLeft className="w-5 h-5 shrink-0 transition-transform group-hover:-translate-x-1" />
-            </>
           ) : (
             <>
               <span>الدخول</span>
@@ -246,34 +195,7 @@ function Splash({ onEnter }: { onEnter: () => void }) {
             </>
           )}
         </button>
-
-        {/* TRANSPARENT / WRAPPED GOLD BUTTON: إنشاء حساب جديد */}
-        <button 
-          onClick={handleRegisterClick}
-          className={`w-full font-black text-sm py-3 rounded-2xl active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 border cursor-pointer bg-white ${
-            currentUser
-              ? "text-red-500 hover:text-red-650 hover:bg-red-50 border-red-200"
-              : "border-[#d49a37] text-[#c28d32] hover:bg-amber-50"
-          }`}
-        >
-          {currentUser ? (
-            <>
-              <LogOut className="w-4.5 h-4.5 shrink-0" />
-              <span>تسجيل الخروج من الحساب</span>
-            </>
-          ) : (
-            <span>إنشاء حساب جديد</span>
-          )}
-        </button>
       </motion.div>
-
-      {/* Secure bottom sheet modal for Registration / Authentication */}
-      <AuthModals 
-        isOpen={authModalOpen} 
-        onClose={() => setAuthModalOpen(false)} 
-        initialTab={authModalTab}
-        onSuccess={handleAuthSuccess}
-      />
 
     </div>
   );

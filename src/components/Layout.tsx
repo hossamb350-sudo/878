@@ -256,16 +256,16 @@ export function Layout() {
               className={({ isActive }) =>
                 `flex flex-col items-center justify-start pt-2 pb-2 w-full transition-colors relative min-h-[4.25rem] sm:min-h-[4.5rem] ${
                   isActive
-                    ? "text-blue-600 dark:text-blue-400"
+                    ? "text-amber-600 dark:text-amber-400"
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {isActive && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-blue-600 rounded-b-full"></div>}
+                  {isActive && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-550 rounded-b-full"></div>}
                   <div className="h-6 w-full flex items-center justify-center mb-1 shrink-0">
-                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 ${isActive ? 'fill-blue-100 dark:fill-blue-900/30' : ''}`} />
+                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 ${isActive ? 'fill-amber-100 dark:fill-amber-900/30' : ''}`} />
                   </div>
                   <span className="text-[9px] min-[380px]:text-[10px] sm:text-xs font-semibold text-center leading-tight line-clamp-2 px-0.5 tracking-tight w-full">
                     {item.label}

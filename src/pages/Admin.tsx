@@ -4,9 +4,10 @@ import { auth, db } from "../firebase";
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
-import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid } from "lucide-react";
+import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid, Send, MessageCircle, Globe, Bell } from "lucide-react";
 import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile, LeaderContent } from "../types";
 import { motion, AnimatePresence } from "motion/react";
+import { notificationService } from "../services/NotificationService";
 
 export function Admin() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -97,7 +98,7 @@ export function Admin() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-gray-500 font-bold">جاري التحقق من صلاحيات الدخول...</p>
+        <p className="text-gray-500 font-bold">جاري تسجيل الدخول...</p>
       </div>
     );
   }
@@ -105,10 +106,10 @@ export function Admin() {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-         <div className="w-20 h-20 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mb-6">
-            <User className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+         <div className="w-20 h-20 bg-amber-100 dark:bg-amber-950/40 rounded-full flex items-center justify-center mb-6">
+            <User className="w-10 h-10 text-amber-600 dark:text-amber-400" />
          </div>
-         <h1 className="text-3xl font-black mb-2 text-gray-900 dark:text-white">مرحباً بك في منصة تعز</h1>
+         <h1 className="text-3xl font-black mb-2 text-gray-900 dark:text-white">مرحباً بك في المنصة الإعلامية</h1>
          <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm">سجل دخولك عبر حساب جوجل للوصول إلى تفضيلاتك وإدارة حسابك الشخصي.</p>
          
          <button 
@@ -302,38 +303,107 @@ function UserProfileView({ user, profile, logout }: { user: FirebaseUser, profil
                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full inline-block">حساب قارئ</span>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
-                   <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                      <div className="flex items-center gap-3 mb-4">
-                         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400">
-                            <Settings className="w-5 h-5" />
+                <div className="mt-10" dir="rtl">
+                   <div className="p-6 md:p-8 bg-blue-50/50 dark:bg-slate-900/40 border border-blue-100 dark:border-slate-800 rounded-3xl text-right transition">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+                         <div className="flex-1 space-y-2">
+                            <h3 className="text-xl font-black text-blue-950 dark:text-blue-100 flex items-center gap-2.5">
+                               <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                               إشعارات الهاتف الفورية (Push Notifications)
+                            </h3>
                          </div>
-                         <h3 className="font-bold text-lg">إدارة الحساب</h3>
-                      </div>
-                      <p className="text-sm text-gray-500 mb-6">يمكنك التحكم في إعدادات خصوصيتك وكيفية ظهور حسابك في التعليقات والتنبيهات.</p>
-                      <button className="w-full py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition opacity-50 cursor-not-allowed">
-                         قريباً: تعديل الملف الشخصي
-                      </button>
-                   </div>
-                   
-                   <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border border-gray-100 dark:border-gray-800">
-                      <div className="flex items-center gap-3 mb-4">
-                         <div className="w-10 h-10 bg-pink-100 dark:bg-pink-900/30 rounded-xl flex items-center justify-center text-pink-600 dark:text-pink-400">
-                            <Heart className="w-5 h-5" />
+                         
+                         <div className="flex items-center gap-3 shrink-0">
+                            <span className="text-sm font-extrabold text-gray-500">
+                               {localStorage.getItem("push_notifications_enabled") === null || localStorage.getItem("push_notifications_enabled") === "true" ? "مفعّلة الآن" : "غير مفعّلة"}
+                            </span>
+                            <button
+                               onClick={async () => {
+                                  const current = localStorage.getItem("push_notifications_enabled") === null || localStorage.getItem("push_notifications_enabled") === "true";
+                                  const nextVal = !current;
+                                  const success = await notificationService.setEnabled(nextVal);
+                                  if (nextVal && !success) {
+                                     alert("تنبيه: يرجى تمكين صلاحية الإشعارات من إعدادات النظام لتلقي التنبيهات.");
+                                     await notificationService.setEnabled(false);
+                                  }
+                                  window.location.reload();
+                               }}
+                               className={`w-14 h-8 flex items-center rounded-full p-1 cursor-pointer transition-all duration-300 ${
+                                  (localStorage.getItem("push_notifications_enabled") === null || localStorage.getItem("push_notifications_enabled") === "true")
+                                     ? "bg-emerald-500 justify-start" 
+                                     : "bg-gray-300 dark:bg-gray-700 justify-end"
+                               }`}
+                            >
+                               <div className="w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center font-bold text-[10px]" />
+                            </button>
                          </div>
-                         <h3 className="font-bold text-lg">المفضلة</h3>
                       </div>
-                      <p className="text-sm text-gray-500 mb-6">الأخبار والمقالات التي قمت بحفظها للرجوع إليها لاحقاً ستظهر في هذا القسم.</p>
-                      <button className="w-full py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition opacity-50 cursor-not-allowed">
-                         لا توجد مفضلات حالياً
-                      </button>
                    </div>
                 </div>
                 
-                <div className="mt-12 p-8 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-3xl text-center">
-                   <AlertTriangle className="w-12 h-12 text-gray-200 dark:text-gray-700 mx-auto mb-4" />
-                   <h3 className="font-bold text-gray-400 dark:text-gray-600">منطقة للمديرين فقط</h3>
-                   <p className="text-xs text-gray-400 dark:text-gray-600 mt-2 max-w-xs mx-auto">عذراً، هذا الحساب ليس لديه صلاحيات الوصول إلى لوحة الإدارة. يمكنك الاستمتاع بتصفح المنصة من الواجهة العامة.</p>
+                <div className="mt-12 p-6 md:p-8 bg-amber-500/5 dark:bg-amber-950/10 border border-amber-600/20 dark:border-amber-500/20 rounded-3xl text-right">
+                   <h3 className="text-xl font-black text-amber-800 dark:text-amber-400 mb-6 flex items-center justify-end gap-2">
+                      تواصل معنا
+                      <MessageCircle className="w-5 h-5 text-amber-600" />
+                   </h3>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" dir="rtl">
+                      {/* Media Office */}
+                      <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                         <div className="flex-1">
+                            <span className="text-xs font-bold text-gray-400 block mb-0.5">المكتب الرسمي</span>
+                            <span className="font-extrabold text-gray-800 dark:text-gray-100 font-sans">مكتب الإعلام تعز</span>
+                         </div>
+                         <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400">
+                            <Globe className="w-5 h-5" />
+                         </div>
+                      </div>
+
+                      {/* X (formerly Twitter) */}
+                      <a href="https://x.com/Taizgio11" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-zinc-800 dark:hover:border-zinc-600 hover:shadow-md transition flex items-center justify-between">
+                         <div className="flex-1">
+                            <span className="text-xs font-bold text-gray-400 block mb-0.5">منصة X (تويتر)</span>
+                            <span className="font-extrabold text-gray-900 dark:text-gray-100 font-mono">@Taizgio11</span>
+                         </div>
+                         <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center text-zinc-900 dark:text-white shrink-0">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                         </div>
+                      </a>
+
+                      {/* Telegram Channel 1 */}
+                      <a href="https://t.me/taizgio" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-sky-400 hover:shadow-md transition flex items-center justify-between">
+                         <div className="flex-1">
+                            <span className="text-xs font-bold text-gray-400 block mb-0.5">قناة التيليجرام الأولى</span>
+                            <span className="font-extrabold text-sky-500 dark:text-sky-400 font-mono">@taizgio</span>
+                         </div>
+                         <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/50 flex items-center justify-center text-sky-500 dark:text-sky-400">
+                            <Send className="w-5 h-5" />
+                         </div>
+                      </a>
+
+                      {/* Telegram Channel 2 */}
+                      <a href="https://t.me/TaizOI" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-sky-400 hover:shadow-md transition flex items-center justify-between">
+                         <div className="flex-1">
+                            <span className="text-xs font-bold text-gray-400 block mb-0.5">قناة التيليجرام الثانية</span>
+                            <span className="font-extrabold text-sky-500 dark:text-sky-400 font-mono">@TaizOI</span>
+                         </div>
+                         <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/50 flex items-center justify-center text-sky-500 dark:text-sky-400">
+                            <Send className="w-5 h-5" />
+                         </div>
+                      </a>
+
+                      {/* WhatsApp Channel */}
+                      <a href="https://whatsapp.com/channel/0029Vahhp6S7z4kYmZrjNf3W" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-green-500 hover:shadow-md transition flex items-center justify-between sm:col-span-2">
+                         <div className="flex-1">
+                            <span className="text-xs font-bold text-gray-400 block mb-0.5">قناة الواتساب الرسمية</span>
+                            <span className="font-extrabold text-green-600 dark:text-green-400">انضم لقناتنا على الواتساب للمتابعة أولاً بأول</span>
+                         </div>
+                         <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-950/50 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
+                            <MessageCircle className="w-5 h-5" />
+                         </div>
+                      </a>
+                   </div>
                 </div>
              </div>
           </div>
@@ -354,6 +424,13 @@ function AdminUrgentNews() {
         text,
         createdAt: Date.now(),
         expiresAt: Date.now() + 60000 // 1 minute
+      });
+      await addDoc(collection(db, "notifications"), {
+        title: "خبر عاجل 🔴",
+        body: text,
+        category: "news",
+        link: "/",
+        createdAt: Date.now()
       });
       alert("تم نشر الخبر العاجل بنجاح (سيختفي تلقائياً بعد دقيقة)");
       setText("");
@@ -579,8 +656,15 @@ function AdminNews() {
         await updateDoc(doc(db, "news", editingId), payload);
         alert("تم تعديل الخبر بنجاح!");
       } else {
-        await addDoc(collection(db, "news"), {
+        const docRef = await addDoc(collection(db, "news"), {
           ...payload,
+          createdAt: Date.now()
+        });
+        await addDoc(collection(db, "notifications"), {
+          title: "خبر جديد 📰",
+          body: payload.title,
+          category: "news",
+          link: `/news/${docRef.id}`,
           createdAt: Date.now()
         });
         alert("تم إضافة الخبر بنجاح!");
@@ -887,8 +971,15 @@ function AdminVideos() {
          });
          alert("تم تعديل الفيديو بنجاح");
       } else {
-         await addDoc(collection(db, "videos"), {
+         const docRef = await addDoc(collection(db, "videos"), {
             title, url, thumbnailUrl: thumb, category: category.trim(), order: parsedOrder, views: 0, createdAt: Date.now()
+         });
+         await addDoc(collection(db, "notifications"), {
+            title: "محتوى مرئي جديد 🎥",
+            body: `تم إضافة فيديو جديد: "${title}"`,
+            category: "video",
+            link: `/watch/${docRef.id}`,
+            createdAt: Date.now()
          });
          alert("تم إضافة الفيديو بنجاح"); 
       }
@@ -1086,6 +1177,13 @@ function AdminLive() {
           alert("تم تعديل البث بنجاح");
         } else {
           await addDoc(collection(db, "livestreams"), { ...payload, createdAt: Date.now() });
+          await addDoc(collection(db, "notifications"), {
+             title: "بث مباشر جديد 🔴",
+             body: `بدأ البث المباشر لـ: "${name}" الآن.`,
+             category: "news",
+             link: "/watch",
+             createdAt: Date.now()
+          });
           alert("تم إضافة البث بنجاح");
         }
         
@@ -1839,6 +1937,13 @@ function AdminEvents() {
         alert("تم التعديل");
       } else {
         await addDoc(collection(db, "events"), data);
+        await addDoc(collection(db, "notifications"), {
+           title: "فعالية جديدة 📅",
+           body: `تم إضافة فعالية جديدة: "${data.title}"`,
+           category: "news",
+           link: "/events",
+           createdAt: Date.now()
+        });
         alert("تمت الإضافة");
       }
       reset();

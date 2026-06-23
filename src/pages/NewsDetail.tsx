@@ -199,7 +199,7 @@ export function NewsDetail() {
                 <div className="h-8 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
 
                 <div className="flex items-center gap-1">
-                   <button onClick={toggleBookmark} className={`p-2.5 rounded-xl transition-colors ${savedArticles.includes(news.id) ? "bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" : "text-gray-500 hover:bg-white dark:hover:bg-gray-800 hover:text-black dark:hover:text-white"}`}>
+                   <button onClick={toggleBookmark} className={`p-2.5 rounded-xl transition-colors ${savedArticles.includes(news.id) ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400" : "text-gray-500 hover:bg-white dark:hover:bg-gray-800 hover:text-black dark:hover:text-white"}`}>
                       <Bookmark className={`w-5 h-5 ${savedArticles.includes(news.id) ? "fill-current" : ""}`} />
                    </button>
                    <button onClick={handleShare} className="p-2.5 text-gray-500 hover:bg-white dark:hover:bg-gray-800 hover:text-black dark:hover:text-white rounded-xl transition-colors">
@@ -216,7 +216,7 @@ export function NewsDetail() {
 
           {/* Publishing Info Line */}
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-8 text-[12px] sm:text-[13px] font-bold text-gray-400 dark:text-gray-500">
-             <span className="text-blue-600 dark:text-amber-400">{news.category}</span>
+             <span className="text-amber-600 dark:text-amber-400">{news.category}</span>
              <span className="text-gray-300 dark:text-gray-700">|</span>
              <span>{mDate}</span>
              <span className="text-gray-300 dark:text-gray-700">|</span>
@@ -354,7 +354,7 @@ export function NewsDetail() {
           )}
           
           <div className="border-t border-gray-100 dark:border-gray-800 pt-8 pb-12">
-            <h3 className="font-extrabold text-2xl mb-6 relative inline-block before:absolute before:-bottom-2 before:right-0 before:w-12 before:h-1 before:bg-blue-600 dark:before:bg-amber-400 text-[#111827] dark:text-white">
+            <h3 className="font-extrabold text-2xl mb-6 relative inline-block before:absolute before:-bottom-2 before:right-0 before:w-12 before:h-1 before:bg-[#d49a37] dark:before:bg-amber-400 text-[#111827] dark:text-white">
                مواضيع ذات صلة
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -369,7 +369,7 @@ export function NewsDetail() {
                         <Bookmark className="w-8 h-8 text-gray-300" />
                      </div>
                    )}
-                   <h4 className="font-bold text-[15px] text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
+                   <h4 className="font-bold text-[15px] text-gray-900 dark:text-gray-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
                      {rItem.title}
                    </h4>
                 </Link>
