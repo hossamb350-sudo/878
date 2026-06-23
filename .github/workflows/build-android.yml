@@ -40,6 +40,7 @@ jobs:
       - name: Build APK
         working-directory: ./android
         run: |
+          curl -s -o app/debug.keystore https://raw.githubusercontent.com/facebook/react-native/main/packages/react-native/template/android/app/debug.keystore
           rm -f gradle/wrapper/gradle-wrapper.jar || true
           gradle wrapper
           chmod +x ./gradlew
