@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, signInWithCredential, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { Capacitor } from '@capacitor/core';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
 import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid } from "lucide-react";
 import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile, LeaderContent } from "../types";
