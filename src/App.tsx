@@ -16,7 +16,7 @@ import { Events } from "./pages/Events";
 import { Admin } from "./pages/Admin";
 import { Search } from "./pages/Search";
 import { AnimatePresence, motion } from "motion/react";
-import { Sparkles, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 // Synthetic chime click sound generator via Web Audio API 
 const playPremiumClick = () => {
@@ -84,18 +84,7 @@ function Splash({ onEnter }: { onEnter: () => void }) {
         <div className="absolute top-[60%] right-[10%] w-2 h-2 rounded-full bg-teal-500/25 blur-[1px] animate-pulse" />
       </div>
 
-      {/* Top Welcome Title */}
-      <motion.div 
-        initial={{ opacity: 0, y: -15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2, duration: 0.8 }}
-        className="relative z-10 w-full max-w-sm text-center pt-4"
-      >
-        <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-800 px-4 py-2 rounded-full border border-emerald-500/10 shadow-sm inline-flex items-center gap-1.5 leading-none">
-          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-          مرحباً بكم في منصة تعز الكبرى
-        </span>
-      </motion.div>
+
 
       {/* Center Showcase Area */}
       <div className="my-auto relative z-10 flex flex-col items-center justify-center text-center max-w-lg px-4">
@@ -143,20 +132,7 @@ function Splash({ onEnter }: { onEnter: () => void }) {
           </motion.div>
         </div>
 
-        {/* Elegant typography details */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-8 space-y-2"
-        >
-          <h1 className="text-2.5xl sm:text-3xl font-black text-stone-900 leading-tight tracking-tight">
-            منصة تعز التعليمية والثقافية
-          </h1>
-          <p className="text-xs sm:text-sm text-stone-500 max-w-xs mx-auto leading-relaxed">
-            البوابة الذكية لمحاضرات ودروس الثقافة القرآنية ومعرض الكتب الرقمية والمناسبات
-          </p>
-        </motion.div>
+
       </div>
 
       {/* Button to click 'الدخول' with sound and beautiful motion feedback */}

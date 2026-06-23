@@ -9,7 +9,6 @@ import {
   Trash2,
   Undo2,
   Quote,
-  Sparkles,
   BookMarked,
   MessageSquare,
 } from "lucide-react";
@@ -562,7 +561,7 @@ export function QuranStats({
             <div className="space-y-3 font-sans text-right">
               {highlights.length === 0 ? (
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-2xl border border-gray-100 dark:border-gray-700 text-center text-gray-500">
-                  <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                  <BookMarked className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="font-bold">لا تملك خطوط تظليل وحفظ.</p>
                   <p className="text-xs text-gray-400 mt-1">
                     أظلل الفقرات الهامة بألوان مميزة لتسهيل الحفظ والمراجعة.

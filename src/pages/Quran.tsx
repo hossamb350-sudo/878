@@ -4,7 +4,7 @@ import { collection, query, orderBy, onSnapshot, doc, getDoc, getDocs, setDoc, d
 import { db, auth } from "../firebase";
 import { QuranSeries, QuranLesson, QuranSyllabus, QuranExcerpt, QuranLastRead } from "../types";
 import { 
-  Menu, Info, MoreVertical, Search, Library, Bookmark, Sparkles,
+  Menu, Info, MoreVertical, Search, Library, Bookmark, Trophy,
   Mic, Undo2, Calendar, Quote, User, X, ChevronLeft, ChevronRight, BookOpen
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -375,7 +375,7 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, activeView, setActiveView, h
 
           <div className="flex-1 overflow-y-auto py-4 bg-gray-50 dark:bg-gray-950">
             <SidebarItem icon={<Library className="w-5 h-5 text-blue-500" />} label="دروس الهدى" description="قائمة السلاسل والدروس الكاملة" active={activeView === 'series' || activeView === 'lessons'} onClick={() => { setActiveView('series'); setIsSidebarOpen(false); }} />
-            <SidebarItem icon={<Sparkles className="w-5 h-5 text-emerald-500 fill-emerald-500/10" />} label="لوحة التقدم" description="متابعة إنجازك وإحصائيات القراءة" active={activeView === 'stats'} onClick={() => { setActiveView('stats'); setIsSidebarOpen(false); }} />
+            <SidebarItem icon={<Trophy className="w-5 h-5 text-emerald-500 fill-emerald-500/10" />} label="لوحة التقدم" description="متابعة إنجازك وإحصائيات القراءة" active={activeView === 'stats'} onClick={() => { setActiveView('stats'); setIsSidebarOpen(false); }} />
             <SidebarItem icon={<Undo2 className="w-5 h-5 rotate-180 text-amber-500" />} label="آخر قراءة" description="العودة لأخر درس توقفت عنده" onClick={handleLastReadClick} />
             <SidebarItem icon={<Calendar className="w-5 h-5 text-purple-500" />} label="مقرر الدروس" description="المقررات الدراسية المحددة" active={activeView === 'syllabuses' || activeView === 'syllabus-detail'} onClick={() => { setActiveView('syllabuses'); setIsSidebarOpen(false); }} />
             <SidebarItem icon={<Quote className="w-5 h-5 text-rose-500" />} label="المقتطفات" description="الجواهر المنتقاة من الدروس" active={activeView === 'excerpts' || activeView === 'excerpt-detail'} onClick={() => { setActiveView('excerpts'); setIsSidebarOpen(false); }} />

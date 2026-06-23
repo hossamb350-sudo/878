@@ -14,7 +14,8 @@ import {
   ZoomOut, 
   Copy, 
   Check, 
-  Sparkles, 
+  PlayCircle,
+  FileText,
   Share2, 
   BookOpen, 
   Type
@@ -308,7 +309,7 @@ export function LeaderItem() {
         <div className="relative z-10 space-y-4">
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-emerald-100/70 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/10">
-              <Sparkles className="w-3.5 h-3.5" />
+              {content.type === "video" ? <PlayCircle className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
               {content.type === "video" ? "عرض مرئي" : "خطابات ودروس"}
             </span>
           </div>

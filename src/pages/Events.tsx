@@ -18,7 +18,6 @@ import {
   ExternalLink,
   SlidersHorizontal,
   MapPin,
-  Sparkles,
   Share2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -177,7 +176,7 @@ export function Events() {
               ) : (
                 <div className="py-6 text-center w-full font-sans">
                    <div className="text-base font-bold text-emerald-300 flex items-center justify-center gap-2 mb-1.5">
-                      <Sparkles className="w-5 h-5 text-amber-500" /> لا توجد مناسبات مسجلة لهذا اليوم التاريخي
+                      <Info className="w-5 h-5 text-amber-500" /> لا توجد مناسبات مسجلة لهذا اليوم التاريخي
                    </div>
                    <p className="text-stone-400 text-xs">تصفح التقويم وأقرب المناسبات من اللوحة المجاورة</p>
                 </div>

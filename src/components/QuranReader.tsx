@@ -8,7 +8,7 @@ import {
   Sliders,
   Eye,
   EyeOff,
-  Sparkles,
+  Highlighter,
   Maximize,
   Minimize2,
   ChevronLeft,
@@ -800,7 +800,7 @@ export function QuranReader({
                       className="w-10 h-10 rounded-full bg-yellow-400 border-2 border-white shadow-xl cursor-pointer flex items-center justify-center shrink-0"
                       title="تظليل أصفر"
                     >
-                      <Sparkles className="w-5 h-5 text-amber-800" />
+                      <Highlighter className="w-5 h-5 text-amber-800" />
                     </motion.button>
                     <motion.button
                       whileHover={{ scale: 1.25 }}
@@ -819,7 +819,7 @@ export function QuranReader({
                       className="w-10 h-10 rounded-full bg-emerald-400 border-2 border-white shadow-xl flex items-center justify-center cursor-pointer shrink-0"
                       title="تظليل أخضر"
                     >
-                      <Sparkles className="w-5 h-5 text-emerald-800" />
+                      <Highlighter className="w-5 h-5 text-emerald-800" />
                     </motion.button>
                   </div>
 
