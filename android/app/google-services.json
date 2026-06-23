@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "565624301516-rlhmjt28tpkmn30g773e6ff2eclo23no.apps.googleusercontent.com",
+          "client_id": "565624301516-em6l124n9crr56fumei982hqb71lda1a.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.taiz.platform",
-            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+            "certificate_hash": "a00f7b73e68e7c7dc7064c37a481d678eba65f50"
           }
         },
         {
