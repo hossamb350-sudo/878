@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "565624301516",
+    "project_id": "gen-lang-client-0926657815",
+    "storage_bucket": "gen-lang-client-0926657815.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565624301516:android:3dd0c9be94870cc238df69",
+        "android_client_info": {
+          "package_name": "com.taiz.platform"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtDGIkBdjQp46d51ZRkQN4ZxlCD6_is3M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
