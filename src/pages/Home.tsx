@@ -370,7 +370,7 @@ export function Home() {
                       
                       <div className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
                         {videos.map(video => (
-                           <Link key={video.id} to={`/watch?v=${encodeURIComponent(video.url)}`} className="snap-start shrink-0 w-[240px] sm:w-[280px] group block">
+                           <Link key={video.id} to={`/watch/${video.id}`} className="snap-start shrink-0 w-[240px] sm:w-[280px] group block">
                               <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-gray-900 mb-2.5 shadow-md">
                                  {video.thumbnailUrl ? (
                                     <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-80 group-hover:scale-103 transition-transform duration-500" />
