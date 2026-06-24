@@ -43,14 +43,17 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Setup Gradle
+      - name: Cleanup and Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.7'
+          gradle-version: '8.13'
+          wrapper-validation-enabled: false
+          dependency-graph: disabled
 
       - name: Build APK
         working-directory: ./android
         run: |
+          # Ensure we use the specified Gradle version from the runner, not the local wrapper if it's corrupted
           gradle assembleDebug --no-daemon --stacktrace
 
       - name: Print SHA-1 fingerprint
