@@ -5,7 +5,7 @@ import { db } from "../firebase";
 import { NewsItem, VideoItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft } from "lucide-react";
+import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X } from "lucide-react";
 import { motion } from "motion/react";
 
 function getRelativeArabicTime(timestamp: number): string {

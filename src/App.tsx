@@ -20,7 +20,7 @@ import { ArrowLeft } from "lucide-react";
 import { SplashCarousel } from "./components/SplashCarousel";
 
 import { NavigationController } from "./components/NavigationController";
-import splashImg from "../Resources/splash.png";
+const splashImg = "/Resources/splash.png";
 
 // Synthetic chime click sound generator via Web Audio API 
 const playPremiumClick = () => {
