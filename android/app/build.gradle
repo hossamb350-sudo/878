@@ -42,14 +42,6 @@ dependencies {
     implementation project(':capacitor-cordova-android-plugins')
 }
 
-configurations.all {
-    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-        if (details.requested.group == 'org.bouncycastle') {
-            details.useTarget 'org.bouncycastle:bcprov-jdk18on:1.78.1'
-        }
-    }
-}
-
 apply from: 'capacitor.build.gradle'
 
 try {

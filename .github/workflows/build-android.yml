@@ -24,7 +24,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Cache Android debug.keystore
         uses: actions/cache@v4
@@ -43,24 +43,15 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Remove Local Gradle Wrapper
-        run: |
-          rm -f android/gradlew
-          rm -f android/gradlew.bat
-          rm -rf android/gradle/wrapper
-
-      - name: Cleanup and Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.13'
-          validate-wrappers: false
-          dependency-graph: disabled
-
       - name: Build APK
         working-directory: ./android
         run: |
-          # Ensure we use the specified Gradle version from the runner, not the local wrapper if it's corrupted
-          gradle assembleDebug --no-daemon --stacktrace
+          # Remove existing wrapper to fix potential corruption and ensure fresh generation
+          rm -rf gradle/wrapper
+          # Use Gradle 8.13 as required by AGP 8.13.0
+          gradle wrapper --gradle-version 8.13
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
 
       - name: Print SHA-1 fingerprint
         working-directory: ./android
