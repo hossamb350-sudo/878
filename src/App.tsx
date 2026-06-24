@@ -20,6 +20,7 @@ import { ArrowLeft } from "lucide-react";
 import { SplashCarousel } from "./components/SplashCarousel";
 
 import { NavigationController } from "./components/NavigationController";
+import splashImg from "../Resources/splash.png";
 
 // Synthetic chime click sound generator via Web Audio API 
 const playPremiumClick = () => {
@@ -50,7 +51,6 @@ const playPremiumClick = () => {
 };
 
 function Splash({ onEnter }: { onEnter: () => void }) {
-  const [imgSrc, setImgSrc] = useState("/logo.png");
   const [clicked, setClicked] = useState(false);
   const [carouselIndex, setCarouselIndex] = useState(0);
 
@@ -136,25 +136,17 @@ function Splash({ onEnter }: { onEnter: () => void }) {
           {/* Static outer accent ring */}
           <div className="absolute -inset-4 rounded-full border border-[#d49a37]/5" />
 
-          {/* Standard Logo Frame Card Container */}
+          {/* Natural Centered Logo Container without borders or padding */}
           <motion.div 
             initial={{ scale: 0.94, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.9, ease: "easeOut" }}
-            whileHover={{ scale: 1.02 }}
-            className="relative w-full h-full bg-white rounded-[2.5rem] p-7 shadow-2xl shadow-stone-200/80 flex items-center justify-center pointer-events-auto border border-stone-100"
+            className="relative w-full h-full flex items-center justify-center pointer-events-auto"
           >
             <img 
-              src={imgSrc} 
-              alt="شعار المنصة الإعلامية" 
-              className="w-full h-full object-contain filter drop-shadow-sm select-none" 
-              onError={() => {
-                if (imgSrc === "https://i.postimg.cc/VNJWMsgN/Picsart-26-06-22-04-24-11-439.png") {
-                  setImgSrc("/logo.png");
-                } else if (imgSrc === "/logo.png") {
-                  setImgSrc("/logo.svg");
-                }
-              }} 
+              src={splashImg} 
+              alt="شعار شاشة البداية" 
+              className="w-full h-full object-contain filter drop-shadow-md select-none" 
             />
           </motion.div>
         </div>

@@ -3,6 +3,7 @@ import { db } from "../firebase";
 import { AppNotification } from "../types";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { Capacitor } from "@capacitor/core";
+import iconImg from "../../Resources/icon.png";
 
 class NotificationService {
   private isListening = false;
@@ -174,8 +175,8 @@ class NotificationService {
         try {
           const systemNotification = new Notification(n.title, {
             body: n.body,
-            icon: "/logo.png",
-            badge: "/logo.png",
+            icon: iconImg,
+            badge: iconImg,
             tag: n.id,
             requireInteraction: true
           });
