@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.taiz.platform',
-  appName: 'TaizPlatform',
+  appName: 'المنصة الإعلامية',
   webDir: 'dist',
   plugins: {
     GoogleAuth: {
