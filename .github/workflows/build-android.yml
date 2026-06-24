@@ -46,8 +46,8 @@ jobs:
       - name: Build APK
         working-directory: ./android
         run: |
-          # Use the installed gradle to regenerate a fresh wrapper if it's corrupt
-          gradle wrapper
+          # Regenerate a fresh wrapper with a compatible version (8.10.2) to fix corruption
+          gradle wrapper --gradle-version 8.10.2
           chmod +x ./gradlew
           ./gradlew assembleDebug
 
