@@ -135,7 +135,7 @@ export function WatchItem() {
         <h2 className="text-2xl font-black mb-2 text-stone-900 dark:text-white">التقرير المقرون غير موجود</h2>
         <p className="text-gray-500 mb-6 font-bold">ربما قد تم إزالته من قبل الإدارة أو تم كتابته بشكل غير دقيق.</p>
         <button 
-          onClick={() => navigate('/watch')}
+          onClick={() => navigate(-1)}
           className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-bold transition inline-flex items-center gap-2 shadow-lg"
         >
           <ArrowRight className="w-4 h-4" /> عودة لقسم شاهد
@@ -149,7 +149,7 @@ export function WatchItem() {
       
       {/* Return line */}
       <button 
-        onClick={() => navigate('/watch')}
+        onClick={() => navigate(-1)}
         className="mb-5 flex items-center gap-2 font-black text-sm text-gray-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 transition"
       >
         <ArrowRight className="w-4 h-4" /> عودة لقسم شاهد المرئي

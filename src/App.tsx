@@ -19,6 +19,8 @@ import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
 import { SplashCarousel } from "./components/SplashCarousel";
 
+import { NavigationController } from "./components/NavigationController";
+
 // Synthetic chime click sound generator via Web Audio API 
 const playPremiumClick = () => {
   try {
@@ -246,6 +248,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <NavigationController />
       <AnimatePresence>
         {showSplash && (
           <motion.div 

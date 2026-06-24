@@ -202,7 +202,7 @@ export function LeaderItem() {
         <h2 className="text-2xl font-black mb-2 text-stone-900 dark:text-white">المادة غير موجودة</h2>
         <p className="text-gray-500 mb-6 font-bold">قد يكون تم سحبها أو أن الرابط غير دقيق.</p>
         <button 
-          onClick={() => navigate('/leader')}
+          onClick={() => navigate(-1)}
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-bold transition duration-300 inline-flex items-center gap-2 shadow-lg"
         >
           <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
@@ -291,7 +291,7 @@ export function LeaderItem() {
       </div>
 
       <button 
-        onClick={() => navigate('/leader')}
+        onClick={() => navigate(-1)}
         className="mb-6 flex items-center gap-2 font-black text-sm text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition"
       >
         <ArrowRight className="w-4 h-4" /> عودة لقسم السيد القائد
