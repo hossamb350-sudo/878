@@ -45,15 +45,20 @@ jobs:
 
       - name: Fix and Regenerate Gradle Wrapper
         run: |
-          # The pre-installed Gradle on the runner might be 9.x, which is incompatible with AGP 8.2.
-          # We regenerate the wrapper from the root (where no AGP is present) to avoid evaluation errors.
+          # Create a temporary empty gradle project to generate clean wrapper files
+          mkdir temp_gradle
+          cd temp_gradle
+          touch build.gradle
           gradle wrapper --gradle-version 8.2.1
+          cd ..
           # Sync the valid wrapper files into the android directory
           mkdir -p android/gradle/wrapper
-          cp gradle/wrapper/gradle-wrapper.jar android/gradle/wrapper/
-          cp gradle/wrapper/gradle-wrapper.properties android/gradle/wrapper/
-          cp gradlew android/
+          cp temp_gradle/gradle/wrapper/gradle-wrapper.jar android/gradle/wrapper/
+          cp temp_gradle/gradle/wrapper/gradle-wrapper.properties android/gradle/wrapper/
+          cp temp_gradle/gradlew android/
           chmod +x android/gradlew
+          # Clean up
+          rm -rf temp_gradle
 
       - name: Build APK
         working-directory: ./android
