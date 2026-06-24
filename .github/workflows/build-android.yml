@@ -43,27 +43,15 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Fix and Regenerate Gradle Wrapper
-        run: |
-          # Create a temporary empty gradle project to generate clean wrapper files
-          mkdir temp_gradle
-          cd temp_gradle
-          touch build.gradle
-          gradle wrapper --gradle-version 8.2.1
-          cd ..
-          # Sync the valid wrapper files into the android directory
-          mkdir -p android/gradle/wrapper
-          cp temp_gradle/gradle/wrapper/gradle-wrapper.jar android/gradle/wrapper/
-          cp temp_gradle/gradle/wrapper/gradle-wrapper.properties android/gradle/wrapper/
-          cp temp_gradle/gradlew android/
-          chmod +x android/gradlew
-          # Clean up
-          rm -rf temp_gradle
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
 
       - name: Build APK
         working-directory: ./android
         run: |
-          ./gradlew assembleDebug
+          gradle assembleDebug --no-daemon --stacktrace
 
       - name: Print SHA-1 fingerprint
         working-directory: ./android
