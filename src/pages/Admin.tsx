@@ -4,58 +4,36 @@ import { auth, db } from "../firebase";
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
-import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid, Send, MessageCircle, Globe, Bell, MonitorPlay } from "lucide-react";
+import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid, Send, MessageCircle, Globe, Bell, MonitorPlay, Share2 } from "lucide-react";
 import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile, LeaderContent } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { notificationService } from "../services/NotificationService";
 
 const ContactUsSection = () => (
-  <div className="p-6 md:p-8 bg-amber-500/5 dark:bg-amber-950/10 border border-amber-600/20 dark:border-amber-500/20 rounded-3xl text-right">
-     <h3 className="text-xl font-black text-amber-800 dark:text-amber-400 mb-6 flex items-center justify-end gap-2">
-        تواصل معنا
-        <MessageCircle className="w-5 h-5 text-amber-600" />
+  <div className="p-6 md:p-8 bg-amber-500/5 dark:bg-amber-950/10 border border-amber-600/20 dark:border-amber-500/20 rounded-3xl text-right" dir="rtl">
+     <h3 className="text-xl font-black text-amber-800 dark:text-amber-400 mb-6 flex items-center gap-2">
+        <Share2 className="w-5 h-5 text-amber-600" />
+        تابعنا
      </h3>
-     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" dir="rtl">
-        {/* Meyon Platform */}
-        <a href="https://meyon.com.ye/c/taizgio/" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-red-500 hover:shadow-md transition flex items-center justify-between">
-           <div className="flex-1">
-              <span className="text-xs font-bold text-gray-400 block mb-0.5">المنصة الرسمية</span>
-              <span className="font-extrabold text-red-600 dark:text-red-400 font-sans">منصة ميون</span>
+     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* WhatsApp Channel */}
+        <a href="https://whatsapp.com/channel/0029Vahhp6S7z4kYmZrjNf3W" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-green-500 hover:shadow-md transition flex items-center justify-between sm:col-span-2">
+           <div className="flex-1 text-right">
+              <span className="font-extrabold text-green-600 dark:text-green-400">قناة الواتساب</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">انضم لقناتنا للمتابعة أولاً بأول</p>
            </div>
-           <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/50 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
-              <MonitorPlay className="w-5 h-5" />
-           </div>
-        </a>
-
-        {/* Media Office */}
-        <div className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center justify-between">
-           <div className="flex-1">
-              <span className="text-xs font-bold text-gray-400 block mb-0.5">المكتب الرسمي</span>
-              <span className="font-extrabold text-gray-800 dark:text-gray-100 font-sans">مكتب الإعلام تعز</span>
-           </div>
-           <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
-              <Globe className="w-5 h-5" />
-           </div>
-        </div>
-
-        {/* X (formerly Twitter) */}
-        <a href="https://x.com/Taizgio11" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-zinc-800 dark:hover:border-zinc-600 hover:shadow-md transition flex items-center justify-between">
-           <div className="flex-1">
-              <span className="text-xs font-bold text-gray-400 block mb-0.5">منصة X (تويتر)</span>
-              <span className="font-extrabold text-gray-900 dark:text-gray-100 font-mono">@Taizgio11</span>
-           </div>
-           <div className="w-10 h-10 rounded-xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center text-zinc-900 dark:text-white shrink-0">
+           <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
               </svg>
            </div>
         </a>
 
         {/* Telegram Channel 1 */}
         <a href="https://t.me/taizgio" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-sky-400 hover:shadow-md transition flex items-center justify-between">
-           <div className="flex-1">
-              <span className="text-xs font-bold text-gray-400 block mb-0.5">قناة التيليجرام الأولى</span>
-              <span className="font-extrabold text-sky-500 dark:text-sky-400 font-mono">@taizgio</span>
+           <div className="flex-1 text-right">
+              <span className="font-extrabold text-sky-500 dark:text-sky-400">قناة التيليجرام الأولى</span>
+              <span className="font-mono text-xs text-gray-400 block mt-0.5">@taizgio</span>
            </div>
            <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/50 flex items-center justify-center text-sky-500 dark:text-sky-400 shrink-0">
               <Send className="w-5 h-5" />
@@ -64,27 +42,36 @@ const ContactUsSection = () => (
 
         {/* Telegram Channel 2 */}
         <a href="https://t.me/TaizOI" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-sky-400 hover:shadow-md transition flex items-center justify-between">
-           <div className="flex-1">
-              <span className="text-xs font-bold text-gray-400 block mb-0.5">قناة التيليجرام الثانية</span>
-              <span className="font-extrabold text-sky-500 dark:text-sky-400 font-mono">@TaizOI</span>
+           <div className="flex-1 text-right">
+              <span className="font-extrabold text-sky-500 dark:text-sky-400">قناة التيليجرام الثانية</span>
+              <span className="font-mono text-xs text-gray-400 block mt-0.5">@TaizOI</span>
            </div>
            <div className="w-10 h-10 rounded-xl bg-sky-50 dark:bg-sky-950/50 flex items-center justify-center text-sky-500 dark:text-sky-400 shrink-0">
               <Send className="w-5 h-5" />
            </div>
         </a>
 
-        {/* WhatsApp Channel */}
-        <a href="https://whatsapp.com/channel/0029Vahhp6S7z4kYmZrjNf3W" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-green-500 hover:shadow-md transition flex items-center justify-between sm:col-span-2">
-           <div className="flex-1">
-              <span className="text-xs font-bold text-gray-400 block mb-0.5">قناة الواتساب الرسمية</span>
-              <span className="font-extrabold text-green-600 dark:text-green-400">انضم لقناتنا على الواتساب للمتابعة أولاً بأول</span>
+        {/* Meyon Platform */}
+        <a href="https://meyon.com.ye/c/taizgio/" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-red-500 hover:shadow-md transition flex items-center justify-between sm:col-span-2">
+           <div className="flex-1 text-right">
+              <span className="font-extrabold text-red-600 dark:text-red-400">منصة ميون</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">مشاهدة الفيديوهات والتقارير الحصرية</p>
            </div>
-           <div className="w-10 h-10 rounded-xl bg-green-50 dark:bg-green-900/40 flex items-center justify-center text-green-600 dark:text-green-400 shrink-0">
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                 <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
-              </svg>
+           <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-950/50 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
+              <MonitorPlay className="w-5 h-5" />
            </div>
         </a>
+     </div>
+
+     {/* Copyright Image */}
+     <div className="mt-8 pt-8 border-t border-amber-600/10 flex justify-center">
+        <img 
+           src="/copyright.png" 
+           alt="جميع الحقوق محفوظة" 
+           className="max-w-full h-auto max-h-32 opacity-90 hover:opacity-100 transition"
+           referrerPolicy="no-referrer"
+           onError={(e) => (e.currentTarget.style.display = 'none')}
+        />
      </div>
   </div>
 );
