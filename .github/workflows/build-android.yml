@@ -43,11 +43,17 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Remove Local Gradle Wrapper
+        run: |
+          rm -f android/gradlew
+          rm -f android/gradlew.bat
+          rm -rf android/gradle/wrapper
+
       - name: Cleanup and Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
-          wrapper-validation-enabled: false
+          validate-wrappers: false
           dependency-graph: disabled
 
       - name: Build APK
