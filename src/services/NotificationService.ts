@@ -3,7 +3,7 @@ import { db } from "../firebase";
 import { AppNotification } from "../types";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { Capacitor } from "@capacitor/core";
-const iconImg = "/app-icon.png";
+const iconImg = "/Resources/icon.png";
 
 class NotificationService {
   private isListening = false;

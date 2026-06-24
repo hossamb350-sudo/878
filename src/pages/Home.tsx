@@ -40,6 +40,19 @@ export function Home() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"top" | "following">("top");
   const [savedArticles, setSavedArticles] = useState<string[]>([]);
+  const [playingVideo, setPlayingVideo] = useState<VideoItem | null>(null);
+
+  const getEmbedUrl = (url: string) => {
+    if (!url) return '';
+    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+    if (ytMatch) {
+      return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&rel=0`;
+    }
+    if (url.includes('facebook.com')) {
+      return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&autoplay=1`;
+    }
+    return url;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -370,7 +383,7 @@ export function Home() {
                       
                       <div className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
                         {videos.map(video => (
-                           <Link key={video.id} to={`/watch/${video.id}`} className="snap-start shrink-0 w-[240px] sm:w-[280px] group block">
+                           <div key={video.id} onClick={() => setPlayingVideo(video)} className="snap-start shrink-0 w-[240px] sm:w-[280px] group block cursor-pointer">
                               <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-gray-900 mb-2.5 shadow-md">
                                  {video.thumbnailUrl ? (
                                     <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-80 group-hover:scale-103 transition-transform duration-500" />
@@ -385,7 +398,7 @@ export function Home() {
                                     <h4 className="text-white text-sm font-bold leading-tight line-clamp-3 text-right">{video.title}</h4>
                                  </div>
                               </div>
-                           </Link>
+                           </div>
                         ))}
                       </div>
                     </div>
@@ -397,6 +410,30 @@ export function Home() {
           </div>
         )}
       </div>
+
+      {playingVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+          <div className="relative w-full max-w-4xl bg-black rounded-xl overflow-hidden">
+            <button 
+              onClick={() => setPlayingVideo(null)}
+              className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/80 rounded-full text-white transition"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="aspect-video w-full">
+              <iframe 
+                src={getEmbedUrl(playingVideo.url)} 
+                className="w-full h-full border-0"
+                allowFullScreen
+                allow="autoplay; encrypted-media; picture-in-picture"
+              ></iframe>
+            </div>
+            <div className="p-4 bg-gray-900 text-white">
+              <h3 className="font-bold text-lg text-right">{playingVideo.title}</h3>
+            </div>
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -17,7 +17,7 @@ const ContactUsSection = () => (
      </h3>
      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" dir="rtl">
         {/* Meyon Platform */}
-        <a href="https://meyon.com.ye/c/taizgio/" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-red-500 hover:shadow-md transition flex items-center justify-between">
+        <a href="https://meyon.com.ye/taizgio11" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-red-500 hover:shadow-md transition flex items-center justify-between">
            <div className="flex-1">
               <span className="text-xs font-bold text-gray-400 block mb-0.5">المنصة الرسمية</span>
               <span className="font-extrabold text-red-600 dark:text-red-400 font-sans">منصة ميون</span>
@@ -1037,7 +1037,7 @@ function AdminVideos() {
         
         <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-4 rounded-lg text-sm border border-blue-100 dark:border-blue-900">
            <strong className="block mb-1 text-blue-800 dark:text-blue-200">تعليمات هامة:</strong>
-           لرفع الفيديو، يرجى رفع الفيديو أولاً إلى <a href="https://meyon.com.ye/c/taizgio/" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-blue-500 transition-colors">منصة ميون</a>، ثم نسخ رابط الفيديو ولصقه في الحقل المخصص.
+           لرفع الفيديو، يرجى رفع الفيديو أولاً إلى <a href="https://meyon.com.ye/taizgio11" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-blue-500 transition-colors">منصة ميون</a>، ثم نسخ رابط الفيديو ولصقه في الحقل المخصص.
         </div>
         
         <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="العنوان" value={title} onChange={e=>setTitle(e.target.value)} />
