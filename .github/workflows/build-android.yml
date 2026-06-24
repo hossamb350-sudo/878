@@ -46,8 +46,6 @@ jobs:
       - name: Build APK
         working-directory: ./android
         run: |
-          rm -f gradle/wrapper/gradle-wrapper.jar || true
-          gradle wrapper
           chmod +x ./gradlew
           ./gradlew assembleDebug
 
