@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
     "lint": "tsc --noEmit",
-    "generate-assets": "npx capacitor-assets generate --assetPath Resources"
+    "generate-assets": "node -e \"const fs = require('fs'); if (fs.existsSync('Resources/app-icon.png')) fs.copyFileSync('Resources/app-icon.png', 'Resources/icon.png');\" && npx capacitor-assets generate --assetPath Resources --android"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",
