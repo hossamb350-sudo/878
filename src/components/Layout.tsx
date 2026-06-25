@@ -234,6 +234,19 @@ export function Layout() {
       <NotificationCenter />
       <UrgentNewsBanner />
 
+      {/* Global Branding Header */}
+      <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-[55] border-b dark:border-gray-800 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-start">
+           <div className="flex flex-col text-right">
+              <span className="font-[900] text-xl sm:text-2xl tracking-tighter leading-none text-amber-700 dark:text-amber-450">منصة تعز الإعلامية</span>
+              <div className="flex items-center justify-start gap-2 mt-1">
+                <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">إخبارية .. ثقافية |</span>
+                <span className="text-[9px] font-bold text-[#d49a37] dark:text-[#e5b35c] tracking-[0.15em] uppercase">Taiz Media Platform</span>
+              </div>
+            </div>
+        </div>
+      </header>
+
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto pb-24 min-w-0 w-full overflow-x-hidden">
         <Outlet />

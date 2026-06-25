@@ -83,6 +83,29 @@ export function Admin() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
+
+  // Admin/Manager View Logic (Moved to top to follow Rules of Hooks)
+  const isManager = profile?.role === 'manager';
+  const isAdmin = profile?.role === 'admin';
+
+  const sidebarTabs = [
+    { id: "news", icon: FileText, label: "الأخبار", roles: ['admin', 'manager'] },
+    { id: "urgent", icon: AlertTriangle, label: "الأخبار العاجلة", roles: ['admin', 'manager'] },
+    { id: "videos", icon: Video, label: "الفيديوهات", roles: ['admin', 'manager'] },
+    { id: "live", icon: Radio, label: "البث المباشر", roles: ['admin'] },
+    { id: "leader", icon: Shield, label: "السيد القائد", roles: ['admin', 'manager'] },
+    { id: "quran", icon: BookOpen, label: "هدي القرآن", roles: ['admin', 'manager'] },
+    { id: "events", icon: CalendarIcon, label: "تقويم المناسبات", roles: ['admin'] }
+  ];
+
+  const filteredTabs = sidebarTabs.filter(tab => tab.roles.includes(profile?.role || ''));
+
+  // Set default tab for manager if current is not allowed
+  useEffect(() => {
+    if (isManager && (activeTab === 'dashboard' || activeTab === 'live' || activeTab === 'events')) {
+      setActiveTab('news');
+    }
+  }, [isManager, activeTab]);
   
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -178,7 +201,7 @@ export function Admin() {
          <div className="w-20 h-20 bg-amber-100 dark:bg-amber-950/40 rounded-full flex items-center justify-center mb-6">
             <User className="w-10 h-10 text-amber-600 dark:text-amber-400" />
          </div>
-         <h1 className="text-3xl font-black mb-2 text-gray-900 dark:text-white">مرحباً بك في المنصة الإعلامية</h1>
+         <h1 className="text-3xl font-black mb-2 text-gray-900 dark:text-white">مرحباً بك في منصة تعز الإعلامية</h1>
          <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm">سجل دخولك عبر حساب جوجل للوصول إلى تفضيلاتك وإدارة حسابك الشخصي.</p>
          
          <button 
@@ -201,7 +224,6 @@ export function Admin() {
     return <UserProfileView user={user} profile={profile} logout={logout} />;
   }
 
-   // Admin View
    return (
      <div className="w-full max-w-7xl mx-auto p-4 md:p-8 pb-32 flex flex-col md:flex-row gap-6 md:gap-8 animate-fade-in overflow-x-hidden">
         {/* Admin Sidebar */}
@@ -215,8 +237,8 @@ export function Admin() {
                  </div>
                  <div className="min-w-0">
                     <div className="font-black text-base md:text-lg truncate text-gray-900 dark:text-white">{user.displayName}</div>
-                    <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-blue-600 bg-blue-50 dark:bg-blue-900/40 px-2.5 py-1 rounded-full w-max mt-1">
-                       <Shield className="w-3 h-3" /> مدير النظام
+                    <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full w-max mt-1 ${isAdmin ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/40' : 'text-amber-600 bg-amber-50 dark:bg-amber-900/40'}`}>
+                       <Shield className="w-3 h-3" /> {isAdmin ? 'مدير النظام' : 'مسؤول محتوى'}
                     </div>
                  </div>
               </div>
@@ -229,31 +251,27 @@ export function Admin() {
            </div>
            
            <nav className="flex md:flex-col gap-2 overflow-x-auto pb-4 md:pb-0 px-1 snap-x scrollbar-hide max-w-full">
-              <div className="hidden md:flex items-center justify-end gap-2 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4 mb-2 mt-4 opacity-70 shrink-0">
-                 نظام الإدارة
-                 <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-              </div>
-              <button
-                onClick={() => setActiveTab("dashboard")}
-                className={`snap-center shrink-0 flex items-center justify-end gap-3 p-3.5 md:p-4 rounded-[1.25rem] transition-all whitespace-nowrap group md:hover:bg-white/80 dark:md:hover:bg-gray-700/50 ${activeTab === "dashboard" ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 md:translate-x-2" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-sm border border-gray-100 dark:border-gray-800"}`}
-              >
-                 <span className="text-sm font-black">الرئيسية</span>
-                 <LayoutGrid className={`w-5 h-5 shrink-0 ${activeTab === "dashboard" ? 'scale-110' : 'md:group-hover:scale-110 transition-transform'}`} />
-              </button>
+              {isAdmin && (
+                <>
+                  <div className="hidden md:flex items-center justify-end gap-2 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4 mb-2 mt-4 opacity-70 shrink-0">
+                    نظام الإدارة
+                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("dashboard")}
+                    className={`snap-center shrink-0 flex items-center justify-end gap-3 p-3.5 md:p-4 rounded-[1.25rem] transition-all whitespace-nowrap group md:hover:bg-white/80 dark:md:hover:bg-gray-700/50 ${activeTab === "dashboard" ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30 md:translate-x-2" : "bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 shadow-sm border border-gray-100 dark:border-gray-800"}`}
+                  >
+                    <span className="text-sm font-black">الرئيسية</span>
+                    <LayoutGrid className={`w-5 h-5 shrink-0 ${activeTab === "dashboard" ? 'scale-110' : 'md:group-hover:scale-110 transition-transform'}`} />
+                  </button>
+                </>
+              )}
 
               <div className="hidden md:flex items-center justify-end gap-2 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4 mb-2 mt-4 opacity-70 shrink-0">
                  إدارة المحتوى
                  <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></div>
               </div>
-              {[
-                { id: "news", icon: FileText, label: "الأخبار" },
-                { id: "urgent", icon: AlertTriangle, label: "الأخبار العاجلة" },
-                { id: "videos", icon: Video, label: "الفيديوهات" },
-                { id: "live", icon: Radio, label: "البث المباشر" },
-                { id: "leader", icon: Shield, label: "السيد القائد" },
-                { id: "quran", icon: BookOpen, label: "هدي القرآن" },
-                { id: "events", icon: CalendarIcon, label: "تقويم المناسبات" }
-              ].map(tab => (
+              {filteredTabs.map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -277,14 +295,14 @@ export function Admin() {
                transition={{ duration: 0.3, ease: "easeOut" }}
                className="bg-white dark:bg-gray-800 p-4 sm:p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 min-h-[600px] overflow-hidden w-full"
              >
-                {activeTab === "dashboard" && <AdminSummaryDashboard />}
+                {activeTab === "dashboard" && isAdmin && <AdminSummaryDashboard />}
                 {activeTab === "news" && <AdminNews />}
                 {activeTab === "urgent" && <AdminUrgentNews />}
                 {activeTab === "videos" && <AdminVideos />}
-                {activeTab === "live" && <AdminLive />}
+                {activeTab === "live" && isAdmin && <AdminLive />}
                 {activeTab === "leader" && <AdminLeader />}
                 {activeTab === "quran" && <AdminQuran />}
-                {activeTab === "events" && <AdminEvents />}
+                {activeTab === "events" && isAdmin && <AdminEvents />}
              </motion.div>
            </AnimatePresence>
         </div>

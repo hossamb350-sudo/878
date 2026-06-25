@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   Bookmark,
-  Quote,
   FileText,
   Edit,
   Trash2,
@@ -396,26 +395,6 @@ export function QuranReader({
       .catch((err) => {
         console.error("Copy failed", err);
       });
-  };
-
-  const shareQuote = (txt: string) => {
-    const formatted = `« ${txt} »\n\n📌 المصدر: من دروس هدي القرآن الكريم\n📖 الدرس: ${lesson.title}\n👤 الشهيد القائد السيد حسين بدرالدين الحوثي\n\n#هدي_القرآن #ثقافة_قرآنية`;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(formatted).then(() => {
-        alert("تم تجهيز الاقتباس المنسق وتضمين المصدر في الحافظة!");
-        setSelectionMenu(null);
-      });
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = formatted;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-      alert("تم تجهيز الاقتباس المنسق وتضمين المصدر في الحافظة!");
-      setSelectionMenu(null);
-    }
   };
 
   const renderParagraphText = (
@@ -876,15 +855,6 @@ export function QuranReader({
                       <Share2 className="w-5 h-5" />
                       <span className="text-[10px] font-black">نسخ</span>
                     </motion.button>
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      onClick={() => shareQuote(selectionMenu.text)}
-                      className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition text-amber-600 flex flex-col items-center gap-0.5"
-                      title="اقتباس متميز"
-                    >
-                      <Quote className="w-5 h-5" />
-                      <span className="text-[10px] font-black">اقتباس</span>
-                    </motion.button>
                   </div>
                 </motion.div>
               </div>
@@ -1177,15 +1147,6 @@ export function QuranReader({
                           >
                             <FileText className="w-3.5 h-3.5" />
                             <span>نسخ</span>
-                          </button>
-
-                          {/* Share citation quote */}
-                          <button
-                            onClick={() => shareQuote(paraText)}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-gray-700 dark:bg-white/5 dark:text-gray-300 border-transparent font-bold animate-pulse"
-                          >
-                            <Quote className="w-3.5 h-3.5" />
-                            <span>مشاركة اقتباس</span>
                           </button>
                         </motion.div>
                       )}

@@ -253,8 +253,8 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
               <div className="text-center mb-6">
                 <h3 className="text-lg font-black text-stone-900 leading-tight">
                   {activeTab === "login" 
-                    ? "مرحباً بك مجدداً في المنصة الإعلامية" 
-                    : "انضم إلى أسرة المنصة الإعلامية"}
+                    ? "مرحباً بك مجدداً في منصة تعز الإعلامية" 
+                    : "انضم إلى أسرة منصة تعز الإعلامية"}
                 </h3>
                 <p className="text-xs text-stone-400 mt-1">
                   {activeTab === "login"

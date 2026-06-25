@@ -116,7 +116,6 @@ export function Events() {
               <CalendarIcon className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-500/10">التقويم الثقافي</span>
               <h1 className="text-2.5xl sm:text-3.5xl font-black text-stone-900 mt-1">تقويم المناسبات</h1>
             </div>
           </div>

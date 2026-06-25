@@ -177,10 +177,6 @@ export function WatchItem() {
           <div className="bg-white dark:bg-zinc-950 rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-100 dark:border-zinc-900/60">
             
             <div className="flex flex-wrap items-center gap-2.5 mb-4">
-              <span className="bg-red-100/70 text-red-700 dark:bg-red-950/30 dark:text-red-400 text-[10px] font-black tracking-wider px-3 py-1 rounded-full border border-red-500/10 flex items-center gap-1 uppercase">
-                <Award className="w-3.5 h-3.5" />
-                شاهد الإعلامي
-              </span>
               {video.duration && (
                 <span className="bg-stone-50 dark:bg-zinc-900 text-stone-500 dark:text-zinc-400 text-[10px] font-black px-2.5 py-1 rounded-md border border-stone-150 dark:border-zinc-800/30 flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5" />
@@ -224,7 +220,7 @@ export function WatchItem() {
           <div className="flex items-center justify-between px-1">
             <h3 className="font-extrabold text-base text-[#111827] dark:text-white flex items-center gap-2">
               <Play className="w-4 h-4 text-red-600 fill-red-600/20" />
-              تفارير مرئية أخرى
+              تقارير مرئية أخرى
             </h3>
             <span className="text-[10px] bg-red-50 dark:bg-red-950/20 border border-red-500/10 text-red-700 dark:text-red-400 font-extrabold px-2 py-0.5 rounded-md">
               الجديد أولاً

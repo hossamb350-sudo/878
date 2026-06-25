@@ -521,6 +521,33 @@ export function Quran() {
           } catch (hErr) {
             handleFirestoreError(hErr, OperationType.GET, `users/${uid}/highlights`);
           }
+
+          // Sync Lesson Progress
+          try {
+            const pSnap = await getDocs(collection(db, "users", uid, "progress"));
+            const pMap: Record<string, number> = {};
+            pSnap.docs.forEach(d => {
+              pMap[d.id] = d.data().percentage || 0;
+            });
+            if (Object.keys(pMap).length > 0) {
+              setLessonProgress(pMap);
+              localStorage.setItem("quran_lesson_progress", JSON.stringify(pMap));
+            }
+          } catch (pErr) {
+             console.error("Sync progress error:", pErr);
+          }
+
+          // Sync Last Read
+          try {
+            const lrDoc = await getDoc(doc(db, "users", uid, "lastRead", "current"));
+            if (lrDoc.exists()) {
+              const lrData = lrDoc.data() as QuranLastRead;
+              setLastRead(lrData);
+              localStorage.setItem("quran_last_read", JSON.stringify(lrData));
+            }
+          } catch (lrErr) {
+            console.error("Sync last read error:", lrErr);
+          }
         } catch(e) {
           console.error("Cloud synchronizer fail:", e);
         }
@@ -776,12 +803,23 @@ export function Quran() {
     setLastRead(progress);
     localStorage.setItem('quran_last_read', JSON.stringify(progress));
 
+    if (auth.currentUser) {
+      setDoc(doc(db, "users", auth.currentUser.uid, "lastRead", "current"), progress);
+    }
+
     setLessonProgress(prev => {
       const current = prev[selectedLesson.id] || 0;
       const nextVal = Math.max(current, percent);
       if (nextVal !== current) {
         const nextMap = { ...prev, [selectedLesson.id]: nextVal };
         localStorage.setItem("quran_lesson_progress", JSON.stringify(nextMap));
+
+        if (auth.currentUser) {
+          setDoc(doc(db, "users", auth.currentUser.uid, "progress", selectedLesson.id), {
+            percentage: nextVal,
+            updatedAt: Date.now()
+          });
+        }
 
         // Stats tracking
         if (nextVal >= 92 && current < 92) {

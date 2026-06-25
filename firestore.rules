@@ -9,6 +9,16 @@ service cloud.firestore {
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
+
+    function isManager() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager';
+    }
+
+    function isStaff() {
+      return isAdmin() || isManager();
+    }
     
     match /users/{userId} {
       allow get: if isSignedIn() && request.auth.uid == userId;
@@ -29,18 +39,24 @@ service cloud.firestore {
       match /stats/{statId} {
         allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
+      match /progress/{lessonId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
+      match /lastRead/{docId} {
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
+      }
     }
     
     match /news/{document=**} {
       allow read: if true;
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
     
     match /videos/{document=**} {
       allow read: if true;
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
     
     match /settings/{document=**} {
@@ -56,7 +72,7 @@ service cloud.firestore {
     match /leader/{document=**} {
       allow read: if true;
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
     
     match /events/{document=**} {
@@ -66,7 +82,7 @@ service cloud.firestore {
     
     match /urgentNews/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
     
     match /notifications/{document=**} {
@@ -76,22 +92,22 @@ service cloud.firestore {
     
     match /quran_series/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
     
     match /quran_lessons/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
     
     match /quran_syllabuses/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
     
     match /quran_excerpts/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
     }
   }
 }

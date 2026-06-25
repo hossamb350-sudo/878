@@ -122,25 +122,9 @@ export function Home() {
       className="max-w-[760px] mx-auto w-full pb-16 bg-white dark:bg-gray-950 transition-colors"
     >
       
-      {/* Brand Header Banner - Islamic/Golden Style with Calligraphy Droplet */}
-      <div className="w-full bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-900 pt-5 pb-0 sticky top-0 z-30 px-4">
-        <div className="flex items-center justify-between max-w-[720px] mx-auto mb-3">
-          {/* Left Side: Simple Text Branding */}
-          <div className="flex items-center select-none py-1">
-            <div className="flex flex-col text-right">
-              <span className="font-[900] text-2xl tracking-tighter leading-none text-amber-700 dark:text-amber-450">المنصة الإعلامية</span>
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">إخبارية ثقافية |</span>
-                <span className="text-[9px] font-bold text-[#d49a37] dark:text-[#e5b35c] tracking-[0.15em] uppercase">Al-Elameyah Media Platform</span>
-              </div>
-            </div>
-          </div>
-
-          <div></div>
-        </div>
-        
-        {/* Tab Navigation Underlines */}
-        <div className="flex max-w-[720px] mx-auto border-t border-gray-50 dark:border-gray-900 overflow-x-auto">
+      {/* Tab Navigation Underlines */}
+      <div className="w-full bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-900 sticky top-0 z-30 px-4">
+        <div className="flex max-w-[720px] mx-auto overflow-x-auto">
           <div className="flex w-full gap-4">
             <button 
               onClick={() => setActiveTab("top")}
