@@ -57,7 +57,9 @@ jobs:
 
       - name: Print SHA-1 fingerprint
         working-directory: ./android
-        run: ./gradlew signingReport
+        run: |
+          chmod +x ./gradlew
+          ./gradlew signingReport
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
