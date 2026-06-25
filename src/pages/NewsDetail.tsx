@@ -242,9 +242,11 @@ export function NewsDetail() {
           {/* Content */}
           <div className="mb-12">
             {news.shortDescription && (
-              <p className={`text-gray-500 dark:text-gray-400 font-bold leading-relaxed mb-8 border-r-4 border-gray-300 dark:border-gray-700 pr-4 ${FONT_SIZES[fontSize]}`}>
-                {news.shortDescription}
-              </p>
+              <div className="mb-10 p-6 sm:p-8 bg-amber-50/30 dark:bg-amber-950/10 rounded-3xl border-r-8 border-amber-600 dark:border-amber-500 shadow-sm ring-1 ring-amber-100/50 dark:ring-amber-900/20">
+                <p className={`text-gray-700 dark:text-gray-200 font-bold leading-[1.8] italic ${FONT_SIZES[fontSize]}`}>
+                  {news.shortDescription}
+                </p>
+              </div>
             )}
 
             <div 

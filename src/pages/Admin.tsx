@@ -238,7 +238,7 @@ export function Admin() {
                  <div className="min-w-0">
                     <div className="font-black text-base md:text-lg truncate text-gray-900 dark:text-white">{user.displayName}</div>
                     <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full w-max mt-1 ${isAdmin ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/40' : 'text-amber-600 bg-amber-50 dark:bg-amber-900/40'}`}>
-                       <Shield className="w-3 h-3" /> {isAdmin ? 'مدير النظام' : 'مسؤول محتوى'}
+                       <Shield className="w-3 h-3" /> {isAdmin ? 'مدير النظام' : 'مسؤول المنصة'}
                     </div>
                  </div>
               </div>
@@ -296,11 +296,11 @@ export function Admin() {
                className="bg-white dark:bg-gray-800 p-4 sm:p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 min-h-[600px] overflow-hidden w-full"
              >
                 {activeTab === "dashboard" && isAdmin && <AdminSummaryDashboard />}
-                {activeTab === "news" && <AdminNews />}
+                {activeTab === "news" && <AdminNews isAdmin={isAdmin} />}
                 {activeTab === "urgent" && <AdminUrgentNews />}
-                {activeTab === "videos" && <AdminVideos />}
+                {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
                 {activeTab === "live" && isAdmin && <AdminLive />}
-                {activeTab === "leader" && <AdminLeader />}
+                {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
                 {activeTab === "quran" && <AdminQuran />}
                 {activeTab === "events" && isAdmin && <AdminEvents />}
              </motion.div>
@@ -444,6 +444,7 @@ function UserProfileView({ user, profile, logout }: { user: FirebaseUser, profil
 
 function AdminUrgentNews() {
   const [text, setText] = useState("");
+  const [duration, setDuration] = useState(1); // minutes
   const [saving, setSaving] = useState(false);
 
   const save = async () => {
@@ -453,7 +454,7 @@ function AdminUrgentNews() {
       await addDoc(collection(db, "urgentNews"), {
         text,
         createdAt: Date.now(),
-        expiresAt: Date.now() + 60000 // 1 minute
+        expiresAt: Date.now() + (duration * 60000)
       });
       await addDoc(collection(db, "notifications"), {
         title: "خبر عاجل 🔴",
@@ -462,7 +463,7 @@ function AdminUrgentNews() {
         link: "/",
         createdAt: Date.now()
       });
-      alert("تم نشر الخبر العاجل بنجاح (سيختفي تلقائياً بعد دقيقة)");
+      alert(`تم نشر الخبر العاجل بنجاح (سيختفي تلقائياً بعد ${duration} دقيقة)`);
       setText("");
     } catch (e) {
       console.error(e);
@@ -476,27 +477,44 @@ function AdminUrgentNews() {
     <div className="space-y-6 animate-fade-in max-w-2xl">
       <div className="flex items-center gap-3 border-b dark:border-gray-700 pb-3">
          <AlertTriangle className="w-6 h-6 text-red-600" />
-         <h2 className="text-xl font-bold text-red-600">نظام الأخبار العاجلة والمباشرة</h2>
+         <h2 className="text-xl font-bold text-red-600">نظام الأخبار العاجلة</h2>
       </div>
 
       <div className="bg-red-50 dark:bg-red-900/10 p-5 rounded-2xl border border-red-100 dark:border-red-900/30">
         <h3 className="font-bold text-red-800 dark:text-red-400 mb-2">تعليمات هامة:</h3>
         <ul className="list-disc list-inside text-sm text-red-700 dark:text-red-300 space-y-1 font-medium">
           <li>سيظهر هذا الخبر بشكل فوري وتلقائي في جميع أقسام المنصة.</li>
-          <li>سيختفي الخبر تلقائياً بعد مرور <strong>دقيقة واحدة</strong> فقط.</li>
+          <li>مدة بقاء الخبر العاجل يتم تحديدها مسبقاً.</li>
           <li>نشر خبر جديد سيستبدل على الفور أي خبر عاجل سابق.</li>
           <li>سيتم إرسال إشعار للمتصفحين وإصدار تنبيه صوتي.</li>
         </ul>
       </div>
 
       <div className="space-y-4">
-        <label className="block font-bold">نص الخبر العاجل:</label>
-        <textarea 
-          className="w-full p-4 text-xl font-bold bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-800 rounded-xl h-32 focus:outline-none focus:border-red-500" 
-          placeholder="أدخل الخبر العاجل هنا..." 
-          value={text} 
-          onChange={e => setText(e.target.value)} 
-        />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="block font-bold">نص الخبر العاجل:</label>
+            <textarea 
+              className="w-full p-4 text-xl font-bold bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-800 rounded-xl h-32 focus:outline-none focus:border-red-500" 
+              placeholder="أدخل الخبر العاجل هنا..." 
+              value={text} 
+              onChange={e => setText(e.target.value)} 
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="block font-bold">مدة ظهور الخبر:</label>
+            <select 
+              className="w-full p-4 text-lg font-bold bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-800 rounded-xl focus:outline-none focus:border-red-500"
+              value={duration}
+              onChange={e => setDuration(Number(e.target.value))}
+            >
+              <option value={1}>1 = دقيقة واحدة</option>
+              <option value={2}>2 = دقيقتان</option>
+              <option value={3}>3 = ثلاث دقائق</option>
+              <option value={4}>4 = أربع دقائق</option>
+            </select>
+          </div>
+        </div>
         
         <button 
           onClick={save} 
@@ -512,7 +530,7 @@ function AdminUrgentNews() {
 
 // Simple Admin Components
 
-function AdminNews() {
+function AdminNews({ isAdmin }: { isAdmin?: boolean }) {
   const [newsMode, setNewsMode] = useState<"add" | "list" | "edit">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   
@@ -528,11 +546,38 @@ function AdminNews() {
   const [isBreaking, setIsBreaking] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [liveUpdatesText, setLiveUpdatesText] = useState("");
+  const [views, setViews] = useState<number>(0);
   
   const [saving, setSaving] = useState(false);
   
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loadingList, setLoadingList] = useState(false);
+
+  // Categories and Authors persistence
+  const [savedCats, setSavedCats] = useState<string[]>(["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"]);
+  const [savedAuthors, setSavedAuthors] = useState<string[]>([]);
+
+  const fetchMetadata = async () => {
+    try {
+      const catDoc = await getDoc(doc(db, "newsMetadata", "categories"));
+      if (catDoc.exists()) {
+        const list = catDoc.data().list || [];
+        const combined = Array.from(new Set([...["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"], ...list]));
+        setSavedCats(combined);
+      }
+      
+      const authDoc = await getDoc(doc(db, "newsMetadata", "authors"));
+      if (authDoc.exists()) {
+        setSavedAuthors(authDoc.data().list || []);
+      }
+    } catch (e) {
+      console.error("Error fetching metadata:", e);
+    }
+  };
+
+  useEffect(() => {
+    fetchMetadata();
+  }, []);
 
   // formatting helper
   const insertText = (before: string, after: string) => {
@@ -543,7 +588,6 @@ function AdminNews() {
     const selectedText = content.substring(start, end);
     const replacement = before + selectedText + after;
     setContent(content.substring(0, start) + replacement + content.substring(end));
-    // Focus and restore selection in a real app, simplified here
   };
 
   const fetchNewsList = async () => {
@@ -576,7 +620,6 @@ function AdminNews() {
         const utimeString = parts[1]?.trim() || "";
         const uimage = parts[2]?.trim() || undefined;
         
-        // If time is provided use it, otherwise use current timestamp
         let updateTime: string | number = Date.now();
         if (utimeString) {
           updateTime = utimeString;
@@ -607,24 +650,25 @@ function AdminNews() {
     setIsBreaking(false);
     setIsPinned(false);
     setLiveUpdatesText("");
+    setViews(0);
     setEditingId(null);
   };
 
   const handleEditClick = (item: NewsItem) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     setTitle(item.title || "");
     setShortDesc(item.shortDescription || "");
     setContent(item.content || "");
     setAuthor(item.author || "");
     setImageUrl(item.imageUrl || "");
+    setViews(item.views || 0);
     if (item.additionalImages) {
       setAdditionalImagesText(item.additionalImages.join("\n"));
     } else {
       setAdditionalImagesText("");
     }
     
-    // Check if category is standard or custom
-    const standardCats = ["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"];
-    if (standardCats.includes(item.category || "")) {
+    if (savedCats.includes(item.category || "")) {
       setCat(item.category || "محلية");
       setCustomCat("");
     } else {
@@ -658,7 +702,6 @@ function AdminNews() {
     setSaving(true);
     const parsedUpdates = parseLiveUpdates(liveUpdatesText);
     
-    // Auto-generate snippet if empty
     let finalSnippet = shortDesc.trim();
     if (!finalSnippet) {
       const strippedContent = content.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ');
@@ -678,10 +721,26 @@ function AdminNews() {
       isBreaking,
       isPinned,
       liveUpdates: parsedUpdates || null,
+      views: Number(views) || 0,
       updatedAt: Date.now()
     };
     
     try {
+      // Save Metadata (Category)
+      if (cat === "custom" && customCat && !savedCats.includes(customCat)) {
+        const newList = [...savedCats, customCat];
+        const customOnlyList = newList.filter(c => !["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"].includes(c));
+        await setDoc(doc(db, "newsMetadata", "categories"), { list: customOnlyList });
+        setSavedCats(newList);
+      }
+
+      // Save Metadata (Author)
+      if (author && !savedAuthors.includes(author)) {
+        const newList = [...savedAuthors, author];
+        await setDoc(doc(db, "newsMetadata", "authors"), { list: newList });
+        setSavedAuthors(newList);
+      }
+
       if (newsMode === "edit" && editingId) {
         await updateDoc(doc(db, "news", editingId), payload);
         alert("تم تعديل الخبر بنجاح!");
@@ -746,7 +805,7 @@ function AdminNews() {
       {newsMode === "add" || newsMode === "edit" ? (
         <div className="space-y-6 bg-gray-50/50 dark:bg-gray-900/20 p-4 sm:p-8 rounded-2xl border border-gray-100 dark:border-gray-800">
           <h3 className="text-xl font-extrabold text-blue-600 dark:text-amber-400 mb-6">
-            {newsMode === "edit" ? "تعديل الخبر المشهور" : "إنشاء خبر جديد"}
+            {newsMode === "edit" ? "تعديل الخبر المنشور" : "إنشاء خبر جديد"}
           </h3>
           
           <div className="space-y-5">
@@ -775,27 +834,39 @@ function AdminNews() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">اسم الكاتب / المحرر</label>
-                <input className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500" placeholder="مثال: أحمد محمد (اختياري)" value={author} onChange={e=>setAuthor(e.target.value)} />
+                <input 
+                  className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500" 
+                  placeholder="مثال: أحمد محمد (اختياري)" 
+                  value={author} 
+                  onChange={e=>setAuthor(e.target.value)}
+                  list="authors-list"
+                />
+                <datalist id="authors-list">
+                  {savedAuthors.map(a => <option key={a} value={a} />)}
+                </datalist>
               </div>
               
               <div>
                 <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">تصنيف الخبر *</label>
-                <div className="flex gap-2">
+                <div className="flex flex-col gap-2">
                   <select 
-                    className="flex-1 p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 font-bold" 
+                    className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 font-bold" 
                     value={cat} 
                     onChange={e=>setCat(e.target.value)}
                   >
-                     {["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"].map(c => <option key={c} value={c}>{c}</option>)}
+                     {savedCats.map(c => <option key={c} value={c}>{c}</option>)}
                      <option value="custom">تصنيف مخصص (أخرى)...</option>
                   </select>
                   {cat === "custom" && (
-                    <input 
-                      className="flex-1 p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500" 
-                      placeholder="اكتب التصنيف هنا..." 
-                      value={customCat} 
-                      onChange={e=>setCustomCat(e.target.value)} 
-                    />
+                    <div className="animate-fade-in space-y-1">
+                      <input 
+                        className="w-full p-3 bg-white dark:bg-gray-800 border-2 border-blue-100 dark:border-blue-900/30 rounded-xl focus:outline-blue-500" 
+                        placeholder="اكتب التصنيف الجديد هنا..." 
+                        value={customCat} 
+                        onChange={e=>setCustomCat(e.target.value)} 
+                      />
+                      <p className="text-[10px] text-blue-600 dark:text-blue-400 px-1 font-medium">سيتم حفظ هذا التصنيف تلقائياً ليظهر في القائمة لاحقاً.</p>
+                    </div>
                   )}
                 </div>
               </div>
@@ -824,6 +895,19 @@ function AdminNews() {
                  </div>
                </div>
             </div>
+            
+            {isAdmin && (
+              <div className="space-y-2 bg-blue-50/30 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                <label className="block text-sm font-bold text-blue-800 dark:text-blue-400">تعديل عدد المشاهدات يدوياً:</label>
+                <input 
+                  type="number"
+                  className="w-full max-w-[200px] p-3 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-lg font-mono font-bold" 
+                  value={views} 
+                  onChange={e=>setViews(parseInt(e.target.value) || 0)} 
+                />
+                <p className="text-[10px] text-gray-500">خاص بالمدير فقط. سيتم استخدام هذا الرقم كقاعدة للمشاهدات.</p>
+              </div>
+            )}
             
             <div className="space-y-4">
               {/* Pinning Option */}
@@ -912,6 +996,9 @@ function AdminNews() {
                              <span className="text-xs font-bold text-gray-400 dark:text-gray-500">
                                 {new Date(item.createdAt).toLocaleDateString('ar-YE', { day: 'numeric', month: 'short', year: 'numeric' })}
                              </span>
+                             <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-sm">
+                                {item.views || 0} مشاهدة
+                             </span>
                              {item.author && (
                                <span className="text-xs font-bold text-blue-600 dark:text-amber-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-sm">
                                   {item.author}
@@ -953,12 +1040,13 @@ function AdminNews() {
   );
 }
 
-function AdminVideos() {
+function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [thumb, setThumb] = useState("");
   const [category, setCategory] = useState("");
   const [order, setOrder] = useState<string>("");
+  const [views, setViews] = useState<number>(0);
   const [saving, setSaving] = useState(false);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -987,6 +1075,7 @@ function AdminVideos() {
     setThumb("");
     setCategory("");
     setOrder("");
+    setViews(0);
     setEditingId(null);
   };
 
@@ -997,12 +1086,12 @@ function AdminVideos() {
     try {
       if (editingId) {
          await updateDoc(doc(db, "videos", editingId), {
-            title, url, thumbnailUrl: thumb, category: category.trim(), order: parsedOrder
+            title, url, thumbnailUrl: thumb, category: category.trim(), order: parsedOrder, views: Number(views) || 0
          });
          alert("تم تعديل الفيديو بنجاح");
       } else {
          const docRef = await addDoc(collection(db, "videos"), {
-            title, url, thumbnailUrl: thumb, category: category.trim(), order: parsedOrder, views: 0, createdAt: Date.now()
+            title, url, thumbnailUrl: thumb, category: category.trim(), order: parsedOrder, views: Number(views) || 0, createdAt: Date.now()
          });
          await addDoc(collection(db, "notifications"), {
             title: "محتوى مرئي جديد 🎥",
@@ -1034,6 +1123,7 @@ function AdminVideos() {
     setThumb(video.thumbnailUrl || "");
     setCategory(video.category || "");
     setOrder(video.order !== undefined && video.order !== null ? String(video.order) : "");
+    setViews(video.views || 0);
     setEditingId(video.id);
   };
 
@@ -1087,6 +1177,19 @@ function AdminVideos() {
             </select>
           </div>
         </div>
+
+        {isAdmin && (
+          <div className="space-y-2 bg-red-50/30 dark:bg-red-950/10 p-4 rounded-lg border border-red-100 dark:border-red-900/30">
+            <label className="block text-sm font-bold text-red-800 dark:text-red-400">تعديل عدد المشاهدات يدوياً:</label>
+            <input 
+              type="number"
+              className="w-full max-w-[150px] p-3 bg-white dark:bg-gray-900 border border-red-200 dark:border-red-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm font-mono font-bold" 
+              value={views} 
+              onChange={e=>setViews(parseInt(e.target.value) || 0)} 
+            />
+            <p className="text-[10px] text-gray-500">خاص بالمدير فقط. سيظهر هذا الرقم للجمهور.</p>
+          </div>
+        )}
 
         <div className="flex gap-3 pt-2">
           <button onClick={save} disabled={saving} className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-lg transition-colors font-bold w-full sm:w-auto">
@@ -1319,13 +1422,14 @@ function AdminLive() {
   );
 }
 
-function AdminLeader() {
+function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState<"video" | "text">("video");
   const [content, setContent] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [order, setOrder] = useState<string>("");
+  const [views, setViews] = useState<number>(0);
   const [saving, setSaving] = useState(false);
   const [notify, setNotify] = useState(true);
   const [leaderContents, setLeaderContents] = useState<LeaderContent[]>([]);
@@ -1370,7 +1474,8 @@ function AdminLeader() {
           content,
           description: type === 'video' ? description.trim() : "",
           thumbnailUrl: thumbnailUrl.trim(),
-          order: parsedOrder
+          order: parsedOrder,
+          views: Number(views) || 0
         });
         alert("تم التعديل بنجاح!"); 
       } else {
@@ -1381,7 +1486,7 @@ function AdminLeader() {
           description: type === 'video' ? description.trim() : "",
           thumbnailUrl: thumbnailUrl.trim(),
           order: parsedOrder,
-          views: 0,
+          views: Number(views) || 0,
           createdAt: Date.now() 
         });
         
@@ -1412,6 +1517,7 @@ function AdminLeader() {
     setDescription("");
     setThumbnailUrl("");
     setOrder("");
+    setViews(0);
     setType("video");
     setEditingId(null);
   }
@@ -1422,6 +1528,7 @@ function AdminLeader() {
     setDescription(item.description || "");
     setThumbnailUrl(item.thumbnailUrl || "");
     setOrder(item.order !== undefined && item.order !== null ? String(item.order) : "");
+    setViews(item.views || 0);
     setType(item.type);
     setEditingId(item.id);
   };
@@ -1532,6 +1639,19 @@ function AdminLeader() {
           />
           <p className="text-[11px] text-emerald-600 mt-2 font-medium">كلما كان الرقم أصغر كلما تمت موازنته والظهور في المقدمة (رقم 1 في البداية). يُرتب تلقائياً حسب الأقدم/الأحدث إذا كان فارغاً.</p>
         </div>
+
+        {isAdmin && (
+          <div className="space-y-2 bg-blue-50/30 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
+            <label className="block text-sm font-bold text-blue-800 dark:text-blue-400">تعديل عدد المشاهدات يدوياً:</label>
+            <input 
+              type="number"
+              className="w-full max-w-[200px] p-3 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-lg font-mono font-bold" 
+              value={views} 
+              onChange={e=>setViews(parseInt(e.target.value) || 0)} 
+            />
+            <p className="text-[10px] text-gray-500">خاص بالمدير فقط.</p>
+          </div>
+        )}
 
         <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-500/30 transition-colors font-bold text-sm">
           <input type="checkbox" checked={notify} onChange={e=>setNotify(e.target.checked)} className="w-5 h-5 accent-blue-600 rounded" />
