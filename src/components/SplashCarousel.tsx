@@ -112,9 +112,9 @@ export function SplashCarousel({ activeIndex, onChangeIndex }: SplashCarouselPro
   const slides = [
     {
       id: 0,
-      type: "news" as const,
-      title: "أخبار موثوقة",
-      sub: "لحظة بلحظة",
+      type: "quran" as const,
+      title: "دروس من",
+      sub: "هدي القرآن",
     },
     {
       id: 1,
@@ -124,9 +124,9 @@ export function SplashCarousel({ activeIndex, onChangeIndex }: SplashCarouselPro
     },
     {
       id: 2,
-      type: "quran" as const,
-      title: "دروس من",
-      sub: "هدي القرآن",
+      type: "news" as const,
+      title: "أخبار موثوقة",
+      sub: "لحظة بلحظة",
     },
   ];
 

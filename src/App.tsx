@@ -117,36 +117,26 @@ function Splash({ onEnter }: { onEnter: () => void }) {
       {/* 2. PLATFORM LOGO PLATE CARD (Matches Center of Graphic Design) */}
       <div className="my-auto relative z-10 flex flex-col items-center justify-center text-center max-w-lg w-full px-2 sm:px-4">
         
-        <div className="relative w-52 h-52 sm:w-60 sm:h-60 flex items-center justify-center mb-4">
+        <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center mb-6">
           
-          {/* Pulsing Aura */}
+          {/* Subtle Ambient Glow */}
           <motion.div 
-            className="absolute -inset-6 bg-gradient-to-r from-[#d49a37]/5 to-[#b37f2c]/5 rounded-full blur-3xl opacity-60"
-            animate={{ scale: [1, 1.06, 1], opacity: [0.5, 0.7, 0.5] }}
-            transition={{ duration: 4.5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -inset-10 bg-gradient-to-r from-[#d49a37]/5 to-[#b37f2c]/5 rounded-full blur-3xl opacity-40"
+            animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
           />
 
-          {/* Golden Outer Rotating Ring line */}
+          {/* Natural Centered Logo Container */}
           <motion.div 
-            className="absolute -inset-2.5 rounded-full border border-dashed border-[#d49a37]/15"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-          />
-
-          {/* Static outer accent ring */}
-          <div className="absolute -inset-4 rounded-full border border-[#d49a37]/5" />
-
-          {/* Natural Centered Logo Container without borders or padding */}
-          <motion.div 
-            initial={{ scale: 0.94, opacity: 0 }}
+            initial={{ scale: 0.92, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.9, ease: "easeOut" }}
+            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
             className="relative w-full h-full flex items-center justify-center pointer-events-auto"
           >
             <img 
               src={splashImg} 
               alt="شعار شاشة البداية" 
-              className="w-full h-full object-contain filter drop-shadow-md select-none" 
+              className="w-full h-full object-contain filter drop-shadow-sm select-none" 
             />
           </motion.div>
         </div>

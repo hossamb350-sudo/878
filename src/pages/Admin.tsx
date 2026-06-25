@@ -4,18 +4,19 @@ import { auth, db } from "../firebase";
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
-import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid, Send, MessageCircle, Globe, Bell, MonitorPlay } from "lucide-react";
+import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid, Send, MessageCircle, Globe, Bell, MonitorPlay, Share2 } from "lucide-react";
 import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile, LeaderContent } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { notificationService } from "../services/NotificationService";
 
 const ContactUsSection = () => (
-  <div className="p-6 md:p-8 bg-amber-500/5 dark:bg-amber-950/10 border border-amber-600/20 dark:border-amber-500/20 rounded-3xl text-right">
-     <h3 className="text-xl font-black text-amber-800 dark:text-amber-400 mb-6 flex items-center justify-end gap-2">
-        تابعنا على
-        <MessageCircle className="w-5 h-5 text-amber-600" />
-     </h3>
-     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" dir="rtl">
+  <div className="space-y-4">
+    <div className="p-6 md:p-8 bg-amber-500/5 dark:bg-amber-950/10 border border-amber-600/20 dark:border-amber-500/20 rounded-3xl text-right">
+       <h3 className="text-xl font-black text-amber-800 dark:text-amber-400 mb-6 flex items-center justify-start gap-2" dir="rtl">
+          <Share2 className="w-5 h-5 text-amber-600" />
+          تابعنا
+       </h3>
+       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" dir="rtl">
         {/* WhatsApp Channel */}
         <a href="https://whatsapp.com/channel/0029Vahhp6S7z4kYmZrjNf3W" target="_blank" rel="referrerPolicy" className="p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-green-500 hover:shadow-md transition flex items-center justify-between sm:col-span-2">
            <div className="flex-1 text-right">
@@ -61,7 +62,23 @@ const ContactUsSection = () => (
               <MonitorPlay className="w-5 h-5" />
            </div>
         </a>
-     </div>
+      </div>
+    </div>
+    
+    {/* Copyright Footer Section */}
+    <div className="w-full flex justify-center py-6 px-4">
+       <div className="w-full max-w-md">
+          <img 
+            src="/assets/copyright.png" 
+            alt="حقوق النشر" 
+            className="w-full h-auto opacity-80 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-700" 
+            onError={(e) => {
+              // Graceful fallback if image doesn't exist yet
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+       </div>
+    </div>
   </div>
 );
 
