@@ -12,9 +12,9 @@ import { notificationService } from "../services/NotificationService";
 const ContactUsSection = () => (
   <div className="space-y-4">
     <div className="p-6 md:p-8 bg-amber-500/5 dark:bg-amber-950/10 border border-amber-600/20 dark:border-amber-500/20 rounded-3xl text-right">
-       <h3 className="text-xl font-black text-amber-800 dark:text-amber-400 mb-6 flex items-center justify-start gap-2" dir="rtl">
+       <h3 className="text-xl font-black text-amber-800 dark:text-amber-400 mb-6 flex items-center justify-end gap-2" dir="rtl">
+          <span>تابعنا</span>
           <Share2 className="w-5 h-5 text-amber-600" />
-          تابعنا
        </h3>
        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4" dir="rtl">
         {/* WhatsApp Channel */}
@@ -69,13 +69,9 @@ const ContactUsSection = () => (
     <div className="w-full flex justify-center py-6 px-4">
        <div className="w-full max-w-md">
           <img 
-            src="/assets/copyright.png" 
+            src="/copyright.png" 
             alt="حقوق النشر" 
             className="w-full h-auto opacity-80 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-700" 
-            onError={(e) => {
-              // Graceful fallback if image doesn't exist yet
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
           />
        </div>
     </div>
