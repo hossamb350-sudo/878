@@ -572,7 +572,7 @@ export function QuranReader({
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex flex-col font-sans transition-colors duration-300 ${themeClasses[readerTheme]}`}
+      className={`absolute inset-0 z-[60] flex flex-col font-sans transition-colors duration-300 ${themeClasses[readerTheme]}`}
       dir="rtl"
     >
       {/* 1. Header Toolbar (Hidden in Focus Mode unless mouse hovers or active) */}
@@ -714,7 +714,7 @@ export function QuranReader({
 
       {/* Focus Mode floating header inside the reader */}
       {focusMode && (
-        <div className="fixed top-6 left-6 z-[100] flex items-center gap-2 pointer-events-none">
+        <div className="absolute top-6 left-6 z-[100] flex items-center gap-2 pointer-events-none">
           <button
             onClick={() => setFocusMode(false)}
             className="flex items-center gap-1.5 px-5 py-2.5 bg-black/80 hover:bg-black backdrop-blur-xl text-white font-black rounded-full text-xs shadow-2xl border border-white/20 transition-all duration-300 pointer-events-auto hover:scale-105 active:scale-95"

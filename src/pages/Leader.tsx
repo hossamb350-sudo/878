@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { LeaderContent } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -14,26 +15,26 @@ export function Leader() {
   const [selectedType, setSelectedType] = useState<"all" | "video" | "text">("all");
 
   useEffect(() => {
-    const fetchLeader = async () => {
-      try {
-        const q = await getDocs(collection(db, "leader"));
-        const data = q.docs.map(d => ({ id: d.id, ...d.data() } as LeaderContent));
-        data.sort((a, b) => {
-          const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-          const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-          if (aOrder !== bOrder) {
-            return aOrder - bOrder;
-          }
-          return b.createdAt - a.createdAt;
-        });
-        setContent(data);
-      } catch (err) {
-         console.error(err);
-      } finally {
-         setLoading(false);
-      }
+    let active = true;
+    const unsubPromise = SyncService.syncCollection<LeaderContent>("leader", (leaderData) => {
+      if (!active) return;
+      const sorted = [...leaderData];
+      sorted.sort((a, b) => {
+        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.createdAt - a.createdAt;
+      });
+      setContent(sorted);
+      setLoading(false);
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 50 });
+
+    return () => {
+      active = false;
+      unsubPromise.then(unsub => unsub());
     };
-    fetchLeader();
   }, []);
 
   const filteredContent = useMemo(() => {

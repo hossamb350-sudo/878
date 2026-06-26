@@ -94,7 +94,9 @@ export interface UserProfile {
   email: string;
   displayName: string;
   photoURL?: string;
-  role: 'admin' | 'manager' | 'user';
+  role: 'admin' | 'manager' | 'user' | 'editor';
+  permissions?: string[];
+  jobTitle?: string;
   createdAt: number;
   lastLogin?: number;
 }

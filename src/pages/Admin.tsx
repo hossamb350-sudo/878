@@ -4,10 +4,11 @@ import { auth, db } from "../firebase";
 import { Capacitor } from '@capacitor/core';
 import { GoogleAuth } from '@southdevs/capacitor-google-auth';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, deleteDoc, orderBy, query, limit, onSnapshot, writeBatch, setDoc, getDoc } from "firebase/firestore";
-import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid, Send, MessageCircle, Globe, Bell, MonitorPlay, Share2 } from "lucide-react";
+import { LogOut, FileText, Video, Radio, Shield, BookOpen, Calendar as CalendarIcon, Trash2, Plus, List, Edit, AlertTriangle, Clock, User, Settings, Heart, LayoutGrid, Send, MessageCircle, Globe, Bell, MonitorPlay, Share2, Users, Search, Filter } from "lucide-react";
 import { NewsItem, VideoItem, LiveStream, EventItem, UserProfile, LeaderContent } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { notificationService } from "../services/NotificationService";
+import { SyncService } from "../services/SyncService";
 
 const ContactUsSection = () => (
   <div className="space-y-4">
@@ -87,25 +88,29 @@ export function Admin() {
   // Admin/Manager View Logic (Moved to top to follow Rules of Hooks)
   const isManager = profile?.role === 'manager';
   const isAdmin = profile?.role === 'admin';
+  const isEditor = profile?.role === 'editor';
+  const hasPermission = (sectionId: string) => profile?.permissions?.includes(sectionId);
 
   const sidebarTabs = [
-    { id: "news", icon: FileText, label: "الأخبار", roles: ['admin', 'manager'] },
-    { id: "urgent", icon: AlertTriangle, label: "الأخبار العاجلة", roles: ['admin', 'manager'] },
-    { id: "videos", icon: Video, label: "الفيديوهات", roles: ['admin', 'manager'] },
-    { id: "live", icon: Radio, label: "البث المباشر", roles: ['admin'] },
-    { id: "leader", icon: Shield, label: "السيد القائد", roles: ['admin', 'manager'] },
-    { id: "quran", icon: BookOpen, label: "هدي القرآن", roles: ['admin', 'manager'] },
-    { id: "events", icon: CalendarIcon, label: "تقويم المناسبات", roles: ['admin'] }
+    { id: "news", icon: FileText, label: "الأخبار", access: isAdmin || isManager || (isEditor && hasPermission("news")) },
+    { id: "urgent", icon: AlertTriangle, label: "الأخبار العاجلة", access: isAdmin || isManager || (isEditor && hasPermission("urgentNews")) },
+    { id: "videos", icon: Video, label: "الفيديوهات", access: isAdmin || isManager || (isEditor && hasPermission("videos")) },
+    { id: "live", icon: Radio, label: "البث المباشر", access: isAdmin },
+    { id: "leader", icon: Shield, label: "السيد القائد", access: isAdmin || isManager || (isEditor && hasPermission("leader")) },
+    { id: "quran", icon: BookOpen, label: "هدي القرآن", access: isAdmin || isManager || (isEditor && hasPermission("quran")) },
+    { id: "events", icon: CalendarIcon, label: "تقويم المناسبات", access: isAdmin },
+    { id: "roles", icon: Users, label: "إدارة الصلاحيات", access: isAdmin }
   ];
 
-  const filteredTabs = sidebarTabs.filter(tab => tab.roles.includes(profile?.role || ''));
+  const filteredTabs = sidebarTabs.filter(tab => tab.access);
 
-  // Set default tab for manager if current is not allowed
+  // Set default tab if current is not allowed
   useEffect(() => {
-    if (isManager && (activeTab === 'dashboard' || activeTab === 'live' || activeTab === 'events')) {
-      setActiveTab('news');
+    const currentTabAllowed = (isAdmin && activeTab === "dashboard") || filteredTabs.some(t => t.id === activeTab);
+    if (!currentTabAllowed && filteredTabs.length > 0) {
+      setActiveTab(filteredTabs[0].id);
     }
-  }, [isManager, activeTab]);
+  }, [isAdmin, activeTab, filteredTabs]);
   
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -237,8 +242,8 @@ export function Admin() {
                  </div>
                  <div className="min-w-0">
                     <div className="font-black text-base md:text-lg truncate text-gray-900 dark:text-white">{user.displayName}</div>
-                    <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full w-max mt-1 ${isAdmin ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/40' : 'text-amber-600 bg-amber-50 dark:bg-amber-900/40'}`}>
-                       <Shield className="w-3 h-3" /> {isAdmin ? 'مدير النظام' : 'مسؤول المنصة'}
+                    <div className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full w-max mt-1 ${isAdmin ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/40' : isManager ? 'text-amber-600 bg-amber-50 dark:bg-amber-900/40' : 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40'}`}>
+                       <Shield className="w-3 h-3" /> {isAdmin ? 'مدير النظام' : isManager ? 'مسؤول المنصة' : profile?.jobTitle || 'محرر'}
                     </div>
                  </div>
               </div>
@@ -303,6 +308,7 @@ export function Admin() {
                 {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
                 {activeTab === "quran" && <AdminQuran />}
                 {activeTab === "events" && isAdmin && <AdminEvents />}
+                {activeTab === "roles" && isAdmin && <AdminRoles />}
              </motion.div>
            </AnimatePresence>
         </div>
@@ -324,7 +330,7 @@ function AdminSummaryDashboard() {
     const unsubs = Object.entries(collectionsMap).map(([key, col]) => {
       return onSnapshot(collection(db, col), (snap) => {
         setStats(prev => ({ ...prev, [key]: snap.size }));
-      });
+      }, (err) => console.error("Admin stats fetch error:", err));
     });
     return () => unsubs.forEach(u => u());
   }, []);
@@ -772,6 +778,7 @@ function AdminNews({ isAdmin }: { isAdmin?: boolean }) {
     if (!window.confirm("هل أنت متأكد من رغبتك في حذف هذا الخبر نهائياً؟")) return;
     try {
       await deleteDoc(doc(db, "news", newsId));
+      await SyncService.trackDeletion("news", newsId);
       setNewsList(prev => prev.filter(item => item.id !== newsId));
       alert("تم حذف الخبر بنجاح");
     } catch (e) {
@@ -1109,6 +1116,7 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(db, "videos", id));
+      await SyncService.trackDeletion("videos", id);
       alert("تم حذف الفيديو بنجاح");
       setDeletingId(null);
     } catch(error) {
@@ -1337,6 +1345,7 @@ function AdminLive() {
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(db, "livestreams", id));
+      await SyncService.trackDeletion("livestreams", id);
       alert("تم حذف البث بنجاح");
       setDeletingId(null);
     } catch(err) {
@@ -1536,6 +1545,7 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
   const handleDelete = async (id: string) => {
     try {
       await deleteDoc(doc(db, "leader", id));
+      await SyncService.trackDeletion("leader", id);
       alert("تم الحذف بنجاح");
       setDeletingId(null);
     } catch (e) {
@@ -1777,7 +1787,7 @@ function AdminQuranSeries() {
   useEffect(() => {
     const unsub = onSnapshot(query(collection(db, "quran_series"), orderBy("order", "asc")), (snap) => {
        setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSeries)));
-    });
+    }, (err) => console.error("Admin quran series err:", err));
     return unsub;
   }, []);
 
@@ -1798,7 +1808,10 @@ function AdminQuranSeries() {
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف؟")) await deleteDoc(doc(db, "quran_series", id));
+    if (confirm("تأكيد الحذف؟")) {
+      await deleteDoc(doc(db, "quran_series", id));
+      await SyncService.trackDeletion("quran_series", id);
+    }
   };
 
   return (
@@ -1847,10 +1860,10 @@ function AdminQuranLessons() {
        const s = snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSeries));
        setSeriesList(s);
        if (s.length > 0 && !seriesId) setSeriesId(s[0].id);
-    });
+    }, (err) => console.error("Admin quran lessons series fetch err:", err));
     const unsub2 = onSnapshot(query(collection(db, "quran_lessons"), orderBy("order", "asc")), (snap) => {
        setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranLesson)));
-    });
+    }, (err) => console.error("Admin quran lessons fetch err:", err));
     return () => { unsub1(); unsub2(); };
   }, [seriesId]);
 
@@ -1882,7 +1895,10 @@ function AdminQuranLessons() {
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف؟")) await deleteDoc(doc(db, "quran_lessons", id));
+    if (confirm("تأكيد الحذف؟")) {
+      await deleteDoc(doc(db, "quran_lessons", id));
+      await SyncService.trackDeletion("quran_lessons", id);
+    }
   };
 
   return (
@@ -1936,7 +1952,7 @@ function AdminQuranSyllabuses() {
   useEffect(() => {
     const unsub = onSnapshot(query(collection(db, "quran_syllabuses"), orderBy("order", "asc")), (snap) => {
        setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSyllabus)));
-    });
+    }, (err) => console.error("Admin quran syllabuses fetch err:", err));
     return unsub;
   }, []);
 
@@ -1955,7 +1971,10 @@ function AdminQuranSyllabuses() {
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف؟")) await deleteDoc(doc(db, "quran_syllabuses", id));
+    if (confirm("تأكيد الحذف؟")) {
+      await deleteDoc(doc(db, "quran_syllabuses", id));
+      await SyncService.trackDeletion("quran_syllabuses", id);
+    }
   };
 
   return (
@@ -1998,7 +2017,7 @@ function AdminQuranExcerpts() {
   useEffect(() => {
     const unsub = onSnapshot(query(collection(db, "quran_excerpts"), orderBy("order", "asc")), (snap) => {
        setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranExcerpt)));
-    });
+    }, (err) => console.error("Admin quran excerpts fetch err:", err));
     return unsub;
   }, []);
 
@@ -2017,7 +2036,10 @@ function AdminQuranExcerpts() {
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف؟")) await deleteDoc(doc(db, "quran_excerpts", id));
+    if (confirm("تأكيد الحذف؟")) {
+      await deleteDoc(doc(db, "quran_excerpts", id));
+      await SyncService.trackDeletion("quran_excerpts", id);
+    }
   };
 
   return (
@@ -2063,7 +2085,7 @@ function AdminEvents() {
   useEffect(() => {
     const unsub = onSnapshot(query(collection(db, "events"), orderBy("timestamp", "asc")), (snap) => {
       setEvents(snap.docs.map(d => ({ id: d.id, ...d.data() } as EventItem)));
-    });
+    }, (err) => console.error("Admin events fetch err:", err));
     return unsub;
   }, []);
 
@@ -2083,10 +2105,10 @@ function AdminEvents() {
 
     try {
       if (editingId) {
-        await updateDoc(doc(db, "events", editingId), data);
+        await updateDoc(doc(db, "events", editingId), { ...data, updatedAt: Date.now() });
         alert("تم التعديل");
       } else {
-        await addDoc(collection(db, "events"), data);
+        await addDoc(collection(db, "events"), { ...data, createdAt: Date.now() });
         await addDoc(collection(db, "notifications"), {
            title: "فعالية جديدة 📅",
            body: `تم إضافة فعالية جديدة: "${data.title}"`,
@@ -2129,6 +2151,7 @@ function AdminEvents() {
   const remove = async (id: string) => {
     if (confirm("هل أنت متأكد من الحذف؟")) {
       await deleteDoc(doc(db, "events", id));
+      await SyncService.trackDeletion("events", id);
     }
   };
 
@@ -2267,6 +2290,264 @@ function AdminEvents() {
           {events.length === 0 && <p className="text-center py-10 text-gray-500 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border border-dashed border-gray-200 dark:border-gray-700">لا توجد مناسبات مضافة حالياً.</p>}
         </div>
       </div>
+    </div>
+  );
+}
+
+function AdminRoles() {
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [sortBy, setSortBy] = useState('date_desc');
+  
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editRole, setEditRole] = useState<string>('user');
+  const [editPermissions, setEditPermissions] = useState<string[]>([]);
+  const [editJobTitle, setEditJobTitle] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, "users"), (snap) => {
+      setUsers(snap.docs.map(d => d.data() as UserProfile));
+      setLoading(false);
+    }, (err) => {
+      console.error("Admin users fetch err:", err);
+      setLoading(false);
+    });
+    return unsub;
+  }, []);
+
+  const handleSave = async () => {
+    if (!editingUser) return;
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "users", editingUser.uid), {
+        role: editRole,
+        permissions: editRole === 'editor' ? editPermissions : null,
+        jobTitle: editRole === 'editor' ? editJobTitle : null
+      });
+      alert('تم تحديث الصلاحيات بنجاح');
+      setEditingUser(null);
+    } catch (e) {
+      console.error(e);
+      alert('حدث خطأ أثناء حفظ الصلاحيات');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const sections = [
+    { id: 'news', label: 'الأخبار' },
+    { id: 'urgentNews', label: 'الأخبار العاجلة' },
+    { id: 'videos', label: 'الفيديوهات' },
+    { id: 'leader', label: 'السيد القائد' },
+    { id: 'quran', label: 'هدي القرآن' },
+  ];
+
+  const filteredUsers = users
+    .filter(u => {
+      const matchesSearch = (u.displayName || '').toLowerCase().includes(search.toLowerCase()) || (u.email || '').toLowerCase().includes(search.toLowerCase());
+      const matchesRole = filterRole === 'all' || u.role === filterRole;
+      return matchesSearch && matchesRole;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'date_desc') return (b.createdAt || 0) - (a.createdAt || 0);
+      if (sortBy === 'date_asc') return (a.createdAt || 0) - (b.createdAt || 0);
+      if (sortBy === 'name_asc') return (a.displayName || '').localeCompare(b.displayName || '');
+      if (sortBy === 'name_desc') return (b.displayName || '').localeCompare(a.displayName || '');
+      return 0;
+    });
+
+  const getRoleLabel = (role: string) => {
+    if (role === 'admin') return 'مسؤول نظام (Admin)';
+    if (role === 'manager') return 'مسؤول منصة (Manager)';
+    if (role === 'editor') return 'محرر (Editor)';
+    return 'مستخدم (User)';
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b dark:border-gray-700 pb-3 gap-4">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2"><Users className="w-6 h-6 text-blue-600" /> إدارة الصلاحيات والمستخدمين</h2>
+      </div>
+
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row gap-4">
+        <div className="flex-1 relative">
+          <Search className="w-5 h-5 absolute right-3 top-3 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="بحث بالاسم أو البريد..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pr-10 p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-blue-500 text-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Filter className="w-5 h-5 text-gray-400" />
+          <select 
+            value={filterRole} 
+            onChange={(e) => setFilterRole(e.target.value)}
+            className="p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-blue-500 font-bold text-xs"
+          >
+            <option value="all">كل الصلاحيات</option>
+            <option value="admin">مسؤول نظام</option>
+            <option value="manager">مسؤول منصة</option>
+            <option value="editor">محرر</option>
+            <option value="user">مستخدم عادي</option>
+          </select>
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            className="p-2.5 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-blue-500 font-bold text-xs"
+          >
+            <option value="date_desc">الأحدث</option>
+            <option value="date_asc">الأقدم</option>
+            <option value="name_asc">الاسم (أ-ي)</option>
+            <option value="name_desc">الاسم (ي-أ)</option>
+          </select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="py-20 text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 font-bold">جاري تحميل المستخدمين...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filteredUsers.map(u => (
+            <div key={u.uid} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center">
+              {u.photoURL ? (
+                <img src={u.photoURL} alt={u.displayName} className="w-16 h-16 rounded-full mb-3 shadow" />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center font-black text-2xl mb-3 shadow">
+                  {u.displayName?.charAt(0)}
+                </div>
+              )}
+              <h3 className="font-bold text-gray-900 dark:text-white truncate w-full">{u.displayName}</h3>
+              <p className="text-xs text-gray-500 truncate w-full mb-2">{u.email}</p>
+              
+              <div className="flex flex-col gap-1 items-center mb-4 min-h-[36px]">
+                <span className={`px-3 py-1 rounded-full text-[10px] font-black ${
+                  u.role === 'admin' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                  u.role === 'manager' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' :
+                  u.role === 'editor' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' :
+                  'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'
+                }`}>
+                  {getRoleLabel(u.role)}
+                </span>
+                {u.role === 'editor' && u.jobTitle && (
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-900/10 px-2 py-0.5 rounded">{u.jobTitle}</span>
+                )}
+              </div>
+              
+              <button 
+                onClick={() => {
+                  setEditingUser(u);
+                  setEditRole(u.role);
+                  setEditPermissions(u.permissions || []);
+                  setEditJobTitle(u.jobTitle || '');
+                }}
+                className="w-full mt-auto py-2 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 transition-colors"
+              >
+                تعديل الصلاحيات
+              </button>
+            </div>
+          ))}
+          {filteredUsers.length === 0 && (
+             <div className="col-span-full py-12 text-center text-gray-500">لا يوجد مستخدمين يطابقون معايير البحث.</div>
+          )}
+        </div>
+      )}
+
+      <AnimatePresence>
+        {editingUser && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-gray-800 w-full max-w-md rounded-2xl shadow-2xl p-6 relative max-h-[90vh] flex flex-col"
+            >
+              <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white border-b dark:border-gray-700 pb-3">تعديل صلاحيات ({editingUser.displayName})</h3>
+              
+              <div className="space-y-4 overflow-y-auto pr-2 flex-1 scrollbar-hide">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">الصلاحية</label>
+                  <select 
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value)}
+                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-blue-500 font-bold"
+                  >
+                    <option value="user">مستخدم عادي (User)</option>
+                    <option value="editor">محرر مخصص (Editor)</option>
+                    <option value="manager">مسؤول منصة (Manager)</option>
+                    <option value="admin">مسؤول نظام (Admin)</option>
+                  </select>
+                  <p className="text-[10px] text-gray-500 mt-1">
+                    {editRole === 'admin' && 'يمتلك كامل الصلاحيات في النظام بما في ذلك إدارة المستخدمين.'}
+                    {editRole === 'manager' && 'يمتلك صلاحية إدارة المحتوى بالكامل عدا إدارة المستخدمين والبث المباشر.'}
+                    {editRole === 'editor' && 'تقتصر صلاحياته على الأقسام المحددة له فقط.'}
+                    {editRole === 'user' && 'لا يمتلك أي صلاحيات إدارية، فقط تصفح وتفاعل كالمعتاد.'}
+                  </p>
+                </div>
+
+                {editRole === 'editor' && (
+                  <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4 pt-2">
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">المسمى الوظيفي (اختياري)</label>
+                      <input 
+                        type="text" 
+                        placeholder="مثال: كاتب سياسي، محرر محلي..." 
+                        value={editJobTitle}
+                        onChange={(e) => setEditJobTitle(e.target.value)}
+                        className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-blue-500 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">الأقسام المسموح بإدارتها</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {sections.map(sec => (
+                          <label key={sec.id} className={`flex items-center gap-2 p-2 border rounded-lg cursor-pointer transition-colors ${editPermissions.includes(sec.id) ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20' : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'}`}>
+                            <input 
+                              type="checkbox" 
+                              checked={editPermissions.includes(sec.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setEditPermissions([...editPermissions, sec.id]);
+                                else setEditPermissions(editPermissions.filter(p => p !== sec.id));
+                              }}
+                              className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-gray-300 dark:border-gray-600"
+                            />
+                            <span className="text-sm font-bold text-gray-800 dark:text-gray-200">{sec.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              <div className="mt-6 flex gap-3 pt-3 border-t dark:border-gray-700 shrink-0">
+                <button 
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}
+                </button>
+                <button 
+                  onClick={() => setEditingUser(null)}
+                  disabled={saving}
+                  className="py-3 px-6 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-xl font-bold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

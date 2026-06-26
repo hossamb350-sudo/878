@@ -16,13 +16,31 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager';
     }
 
+    function isEditor() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'editor';
+    }
+
+    function hasPermission(section) {
+      let data = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return ('permissions' in data) && (data.permissions != null) && (data.permissions.hasAny([section]));
+    }
+
+    function canManage(section) {
+      return isAdmin() || 
+             (isManager() && section in ['news', 'urgentNews', 'videos', 'leader', 'quran']) || 
+             (isEditor() && hasPermission(section));
+    }
+    
     function isStaff() {
-      return isAdmin() || isManager();
+      return isAdmin() || isManager() || isEditor();
     }
     
     match /users/{userId} {
       allow get: if isSignedIn() && request.auth.uid == userId;
-      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
       allow list, delete: if isAdmin();
       allow read: if isAdmin();
 
@@ -50,13 +68,13 @@ service cloud.firestore {
     match /news/{document=**} {
       allow read: if true;
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
-      allow write: if isStaff();
+      allow write: if canManage('news');
     }
     
     match /videos/{document=**} {
       allow read: if true;
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
-      allow write: if isStaff();
+      allow write: if canManage('videos');
     }
     
     match /settings/{document=**} {
@@ -72,7 +90,7 @@ service cloud.firestore {
     match /leader/{document=**} {
       allow read: if true;
       allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']);
-      allow write: if isStaff();
+      allow write: if canManage('leader');
     }
     
     match /events/{document=**} {
@@ -82,32 +100,37 @@ service cloud.firestore {
     
     match /urgentNews/{document=**} {
       allow read: if true;
-      allow write: if isStaff();
+      allow write: if canManage('urgentNews');
     }
     
     match /notifications/{document=**} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isStaff();
+    }
+    
+    match /newsMetadata/{document=**} {
+      allow read: if true;
+      allow write: if canManage('news');
     }
     
     match /quran_series/{document=**} {
       allow read: if true;
-      allow write: if isStaff();
+      allow write: if canManage('quran');
     }
     
     match /quran_lessons/{document=**} {
       allow read: if true;
-      allow write: if isStaff();
+      allow write: if canManage('quran');
     }
     
     match /quran_syllabuses/{document=**} {
       allow read: if true;
-      allow write: if isStaff();
+      allow write: if canManage('quran');
     }
     
     match /quran_excerpts/{document=**} {
       allow read: if true;
-      allow write: if isStaff();
+      allow write: if canManage('quran');
     }
   }
 }

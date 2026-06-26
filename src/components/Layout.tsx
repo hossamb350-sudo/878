@@ -3,6 +3,7 @@ import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTr
 import React, { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { UrgentNews, AppNotification } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -18,12 +19,16 @@ function NotificationCenter() {
       try { setReadIds(JSON.parse(saved)); } catch(e) {}
     }
 
-    const q = query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(20));
-    const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppNotification));
-      setNotifications(data);
-    });
-    return unsub;
+    let active = true;
+    const unsubPromise = SyncService.syncCollection<AppNotification>("notifications", (data) => {
+      if (!active) return;
+      setNotifications(data.slice(0, 20));
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 20 });
+
+    return () => {
+      active = false;
+      unsubPromise.then(unsub => unsub());
+    };
   }, []);
 
   useEffect(() => {
@@ -41,14 +46,14 @@ function NotificationCenter() {
   };
 
   return (
-    <div className="fixed bottom-24 left-4 z-[60]">
+    <div className="relative z-[60]">
       <button 
         onClick={toggle} 
-        className="p-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-lg border border-white dark:border-gray-700 hover:scale-105 active:scale-95 transition-all group"
+        className="p-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:scale-105 active:scale-95 transition-all group relative"
       >
-        <Bell className={`w-6 h-6 ${unreadCount > 0 ? 'text-blue-600 dark:text-blue-400 animate-pulse' : 'text-gray-600 dark:text-gray-400'}`} />
+        <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-blue-600 dark:text-blue-400 animate-pulse' : 'text-gray-600 dark:text-gray-400'}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm ring-2 ring-white dark:ring-gray-800">
+          <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-sm ring-2 ring-white dark:ring-gray-800">
             {unreadCount}
           </span>
         )}
@@ -63,10 +68,10 @@ function NotificationCenter() {
                className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40"
             />
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.9, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="absolute left-0 bottom-full mb-3 w-[85vw] max-w-[340px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white dark:border-gray-800 z-50 overflow-hidden rtl"
+              exit={{ opacity: 0, scale: 0.9, y: -10 }}
+              className="absolute left-0 top-full mt-3 w-[85vw] max-w-[340px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white dark:border-gray-800 z-50 overflow-hidden rtl"
               dir="rtl"
             >
               <div className="p-5 border-b dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
@@ -141,39 +146,44 @@ function UrgentNewsBanner() {
       Notification.requestPermission();
     }
 
-    const q = query(collection(db, "urgentNews"), orderBy("createdAt", "desc"), limit(1));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      if (!snapshot.empty) {
-        const data = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as UrgentNews;
-        
-        // Check if expired
+    let active = true;
+    let timerId: any = null;
+
+    const unsubPromise = SyncService.syncCollection<UrgentNews>("urgentNews", (dataList) => {
+      if (!active) return;
+      if (timerId) clearTimeout(timerId);
+
+      const latest = dataList[0];
+      if (latest) {
         const now = Date.now();
-        if (data.expiresAt > now) {
-           setUrgentNews(data);
-           playAlertSound();
-           
-           if ("Notification" in window && Notification.permission === "granted") {
-             new Notification("خبر عاجل 🔴", { body: data.text });
-           }
-           
-           // Automatically hide when expires 
-           const timeRemaining = data.expiresAt - now;
-           const timer = setTimeout(() => {
-             setUrgentNews(null);
-           }, timeRemaining);
-           
-           return () => clearTimeout(timer);
+        if (latest.expiresAt > now) {
+          setUrgentNews(latest);
+          
+          // Only play sound and notify if the news is extremely fresh (e.g. added in the last 15 seconds)
+          if (latest.createdAt && now - latest.createdAt < 15000) {
+            playAlertSound();
+            if ("Notification" in window && Notification.permission === "granted") {
+              new Notification("خبر عاجل 🔴", { body: latest.text });
+            }
+          }
+
+          const timeRemaining = latest.expiresAt - now;
+          timerId = setTimeout(() => {
+            setUrgentNews(null);
+          }, timeRemaining);
         } else {
-           setUrgentNews(null);
+          setUrgentNews(null);
         }
       } else {
         setUrgentNews(null);
       }
-    }, (error) => {
-      console.error("Firestore snapshot error:", error);
-    });
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 1 });
 
-    return () => unsubscribe();
+    return () => {
+      active = false;
+      if (timerId) clearTimeout(timerId);
+      unsubPromise.then(unsub => unsub());
+    };
   }, []);
 
   return (
@@ -231,19 +241,19 @@ export function Layout() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
-      <NotificationCenter />
       <UrgentNewsBanner />
 
       {/* Global Branding Header */}
       <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-[55] border-b dark:border-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-start">
+        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
            <div className="flex flex-col text-right">
               <span className="font-[900] text-xl sm:text-2xl tracking-tighter leading-none text-amber-700 dark:text-amber-450">منصة تعز الإعلامية</span>
               <div className="flex items-center justify-start gap-2 mt-1">
                 <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">إخبارية .. ثقافية |</span>
-                <span className="text-[9px] font-bold text-[#d49a37] dark:text-[#e5b35c] tracking-[0.15em] uppercase">Taiz Media Platform</span>
+                <span className="text-[9px] font-bold text-[#d49a37] dark:text-[#e5b35c] tracking-[0.15em] uppercase">TAIZ MEDIA PLAT FORM</span>
               </div>
             </div>
+            <NotificationCenter />
         </div>
       </header>
 

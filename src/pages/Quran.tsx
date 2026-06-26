@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, orderBy, onSnapshot, doc, getDoc, getDocs, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { QuranSeries, QuranLesson, QuranSyllabus, QuranExcerpt, QuranLastRead } from "../types";
 import { 
   Menu, Info, MoreVertical, Search, Library, Bookmark, Trophy,
@@ -462,23 +463,46 @@ export function Quran() {
       try { setHighlights(JSON.parse(savedHighlights)); } catch(e){}
     }
 
-    // 2. Fetch Quran content lists
-    const unsubSeries = onSnapshot(query(collection(db, "quran_series"), orderBy("order", "asc")), (snap) => {
-      setSeriesList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSeries)));
-      setLoading(false);
-    });
+    // 2. Fetch Quran content lists using SyncService caching
+    let active = true;
+    let seriesDone = false;
+    let lessonsDone = false;
+    let syllabusesDone = false;
+    let excerptsDone = false;
 
-    const unsubLessons = onSnapshot(query(collection(db, "quran_lessons"), orderBy("order", "asc")), (snap) => {
-      setLessonsList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranLesson)));
-    });
+    const checkLoading = () => {
+      if (active && seriesDone && lessonsDone && syllabusesDone && excerptsDone) {
+        setLoading(false);
+      }
+    };
 
-    const unsubSyllabuses = onSnapshot(query(collection(db, "quran_syllabuses"), orderBy("order", "asc")), (snap) => {
-      setSyllabusesList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSyllabus)));
-    });
+    const unsubSeriesPromise = SyncService.syncCollection<QuranSeries>("quran_series", (data) => {
+      if (!active) return;
+      setSeriesList(data);
+      seriesDone = true;
+      checkLoading();
+    }, { orderByField: "order", orderDirection: "asc" });
 
-    const unsubExcerpts = onSnapshot(query(collection(db, "quran_excerpts"), orderBy("order", "asc")), (snap) => {
-      setExcerptsList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranExcerpt)));
-    });
+    const unsubLessonsPromise = SyncService.syncCollection<QuranLesson>("quran_lessons", (data) => {
+      if (!active) return;
+      setLessonsList(data);
+      lessonsDone = true;
+      checkLoading();
+    }, { orderByField: "order", orderDirection: "asc" });
+
+    const unsubSyllabusesPromise = SyncService.syncCollection<QuranSyllabus>("quran_syllabuses", (data) => {
+      if (!active) return;
+      setSyllabusesList(data);
+      syllabusesDone = true;
+      checkLoading();
+    }, { orderByField: "order", orderDirection: "asc" });
+
+    const unsubExcerptsPromise = SyncService.syncCollection<QuranExcerpt>("quran_excerpts", (data) => {
+      if (!active) return;
+      setExcerptsList(data);
+      excerptsDone = true;
+      checkLoading();
+    }, { orderByField: "order", orderDirection: "asc" });
 
     // 3. User Cloud Sync subcollections
     const unsubAuth = onAuthStateChanged(auth, async (currentUser) => {
@@ -555,7 +579,12 @@ export function Quran() {
     });
 
     return () => {
-      unsubSeries(); unsubLessons(); unsubSyllabuses(); unsubExcerpts(); unsubAuth();
+      active = false;
+      unsubSeriesPromise.then(unsub => unsub());
+      unsubLessonsPromise.then(unsub => unsub());
+      unsubSyllabusesPromise.then(unsub => unsub());
+      unsubExcerptsPromise.then(unsub => unsub());
+      unsubAuth();
     };
   }, []);
 

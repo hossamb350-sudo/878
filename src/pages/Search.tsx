@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { collection, query, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { NewsItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -21,10 +22,8 @@ export function Search() {
     const search = async () => {
       setLoading(true);
       try {
-        // Fast client-side filter over all news for simple search MVP
-        // In large scale, we'd use Algolia or Typesense, as Firestore lacks full-text search.
-        const snapshot = await getDocs(query(collection(db, "news")));
-        const allNews = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem));
+        // Fast client-side filter over cached news
+        const allNews = SyncService.getCache<NewsItem>("news");
         const filtered = allNews.filter(n => 
           n.title.includes(q) || 
           n.shortDescription.includes(q) || 

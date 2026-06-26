@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, query, where, limit, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { NewsItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -44,12 +45,28 @@ export function NewsDetail() {
       setLoading(true);
       window.scrollTo(0, 0); // Scroll to top on navigation
       try {
-        const d = await getDoc(doc(db, "news", id));
-        if (d.exists()) {
-          const newsData = { id: d.id, ...d.data() } as NewsItem;
-          setNews(newsData);
+        const cachedNews = SyncService.getCache<NewsItem>("news");
+        
+        let foundNews = cachedNews.find(n => n.id === id) || null;
+        if (foundNews) {
+          setNews(foundNews);
+        } else {
+          const d = await getDoc(doc(db, "news", id));
+          if (d.exists()) {
+            foundNews = { id: d.id, ...d.data() } as NewsItem;
+            setNews(foundNews);
+          }
+        }
+
+        // Suggestions from cachedNews
+        if (foundNews) {
+          let rItems = cachedNews.filter(n => n.category === foundNews!.category && n.id !== id);
+          if (rItems.length < 3) {
+            rItems = cachedNews.filter(n => n.id !== id);
+          }
+          setRelated(rItems.slice(0, 3));
           
-          // Increment views
+          // Increment views in background
           try {
             const { updateDoc, increment } = await import("firebase/firestore");
             await updateDoc(doc(db, "news", id), {
@@ -58,18 +75,6 @@ export function NewsDetail() {
           } catch(e) {
             console.warn("Could not increment views", e);
           }
-          
-          // Fetch related
-          let catQuery = query(collection(db, "news"), where("category", "==", newsData.category), limit(4));
-          let relatedDocs = await getDocs(catQuery);
-          let rItems = relatedDocs.docs.map(rd => ({ id: rd.id, ...rd.data() } as NewsItem)).filter(i => i.id !== id);
-          if (rItems.length < 3) {
-            // fallback to any latest if not enough related
-            let fallbackQ = query(collection(db, "news"), limit(4));
-            let fbDocs = await getDocs(fallbackQ);
-            rItems = fbDocs.docs.map(rd => ({ id: rd.id, ...rd.data() } as NewsItem)).filter(i => i.id !== id);
-          }
-          setRelated(rItems.slice(0, 3));
         }
       } catch (err) {
         console.error(err);

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import { collection, query, orderBy, getDocs, onSnapshot, where } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, onSnapshot, where, limit } from "firebase/firestore";
 import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { VideoItem, LiveStream } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -30,42 +31,50 @@ export function Watch() {
   const activeVideoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Dynamic fetch for active channels realtime
-    const channelsQ = query(collection(db, "livestreams"), where("isActive", "==", true));
-    const unsubChannels = onSnapshot(channelsQ, (snap) => {
-      const dbChannels = snap.docs.map(d => ({ id: d.id, ...d.data() } as LiveStream));
-      dbChannels.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
-      setChannels(dbChannels);
-      setActiveChannelId(prev => {
-        if (!prev && dbChannels.length > 0) return dbChannels[0].id || null;
-        return prev;
-      });
-    }, (error) => {
-      console.error("Error fetching livestreams realtime:", error);
-    });
+    let active = true;
+    let channelsDone = false;
+    let videosDone = false;
 
-    const fetchVideos = async () => {
-      try {
-        const vids = await getDocs(collection(db, "videos"));
-        const data = vids.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem));
-        data.sort((a, b) => {
-          const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-          const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-          if (aOrder !== bOrder) {
-            return aOrder - bOrder;
-          }
-          return b.createdAt - a.createdAt;
-        });
-        setVideos(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
+    const checkLoading = () => {
+      if (active && channelsDone && videosDone) {
         setLoading(false);
       }
     };
-    fetchVideos();
 
-    return () => unsubChannels();
+    const unsubChannelsPromise = SyncService.syncCollection<LiveStream>("livestreams", (dbChannels) => {
+      if (!active) return;
+      const activeChannels = dbChannels.filter(c => c.isActive);
+      activeChannels.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setChannels(activeChannels);
+      setActiveChannelId(prev => {
+        if (!prev && activeChannels.length > 0) return activeChannels[0].id || null;
+        return prev;
+      });
+      channelsDone = true;
+      checkLoading();
+    }, { orderByField: "createdAt", orderDirection: "desc" });
+
+    const unsubVideosPromise = SyncService.syncCollection<VideoItem>("videos", (videoData) => {
+      if (!active) return;
+      const sorted = [...videoData];
+      sorted.sort((a, b) => {
+        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.createdAt - a.createdAt;
+      });
+      setVideos(sorted);
+      videosDone = true;
+      checkLoading();
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 50 });
+
+    return () => {
+      active = false;
+      unsubChannelsPromise.then(unsub => unsub());
+      unsubVideosPromise.then(unsub => unsub());
+    };
   }, []);
 
   const activeChannel = channels.find(c => c.id === activeChannelId);

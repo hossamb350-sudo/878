@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, query, orderBy, getDocs, limit } from "firebase/firestore";
 import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { NewsItem, VideoItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -42,29 +43,38 @@ export function Home() {
   const [savedArticles, setSavedArticles] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const _news = await getDocs(query(collection(db, "news"), orderBy("createdAt", "desc"), limit(30)));
-        setNews(_news.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem)));
+    let active = true;
+    let newsDone = false;
+    let videosDone = false;
 
-        const _videos = await getDocs(collection(db, "videos"));
-        const videoData = _videos.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem));
-        videoData.sort((a, b) => {
-          const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-          const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-          if (aOrder !== bOrder) {
-            return aOrder - bOrder;
-          }
-          return b.createdAt - a.createdAt;
-        });
-        setVideos(videoData.slice(0, 10));
-      } catch (err) {
-        console.error("Error fetching data:", err);
-      } finally {
+    const checkLoading = () => {
+      if (active && newsDone && videosDone) {
         setLoading(false);
       }
     };
-    fetchData();
+
+    const unsubNewsPromise = SyncService.syncCollection<NewsItem>("news", (newsData) => {
+      if (!active) return;
+      setNews(newsData.slice(0, 30));
+      newsDone = true;
+      checkLoading();
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
+
+    const unsubVideosPromise = SyncService.syncCollection<VideoItem>("videos", (videoData) => {
+      if (!active) return;
+      const sorted = [...videoData];
+      sorted.sort((a, b) => {
+        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return b.createdAt - a.createdAt;
+      });
+      setVideos(sorted.slice(0, 10));
+      videosDone = true;
+      checkLoading();
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
 
     // Load saved bookmarks status
     const saved = localStorage.getItem("saved_news");
@@ -75,6 +85,12 @@ export function Home() {
         console.error(e);
       }
     }
+
+    return () => {
+      active = false;
+      unsubNewsPromise.then(unsub => unsub());
+      unsubVideosPromise.then(unsub => unsub());
+    };
   }, []);
 
   const toggleBookmark = (id: string, e: React.MouseEvent) => {

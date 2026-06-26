@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment, collection, query, orderBy, getDocs, limit } from "firebase/firestore";
 import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { VideoItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -46,30 +47,25 @@ export function WatchItem() {
     const fetchVideoAndSuggestions = async () => {
       try {
         setLoading(true);
-        const docRef = doc(db, "videos", id);
-        const docSnap = await getDoc(docRef);
+        const cachedVideos = SyncService.getCache<VideoItem>("videos");
         
-        if (docSnap.exists()) {
-          const videoData = { id: docSnap.id, ...docSnap.data() } as VideoItem;
-          setVideo(videoData);
-          
-          // Increment views
-          try {
-            await updateDoc(docRef, {
-              views: increment(1)
-            });
-          } catch(e) {
-            console.warn("Could not increment views", e);
-          }
+        let foundVideo = cachedVideos.find(v => v.id === id) || null;
+        if (foundVideo) {
+          setVideo(foundVideo);
         } else {
-          setError(true);
+          const docRef = doc(db, "videos", id);
+          const docSnap = await getDoc(docRef);
+          
+          if (docSnap.exists()) {
+            foundVideo = { id: docSnap.id, ...docSnap.data() } as VideoItem;
+            setVideo(foundVideo);
+          } else {
+            setError(true);
+          }
         }
 
-        // Fetch other suggestions (excluding current one)
-        const snap = await getDocs(collection(db, "videos"));
-        const list = snap.docs
-          .map(d => ({ id: d.id, ...d.data() } as VideoItem))
-          .filter(v => v.id !== id);
+        // Suggestions from cached list
+        const list = cachedVideos.filter(v => v.id !== id);
         list.sort((a, b) => {
           const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
           const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
@@ -80,6 +76,16 @@ export function WatchItem() {
         });
         setRecentVideos(list.slice(0, 8));
 
+        // Background update for incrementing views
+        if (foundVideo) {
+          try {
+            await updateDoc(doc(db, "videos", id), {
+              views: increment(1)
+            });
+          } catch(e) {
+            console.warn("Could not increment views", e);
+          }
+        }
       } catch (err) {
         console.error(err);
         setError(true);

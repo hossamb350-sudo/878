@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
 import { EventItem } from "../types";
 import { format, differenceInDays, isSameDay, isAfter, startOfDay, addDays, isBefore } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -45,11 +46,17 @@ export function Events() {
   }, [dbEvents]);
 
   useEffect(() => {
-    const unsub = onSnapshot(query(collection(db, "events"), orderBy("timestamp", "asc")), (snap) => {
-      setDbEvents(snap.docs.map(d => ({ id: d.id, ...d.data() } as EventItem)));
+    let active = true;
+    const unsubPromise = SyncService.syncCollection<EventItem>("events", (data) => {
+      if (!active) return;
+      setDbEvents(data);
       setLoading(false);
-    });
-    return unsub;
+    }, { orderByField: "timestamp", orderDirection: "asc" });
+
+    return () => {
+      active = false;
+      unsubPromise.then(unsub => unsub());
+    };
   }, []);
 
   const today = startOfDay(new Date());
