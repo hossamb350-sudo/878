@@ -76,13 +76,20 @@ const ContactUsSection = () => {
       </div>
       
       {/* Copyright Footer Section */}
-      <div className="w-full flex justify-center py-6 px-4">
+      <div className="w-full flex flex-col items-center justify-center py-6 px-4 gap-4">
          <div className="w-full max-w-md">
             <img 
               src="/copyright.png" 
               alt="حقوق النشر" 
               className="w-full h-auto opacity-80 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-700" 
             />
+         </div>
+         <div className="text-center pt-2">
+            <p className="text-[9px] sm:text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-wider flex flex-wrap items-center justify-center gap-1.5 opacity-80">
+               <span className="uppercase">Designed & Developed by : Al Basha Taiz</span>
+               <span className="text-gray-300 dark:text-gray-700">|</span>
+               <span className="font-bold">تصميم، إعداد وبرمجة : الباشا تعز</span>
+            </p>
          </div>
       </div>
     </div>
