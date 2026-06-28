@@ -29,12 +29,23 @@ service cloud.firestore {
 
     function canManage(section) {
       return isAdmin() || 
-             (isManager() && section in ['news', 'urgentNews', 'videos', 'leader', 'quran']) || 
+             (isManager() && section in ['news', 'urgentNews', 'videos', 'leader', 'quran', 'social_links']) || 
              (isEditor() && hasPermission(section));
     }
     
     function isStaff() {
       return isAdmin() || isManager() || isEditor();
+    }
+
+    function isValidSocialLink(data) {
+      return data.keys().hasAll(['platform', 'label', 'url', 'order', 'createdAt']) &&
+             data.keys().size() <= 6 &&
+             data.platform is string && data.platform.size() <= 100 &&
+             data.label is string && data.label.size() <= 100 &&
+             data.url is string && data.url.size() <= 1000 &&
+             ( !('description' in data) || (data.description is string && data.description.size() <= 500) ) &&
+             data.order is number &&
+             data.createdAt is number;
     }
     
     match /users/{userId} {
@@ -98,6 +109,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
+    match /deletions/{document=**} {
+      allow read: if true;
+      allow write: if isStaff();
+    }
+    
     match /urgentNews/{document=**} {
       allow read: if true;
       allow write: if canManage('urgentNews');
@@ -131,6 +147,12 @@ service cloud.firestore {
     match /quran_excerpts/{document=**} {
       allow read: if true;
       allow write: if canManage('quran');
+    }
+
+    match /social_links/{document=**} {
+      allow read: if true;
+      allow create, update: if canManage('social_links') && isValidSocialLink(request.resource.data);
+      allow delete: if canManage('social_links');
     }
   }
 }

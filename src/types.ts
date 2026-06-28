@@ -15,6 +15,7 @@ export interface NewsItem {
   imageUrl?: string;
   additionalImages?: string[];
   category: string;
+  categories?: string[];
   isBreaking: boolean;
   isPinned?: boolean;
   createdAt: number;
@@ -44,7 +45,7 @@ export interface VideoItem {
 }
 
 export interface LiveStream {
-  id?: string;
+  id: string;
   name?: string;
   iconUrl?: string;
   url?: string;
@@ -150,6 +151,16 @@ export interface LessonProgress {
   lessonId: string;
   completionPercentage: number; // 0 to 100
   lastUpdated: number;
+}
+
+export interface SocialLink {
+  id: string;
+  platform: string;
+  label: string;
+  url: string;
+  description?: string;
+  order: number;
+  createdAt: number;
 }
 
 export interface AppNotification {

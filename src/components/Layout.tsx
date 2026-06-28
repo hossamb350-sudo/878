@@ -49,11 +49,11 @@ function NotificationCenter() {
     <div className="relative z-[60]">
       <button 
         onClick={toggle} 
-        className="p-2.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur-md rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:scale-105 active:scale-95 transition-all group relative"
+        className="p-2.5 bg-surface-main hover:bg-surface-hover rounded-xl border border-border-light hover:scale-105 active:scale-95 transition-all group relative"
       >
-        <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-blue-600 dark:text-blue-400 animate-pulse' : 'text-gray-600 dark:text-gray-400'}`} />
+        <Bell className={`w-5 h-5 ${unreadCount > 0 ? 'text-taiz-sky animate-pulse' : 'text-text-secondary'}`} />
         {unreadCount > 0 && (
-          <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full shadow-sm ring-2 ring-white dark:ring-gray-800">
+          <span className="absolute -top-1 -right-1 bg-status-error text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-md ring-2 ring-white">
             {unreadCount}
           </span>
         )}
@@ -65,40 +65,40 @@ function NotificationCenter() {
             <motion.div 
                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                onClick={() => setIsOpen(false)}
-               className="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-40"
+               className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: -10 }}
-              className="absolute left-0 top-full mt-3 w-[85vw] max-w-[340px] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white dark:border-gray-800 z-50 overflow-hidden rtl"
+              className="absolute left-0 top-full mt-3 w-[85vw] max-w-[340px] glass-panel rounded-2xl z-50 overflow-hidden rtl"
               dir="rtl"
             >
-              <div className="p-5 border-b dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
-                <div className="flex items-center gap-2">
-                   <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
-                   <h3 className="font-black text-gray-900 dark:text-white">جديد المنصة</h3>
+              <div className="p-5 border-b border-border-light flex justify-between items-center bg-surface-main/80">
+                <div className="flex items-center gap-3">
+                   <div className="w-2.5 h-2.5 bg-taiz-sky rounded-full animate-pulse shadow-glow"></div>
+                   <h3 className="font-bold text-text-primary">جديد المنصة</h3>
                 </div>
-                <button onClick={() => setIsOpen(false)} className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
-                  <X className="w-5 h-5 text-gray-400" />
+                <button onClick={() => setIsOpen(false)} className="p-1.5 hover:bg-white rounded-full transition-colors">
+                  <X className="w-5 h-5 text-text-muted" />
                 </button>
               </div>
               <div className="max-h-[60vh] overflow-y-auto scrollbar-hide py-2">
                 {notifications.length === 0 ? (
                   <div className="p-12 text-center flex flex-col items-center gap-3">
-                     <Bell className="w-12 h-12 text-gray-200 dark:text-gray-800" />
-                     <p className="text-gray-400 text-sm font-bold">لا يوجد تنبيهات حالياً</p>
+                     <Bell className="w-12 h-12 text-text-muted opacity-50" />
+                     <p className="text-text-muted text-sm font-bold">لا يوجد تنبيهات حالياً</p>
                   </div>
                 ) : (
                   notifications.map(n => (
-                    <div key={n.id} className="mx-3 my-2 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-50 dark:border-gray-700/50 hover:border-blue-500 transition-colors shadow-sm">
-                      <div className="flex justify-between items-start mb-1 gap-2">
-                        <span className="font-bold text-sm text-gray-900 dark:text-white leading-tight">{n.title}</span>
-                        <span className="text-[9px] font-bold text-gray-400 whitespace-nowrap bg-gray-100 dark:bg-gray-900 px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                    <div key={n.id} className="mx-3 my-2 p-4 card card-hover">
+                      <div className="flex justify-between items-start mb-2 gap-2">
+                        <span className="font-bold text-sm text-text-primary leading-[1.4]">{n.title}</span>
+                        <span className="text-[10px] font-bold text-text-secondary whitespace-nowrap bg-surface-main px-2 py-1 rounded-md">
                           {new Date(n.createdAt).toLocaleDateString("ar-SA", { day: 'numeric', month: 'short' })}
                         </span>
                       </div>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-3">{n.body}</p>
+                      <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">{n.body}</p>
                     </div>
                   ))
                 )}
@@ -193,16 +193,16 @@ function UrgentNewsBanner() {
            initial={{ y: -50, opacity: 0 }}
            animate={{ y: 0, opacity: 1 }}
            exit={{ y: -50, opacity: 0 }}
-           className="bg-red-600 text-white shadow-md relative z-50 overflow-hidden"
+           className="bg-status-error text-white shadow-md relative z-50 overflow-hidden"
          >
             <div className="absolute top-0 left-0 bottom-0 w-1 bg-white opacity-40 animate-pulse"></div>
-            <div className="max-w-[800px] mx-auto px-4 py-3 flex items-center justify-between min-w-0 gap-2">
+            <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between min-w-0 gap-2">
                <div className="flex items-center gap-3 w-full min-w-0">
-                  <div className="bg-white/20 p-1.5 rounded-sm shrink-0 shadow-inner">
+                  <div className="bg-white/20 p-1.5 rounded-lg shrink-0 shadow-inner">
                      <AlertTriangle className="w-5 h-5 text-white animate-pulse" />
                   </div>
-                  <h3 className="font-extrabold text-sm sm:text-base md:text-lg leading-tight w-full text-right truncate whitespace-normal line-clamp-2">
-                    <span className="font-black text-xs sm:text-sm bg-white text-red-600 px-1.5 py-0.5 rounded-sm ml-2 hidden sm:inline-block">عاجل</span>
+                  <h3 className="font-bold text-sm sm:text-base leading-tight w-full text-right truncate whitespace-normal line-clamp-2">
+                    <span className="font-black text-xs sm:text-sm bg-white text-status-error px-2 py-0.5 rounded-md ml-2 hidden sm:inline-block">عاجل</span>
                     {urgentNews.text}
                   </h3>
                </div>
@@ -240,18 +240,15 @@ export function Layout() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex flex-col min-h-screen bg-surface-main text-text-primary transition-colors">
       <UrgentNewsBanner />
 
-      {/* Global Branding Header */}
-      <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-[55] border-b dark:border-gray-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+      {/* Main Header - Reverted to previous state */}
+      <header className="bg-surface-main sticky top-0 z-[55] border-b border-border-light shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
            <div className="flex flex-col text-right">
-              <span className="font-[900] text-xl sm:text-2xl tracking-tighter leading-none text-amber-700 dark:text-amber-450">منصة تعز الإعلامية</span>
-              <div className="flex items-center justify-start gap-2 mt-1">
-                <span className="text-[9px] font-bold text-gray-400 dark:text-gray-500">إخبارية .. ثقافية |</span>
-                <span className="text-[9px] font-bold text-[#d49a37] dark:text-[#e5b35c] tracking-[0.15em] uppercase">TAIZ MEDIA PLAT FORM</span>
-              </div>
+              <span className="font-black text-lg sm:text-xl text-taiz-navy leading-tight">منصة تعز الإعلامية</span>
+              <span className="text-[10px] font-bold text-taiz-sky uppercase tracking-wider">إخبارية .. ثقافية | TAIZ MEDIA PLATFORM</span>
             </div>
             <NotificationCenter />
         </div>
@@ -263,8 +260,8 @@ export function Layout() {
       </main>
 
       {/* Navigation for All Devices */}
-      <nav className={`fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 px-1 flex justify-center items-center z-40 pb-safe shadow-[0_-4px_10px_rgba(0,0,0,0.05)] dark:shadow-[0_-4px_10px_rgba(0,0,0,0.2)] transition-transform duration-300 ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
-        <div className="grid grid-cols-6 w-full max-w-[600px] justify-items-center">
+      <nav className={`fixed bottom-0 left-0 right-0 glass-panel border-t border-border-light px-1 flex justify-center items-center z-40 pb-safe transition-transform duration-300 ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+        <div className="grid grid-cols-6 w-full max-w-2xl justify-items-center">
           {[
             { to: "/", icon: Newspaper, label: "الأخبار" },
             { to: "/watch", icon: Tv, label: "شاهد" },
@@ -277,20 +274,20 @@ export function Layout() {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-start pt-2 pb-2 w-full transition-colors relative min-h-[4.25rem] sm:min-h-[4.5rem] ${
+                `flex flex-col items-center justify-start pt-2 pb-2 w-full transition-all relative min-h-[4.25rem] sm:min-h-[4.5rem] group ${
                   isActive
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                    ? "text-taiz-sky"
+                    : "text-text-muted hover:text-taiz-navy"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {isActive && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-550 rounded-b-full"></div>}
-                  <div className="h-6 w-full flex items-center justify-center mb-1 shrink-0">
-                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 ${isActive ? 'fill-amber-100 dark:fill-amber-900/30' : ''}`} />
+                  {isActive && <motion.div layoutId="nav-active" className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-taiz-sky to-taiz-royal rounded-b-full shadow-glow"></motion.div>}
+                  <div className="h-6 w-full flex items-center justify-center mb-1 shrink-0 mt-1">
+                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isActive ? 'fill-taiz-sky/10 scale-110 text-taiz-sky' : 'group-hover:scale-110'}`} />
                   </div>
-                  <span className="text-[9px] min-[380px]:text-[10px] sm:text-xs font-semibold text-center leading-tight line-clamp-2 px-0.5 tracking-tight w-full">
+                  <span className="text-[9px] min-[380px]:text-[10px] sm:text-xs font-bold text-center leading-tight line-clamp-2 px-0.5 tracking-tight w-full">
                     {item.label}
                   </span>
                 </>

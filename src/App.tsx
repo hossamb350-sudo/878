@@ -60,89 +60,69 @@ function Splash({ onEnter }: { onEnter: () => void }) {
     playPremiumClick();
     setTimeout(() => {
       onEnter();
-    }, 450);
+    }, 600);
   };
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleAction();
+    }, 8000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="fixed inset-0 bg-white text-zinc-900 z-[100] flex flex-col items-center justify-between py-10 px-6 sm:p-12 select-none font-sans overflow-y-auto overflow-x-hidden leading-relaxed">
+    <div className="fixed inset-0 bg-[#eef1f5] text-taiz-navy z-[100] flex flex-col items-center justify-center select-none font-sans overflow-hidden">
       
-      {/* 1. LUXURY GEOMETRIC ISLAMIC BACKGROUND VECTORS (Matching the design image) */}
-      
-      {/* Decorative Rotating Geometric Background Star (Faint Islamic Art Motif) */}
-      <div className="absolute inset-0 opacity-[0.025] pointer-events-none overflow-hidden z-0 flex items-center justify-center">
-        <motion.svg 
-          width="750" 
-          height="750" 
-          viewBox="0 0 100 100" 
-          className="text-[#d49a37]"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 55, repeat: Infinity, ease: "linear" }}
-        >
-          <polygon points="50,0 65,35 100,50 65,65 50,100 35,65 0,50 35,35" fill="currentColor" />
-          <polygon points="50,15 58,42 85,50 58,58 50,85 42,58 15,50 42,42" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        </motion.svg>
-      </div>
-
-      {/* Top-Left Dots Grid */}
-      <svg viewBox="0 0 100 100" className="absolute top-[4%] left-[4%] w-20 h-20 sm:w-24 sm:h-24 text-[#d49a37]/35 opacity-70 pointer-events-none z-0">
-        {Array.from({ length: 6 }).map((_, r) =>
-          Array.from({ length: 6 }).map((_, c) => (
-            <circle key={`tl-${r}-${c}`} cx={10 + c * 16} cy={10 + r * 16} r="1.5" fill="currentColor" />
-          ))
-        )}
-      </svg>
-
-      {/* Bottom-Right Dots Grid */}
-      <svg viewBox="0 0 100 100" className="absolute bottom-[4%] right-[4%] w-24 h-24 sm:w-32 sm:h-32 text-[#d49a37]/25 opacity-75 pointer-events-none z-0">
-        {Array.from({ length: 8 }).map((_, r) =>
-          Array.from({ length: 8 }).map((_, c) => (
-            <circle key={`br-${r}-${c}`} cx={10 + c * 12} cy={10 + r * 12} r="1.2" fill="currentColor" />
-          ))
-        )}
-      </svg>
-
-      {/* Elegant concentric gold rings */}
-      <div className="absolute top-[8%] right-[-5%] w-36 h-36 rounded-full border border-[#d49a37]/10 pointer-events-none z-0 flex items-center justify-center">
-        <div className="w-28 h-28 rounded-full border border-dashed border-[#d49a37]/8" />
-      </div>
-
-      <div className="absolute bottom-[18%] left-[-4%] w-24 h-24 rounded-full border border-[#d49a37]/12 pointer-events-none z-0" />
-
-      {/* Subtle glowing warm amber dust */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-[28%] right-[15%] w-2 h-2 rounded-full bg-[#d49a37]/30 blur-[1px] animate-pulse" />
-        <div className="absolute bottom-[38%] left-[10%] w-1.5 h-1.5 rounded-full bg-[#d49a37]/20 blur-[1.5px] animate-pulse" />
-      </div>
-
-      {/* 2. PLATFORM LOGO PLATE CARD (Matches Center of Graphic Design) */}
-      <div className="my-auto relative z-10 flex flex-col items-center justify-center text-center max-w-lg w-full px-2 sm:px-4">
+      {/* Cinematic Background Atmosphere - Matching the Logo Background */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* Soft radial glow behind the logo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-radial from-white via-white/40 to-transparent opacity-80" />
         
-        <div className="relative w-72 h-72 sm:w-80 sm:h-80 md:w-96 md:h-96 flex items-center justify-center mb-6">
-          
-          {/* Subtle Ambient Glow */}
+        {/* Subtle atmospheric vignettes */}
+        <div className="absolute -top-[20%] -left-[20%] w-[60%] h-[60%] bg-taiz-sky/10 blur-[150px] rounded-full" />
+        <div className="absolute -bottom-[20%] -right-[20%] w-[60%] h-[60%] bg-taiz-royal/10 blur-[150px] rounded-full" />
+        
+        {/* Refined texture overlay */}
+        <div className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/natural-paper.png")' }} />
+      </div>
+
+      <div className="relative z-10 flex flex-col items-center justify-center text-center max-w-lg w-full px-6 min-h-[500px]">
+        
+        {/* Premium Logo Presentation with Shimmer */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8, filter: "blur(20px)" }}
+          animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+          transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+          className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center"
+        >
+          {/* Animated Halos with Logo Colors */}
           <motion.div 
-            className="absolute -inset-10 bg-gradient-to-r from-[#d49a37]/5 to-[#b37f2c]/5 rounded-full blur-3xl opacity-40"
-            animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -inset-10 border border-taiz-sky/15 rounded-full"
+            animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div 
+            className="absolute -inset-20 border border-taiz-royal/10 rounded-full"
+            animate={{ scale: [1.1, 1, 1.1], opacity: [0.1, 0.2, 0.1] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
           />
 
-          {/* Natural Centered Logo Container */}
-          <motion.div 
-            initial={{ scale: 0.92, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative w-full h-full flex items-center justify-center pointer-events-auto"
-          >
-            <img 
-              src={splashImg} 
-              alt="شعار شاشة البداية" 
-              className="w-full h-full object-contain filter drop-shadow-sm select-none" 
-            />
-          </motion.div>
-        </div>
+          {/* Logo Container with Shimmer Effect */}
+          <div className="relative w-full h-full drop-shadow-[0_20px_50px_rgba(3,47,105,0.15)]">
+            <div className="shimmer w-full h-full flex items-center justify-center rounded-[3rem] overflow-hidden">
+              <motion.img 
+                src={splashImg} 
+                alt="Logo" 
+                className="w-full h-full object-contain select-none p-4" 
+                animate={{ y: [0, -8, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </div>
+          </div>
+        </motion.div>
 
-        {/* 3. FEATURES SLIDING CAROUSEL (Implementing Slide cards and dots from Graphic Design) */}
-        <div className="w-full mt-6 mb-8 transform">
+        {/* Content Carousel - Positioned below logo with negative margin for tightness */}
+        <div className="w-full -mt-6 sm:-mt-10 relative z-0">
           <SplashCarousel 
             activeIndex={carouselIndex} 
             onChangeIndex={setCarouselIndex} 
@@ -150,35 +130,14 @@ function Splash({ onEnter }: { onEnter: () => void }) {
         </div>
       </div>
 
-      {/* 4. PREMIUM ENTRY BUTTONS (Strictly implements the gold flow in mock graphic) */}
+      {/* Modern minimal footer */}
       <motion.div 
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="relative z-10 w-full max-w-sm px-4 pb-8 mt-auto"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.7 }}
+        transition={{ delay: 1.5 }}
+        className="absolute bottom-10 text-[10px] font-black tracking-[0.2em] text-taiz-navy/40 uppercase"
       >
-        {/* GOLD BUTTON: الدخول */}
-        <button 
-          onClick={handleAction}
-          disabled={clicked}
-          className={`w-full relative overflow-hidden font-black text-base sm:text-lg py-4 rounded-2xl shadow-xl active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-3 border cursor-pointer ${
-            clicked 
-              ? "bg-stone-50 text-stone-300 scale-[0.98] border-stone-100" 
-              : "bg-gradient-to-r from-[#d49a37] to-[#b37f2c] text-white hover:from-[#e3ab4a] hover:to-[#c48f33] border-[#d49e3c]/30 shadow-amber-600/10"
-          }`}
-        >
-          {clicked ? (
-            <span className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-stone-300 animate-ping" />
-              جاري الدخول...
-            </span>
-          ) : (
-            <>
-              <span>الدخول</span>
-              <ArrowLeft className="w-5 h-5 shrink-0 transition-transform group-hover:-translate-x-1" />
-            </>
-          )}
-        </button>
+        Taiz Media Platform • 2026
       </motion.div>
 
     </div>

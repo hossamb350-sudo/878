@@ -47,7 +47,7 @@ export function WatchItem() {
     const fetchVideoAndSuggestions = async () => {
       try {
         setLoading(true);
-        const cachedVideos = SyncService.getCache<VideoItem>("videos");
+        const cachedVideos = await SyncService.getCache<VideoItem>("videos");
         
         let foundVideo = cachedVideos.find(v => v.id === id) || null;
         if (foundVideo) {
@@ -117,15 +117,15 @@ export function WatchItem() {
       <div className="max-w-[1200px] mx-auto p-4 py-12 animate-pulse font-sans">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
-            <div className="aspect-video w-full bg-gray-200 dark:bg-zinc-800 rounded-3xl"></div>
-            <div className="h-8 bg-gray-200 dark:bg-zinc-800 w-3/4 rounded-xl"></div>
-            <div className="h-4 bg-gray-150 dark:bg-zinc-800/60 w-1/4 rounded"></div>
+            <div className="aspect-video w-full bg-surface-card rounded-3xl"></div>
+            <div className="h-8 bg-surface-card w-3/4 rounded-xl"></div>
+            <div className="h-4 bg-surface-card w-1/4 rounded"></div>
           </div>
           <div className="space-y-4">
-            <div className="h-6 bg-gray-200 dark:bg-zinc-800 w-1/2 rounded mb-4"></div>
-            <div className="h-20 bg-gray-150 dark:bg-zinc-800/60 rounded-xl"></div>
-            <div className="h-20 bg-gray-150 dark:bg-zinc-800/60 rounded-xl"></div>
-            <div className="h-20 bg-gray-150 dark:bg-zinc-800/60 rounded-xl"></div>
+            <div className="h-6 bg-surface-card w-1/2 rounded mb-4"></div>
+            <div className="h-20 bg-surface-card rounded-xl"></div>
+            <div className="h-20 bg-surface-card rounded-xl"></div>
+            <div className="h-20 bg-surface-card rounded-xl"></div>
           </div>
         </div>
       </div>
@@ -135,14 +135,14 @@ export function WatchItem() {
   if (error || !video) {
     return (
       <div className="max-w-4xl mx-auto p-4 py-20 text-center font-sans">
-        <div className="w-20 h-20 bg-gray-100 dark:bg-zinc-800 rounded-full flex items-center justify-center mx-auto mb-6">
-          <VideoIcon className="w-10 h-10 text-gray-400" />
+        <div className="w-20 h-20 bg-surface-card rounded-full flex items-center justify-center mx-auto mb-6">
+          <VideoIcon className="w-10 h-10 text-text-muted" />
         </div>
-        <h2 className="text-2xl font-black mb-2 text-stone-900 dark:text-white">التقرير المقرون غير موجود</h2>
-        <p className="text-gray-500 mb-6 font-bold">ربما قد تم إزالته من قبل الإدارة أو تم كتابته بشكل غير دقيق.</p>
+        <h2 className="text-2xl font-black mb-2 text-text-primary">المحتوى غير موجود</h2>
+        <p className="text-text-secondary mb-6 font-bold">ربما قد تم إزالته من قبل الإدارة أو تم كتابته بشكل غير دقيق.</p>
         <button 
           onClick={() => navigate(-1)}
-          className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-bold transition inline-flex items-center gap-2 shadow-lg"
+          className="btn btn-primary rounded-2xl inline-flex items-center gap-2 shadow-strong"
         >
           <ArrowRight className="w-4 h-4" /> عودة لقسم شاهد
         </button>
@@ -156,9 +156,9 @@ export function WatchItem() {
       {/* Return line */}
       <button 
         onClick={() => navigate(-1)}
-        className="mb-5 flex items-center gap-2 font-black text-sm text-gray-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 transition"
+        className="mb-5 flex items-center gap-2 font-[900] text-sm text-text-secondary hover:text-text-primary transition"
       >
-        <ArrowRight className="w-4 h-4" /> عودة لقسم شاهد المرئي
+        <ArrowRight className="w-5 h-5" /> عودة لقسم شاهد المرئي
       </button>
 
       {/* Cinematic grid: Main Player on Right (Ar-RTL), Recent Suggestions on Left */}
@@ -168,7 +168,7 @@ export function WatchItem() {
         <div className="lg:col-span-2 space-y-5">
           
           {/* Cinema Frame Wrapper with Reflection Glow */}
-          <div className="bg-black dark:bg-[#090b11] rounded-3xl overflow-hidden shadow-2xl border border-stone-200 dark:border-zinc-800 relative group transition-all duration-500">
+          <div className="bg-black rounded-3xl overflow-hidden shadow-strong border border-border-light relative group transition-all duration-500">
             <div className="aspect-video w-full">
               <iframe 
                 src={getEmbedUrl(video.url)} 
@@ -180,31 +180,31 @@ export function WatchItem() {
           </div>
 
           {/* Metadata details Card */}
-          <div className="bg-white dark:bg-zinc-950 rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-100 dark:border-zinc-900/60">
+          <div className="bg-surface-card rounded-3xl p-6 sm:p-8 shadow-soft border border-border-light">
             
             <div className="flex flex-wrap items-center gap-2.5 mb-4">
               {video.duration && (
-                <span className="bg-stone-50 dark:bg-zinc-900 text-stone-500 dark:text-zinc-400 text-[10px] font-black px-2.5 py-1 rounded-md border border-stone-150 dark:border-zinc-800/30 flex items-center gap-1">
+                <span className="bg-surface-main text-text-secondary text-[10px] font-black px-3 py-1.5 rounded-xl border border-border-light flex items-center gap-1.5 shadow-sm">
                   <Clock className="w-3.5 h-3.5" />
                   {video.duration}
                 </span>
               )}
             </div>
 
-            <h1 className="text-xl sm:text-2.5xl font-extrabold text-[#111827] dark:text-white leading-snug mb-5">
+            <h1 className="text-xl sm:text-2xl font-black text-text-primary leading-[1.4] mb-6">
               {video.title}
             </h1>
 
             {/* Interaction Area */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-5 border-t border-stone-150/40 dark:border-zinc-900">
-              <div className="flex flex-wrap items-center gap-4 text-xs font-bold text-stone-400 dark:text-zinc-500">
-                <div className="flex items-center gap-1.5 bg-stone-50 dark:bg-zinc-900/60 px-3 py-1.5 rounded-lg border border-stone-100 dark:border-zinc-800">
-                  <Calendar className="w-4 h-4 text-red-600 dark:text-red-500" />
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-border-light">
+              <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-text-secondary">
+                <div className="flex items-center gap-1.5 bg-surface-main px-4 py-2 rounded-xl border border-border-light shadow-sm">
+                  <Calendar className="w-4 h-4 text-taiz-royal" />
                   <span>{format(video.createdAt, "dd MMMM yyyy", { locale: ar })}</span>
                 </div>
                 
-                <div className="flex items-center gap-1.5 bg-stone-50 dark:bg-zinc-900/60 px-3 py-1.5 rounded-lg border border-stone-100 dark:border-zinc-800">
-                  <Eye className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />
+                <div className="flex items-center gap-1.5 bg-surface-main px-4 py-2 rounded-xl border border-border-light shadow-sm">
+                  <Eye className="w-4 h-4 text-taiz-sky" />
                   <span>{(video.views || 0) + 1} مشاهدة</span>
                 </div>
               </div>
@@ -212,7 +212,7 @@ export function WatchItem() {
               {/* Share button */}
               <button
                 onClick={handleShare}
-                className={`px-4 py-2 rounded-2xl text-xs font-black flex items-center gap-1.5 transition-all shadow-sm ${shareSuccess ? "bg-emerald-500 text-white" : "bg-red-600 hover:bg-red-700 text-white"}`}
+                className={`px-5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-md ${shareSuccess ? "bg-taiz-sky text-white" : "btn-primary hover:scale-105"}`}
               >
                 <Share2 className="w-4 h-4" />
                 <span>{shareSuccess ? "تم نسخ الرابط للنسخ" : "مشاركة المحتوى"}</span>
@@ -224,32 +224,32 @@ export function WatchItem() {
         {/* LEFT COLUMN: Suggested videos sidebar */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
-            <h3 className="font-extrabold text-base text-[#111827] dark:text-white flex items-center gap-2">
-              <Play className="w-4 h-4 text-red-600 fill-red-600/20" />
+            <h3 className="font-black text-base text-text-primary flex items-center gap-2">
+              <Play className="w-5 h-5 text-taiz-sky fill-taiz-sky/20" />
               تقارير مرئية أخرى
             </h3>
-            <span className="text-[10px] bg-red-50 dark:bg-red-950/20 border border-red-500/10 text-red-700 dark:text-red-400 font-extrabold px-2 py-0.5 rounded-md">
+            <span className="text-[10px] bg-surface-main border border-taiz-sky/20 text-taiz-sky font-black px-3 py-1 rounded-xl shadow-sm">
               الجديد أولاً
             </span>
           </div>
 
           <div className="space-y-3.5 max-h-[700px] overflow-y-auto no-scrollbar pr-1">
             {recentVideos.length === 0 ? (
-              <p className="text-gray-400 text-xs text-center py-8">لا توجد توصيات أخرى حالياً</p>
+              <p className="text-text-muted text-xs text-center py-8">لا توجد توصيات أخرى حالياً</p>
             ) : (
               recentVideos.map((vid) => (
                 <Link 
                   to={`/watch/${vid.id}`} 
                   key={vid.id} 
-                  className="flex gap-3 bg-white dark:bg-zinc-950 hover:bg-stone-50 dark:hover:bg-zinc-900/70 p-2.5 rounded-2xl border border-stone-100/60 dark:border-zinc-900 transition-all duration-300 group shadow-sm hover:shadow-md hover:translate-x-[-2px] text-right"
+                  className="card card-hover flex gap-3 p-3 transition-all duration-300 group shadow-sm hover:translate-x-[-2px] text-right"
                 >
                   {/* Miniature Thumbnail */}
-                  <div className="relative w-28 sm:w-32 aspect-video rounded-xl overflow-hidden bg-zinc-950 shrink-0 border border-stone-150 dark:border-zinc-800">
+                  <div className="relative w-28 sm:w-32 aspect-video rounded-xl overflow-hidden bg-taiz-navy shrink-0 border border-border-light">
                     {vid.thumbnailUrl ? (
-                      <img src={vid.thumbnailUrl} alt={vid.title} className="w-full h-full object-cover group-hover:scale-103 transitionduration-500" />
+                      <img src={vid.thumbnailUrl} alt={vid.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full h-full bg-stone-900 flex items-center justify-center">
-                        <VideoIcon className="w-4 h-4 text-zinc-700" />
+                      <div className="w-full h-full bg-surface-main flex items-center justify-center">
+                        <VideoIcon className="w-4 h-4 text-text-muted" />
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/15 flex items-center justify-center group-hover:bg-black/25 transition duration-300">
@@ -259,11 +259,11 @@ export function WatchItem() {
 
                   {/* MINI INFO */}
                   <div className="flex flex-col justify-between py-0.5 overflow-hidden">
-                    <h4 className="text-xs font-bold leading-snug text-[#111827] dark:text-zinc-100 line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                    <h4 className="text-xs font-bold leading-snug text-text-primary line-clamp-2 group-hover:text-taiz-sky transition-colors">
                       {vid.title}
                     </h4>
                     
-                    <div className="text-[10px] text-stone-400 dark:text-zinc-500 font-semibold flex items-center gap-1.5 mt-2">
+                    <div className="text-[10px] text-text-muted font-bold flex items-center gap-1.5 mt-2">
                       <span>{format(vid.createdAt || Date.now(), "d MMM yyyy", { locale: ar })}</span>
                       <span>•</span>
                       <span>{vid.views || 0} مشاهدة</span>

@@ -4,15 +4,16 @@ import { doc, getDoc, collection, query, where, limit, getDocs } from "firebase/
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
 import { NewsItem } from "../types";
+import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Share2, Bookmark, ArrowRight, Clock, User, ChevronRight, ChevronLeft, X, Eye } from "lucide-react";
+import { Share2, Bookmark, ArrowRight, Clock, User, ChevronRight, ChevronLeft, X, Eye, Plus, Minus, Calendar } from "lucide-react";
 import { motion } from "motion/react";
 
 const FONT_SIZES = {
-  sm: "text-base sm:text-lg",
-  md: "text-lg sm:text-xl",
-  lg: "text-xl sm:text-2xl",
+  sm: "text-[16px] sm:text-[17px] leading-[1.8] text-justify",
+  md: "text-[18px] sm:text-[19px] leading-[1.85] text-justify",
+  lg: "text-[20px] sm:text-[21px] leading-[1.9] text-justify",
 };
 
 export function NewsDetail() {
@@ -45,7 +46,7 @@ export function NewsDetail() {
       setLoading(true);
       window.scrollTo(0, 0); // Scroll to top on navigation
       try {
-        const cachedNews = SyncService.getCache<NewsItem>("news");
+        const cachedNews = await SyncService.getCache<NewsItem>("news");
         
         let foundNews = cachedNews.find(n => n.id === id) || null;
         if (foundNews) {
@@ -134,175 +135,195 @@ export function NewsDetail() {
     return { mDate, mTime, hDate };
   };
 
-  if (loading) {
-     return (
-       <div className="max-w-3xl mx-auto p-4 pt-10 space-y-6 animate-pulse">
-         <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/4"></div>
-         <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
-         <div className="h-10 bg-gray-200 dark:bg-gray-800 rounded w-3/4"></div>
-         <div className="h-64 sm:h-96 bg-gray-200 dark:bg-gray-800 rounded-xl w-full"></div>
-         <div className="space-y-4">
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-5/6"></div>
-         </div>
-       </div>
-     );
-  }
+   if (loading) {
+      return (
+        <div className="max-w-3xl mx-auto p-4 pt-10 space-y-6 animate-pulse">
+          <div className="h-4 bg-surface-card rounded-lg w-1/4"></div>
+          <div className="h-10 bg-surface-card rounded-xl w-full"></div>
+          <div className="h-10 bg-surface-card rounded-xl w-3/4"></div>
+          <div className="h-64 sm:h-96 bg-surface-card rounded-3xl w-full shadow-soft"></div>
+          <div className="space-y-4">
+             <div className="h-4 bg-surface-card rounded-lg w-full"></div>
+             <div className="h-4 bg-surface-card rounded-lg w-full"></div>
+             <div className="h-4 bg-surface-card rounded-lg w-5/6"></div>
+          </div>
+        </div>
+      );
+   }
 
-  if (!news) return <div className="p-8 text-center text-gray-500 font-bold">لم يتم العثور على الخبر</div>;
+  if (!news) return <div className="p-8 text-center text-text-secondary font-bold">لم يتم العثور على الخبر</div>;
 
   const { mDate, mTime, hDate } = formatPublishInfo(news.createdAt);
   const isModified = news.updatedAt && news.updatedAt > news.createdAt + 60000;
   const modInfo = isModified ? formatPublishInfo(news.updatedAt!) : null;
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="max-w-[800px] mx-auto w-full bg-white dark:bg-gray-950 min-h-screen font-sans"
-    >
-       <article className="p-4 sm:p-6 md:p-8">
-          
-          {news.imageUrl && (
-             <div className="mb-6 w-full bg-gray-100 dark:bg-gray-900 rounded-2xl overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800">
-                <img src={news.imageUrl} alt={news.title} className="w-full h-auto object-cover max-h-[500px]" />
-             </div>
-          )}
-          
-          {/* New Minimal Article Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8 bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-2xl border border-gray-100 dark:border-gray-800/50">
-             <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-gray-600 dark:text-gray-300 font-bold hover:text-black dark:hover:text-white px-3 py-2 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
-                <ArrowRight className="w-5 h-5" />
-                <span>العودة</span>
-             </button>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="max-w-[800px] mx-auto w-full bg-surface-main min-h-screen font-sans"
+      >
+         <article className="p-4 sm:p-6 md:p-8 bg-surface-card sm:rounded-3xl shadow-soft border border-border-light sm:mt-4">
+            
+            {news.imageUrl && (
+               <div className="mb-6 w-full bg-surface-main rounded-3xl overflow-hidden shadow-soft border border-border-light">
+                  <img src={news.imageUrl} alt={news.title} className="w-full h-auto object-cover max-h-[500px]" />
+               </div>
+            )}
+            
+            {/* Minimal Article Toolbar */}
+            <div className="flex items-center justify-between gap-4 mb-2">
+               <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-text-secondary font-bold hover:text-taiz-sky transition-all text-sm">
+                  <ArrowRight className="w-4 h-4" />
+                  <span>العودة</span>
+               </button>
 
-             <div className="flex items-center gap-2">
-                <div className="flex items-center bg-white dark:bg-gray-800 rounded-xl p-1 border border-gray-200 dark:border-gray-700 shadow-sm font-bold">
-                   <button 
-                     onClick={() => setFontSize("sm")}
-                     className={`px-3 py-1.5 rounded-lg transition-colors ${fontSize === "sm" ? "bg-gray-100 dark:bg-gray-700 text-black dark:text-white" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}
-                   >
-                     أ-
-                   </button>
-                   <button 
-                     onClick={() => setFontSize("md")}
-                     className={`px-3 py-1.5 rounded-lg transition-colors ${fontSize === "md" ? "bg-gray-100 dark:bg-gray-700 text-black dark:text-white" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}
-                   >
-                     أ
-                   </button>
-                   <button 
-                     onClick={() => setFontSize("lg")}
-                     className={`px-3 py-1.5 rounded-lg transition-colors text-lg leading-none pt-2 ${fontSize === "lg" ? "bg-gray-100 dark:bg-gray-700 text-black dark:text-white" : "text-gray-500 hover:text-gray-900 dark:hover:text-gray-200"}`}
-                   >
-                     أ+
-                   </button>
-                </div>
-                
-                <div className="h-8 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
+               <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1">
+                     <button 
+                       onClick={() => setFontSize("sm")}
+                       className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${fontSize === "sm" ? "bg-taiz-sky/10 text-taiz-sky" : "text-text-muted hover:text-text-primary hover:bg-surface-hover"}`}
+                       title="تصغير الخط"
+                     >
+                       <Minus className="w-4 h-4" />
+                     </button>
+                     <button 
+                       onClick={() => setFontSize("md")}
+                       className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all font-bold ${fontSize === "md" ? "bg-taiz-sky/10 text-taiz-sky" : "text-text-muted hover:text-text-primary hover:bg-surface-hover"}`}
+                       title="الخط الافتراضي"
+                     >
+                       <span className="text-sm">A</span>
+                     </button>
+                     <button 
+                       onClick={() => setFontSize("lg")}
+                       className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${fontSize === "lg" ? "bg-taiz-sky/10 text-taiz-sky" : "text-text-muted hover:text-text-primary hover:bg-surface-hover"}`}
+                       title="تكبير الخط"
+                     >
+                       <Plus className="w-4 h-4" />
+                     </button>
+                  </div>
+                  
+                  <div className="h-4 w-px bg-border-light"></div>
 
-                <div className="flex items-center gap-1">
-                   <button onClick={toggleBookmark} className={`p-2.5 rounded-xl transition-colors ${savedArticles.includes(news.id) ? "bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400" : "text-gray-500 hover:bg-white dark:hover:bg-gray-800 hover:text-black dark:hover:text-white"}`}>
-                      <Bookmark className={`w-5 h-5 ${savedArticles.includes(news.id) ? "fill-current" : ""}`} />
-                   </button>
-                   <button onClick={handleShare} className="p-2.5 text-gray-500 hover:bg-white dark:hover:bg-gray-800 hover:text-black dark:hover:text-white rounded-xl transition-colors">
-                      <Share2 className="w-5 h-5" />
-                   </button>
-                </div>
-             </div>
-          </div>
-
-          {/* Title */}
-          <h1 className={`font-extrabold mb-4 text-[#111827] dark:text-[#f3f4f6] tracking-tight leading-[1.3] ${fontSize === 'lg' ? 'text-4xl sm:text-5xl' : fontSize === 'md' ? 'text-3xl sm:text-4xl' : 'text-2xl sm:text-3xl'}`}>
-            {news.title}
-          </h1>
-
-          {/* Publishing Info Line */}
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-8 text-[12px] sm:text-[13px] font-bold text-gray-400 dark:text-gray-500">
-             <span className="text-amber-600 dark:text-amber-400">{news.category}</span>
-             <span className="text-gray-300 dark:text-gray-700">|</span>
-             <span>{mDate}</span>
-             <span className="text-gray-300 dark:text-gray-700">|</span>
-             <span>{hDate}</span>
-             <span className="text-gray-300 dark:text-gray-700">|</span>
-             <span>{mTime}</span>
-             {news.author && (
-               <>
-                 <span className="text-gray-300 dark:text-gray-700">|</span>
-                 <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300"><User className="w-3.5 h-3.5"/> {news.author}</span>
-               </>
-             )}
-             <span className="text-gray-300 dark:text-gray-700">|</span>
-             <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400"><Eye className="w-3.5 h-3.5"/> {(news.views || 0) + 1}</span>
-          </div>
-          {isModified && modInfo && (
-            <div className="mb-8 -mt-5 text-[11px] font-medium text-gray-400 opacity-80 flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>آخر تحديث: {modInfo.mDate} - {modInfo.mTime}</span>
+                  <div className="flex items-center gap-1">
+                     <button onClick={toggleBookmark} className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${savedArticles.includes(news.id) ? "text-taiz-sky bg-taiz-sky/10" : "text-text-muted hover:bg-surface-hover hover:text-text-primary"}`} title="حفظ الخبر">
+                        <Bookmark className={`w-4 h-4 ${savedArticles.includes(news.id) ? "fill-current" : ""}`} />
+                     </button>
+                     <button onClick={handleShare} className="w-8 h-8 flex items-center justify-center text-text-muted hover:bg-surface-hover hover:text-text-primary rounded-lg transition-all" title="مشاركة">
+                        <Share2 className="w-4 h-4" />
+                     </button>
+                  </div>
+               </div>
             </div>
-          )}
 
-          {/* Content */}
-          <div className="mb-12">
-            {news.shortDescription && (
-              <div className="mb-10 p-6 sm:p-8 bg-amber-50/30 dark:bg-amber-950/10 rounded-3xl border-r-8 border-amber-600 dark:border-amber-500 shadow-sm ring-1 ring-amber-100/50 dark:ring-amber-900/20">
-                <p className={`text-gray-700 dark:text-gray-200 font-bold leading-[1.8] italic ${FONT_SIZES[fontSize]}`}>
-                  {news.shortDescription}
-                </p>
+            {/* Title */}
+            <h1 className="font-black mb-1.5 text-text-primary tracking-tight leading-[1.3] text-lg sm:text-xl">
+              {news.title}
+            </h1>
+
+            {/* Publishing Info Line */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-3 text-[11px] sm:text-[12px] font-bold text-text-secondary">
+               <CategoryBadges item={news} className="!justify-start" />
+               <span className="text-border-subtle">•</span>
+               
+               <span className="flex items-center gap-1">
+                 <Calendar className="w-3 h-3" />
+                 <span>{mDate}</span>
+               </span>
+               
+               <span className="text-border-subtle">•</span>
+               <span>{hDate}</span>
+               
+               <span className="text-border-subtle">•</span>
+               <span className="flex items-center gap-1">
+                 <Clock className="w-3 h-3" />
+                 <span>{mTime}</span>
+               </span>
+
+               {news.author && (
+                 <>
+                   <span className="text-border-subtle">•</span>
+                   <span className="flex items-center gap-1 text-text-muted">
+                     <User className="w-3 h-3"/> 
+                     {news.author}
+                   </span>
+                 </>
+               )}
+               
+               <span className="text-border-subtle">•</span>
+               <span className="flex items-center gap-1 text-taiz-royal">
+                 <Eye className="w-3 h-3"/> 
+                 {(news.views || 0) + 1}
+               </span>
+            </div>
+            {isModified && modInfo && (
+              <div className="mb-3 -mt-2 text-[10px] font-bold text-text-muted opacity-80 flex items-center gap-1">
+                <Clock className="w-2.5 h-2.5" />
+                <span>آخر تحديث: {modInfo.mDate} - {modInfo.mTime}</span>
               </div>
             )}
 
-            <div 
-              className={`prose dark:prose-invert prose-gray max-w-none text-[#111827] dark:text-[#f3f4f6] leading-[2.1] font-medium ${FONT_SIZES[fontSize]}`}
-              dangerouslySetInnerHTML={{ __html: news.content }} 
-            />
-          </div>
-          
-          {/* Live Coverage Section */}
-          {news.liveUpdates && news.liveUpdates.length > 0 && (
-            <div className="mb-12 bg-gray-50/50 dark:bg-gray-900/30 rounded-2xl p-4 sm:p-6 border border-gray-150 dark:border-gray-800">
-               <div className="flex items-center gap-2 mb-8">
-                 <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
-                 </span>
-                 <h2 className="text-xl font-extrabold text-[#111827] dark:text-white">تغطية مباشرة وتحديثات</h2>
-               </div>
-               
-               <div className="space-y-8 relative before:absolute before:right-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200 dark:before:bg-gray-800">
-                 {/* Sort descending (newest first) */}
-                 {[...news.liveUpdates].sort((a,b) => {
-                   const timeA = typeof a.time === 'number' ? a.time : (a.timestamp || 0);
-                   const timeB = typeof b.time === 'number' ? b.time : (b.timestamp || 0);
-                   return timeB - timeA;
-                 }).map((update) => (
-                   <div key={update.id} className="relative pr-10">
-                     <span className="absolute right-2 top-2 w-4 h-4 rounded-full bg-red-100 dark:bg-red-900/30 border-[4px] border-red-600 dark:border-red-500 z-10 shadow-sm"></span>
-                     
-                     <div className="bg-white dark:bg-gray-900 rounded-xl p-4 border border-gray-100 dark:border-gray-800 shadow-sm">
-                       <span className="text-[12px] font-bold text-gray-400 dark:text-gray-500 mb-2 block">
-                         {typeof update.time === 'number' || update.timestamp ? formatPublishInfo(typeof update.time === 'number' ? update.time : update.timestamp!).mTime : update.time}
-                       </span>
-                       <p className={`font-bold text-[#111827] dark:text-gray-200 leading-relaxed ${FONT_SIZES[fontSize]}`}>
-                         {update.text}
-                       </p>
-                       
-                       {update.imageUrl && (
-                         <div className="mt-4 rounded-lg overflow-hidden border border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-950">
-                           <a href={update.imageUrl} target="_blank" rel="noopener noreferrer">
-                             <img src={update.imageUrl} alt={update.imageTitle || update.text} className="w-full h-auto max-h-[400px] object-cover hover:opacity-90 transition-opacity" />
-                           </a>
-                           {update.imageTitle && <p className="p-3 text-sm font-semibold text-gray-500 text-center">{update.imageTitle}</p>}
-                         </div>
-                       )}
-                     </div>
-                   </div>
-                 ))}
-               </div>
+            {/* Content */}
+            <div className="mb-8">
+              {news.shortDescription && (
+                <div className="mb-6 p-5 sm:p-6 bg-surface-main rounded-2xl border-r-4 border-taiz-sky shadow-sm">
+                  <p className={`text-taiz-navy font-[800] leading-[1.7] ${FONT_SIZES[fontSize]}`}>
+                    {news.shortDescription}
+                  </p>
+                </div>
+              )}
+
+              <div 
+                className={`prose prose-gray max-w-none text-taiz-navy font-medium space-y-6 ${FONT_SIZES[fontSize]}`}
+                dangerouslySetInnerHTML={{ __html: news.content }} 
+              />
             </div>
-          )}
+            
+            {/* Live Coverage Section */}
+            {news.liveUpdates && news.liveUpdates.length > 0 && (
+              <div className="mb-12 bg-[#f8fafc] rounded-[2rem] p-6 sm:p-8 border border-gray-100 shadow-sm">
+                 <div className="flex items-center gap-3 mb-8">
+                   <span className="relative flex h-3.5 w-3.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-taiz-sky opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-taiz-royal"></span>
+                   </span>
+                   <h2 className="text-2xl font-[900] text-taiz-navy">تغطية مباشرة وتحديثات</h2>
+                 </div>
+                 
+                 <div className="space-y-8 relative before:absolute before:right-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200">
+                   {/* Sort descending (newest first) */}
+                   {[...news.liveUpdates].sort((a,b) => {
+                     const timeA = typeof a.time === 'number' ? a.time : (a.timestamp || 0);
+                     const timeB = typeof b.time === 'number' ? b.time : (b.timestamp || 0);
+                     return timeB - timeA;
+                   }).map((update) => (
+                     <div key={update.id} className="relative pr-10">
+                       <span className="absolute right-2 top-2 w-4 h-4 rounded-full bg-white border-[4px] border-taiz-sky z-10 shadow-sm"></span>
+                       
+                       <div className="bg-white rounded-[1.5rem] p-5 border border-gray-100 shadow-sm">
+                         <span className="text-[12px] font-black tracking-wide text-taiz-sky mb-3 block">
+                           {typeof update.time === 'number' || update.timestamp ? formatPublishInfo(typeof update.time === 'number' ? update.time : update.timestamp!).mTime : update.time}
+                         </span>
+                         <p className={`font-bold text-taiz-navy leading-relaxed ${FONT_SIZES[fontSize]}`}>
+                           {update.text}
+                         </p>
+                         
+                         {update.imageUrl && (
+                           <div className="mt-4 rounded-lg overflow-hidden border border-gray-100 bg-gray-50">
+                             <a href={update.imageUrl} target="_blank" rel="noopener noreferrer">
+                               <img src={update.imageUrl} alt={update.imageTitle || update.text} className="w-full h-auto max-h-[400px] object-cover hover:opacity-90 transition-opacity" />
+                             </a>
+                             {update.imageTitle && <p className="p-3 text-sm font-bold text-taiz-soft text-center">{update.imageTitle}</p>}
+                           </div>
+                         )}
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+              </div>
+            )}
 
           {/* Multiple Pictures Gallery Section */}
           {news.additionalImages && news.additionalImages.length > 0 && (
@@ -360,23 +381,23 @@ export function NewsDetail() {
             </div>
           )}
           
-          <div className="border-t border-gray-100 dark:border-gray-800 pt-8 pb-12">
-            <h3 className="font-extrabold text-2xl mb-6 relative inline-block before:absolute before:-bottom-2 before:right-0 before:w-12 before:h-1 before:bg-[#d49a37] dark:before:bg-amber-400 text-[#111827] dark:text-white">
+          <div className="border-t border-gray-100 pt-8 pb-12">
+            <h3 className="font-black text-2xl mb-6 relative inline-block before:absolute before:-bottom-2 before:right-0 before:w-12 before:h-1 before:bg-taiz-sky text-taiz-navy">
                مواضيع ذات صلة
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {related.map(rItem => (
                 <Link key={rItem.id} to={`/news/${rItem.id}`} className="group block">
                    {rItem.imageUrl ? (
-                     <div className="aspect-[4/3] w-full rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-900 mb-3 shadow-sm border border-gray-100 dark:border-gray-800">
+                     <div className="aspect-[4/3] w-full rounded-xl overflow-hidden bg-gray-50 mb-3 shadow-sm border border-gray-50">
                         <img src={rItem.imageUrl} alt={rItem.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                      </div>
                    ) : (
-                     <div className="aspect-[4/3] w-full rounded-xl bg-gray-50 dark:bg-gray-900 mb-3 flex items-center justify-center border border-gray-100 dark:border-gray-800">
-                        <Bookmark className="w-8 h-8 text-gray-300" />
+                     <div className="aspect-[4/3] w-full rounded-xl bg-gray-50 mb-3 flex items-center justify-center border border-gray-50">
+                        <Bookmark className="w-8 h-8 text-gray-200" />
                      </div>
                    )}
-                   <h4 className="font-bold text-[15px] text-gray-900 dark:text-gray-100 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2 leading-snug">
+                   <h4 className="font-bold text-[15px] text-taiz-navy group-hover:text-taiz-royal transition-colors line-clamp-2 leading-snug">
                      {rItem.title}
                    </h4>
                 </Link>

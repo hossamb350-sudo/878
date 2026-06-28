@@ -1,5 +1,6 @@
 import { collection, query, where, getDocs, orderBy, limit, addDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import { get, set } from "idb-keyval";
 
 export interface SyncOptions {
   orderByField?: string;
@@ -8,36 +9,63 @@ export interface SyncOptions {
   customMerge?: (cached: any[], fetched: any[]) => any[];
 }
 
-export const SyncService = {
+export interface FirestoreErrorInfo {
+  error_code: string;
+  error_message: string;
+  collection_path: string;
+  document_id?: string;
+  operation_type: 'read' | 'write' | 'delete' | 'query';
+  is_permission_error: boolean;
+}
+
+export const handleFirestoreError = (
+  error: any,
+  collectionPath: string,
+  operation: 'read' | 'write' | 'delete' | 'query',
+  documentId?: string
+) => {
+  const errorInfo: FirestoreErrorInfo = {
+    error_code: error.code || 'unknown',
+    error_message: error.message || 'An unexpected error occurred',
+    collection_path: collectionPath,
+    document_id: documentId,
+    operation_type: operation,
+    is_permission_error: error.code === 'permission-denied',
+  };
+  throw new Error(JSON.stringify(errorInfo));
+};
+
+export class SyncService {
   // Save/Get helper
-  getCache<T>(collectionName: string): T[] {
+  static async getCache<T>(collectionName: string): Promise<T[]> {
     try {
-      const data = localStorage.getItem(`cache_${collectionName}`);
-      return data ? JSON.parse(data) : [];
+      const data = await get(`cache_${collectionName}`);
+      return data || [];
     } catch (e) {
       console.error(`Error reading cache for ${collectionName}:`, e);
       return [];
     }
-  },
+  }
 
-  setCache<T>(collectionName: string, data: T[]): void {
+  static async setCache<T>(collectionName: string, data: T[]): Promise<void> {
     try {
-      localStorage.setItem(`cache_${collectionName}`, JSON.stringify(data));
+      await set(`cache_${collectionName}`, data);
     } catch (e) {
       console.error(`Error writing cache for ${collectionName}:`, e);
     }
-  },
+  }
 
-  getSyncTime(collectionName: string): number {
-    return Number(localStorage.getItem(`sync_time_${collectionName}`) || "0");
-  },
+  static async getSyncTime(collectionName: string): Promise<number> {
+    const time = await get(`sync_time_${collectionName}`);
+    return Number(time || "0");
+  }
 
-  setSyncTime(collectionName: string, time: number): void {
-    localStorage.setItem(`sync_time_${collectionName}`, String(time));
-  },
+  static async setSyncTime(collectionName: string, time: number): Promise<void> {
+    await set(`sync_time_${collectionName}`, time);
+  }
 
   // Log a deletion from Admin
-  async trackDeletion(collectionName: string, docId: string): Promise<void> {
+  static async trackDeletion(collectionName: string, docId: string): Promise<void> {
     try {
       await addDoc(collection(db, "deletions"), {
         collection: collectionName,
@@ -45,12 +73,39 @@ export const SyncService = {
         timestamp: Date.now(),
       });
     } catch (e) {
-      console.error("Error tracking deletion:", e);
+      handleFirestoreError(e, "deletions", "write");
     }
-  },
+  }
+
+  static async refreshCollection<T extends { id: string; createdAt?: number; timestamp?: number }>(
+    collectionName: string,
+    options?: SyncOptions
+  ): Promise<T[]> {
+    try {
+      let q = query(
+        collection(db, collectionName),
+        orderBy(options?.orderByField || "createdAt", options?.orderDirection || "desc"),
+        limit(options?.limit || 30) // limit enough for pull-to-refresh
+      );
+      const snap = await getDocs(q);
+      const fetchedItems = snap.docs.map(
+        (d) => ({ id: d.id, ...(d.data() as any) } as unknown as T)
+      );
+      
+      const sorted = SyncService.sortItems(fetchedItems, options);
+      
+      await SyncService.setCache(collectionName, sorted);
+      await SyncService.setSyncTime(collectionName, Date.now());
+      
+      return sorted;
+    } catch (e: any) {
+      handleFirestoreError(e, collectionName, "query");
+      return []; // never reached but satisfies TS
+    }
+  }
 
   // Perform full sync
-  async syncCollection<T extends { id: string; createdAt?: number; timestamp?: number }>(
+  static async syncCollection<T extends { id: string; createdAt?: number; timestamp?: number }>(
     collectionName: string,
     onUpdate: (items: T[]) => void,
     options?: SyncOptions
@@ -58,31 +113,34 @@ export const SyncService = {
     let active = true;
 
     // 1. Return cached items immediately
-    let cachedList = this.getCache<T>(collectionName);
+    let cachedList = await SyncService.getCache<T>(collectionName);
     
     // Sort cached list
-    cachedList = this.sortItems(cachedList, options);
-    onUpdate(cachedList);
+    cachedList = SyncService.sortItems(cachedList, options);
+    if (active) onUpdate(cachedList);
 
     // 2. Perform background sync
-    const lastSyncTime = this.getSyncTime(collectionName);
+    const lastSyncTime = await SyncService.getSyncTime(collectionName);
     const now = Date.now();
 
     try {
       let q;
+      const syncField = options?.orderByField || "createdAt";
+      
       if (lastSyncTime === 0) {
         // Initial fetch: get with a limit if specified, to avoid downloading massive history
         q = query(
           collection(db, collectionName),
-          orderBy(options?.orderByField || "createdAt", options?.orderDirection || "desc"),
-          limit(options?.limit || 100)
+          orderBy(syncField, options?.orderDirection || "desc"),
+          limit(options?.limit || 20)
         );
       } else {
         // Incremental fetch: only get items newer than lastSyncTime
-        // We query by createdAt. For older records without it, they are already cached.
+        // Ensure we use the correct field for the time query
+        let queryField = syncField === "order" ? "createdAt" : syncField;
         q = query(
           collection(db, collectionName),
-          where("createdAt", ">", lastSyncTime)
+          where(queryField, ">", lastSyncTime)
         );
       }
 
@@ -92,7 +150,6 @@ export const SyncService = {
           ? getDocs(
               query(
                 collection(db, "deletions"),
-                where("collection", "==", collectionName),
                 where("timestamp", ">", lastSyncTime)
               )
             )
@@ -103,7 +160,7 @@ export const SyncService = {
 
       // Parse fetched documents
       const fetchedItems = snap.docs.map(
-        (d) => ({ id: d.id, ...d.data() } as unknown as T)
+        (d) => ({ id: d.id, ...(d.data() as any) } as unknown as T)
       );
 
       // Parse deleted IDs
@@ -111,7 +168,7 @@ export const SyncService = {
       if (delSnap) {
         delSnap.docs.forEach((d) => {
           const data = d.data();
-          if (data.docId) {
+          if (data.docId && data.collection === collectionName) {
             deletedIds.add(data.docId);
           }
         });
@@ -139,24 +196,24 @@ export const SyncService = {
       }
 
       // Sort
-      mergedList = this.sortItems(mergedList, options);
+      mergedList = SyncService.sortItems(mergedList, options);
 
       // Save to cache
-      this.setCache(collectionName, mergedList);
-      this.setSyncTime(collectionName, now);
+      await SyncService.setCache(collectionName, mergedList);
+      await SyncService.setSyncTime(collectionName, now);
 
       // Trigger callback with fresh merged data
-      onUpdate(mergedList);
-    } catch (e) {
-      console.error(`Failed to sync collection ${collectionName}:`, e);
+      if (active) onUpdate(mergedList);
+    } catch (e: any) {
+      handleFirestoreError(e, collectionName, "query");
     }
 
     return () => {
       active = false;
     };
-  },
+  }
 
-  sortItems<T extends { id: string; createdAt?: number; timestamp?: number; order?: number }>(
+  static sortItems<T extends { id: string; createdAt?: number; timestamp?: number; order?: number }>(
     items: T[],
     options?: SyncOptions
   ): T[] {
@@ -179,4 +236,4 @@ export const SyncService = {
       return dir === "asc" ? valA - valB : valB - valA;
     });
   }
-};
+}

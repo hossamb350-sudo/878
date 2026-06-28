@@ -552,7 +552,7 @@ export function QuranReader({
 
   // Styles formatting
   const themeClasses = {
-    day: "bg-[#FAF8F5] text-stone-900 border-stone-200",
+    day: "bg-surface-main text-text-primary border-border-light",
     night: "bg-[#121214] text-zinc-100 border-zinc-800",
     sepia: "bg-[#F4ECD8] text-[#422F1E] border-[#EADFCA]",
   };
@@ -577,7 +577,7 @@ export function QuranReader({
     >
       {/* 1. Header Toolbar (Hidden in Focus Mode unless mouse hovers or active) */}
       {!focusMode && (
-        <div className="bg-[#1e293b] text-white px-4 py-3 flex items-center justify-between z-40 shadow-md shrink-0">
+        <div className="bg-taiz-navy text-white px-4 py-3 flex items-center justify-between z-40 shadow-md shrink-0">
           <button
             onClick={onBack}
             className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition duration-200"
@@ -590,7 +590,7 @@ export function QuranReader({
             <h1 className="text-sm md:text-base font-black truncate">
               {lesson.title}
             </h1>
-            <p className="text-[10px] text-gray-300 truncate font-semibold">
+            <p className="text-[10px] text-white/70 truncate font-semibold">
               {series.title}
             </p>
           </div>
@@ -623,26 +623,26 @@ export function QuranReader({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-slate-850 bg-slate-900 border-b border-gray-700 text-white px-4 py-4 space-y-4 shadow-inner z-30 font-sans"
+            className="bg-taiz-navy/95 border-b border-white/10 text-white px-4 py-4 space-y-4 shadow-inner z-30 font-sans backdrop-blur-md"
           >
             <div className="max-w-2xl mx-auto space-y-3">
               {/* Eye-safety back-themes */}
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setReaderTheme("day")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-black ${readerTheme === "day" ? "bg-[#FAF8F5] border-yellow-600" : "bg-[#FAF8F5]/80 border-transparent"}`}
+                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-text-primary ${readerTheme === "day" ? "bg-surface-main border-taiz-royal" : "bg-surface-main/80 border-transparent"}`}
                 >
                   🎨 نهاراً
                 </button>
                 <button
                   onClick={() => setReaderTheme("sepia")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-[#422F1E] ${readerTheme === "sepia" ? "bg-[#F4ECD8] border-yellow-700" : "bg-[#F4ECD8]/80 border-transparent"}`}
+                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-[#422F1E] ${readerTheme === "sepia" ? "bg-[#F4ECD8] border-[#7F6E5D]" : "bg-[#F4ECD8]/80 border-transparent"}`}
                 >
                   👁️ دافئ
                 </button>
                 <button
                   onClick={() => setReaderTheme("night")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-white ${readerTheme === "night" ? "bg-[#121214] border-blue-500" : "bg-[#121214]/85 border-transparent"}`}
+                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-white ${readerTheme === "night" ? "bg-[#121214] border-taiz-sky" : "bg-[#121214]/85 border-transparent"}`}
                 >
                   🌙 ليلاً
                 </button>
@@ -650,31 +650,31 @@ export function QuranReader({
 
               {/* Adjust font size */}
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-gray-400 font-bold">
+                <span className="text-xs text-white/50 font-bold">
                   حجم نص الدرس:
                 </span>
-                <div className="grid grid-cols-4 gap-1.5 text-xs text-black">
+                <div className="grid grid-cols-4 gap-1.5 text-xs text-text-primary">
                   <button
                     onClick={() => setFontSize("sm")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "sm" ? "bg-yellow-500 text-white" : "bg-gray-100"}`}
+                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "sm" ? "bg-taiz-royal text-white" : "bg-surface-main"}`}
                   >
                     صغير
                   </button>
                   <button
                     onClick={() => setFontSize("md")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "md" ? "bg-yellow-500 text-white" : "bg-gray-100"}`}
+                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "md" ? "bg-taiz-royal text-white" : "bg-surface-main"}`}
                   >
                     متوسط
                   </button>
                   <button
                     onClick={() => setFontSize("lg")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "lg" ? "bg-yellow-500 text-white" : "bg-gray-100"}`}
+                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "lg" ? "bg-taiz-royal text-white" : "bg-surface-main"}`}
                   >
                     كبير
                   </button>
                   <button
                     onClick={() => setFontSize("xl")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "xl" ? "bg-yellow-500 text-white" : "bg-gray-100"}`}
+                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "xl" ? "bg-taiz-royal text-white" : "bg-surface-main"}`}
                   >
                     مضاعف
                   </button>
@@ -684,13 +684,13 @@ export function QuranReader({
               {/* Height and weight */}
               <div className="grid grid-cols-2 gap-4 pt-1">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs text-gray-400 font-bold">
+                  <span className="text-xs text-white/50 font-bold">
                     المسافة بين السطور:
                   </span>
                   <select
                     value={lineHeight}
                     onChange={(e) => setLineHeight(e.target.value as any)}
-                    className="p-2 rounded bg-slate-800 text-sm border border-gray-600 font-bold"
+                    className="p-2 rounded bg-black/20 text-sm border border-white/10 font-bold focus:outline-none"
                   >
                     <option value="compact">مضغوط</option>
                     <option value="relaxed">مريح</option>
@@ -701,7 +701,7 @@ export function QuranReader({
                 <div className="flex flex-col justify-end">
                   <button
                     onClick={() => setFontMedium(!fontMedium)}
-                    className={`p-2.5 rounded border text-xs font-bold transition ${fontMedium ? "bg-yellow-600 border-yellow-500 text-white" : "bg-slate-800 border-gray-600 text-gray-300"}`}
+                    className={`p-2.5 rounded border text-xs font-bold transition ${fontMedium ? "bg-taiz-royal border-taiz-royal text-white" : "bg-black/20 border-white/10 text-white/70"}`}
                   >
                     تفعيل خط عريض (Medium/Medium)
                   </button>
@@ -717,9 +717,9 @@ export function QuranReader({
         <div className="absolute top-6 left-6 z-[100] flex items-center gap-2 pointer-events-none">
           <button
             onClick={() => setFocusMode(false)}
-            className="flex items-center gap-1.5 px-5 py-2.5 bg-black/80 hover:bg-black backdrop-blur-xl text-white font-black rounded-full text-xs shadow-2xl border border-white/20 transition-all duration-300 pointer-events-auto hover:scale-105 active:scale-95"
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-black/80 hover:bg-black backdrop-blur-xl text-white font-black rounded-full text-xs shadow-strong border border-white/20 transition-all duration-300 pointer-events-auto hover:scale-105 active:scale-95"
           >
-            <Minimize2 className="w-4 h-4 text-amber-400" />
+            <Minimize2 className="w-4 h-4 text-taiz-royal" />
             <span>خروج من وضع التركيز</span>
           </button>
         </div>
@@ -759,9 +759,9 @@ export function QuranReader({
                     },
                   }}
                   exit={{ opacity: 0, scale: 0.5, y: 20, rotate: 5 }}
-                  className="flex items-center gap-1 bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl p-2 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-amber-500/30 ltr"
+                  className="flex items-center gap-1 bg-surface-main/95 backdrop-blur-2xl p-2 rounded-2xl shadow-strong border border-taiz-royal/30 ltr"
                 >
-                  <div className="flex items-center gap-2 px-2 border-r border-gray-200 dark:border-gray-700 mr-1 ltr">
+                  <div className="flex items-center gap-2 px-2 border-r border-border-light mr-1 ltr">
                     <motion.button
                       whileHover={{ scale: 1.25 }}
                       onClick={(e) => {
@@ -817,7 +817,7 @@ export function QuranReader({
                         setSelectionMenu(null);
                         window.getSelection()?.removeAllRanges();
                       }}
-                      className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition text-gray-800 dark:text-gray-100 flex flex-col items-center gap-0.5"
+                      className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition text-text-primary flex flex-col items-center gap-0.5"
                       title="تثبيت ملاحظة"
                     >
                       <StickyNote className="w-5 h-5" />
@@ -834,13 +834,13 @@ export function QuranReader({
                         setSelectionMenu(null);
                         window.getSelection()?.removeAllRanges();
                       }}
-                      className={`p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition flex flex-col items-center gap-0.5 ${isSelectionBookmarked ? "text-red-500 font-extrabold" : "text-gray-800 dark:text-gray-100"}`}
+                      className={`p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition flex flex-col items-center gap-0.5 ${isSelectionBookmarked ? "text-status-error font-extrabold" : "text-text-primary"}`}
                       title={
                         isSelectionBookmarked ? "إلغاء الإشارة" : "حفظ إشارة"
                       }
                     >
                       <Bookmark
-                        className={`w-5 h-5 ${isSelectionBookmarked ? "text-red-500 fill-red-500" : ""}`}
+                        className={`w-5 h-5 ${isSelectionBookmarked ? "text-status-error fill-status-error" : ""}`}
                       />
                       <span className="text-[10px] font-black">
                         {isSelectionBookmarked ? "إشارة محفوظـة" : "حفظ إشارة"}
@@ -849,7 +849,7 @@ export function QuranReader({
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       onClick={() => copyText(selectionMenu.text)}
-                      className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition text-gray-800 dark:text-gray-100 flex flex-col items-center gap-0.5"
+                      className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition text-text-primary flex flex-col items-center gap-0.5"
                       title="نسخ"
                     >
                       <Share2 className="w-5 h-5" />
@@ -882,17 +882,17 @@ export function QuranReader({
               initial={{ opacity: 0, scale: 0.9, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 10 }}
-              className="bg-white dark:bg-zinc-900 rounded-2xl shadow-[0_30px_60px_-12px_rgba(0,0,0,0.45)] border border-gray-200 dark:border-zinc-700 overflow-hidden"
+              className="bg-surface-main rounded-2xl shadow-[0_30px_60px_-12px_rgba(0,0,0,0.45)] border border-border-light overflow-hidden"
             >
-              <div className="bg-amber-50 dark:bg-amber-900/20 px-3 py-2 border-b border-amber-100 dark:border-amber-900/30 flex items-center justify-between">
-                <span className="text-xs font-black text-amber-800 dark:text-amber-400">
+              <div className="bg-surface-card px-3 py-2 border-b border-border-light flex items-center justify-between">
+                <span className="text-xs font-black text-taiz-royal">
                   تدوين ملحوظة
                 </span>
                 <button
                   onClick={() => setFloatingNote(null)}
-                  className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition"
+                  className="p-1 hover:bg-surface-hover rounded-lg transition"
                 >
-                  <X className="w-4 h-4 text-gray-500" />
+                  <X className="w-4 h-4 text-text-muted" />
                 </button>
               </div>
               <div className="p-3">
@@ -901,12 +901,12 @@ export function QuranReader({
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   placeholder="اكتب ملحوظتك هنا..."
-                  className="w-full h-32 p-3 text-sm bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none resize-none font-medium leading-relaxed"
+                  className="w-full h-32 p-3 text-sm bg-surface-main border border-border-light rounded-xl focus:ring-2 focus:ring-taiz-royal outline-none resize-none font-medium leading-relaxed"
                 />
                 <div className="flex items-center justify-between mt-3">
                   <button
                     onClick={() => setFloatingNote(null)}
-                    className="text-xs text-gray-500 font-bold hover:underline"
+                    className="text-xs text-text-muted font-bold hover:underline"
                   >
                     إلغاء
                   </button>
@@ -919,7 +919,7 @@ export function QuranReader({
                       );
                       setFloatingNote(null);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black shadow-lg shadow-amber-600/20 transition active:scale-95"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-taiz-royal hover:bg-taiz-royal/90 text-white rounded-xl text-xs font-black shadow-lg shadow-taiz-royal/20 transition active:scale-95"
                   >
                     <Check className="w-3.5 h-3.5" />
                     <span>حفظ الملحوظة</span>
@@ -933,7 +933,7 @@ export function QuranReader({
 
       {/* Jump Restore Prompt */}
       {jumpPrompt !== null && (
-        <div className="flex justify-between items-center bg-amber-500/90 backdrop-blur text-white px-4 py-3 z-40 shadow-md font-sans text-xs md:text-sm">
+        <div className="flex justify-between items-center bg-taiz-sky/90 backdrop-blur text-white px-4 py-3 z-40 shadow-md font-sans text-xs md:text-sm">
           <span>
             لقد توقفت هنا في آخر قراءة لك. هل تود العودة للموضع السابق؟
           </span>
@@ -946,7 +946,7 @@ export function QuranReader({
             </button>
             <button
               onClick={handleApplyJumpRestore}
-              className="px-3 py-1 bg-white text-amber-900 rounded font-bold hover:bg-gray-100 transition-colors"
+              className="px-3 py-1 bg-white text-taiz-navy rounded font-bold hover:bg-surface-hover transition-colors"
             >
               نعم، المتابعة
             </button>
@@ -964,19 +964,19 @@ export function QuranReader({
       >
         <div className="max-w-2xl mx-auto space-y-8 py-8">
           {/* Section top info */}
-          <div className="text-center pb-6 border-b border-gray-300 dark:border-gray-700/60 font-sans">
-            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 border border-amber-600/30 px-3 py-1 rounded-full uppercase tracking-wider">
+          <div className="text-center pb-6 border-b border-border-light font-sans">
+            <span className="text-xs font-bold text-taiz-royal border border-taiz-royal/30 px-3 py-1 rounded-full uppercase tracking-wider">
               الدرس الحالي
             </span>
             <h2 className="text-3xl font-black mt-3 mb-2">{lesson.title}</h2>
-            <p className="text-xs text-gray-500 font-bold">
+            <p className="text-xs text-text-secondary font-bold">
               سلسلة: {series.title}
             </p>
           </div>
 
           {/* Paragraph list loop */}
           {paragraphs.length === 0 ? (
-            <p className="text-center text-gray-500 py-10 font-sans">
+            <p className="text-center text-text-muted py-10 font-sans">
               لم يتم تزويد الدرس بمحتوى بعد.
             </p>
           ) : (
@@ -1027,21 +1027,21 @@ export function QuranReader({
                       );
                       if (noteEditIndex !== idx) setNoteEditIndex(null);
                     }}
-                    className={`relative group px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 border border-transparent hover:border-gray-300/40 hover:bg-black/5 dark:hover:bg-white/5 ${fontSizeClasses[fontSize]} ${lineHeightClasses[lineHeight]} ${fontMedium ? "font-medium" : "font-natural"} text-justify ${blockHighlightClass}`}
+                    className={`relative group px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 border border-transparent hover:border-border-light hover:bg-surface-hover ${fontSizeClasses[fontSize]} ${lineHeightClasses[lineHeight]} ${fontMedium ? "font-medium" : "font-natural"} text-justify ${blockHighlightClass}`}
                   >
                     {/* Floating top flags for bookmark or note indicator */}
                     <div className="absolute top-1 left-2 flex items-center gap-1 pointer-events-none scale-90">
                       {isBookmarked && (
-                        <Bookmark className="w-4 h-4 text-red-500 fill-red-500" />
+                        <Bookmark className="w-4 h-4 text-status-error fill-status-error" />
                       )}
                       {paragraphNotes.length > 0 && (
-                        <FileText className="w-4 h-4 text-amber-500" />
+                        <FileText className="w-4 h-4 text-taiz-royal" />
                       )}
                     </div>
 
                     {/* Main paragraph Text body */}
                     <div
-                      className={`flex-1 transition-colors ${selectedParaIndex === idx ? "text-gray-950 dark:text-white" : ""}`}
+                      className={`flex-1 transition-colors ${selectedParaIndex === idx ? "text-text-primary" : "text-text-primary/90"}`}
                     >
                       {renderParagraphText(
                         paraText,
@@ -1056,11 +1056,11 @@ export function QuranReader({
                       <div
                         key={note.id || `note-${idx}-${nIdx}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="mt-3 bg-[#FCF6E0] dark:bg-zinc-800 p-3 rounded-xl border-r-4 border-amber-500 text-[#4E3D21] dark:text-amber-200 text-sm shadow-sm flex items-start gap-3"
+                        className="mt-3 bg-surface-card p-3 rounded-xl border-r-4 border-taiz-royal text-text-primary text-sm shadow-sm flex items-start gap-3"
                       >
-                        <FileText className="w-4 h-4 shrink-0 text-amber-600 mt-1" />
+                        <FileText className="w-4 h-4 shrink-0 text-taiz-royal mt-1" />
                         <div className="flex-1">
-                          <span className="font-bold text-xs text-amber-800 dark:text-amber-300 block mb-1">
+                          <span className="font-bold text-xs text-text-muted block mb-1">
                             ملاحظة {paragraphNotes.length > 1 ? nIdx + 1 : ""}:
                           </span>
                           <p className="leading-relaxed whitespace-pre-wrap">
@@ -1069,7 +1069,7 @@ export function QuranReader({
                         </div>
                         <button
                           onClick={() => onDeleteNote(note.id || idx)}
-                          className="text-gray-400 hover:text-red-500 transition-colors p-1 bg-black/5 rounded-lg shrink-0"
+                          className="text-text-muted hover:text-status-error transition-colors p-1 bg-surface-hover rounded-lg shrink-0"
                           title="حذف الملاحظة"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1085,10 +1085,10 @@ export function QuranReader({
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="mt-4 border-t border-gray-400/20 pt-3 flex flex-wrap items-center gap-2"
+                          className="mt-4 border-t border-border-light pt-3 flex flex-wrap items-center gap-2"
                         >
                           {/* التظليل والحفظ سريع */}
-                          <div className="flex items-center gap-1 bg-black/10 dark:bg-white/5 p-1 rounded-full border border-gray-400/20">
+                          <div className="flex items-center gap-1 bg-surface-hover p-1 rounded-full border border-border-light">
                             <button
                               onClick={() => onToggleHighlight(idx, "yellow")}
                               className={`w-6 h-6 rounded-full bg-yellow-400 border border-white hover:scale-110 transition ${globalHighlights.some((h) => h.color === "yellow") ? "ring-2 ring-amber-500" : ""}`}
@@ -1103,19 +1103,19 @@ export function QuranReader({
                               inlineHighlights.length > 0) && (
                               <button
                                 onClick={() => onDeleteHighlight(idx)}
-                                className="text-[10px] text-red-500 font-black px-1.5 hover:underline"
+                                className="text-[10px] text-status-error font-black px-1.5 hover:underline"
                               >
                                 حذف التظليل
                               </button>
                             )}
                           </div>
 
-                          <span className="text-gray-400 text-xs">|</span>
+                          <span className="text-text-muted text-xs">|</span>
 
                           {/* Bookmark add */}
                           <button
                             onClick={() => onToggleBookmark(idx, paraText)}
-                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl font-bold border transition ${isBookmarked ? "bg-red-500 text-white border-red-500" : "bg-black/10 text-gray-700 dark:bg-white/5 dark:text-gray-300 border-transparent"}`}
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl font-bold border transition ${isBookmarked ? "bg-status-error text-white border-status-error" : "bg-black/10 text-text-primary dark:bg-white/5 border-transparent"}`}
                           >
                             <Bookmark
                               className={`w-3.5 h-3.5 ${isBookmarked ? "fill-white" : ""}`}
@@ -1134,7 +1134,7 @@ export function QuranReader({
                                   ?.noteText || "",
                               );
                             }}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-gray-700 dark:bg-white/5 dark:text-gray-300 border-transparent font-bold"
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-text-primary dark:bg-white/5 border-transparent font-bold"
                           >
                             <Edit className="w-3.5 h-3.5" />
                             <span>ملحوظة</span>
@@ -1143,7 +1143,7 @@ export function QuranReader({
                           {/* Copy paragraph text */}
                           <button
                             onClick={() => copyText(paraText)}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-gray-700 dark:bg-white/5 dark:text-gray-300 border-transparent font-bold"
+                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-text-primary dark:bg-white/5 border-transparent font-bold"
                           >
                             <FileText className="w-3.5 h-3.5" />
                             <span>نسخ</span>
@@ -1156,15 +1156,15 @@ export function QuranReader({
                     {noteEditIndex === idx && (
                       <div
                         onClick={(e) => e.stopPropagation()}
-                        className="mt-3 bg-yellow-50/50 dark:bg-zinc-800 p-3 rounded-2xl border border-yellow-200 dark:border-zinc-700 font-sans shadow-sm"
+                        className="mt-3 bg-surface-card p-3 rounded-2xl border border-taiz-royal font-sans shadow-sm"
                       >
-                        <span className="text-xs font-bold text-gray-500 dark:text-gray-300 block mb-1">
+                        <span className="text-xs font-bold text-text-muted block mb-1">
                           دون ملحوظتك على هذه الفقرة:
                         </span>
                         <textarea
                           autoFocus
                           rows={3}
-                          className="w-full text-sm p-3 bg-white dark:bg-zinc-900 text-stone-900 dark:text-zinc-100 rounded-xl outline-none border border-gray-300 dark:border-gray-700 font-bold"
+                          className="w-full text-sm p-3 bg-surface-main text-text-primary rounded-xl outline-none border border-border-light font-bold focus:border-taiz-royal"
                           value={noteText}
                           onChange={(e) => setNoteText(e.target.value)}
                           placeholder="اكتب ملاحظاتك هنا..."
@@ -1172,7 +1172,7 @@ export function QuranReader({
                         <div className="flex justify-end gap-2 mt-2">
                           <button
                             onClick={() => setNoteEditIndex(null)}
-                            className="px-3 py-1 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 text-xs rounded-lg font-bold"
+                            className="px-3 py-1 bg-surface-hover text-text-secondary text-xs rounded-lg font-bold"
                           >
                             إلغاء
                           </button>
@@ -1181,7 +1181,7 @@ export function QuranReader({
                               onSaveNote(idx, noteText);
                               setNoteEditIndex(null);
                             }}
-                            className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded-lg font-bold"
+                            className="px-3 py-1 bg-taiz-royal hover:bg-taiz-royal/90 text-white text-xs rounded-lg font-bold"
                           >
                             حفظ الملاحظة
                           </button>
@@ -1198,7 +1198,7 @@ export function QuranReader({
 
       {/* 2. Interactive Bottom Reading HUD Indicators (Time left, progress remaining) */}
       {!focusMode && (
-        <div className="bg-[#1e293b] border-t border-gray-700 text-white px-4 py-2.5 flex items-center justify-between shadow-lg text-xs font-sans shrink-0">
+        <div className="bg-taiz-navy border-t border-white/10 text-white px-4 py-2.5 flex items-center justify-between shadow-lg text-xs font-sans shrink-0">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-emerald-400" />
             <span className="font-bold">
@@ -1210,13 +1210,13 @@ export function QuranReader({
           </div>
 
           <div className="text-center">
-            <span className="font-extrabold text-[#38bdf8]">
+            <span className="font-extrabold text-taiz-sky">
               تمت قراءة {scrollStats.percentage}% من الدرس
             </span>
             {/* Progress bar line */}
-            <div className="w-32 bg-gray-700 h-1 rounded-full overflow-hidden mt-1 mx-auto">
+            <div className="w-32 bg-white/20 h-1 rounded-full overflow-hidden mt-1 mx-auto">
               <div
-                className="h-full bg-[#38bdf8]"
+                className="h-full bg-taiz-sky"
                 style={{ width: `${scrollStats.percentage}%` }}
               />
             </div>

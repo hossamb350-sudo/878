@@ -1,4 +1,4 @@
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, addDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { AppNotification } from "../types";
 import { LocalNotifications } from "@capacitor/local-notifications";
@@ -202,6 +202,22 @@ class NotificationService {
       this.unsubscribe = null;
     }
     this.isListening = false;
+  }
+
+  // Create a new notification document in Firestore to be picked up by other clients
+  public async sendNewsNotification(data: { id: string; title: string; category?: string; imageUrl?: string }) {
+    try {
+      const notificationData: Omit<AppNotification, "id"> = {
+        title: "خبر جديد",
+        body: data.title,
+        category: "news",
+        link: `/news/${data.id}`,
+        createdAt: Date.now()
+      };
+      await addDoc(collection(db, "notifications"), notificationData);
+    } catch (e) {
+      console.error("Failed to send news notification:", e);
+    }
   }
 }
 

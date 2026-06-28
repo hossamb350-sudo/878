@@ -147,6 +147,20 @@
         "progressLog": { "type": "array" }
       },
       "required": ["lessonsReadCount", "totalReadingTimeMinutes", "lastReadTimestamp"]
+    },
+    "SocialLink": {
+      "title": "Social Link",
+      "description": "External social media links",
+      "type": "object",
+      "properties": {
+        "platform": { "type": "string" },
+        "label": { "type": "string" },
+        "url": { "type": "string" },
+        "description": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["platform", "label", "url", "order", "createdAt"]
     }
   },
   "firestore": {
@@ -197,6 +211,10 @@
     "/notifications/{notifId}": {
       "schema": { "$ref": "Notification" },
       "description": "System Notifications"
+    },
+    "/social_links/{linkId}": {
+      "schema": { "$ref": "SocialLink" },
+      "description": "External social media links"
     }
   }
 }

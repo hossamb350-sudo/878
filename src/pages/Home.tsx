@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { collection, query, orderBy, getDocs, limit } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
 import { NewsItem, VideoItem } from "../types";
+import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X } from "lucide-react";
+import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar } from "lucide-react";
 import { motion } from "motion/react";
+import { PullToRefresh } from "../components/PullToRefresh";
 
 function getRelativeArabicTime(timestamp: number): string {
   const diffMs = Date.now() - timestamp;
@@ -35,14 +37,93 @@ function getRelativeArabicTime(timestamp: number): string {
   return format(timestamp, "dd MMMM yyyy", { locale: ar });
 }
 
+function formatPublishInfo(timestamp: number) {
+  const d = new Date(timestamp);
+  const mDate = format(d, "dd MMMM yyyy'م'", { locale: ar });
+  const mTime = format(d, "hh:mm a", { locale: ar });
+  
+  let hDate = "";
+  try {
+    hDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }).format(d) + "هـ";
+  } catch (e) {
+    hDate = "";
+  }
+  
+  return { mDate, mTime, hDate };
+}
+
 export function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"top" | "following">("top");
-  const [savedArticles, setSavedArticles] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Record<string, string>>({
+    "محلية": "#049EDF",
+    "تعبئة عامة": "#032F69",
+    "اجتماعية": "#055198",
+    "أنشطة وزيارات": "#7C3AED",
+    "مشاريع": "#10B981",
+    "مقال": "#F59E0B"
+  });
 
   useEffect(() => {
+    const fetchCats = async () => {
+      try {
+        const catDoc = await getDoc(doc(db, "newsMetadata", "categories"));
+        if (catDoc.exists()) {
+          const data = catDoc.data();
+          const catMap: Record<string, string> = { ...categories };
+          if (data.items) {
+            data.items.forEach((item: any) => {
+              if (item.name && item.color) catMap[item.name] = item.color;
+            });
+          }
+          setCategories(catMap);
+        }
+      } catch (e) {
+        console.error("Error fetching category colors:", e);
+      }
+    };
+    fetchCats();
+  }, []);
+
+  useEffect(() => {
+    // Load from cache first
+    const cachedNews = localStorage.getItem("taiz_news_cache");
+    const cachedVideos = localStorage.getItem("taiz_videos_cache");
+
+    let hasCache = false;
+
+    if (cachedNews) {
+      try {
+        const parsed = JSON.parse(cachedNews);
+        if (parsed.length > 0) {
+          setNews(parsed);
+          hasCache = true;
+        }
+      } catch (e) {
+        console.warn("Error parsing news cache", e);
+      }
+    }
+    if (cachedVideos) {
+      try {
+        const parsed = JSON.parse(cachedVideos);
+        if (parsed.length > 0) {
+          setVideos(parsed);
+          hasCache = true;
+        }
+      } catch (e) {
+        console.warn("Error parsing videos cache", e);
+      }
+    }
+
+    if (hasCache) {
+      setLoading(false);
+    }
+
     let active = true;
     let newsDone = false;
     let videosDone = false;
@@ -55,7 +136,9 @@ export function Home() {
 
     const unsubNewsPromise = SyncService.syncCollection<NewsItem>("news", (newsData) => {
       if (!active) return;
-      setNews(newsData.slice(0, 30));
+      const sliced = newsData.slice(0, 30);
+      setNews(sliced);
+      localStorage.setItem("taiz_news_cache", JSON.stringify(sliced));
       newsDone = true;
       checkLoading();
     }, { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
@@ -71,20 +154,12 @@ export function Home() {
         }
         return b.createdAt - a.createdAt;
       });
-      setVideos(sorted.slice(0, 10));
+      const sliced = sorted.slice(0, 10);
+      setVideos(sliced);
+      localStorage.setItem("taiz_videos_cache", JSON.stringify(sliced));
       videosDone = true;
       checkLoading();
     }, { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
-
-    // Load saved bookmarks status
-    const saved = localStorage.getItem("saved_news");
-    if (saved) {
-      try {
-        setSavedArticles(JSON.parse(saved));
-      } catch (e) {
-        console.error(e);
-      }
-    }
 
     return () => {
       active = false;
@@ -93,23 +168,8 @@ export function Home() {
     };
   }, []);
 
-  const toggleBookmark = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    let updated = [...savedArticles];
-    if (updated.includes(id)) {
-      updated = updated.filter(item => item !== id);
-    } else {
-      updated.push(id);
-    }
-    setSavedArticles(updated);
-    localStorage.setItem("saved_news", JSON.stringify(updated));
-  };
-
   // Filter items
-  let filteredNews = activeTab === "following" 
-    ? news.filter(n => savedArticles.includes(n.id))
-    : [...news];
+  let filteredNews = [...news];
 
   // Pin manually-pinned news at top
   const pinnedNewsIndex = filteredNews.findIndex(n => n.isPinned);
@@ -129,166 +189,121 @@ export function Home() {
 
   const breakingItems = news.filter(n => n.isBreaking).slice(0, 3); // For the vertical timeline under hero
 
+  const handleRefresh = async () => {
+    try {
+      const freshNews = await SyncService.refreshCollection<NewsItem>("news", { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
+      setNews(freshNews);
+      
+      const freshVideos = await SyncService.refreshCollection<VideoItem>("videos", { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
+      const sortedVideos = [...freshVideos].sort((a, b) => {
+        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+        if (aOrder !== bOrder) {
+          return aOrder - bOrder;
+        }
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      });
+      setVideos(sortedVideos.slice(0, 10));
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  };
+
   return (
+    <PullToRefresh onRefresh={handleRefresh}>
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }} 
       transition={{ duration: 0.3 }}
-      className="max-w-[760px] mx-auto w-full pb-16 bg-white dark:bg-gray-950 transition-colors"
+      className="max-w-[760px] mx-auto w-full pb-16 bg-surface-main text-text-primary transition-colors"
     >
       
-      {/* Tab Navigation Underlines */}
-      <div className="w-full bg-white dark:bg-gray-950 border-b border-gray-100 dark:border-gray-900 sticky top-0 z-30 px-4">
-        <div className="flex max-w-[720px] mx-auto overflow-x-auto">
-          <div className="flex w-full gap-4">
-            <button 
-              onClick={() => setActiveTab("top")}
-              className={`py-3.5 px-4 font-extrabold text-[16px] transition-all relative ${
-                activeTab === "top" 
-                  ? "text-amber-700 dark:text-amber-400" 
-                  : "text-gray-400 hover:text-amber-700 dark:hover:text-amber-400"
-              }`}
-            >
-               أهم الأخبار
-               {activeTab === "top" && (
-                 <div className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#d49a37] transition-all"></div>
-               )}
-            </button>
-            <button 
-              onClick={() => setActiveTab("following")}
-              className={`py-3.5 px-4 font-extrabold text-[16px] transition-all relative ${
-                activeTab === "following" 
-                  ? "text-amber-700 dark:text-amber-400" 
-                  : "text-gray-400 hover:text-amber-700 dark:hover:text-amber-400"
-              }`}
-            >
-               المتابعة
-               {activeTab === "following" && (
-                 <div className="absolute bottom-0 left-4 right-4 h-[3px] bg-[#d49a37] transition-all"></div>
-               )}
-            </button>
-          </div>
-        </div>
-      </div>
-
       <div className="p-0 sm:p-4">
         {loading ? (
            <div className="space-y-6 pt-4 px-4 sm:px-0">
-              <div className="animate-pulse bg-gray-100 dark:bg-gray-900 h-64 sm:h-80 w-full mb-6 rounded-none"></div>
+              <div className="animate-pulse bg-surface-card h-64 sm:h-80 w-full mb-6 rounded-3xl shadow-soft"></div>
               {[1, 2, 3].map(i => (
                 <div key={i} className="flex gap-4 animate-pulse px-4 sm:px-0">
-                   <div className="w-[110px] h-[110px] bg-gray-100 dark:bg-gray-900 shrink-0"></div>
+                   <div className="w-[110px] h-[110px] bg-surface-card rounded-2xl shrink-0 shadow-soft"></div>
                    <div className="flex-1 space-y-3 py-2">
-                      <div className="h-6 bg-gray-100 dark:bg-gray-900 rounded w-full"></div>
-                      <div className="h-4 bg-gray-100 dark:bg-gray-900 rounded w-2/3"></div>
+                      <div className="h-6 bg-surface-card rounded-lg w-full"></div>
+                      <div className="h-4 bg-surface-card rounded-lg w-2/3"></div>
                    </div>
                 </div>
               ))}
            </div>
         ) : filteredNews.length === 0 ? (
-          <div className="text-center py-24 text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/40 border border-dashed border-gray-150 dark:border-gray-800 m-4 sm:m-0 rounded-2xl font-sans">
-             <Bookmark className="w-16 h-16 mx-auto mb-4 opacity-30" />
-             <p className="text-lg font-bold">لا توجد أخبار هنا</p>
-             <p className="text-sm mt-1 text-gray-400">احفظ الأخبار لقرائتها لاحقاً في قائمة المتابعة.</p>
+          <div className="text-center py-24 card m-4 sm:m-0 font-sans">
+             <Newspaper className="w-16 h-16 mx-auto mb-4 text-taiz-sky opacity-40" />
+             <p className="text-lg font-bold text-text-primary">لا توجد أخبار حالياً</p>
           </div>
         ) : (
           <div className="space-y-0">
             
             {/* HERO FEATURED POST */}
             {heroItem && (
-              <div className="block bg-white dark:bg-gray-950 pb-6 border-b border-gray-150 dark:border-gray-900 mb-6 font-sans">
+              <div className="block bg-surface-main pb-1.5 border-b border-border-light mb-4 font-sans">
                 {heroItem.imageUrl && (
-                  <Link to={`/news/${heroItem.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-gray-100 dark:bg-gray-900 mb-4 sm:rounded-sm shadow-sm">
+                  <Link to={`/news/${heroItem.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-surface-card mb-4 sm:rounded-3xl shadow-soft border border-border-light">
                      <img 
                        src={heroItem.imageUrl} 
                        alt={heroItem.title} 
-                       className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-700 ease-out" 
+                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
                      />
-                     <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"></div>
+                     <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
+                     
+                     {/* Category Labels */}
+                     <CategoryBadges item={heroItem} isHero={true} className="absolute top-2 left-1/2 -translate-x-1/2" />
                   </Link>
                 )}
                 
-                <div className="px-4 sm:px-0">
-                  <Link to={`/news/${heroItem.id}`} className="block hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-                    <h2 className="font-extrabold text-[20px] sm:text-[24px] text-[#111827] dark:text-[#f3f4f6] leading-[1.3] mb-4 text-right">
-                       {heroItem.title}
-                    </h2>
-                  </Link>
-                  
-                  {/* Info Row: Blinking Live coverage + Bookmark */}
-                  <div className="flex items-center justify-between mb-4 mt-2">
-                    {/* Pulsing Live Cover */}
-                    {heroItem.isBreaking ? (
-                      <div className="flex items-center gap-1.5 text-red-600 dark:text-red-500 font-extrabold text-[14px] select-none">
-                        <span className="relative flex h-2.5 w-2.5">
+                <div className="px-5 sm:px-2">
+                  {/* Info Row: News Meta (Above Title) */}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2.5 text-[10px] sm:text-[11px] font-bold text-text-secondary">
+                    {heroItem.isBreaking && (
+                      <div className="flex items-center gap-1.5 text-status-error font-extrabold select-none bg-status-error/5 px-2 py-0.5 rounded-full shrink-0">
+                        <span className="relative flex h-1.5 w-1.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
+                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
                         </span>
                         تغطية مباشرة
                       </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-[11px] px-2.5 py-0.5 rounded-full font-black border border-emerald-500/10">
-                          {heroItem.category || "مادة بارزة"}
-                        </span>
-                        <span className="text-stone-400 dark:text-zinc-500 text-xs font-bold leading-none">
-                          {new Date(heroItem.createdAt).toLocaleDateString("ar-YE", {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </span>
-                      </div>
                     )}
-
-                    {/* Bookmark on the left */}
-                    <button 
-                      onClick={(e) => toggleBookmark(heroItem.id, e)} 
-                      className="text-gray-400 hover:text-black dark:hover:text-white transition transform active:scale-90"
-                      title="حفظ للقرأة لاحقاً"
-                    >
-                      <Bookmark className={`w-5.5 h-5.5 ${savedArticles.includes(heroItem.id) ? "fill-black text-black dark:fill-white dark:text-white" : "stroke-[1.5]"}`} />
-                    </button>
+                    
+                    <span className="flex items-center gap-1 shrink-0">
+                      <Calendar className="w-3 h-3 text-taiz-sky/70" />
+                      <span>{formatPublishInfo(heroItem.createdAt).mDate}</span>
+                    </span>
+                    
+                    <span className="shrink-0 text-text-muted">{formatPublishInfo(heroItem.createdAt).hDate}</span>
+                    
+                    <span className="flex items-center gap-1 shrink-0">
+                      <Clock className="w-3 h-3 text-taiz-sky/70" />
+                      <span>{formatPublishInfo(heroItem.createdAt).mTime}</span>
+                    </span>
+                    
+                    {heroItem.author && (
+                      <span className="flex items-center gap-1 text-text-muted shrink-0 max-w-[120px] truncate">
+                        <User className="w-3 h-3"/> 
+                        {heroItem.author}
+                      </span>
+                    )}
                   </div>
-                  
-                  {/* Vertical Connecting Live Update Timeline */}
-                  {((heroItem.liveUpdates && heroItem.liveUpdates.length > 0) || (heroItem.isBreaking && breakingItems.length > 0)) && (
-                    <div className="mt-4 mb-2 bg-gray-50/50 dark:bg-gray-900/30 rounded-xl p-4 border border-gray-100 dark:border-gray-900 text-right">
-                      <div className="space-y-5 relative before:absolute before:right-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-200 dark:before:bg-gray-800">
-                        {heroItem.liveUpdates && heroItem.liveUpdates.length > 0 ? (
-                          heroItem.liveUpdates.map((update) => (
-                            <div key={update.id} className="relative pr-6">
-                              {/* Connector dot */}
-                              <span className="absolute right-0 top-1.5 w-3.5 h-3.5 rounded-full bg-gray-400 dark:bg-gray-600 border-[3px] border-white dark:border-gray-950 z-10 shadow-sm"></span>
-                              <p className="text-[15px] sm:text-[16px] font-bold text-gray-900 dark:text-gray-100 leading-snug">
-                                {update.text}
-                              </p>
-                              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mt-1.5 block">
-                                {update.time}
-                              </span>
-                            </div>
-                          ))
-                        ) : (
-                          // Dynamic fallback breaking news list timeline
-                          breakingItems.map((bItem) => (
-                            <div key={bItem.id} className="relative pr-6">
-                              <span className="absolute right-0 top-1.5 w-3.5 h-3.5 rounded-full bg-gray-400 dark:bg-gray-600 border-[3px] border-white dark:border-gray-950 z-10 shadow-sm"></span>
-                              <Link to={`/news/${bItem.id}`} className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
-                                <p className="text-[14px] sm:text-[15px] font-bold text-gray-900 dark:text-gray-100 leading-snug">
-                                  {bItem.title}
-                                </p>
-                              </Link>
-                              <span className="text-[11px] font-semibold text-gray-400 dark:text-gray-500 mt-1.5 block">
-                                {getRelativeArabicTime(bItem.createdAt)}
-                              </span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  )}
 
+                  <Link to={`/news/${heroItem.id}`} className="block hover:text-taiz-sky transition-colors group">
+                    <h2 className="font-black text-[19px] sm:text-[23px] text-text-primary leading-[1.4] mb-2.5 text-right tracking-tight group-hover:text-taiz-sky transition-colors">
+                       {heroItem.title}
+                    </h2>
+                  </Link>
+
+                  <div className="flex items-center mt-2">
+                    <div className="mr-auto flex items-center gap-1 text-taiz-royal shrink-0 text-[10px] sm:text-[11px] font-black bg-taiz-royal/5 w-fit px-2 py-0.5 rounded-lg border border-taiz-royal/10">
+                      <Eye className="w-3 h-3"/> 
+                      <span>{heroItem.views || 0} مشاهدة</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -296,93 +311,95 @@ export function Home() {
             {/* LIST CHANNELS */}
             <div className="flex flex-col font-sans">
               {listItems.map((item, index) => (
-                <div key={item.id}>
-                    <Link 
+                <div key={item.id} className="pt-2">
+                  <Link 
                     to={`/news/${item.id}`} 
-                    className="flex gap-4 p-4 hover:bg-gray-50/50 dark:hover:bg-gray-900/30 transition-all border-b border-gray-100 dark:border-gray-900 px-4 sm:px-0"
+                    className="flex gap-4 p-3.5 hover:bg-surface-hover transition-all border border-border-light bg-surface-card rounded-2xl shadow-soft mb-4 mx-4 sm:mx-0 group relative"
                   >
-                    {/* Right Side News Content */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between py-1 text-right pr-1">
-                       <div>
-                          <h3 className="font-extrabold text-[14px] sm:text-[16px] text-[#111827] dark:text-[#f3f4f6] leading-[1.38] transition-colors hover:text-amber-600 dark:hover:text-amber-400 mb-1 truncate whitespace-normal line-clamp-2">
-                            {item.title}
-                          </h3>
-                          {(item.shortDescription || (item.content && item.content.substring(0, 80))) && (
-                            <p className="text-[12px] sm:text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed line-clamp-2 mt-1">
-                              {item.shortDescription || (item.content ? item.content.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').substring(0, 100) + "..." : "")}
-                            </p>
-                          )}
-                       </div>
+                    {/* Category Tags Attached to Center-Top (Outside) */}
+                    <CategoryBadges item={item} isHero={false} className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" />
 
-                       {/* Bottom row: Meta right-side, Actions left-side */}
-                       <div className="flex w-full min-w-0 items-start sm:items-center justify-between mt-3 text-[11px] sm:text-[12px] text-gray-400 font-medium">
-                          {/* Right Side: Relative time, category, author, absolute date */}
-                          <div className="flex-1 min-w-0 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-gray-400 dark:text-gray-500">
-                             <span className="shrink-0 font-bold text-red-600 dark:text-red-400 flex items-center gap-1">
-                                <Clock className="w-3 h-3" />
-                                {getRelativeArabicTime(item.createdAt)}
+                    {/* Right Side News Content */}
+                    <div className="flex-1 min-w-0 flex flex-col justify-between py-1 text-right pr-0.5">
+                       <div>
+                          {/* Top row: News Meta (Above Title) */}
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2.5 text-[9px] sm:text-[10px] text-text-muted font-bold">
+                             <span className="flex items-center gap-1 shrink-0">
+                               <Calendar className="w-2.5 h-2.5 text-taiz-sky/60" />
+                               <span>{formatPublishInfo(item.createdAt).mDate}</span>
                              </span>
-                             <span className="text-gray-300 dark:text-gray-700 shrink-0 hidden sm:inline-block">•</span>
-                             <span className="shrink-0 text-[10px] hidden sm:inline-block">
-                                {new Date(item.createdAt).toLocaleDateString("ar-YE", { weekday: "short", day: "numeric", month: "short" })} - {new Date(item.createdAt).toLocaleTimeString("ar-YE", { hour: "numeric", minute: "2-digit" })}
+                             
+                             <span className="shrink-0">{formatPublishInfo(item.createdAt).hDate}</span>
+                             
+                             <span className="flex items-center gap-1 shrink-0">
+                               <Clock className="w-2.5 h-2.5 text-taiz-sky/60" />
+                               <span>{formatPublishInfo(item.createdAt).mTime}</span>
                              </span>
-                             <span className="text-gray-300 dark:text-gray-700 shrink-0">•</span>
-                             <span className="text-amber-700 dark:text-amber-455 font-bold shrink-0">{item.category}</span>
+
                              {item.author && (
-                               <>
-                                 <span className="text-gray-300 dark:text-gray-700 shrink-0">•</span>
-                                 <span className="shrink-0 text-gray-500 font-bold max-w-[80px] truncate">{item.author}</span>
-                               </>
+                               <span className="flex items-center gap-1 text-text-muted max-w-[100px] truncate shrink-0">
+                                 <User className="w-2.5 h-2.5"/> 
+                                 {item.author}
+                               </span>
                              )}
                           </div>
-                          
-                          {/* Left Side: Buttons */}
-                          <div className="flex items-center gap-2 pl-1 shrink-0 self-end sm:self-auto">
-                            <button 
-                              onClick={(e) => toggleBookmark(item.id, e)} 
-                              className="text-gray-400 hover:text-[#111827] dark:hover:text-white transition p-1"
-                              title="حفظ"
-                            >
-                              <Bookmark className={`w-[18px] h-[18px] ${savedArticles.includes(item.id) ? "fill-black text-black dark:fill-white dark:text-white" : "stroke-[1.5]"}`} />
-                            </button>
-                          </div>
+
+                          <h3 className="font-bold text-[15px] sm:text-[17px] text-text-primary leading-[1.45] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-3 tracking-tight">
+                            {item.title}
+                          </h3>
+                       </div>
+
+                       <div className="flex items-center mt-auto">
+                          <span className="mr-auto flex items-center gap-1 text-taiz-royal shrink-0 text-[9px] font-black bg-taiz-royal/5 px-1.5 py-0.5 rounded-md border border-taiz-royal/10">
+                            <Eye className="w-2.5 h-2.5"/> 
+                            {item.views || 0}
+                          </span>
                        </div>
                     </div>
 
                     {/* Left Side Compact Image */}
                     {item.imageUrl && (
-                      <div className="w-[96px] h-[96px] sm:w-[110px] sm:h-[110px] rounded-sm overflow-hidden shrink-0 bg-gray-100 dark:bg-gray-800 shadow-sm border border-gray-50 dark:border-gray-900">
-                         <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                      <div className="w-[110px] h-[110px] sm:w-[130px] sm:h-[130px] rounded-2xl overflow-hidden shrink-0 bg-surface-main shadow-soft border border-border-light">
+                         <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       </div>
                     )}
                   </Link>
 
                   {/* Insert Video Slider Container */}
-                  {index === 1 && videos.length > 0 && activeTab === 'top' && (
-                    <div className="my-6 py-6 border-b border-gray-100 dark:border-gray-900 bg-gray-50/40 dark:bg-gray-900/20 rounded-xl px-4">
-                      <div className="flex items-center justify-between mb-4 text-right">
-                        <Link to="/watch" className="flex items-center gap-2 group cursor-pointer inline-flex">
-                           <MonitorPlay className="w-5 h-5 text-red-600 group-hover:scale-110 transition-transform" />
-                           <h2 className="font-extrabold text-lg select-none group-hover:text-red-600 transition-colors">أحدث الفيديوهات والتقارير</h2>
-                           <span className="bg-[#facc15] text-black text-[10px] font-extrabold px-1.5 py-0.5 rounded leading-none">جديد</span>
+                  {index === 1 && videos.length > 0 && (
+                    <div className="my-2 py-4 bg-surface-main border-y border-border-light px-5 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-taiz-sky/5 rounded-full blur-[40px] -mt-10 -mr-10"></div>
+                      <div className="flex items-center justify-between mb-4 text-right relative z-10">
+                        <Link to="/watch" className="flex items-center gap-3 group cursor-pointer inline-flex">
+                           <div className="bg-gradient-to-br from-taiz-navy to-taiz-royal p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all">
+                              <MonitorPlay className="w-5 h-5 text-white" />
+                           </div>
+                           <h2 className="font-black text-[22px] select-none text-text-primary group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
                         </Link>
                       </div>
                       
-                      <div className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar" style={{ scrollbarWidth: 'none' }}>
+                      <div className="flex overflow-x-auto gap-5 pb-4 snap-x hide-scrollbar relative z-10" style={{ scrollbarWidth: 'none' }}>
                         {videos.map(video => (
-                           <Link key={video.id} to={`/watch/${video.id}`} className="snap-start shrink-0 w-[240px] sm:w-[280px] group block">
-                              <div className="relative aspect-[4/5] rounded-xl overflow-hidden bg-gray-900 mb-2.5 shadow-md">
+                           <Link key={video.id} to={`/watch/${video.id}`} className="snap-start shrink-0 w-[280px] sm:w-[320px] group block">
+                              <div className="relative aspect-[16/9] rounded-3xl overflow-hidden bg-taiz-navy mb-4 shadow-medium border border-border-light group-hover:shadow-strong group-hover:border-taiz-sky/30 transition-all">
                                  {video.thumbnailUrl ? (
-                                    <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-80 group-hover:scale-103 transition-transform duration-500" />
+                                    <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" />
                                  ) : (
-                                    <div className="w-full h-full bg-gradient-to-b from-gray-800 to-black"></div>
+                                    <div className="w-full h-full bg-gradient-to-br from-taiz-navy to-taiz-royal"></div>
                                  )}
-                                 <div className="absolute inset-0 flex items-center justify-center bg-black/10">
-                                    <PlayCircle className="w-12 h-12 text-white/80 group-hover:text-white transition-all transform group-hover:scale-105" />
+                                 <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
+                                 <div className="absolute top-3 right-3 z-30">
+                                    <div className="bg-white/90 backdrop-blur-md text-taiz-navy text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm border border-white/50">
+                                       {video.category || "فيديو"}
+                                    </div>
                                  </div>
-                                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/95 via-black/50 to-transparent">
-                                    <div className="bg-red-600 text-white text-[10px] font-extrabold px-2 py-0.5 inline-block mb-2 rounded-sm uppercase tracking-wide">فيديو</div>
-                                    <h4 className="text-white text-sm font-bold leading-tight line-clamp-3 text-right">{video.title}</h4>
+                                 <div className="absolute inset-0 flex items-center justify-center z-20">
+                                    <div className="bg-white/20 backdrop-blur-md p-3.5 rounded-full shadow-strong group-hover:scale-110 transition-transform border border-white/30">
+                                       <PlayCircle className="w-8 h-8 text-white ml-0.5" />
+                                    </div>
+                                 </div>
+                                 <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+                                    <h4 className="text-white text-[15px] font-bold leading-[1.4] line-clamp-2 text-right group-hover:text-taiz-sky transition-colors">{video.title}</h4>
                                  </div>
                               </div>
                            </Link>
@@ -398,5 +415,6 @@ export function Home() {
         )}
       </div>
     </motion.div>
+    </PullToRefresh>
   );
 }

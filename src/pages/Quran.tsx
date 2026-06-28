@@ -64,10 +64,10 @@ type QuranView = 'series' | 'lessons' | 'lesson-detail' | 'syllabuses' | 'syllab
 // --- Sub-components moved outside to prevent re-mounting on every state update ---
 
 const ProgressBar = ({ percentage }: { percentage: number }) => (
-  <div className="w-full bg-gray-100 dark:bg-gray-700 h-1 rounded-full mt-3 overflow-hidden">
+  <div className="w-full bg-surface-main h-1 rounded-full mt-3 overflow-hidden">
     <div 
       style={{ width: `${percentage}%` }} 
-      className="h-full bg-emerald-500"
+      className="h-full bg-taiz-sky"
     />
   </div>
 );
@@ -82,9 +82,9 @@ const QuranSearchView = ({ searchQuery, lessonsList, excerptsList, scrollRef, on
     <div className="flex-1 overflow-y-auto px-4 py-6 relative" ref={scrollRef}>
       <div className="space-y-3 max-w-lg mx-auto">
         {searchQuery.length < 2 ? (
-          <p className="text-center text-gray-500 py-10">اكتب كلمة واحدة على الأقل للبحث...</p>
+          <p className="text-center text-text-muted py-10">اكتب كلمة واحدة على الأقل للبحث...</p>
         ) : results.length === 0 ? (
-          <p className="text-center text-gray-500 py-10">لم يتم العثور على نتائج لـ "{searchQuery}"</p>
+          <p className="text-center text-text-muted py-10">لم يتم العثور على نتائج لـ "{searchQuery}"</p>
         ) : (
           results.map((item: any) => {
             const isLesson = item.type === 'lesson';
@@ -99,15 +99,15 @@ const QuranSearchView = ({ searchQuery, lessonsList, excerptsList, scrollRef, on
                      onSelectExcerpt(item as QuranExcerpt);
                    }
                  }}
-                 className="w-full bg-white dark:bg-gray-800 p-4 rounded-xl flex flex-col gap-1 border border-gray-100 dark:border-gray-700 text-right shadow-sm focus:outline-none"
+                 className="w-full bg-surface-card p-4 rounded-xl flex flex-col gap-1 border border-border-light text-right shadow-sm focus:outline-none"
               >
                  <div className="flex justify-between items-center">
-                   <span className="font-bold text-gray-800 dark:text-gray-100">{item.title}</span>
-                   <span className="text-[10px] px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-gray-500 font-bold">
+                   <span className="font-bold text-text-primary">{item.title}</span>
+                   <span className="text-[10px] px-2 py-0.5 bg-surface-main rounded text-text-secondary font-bold">
                      {isLesson ? 'درس' : 'مقتطف'}
                    </span>
                  </div>
-                 <p className="text-xs text-gray-500 line-clamp-1">{item.content}</p>
+                 <p className="text-xs text-text-muted line-clamp-1">{item.content}</p>
               </button>
             );
           })
@@ -121,20 +121,20 @@ const SeriesView = ({ seriesList, onSelectSeries, scrollRef }: any) => (
   <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
     <div className="space-y-4 max-w-lg mx-auto">
        {seriesList.length === 0 ? (
-         <p className="text-center text-gray-500 py-10 font-bold">لا توجد سلاسل متاحة حالياً</p>
+         <p className="text-center text-text-muted py-10 font-bold">لا توجد سلاسل متاحة حالياً</p>
        ) : (
          seriesList.map((series: any) => (
            <button 
               key={series.id} 
               onClick={() => onSelectSeries(series)}
-              className="w-full bg-white dark:bg-gray-800 hover:bg-slate-50 dark:hover:bg-gray-800/80 transition-all p-5 rounded-2xl flex items-center justify-between border-r-8 border-amber-600 dark:border-amber-500 group shadow-sm text-right focus:outline-none"
+              className="w-full bg-surface-card hover:bg-surface-hover transition-all p-5 rounded-3xl flex items-center justify-between border-r-8 border-taiz-royal group shadow-sm text-right focus:outline-none"
            >
               <div className="flex flex-col gap-1 pr-1">
-                <span className="text-lg font-black text-gray-800 dark:text-gray-100">{series.title}</span>
-                {series.description && <span className="text-xs text-gray-500 font-bold">{series.description}</span>}
+                <span className="text-lg font-black text-text-primary">{series.title}</span>
+                {series.description && <span className="text-xs text-text-secondary font-bold">{series.description}</span>}
               </div>
-              <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-gray-700 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shrink-0 mr-2 focus:outline-none">
-                <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <div className="w-8 h-8 rounded-full bg-taiz-navy/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shrink-0 mr-2 focus:outline-none">
+                <ChevronLeft className="w-5 h-5 text-taiz-navy" />
               </div>
            </button>
          ))
@@ -149,7 +149,7 @@ const LessonsView = ({ selectedSeries, lessonsList, lessonProgress, onNavigateTo
     <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
       <div className="space-y-3 max-w-lg mx-auto">
          {seriesLessons.length === 0 ? (
-            <p className="text-center text-gray-500 py-10 font-bold">لا توجد دروس في هذه السلسلة أو لم يتم إضافتها بعد.</p>
+            <p className="text-center text-text-muted py-10 font-bold">لا توجد دروس في هذه السلسلة أو لم يتم إضافتها بعد.</p>
          ) : (
            seriesLessons.map((lesson: any) => {
               const progress = lessonProgress[lesson.id] || 0;
@@ -157,11 +157,11 @@ const LessonsView = ({ selectedSeries, lessonsList, lessonProgress, onNavigateTo
                 <button 
                    key={lesson.id} 
                    onClick={() => onNavigateToLesson(lesson, selectedSeries!)}
-                   className="w-full bg-white dark:bg-gray-800 hover:bg-slate-50 dark:hover:bg-gray-700/80 transition p-4 rounded-2xl flex flex-col shadow-sm border border-gray-100 dark:border-gray-700 text-right group focus:outline-none"
+                   className="w-full bg-surface-card hover:bg-surface-hover transition p-4 rounded-3xl flex flex-col shadow-sm border border-border-light text-right group focus:outline-none"
                 >
                    <div className="flex items-center justify-between w-full">
-                      <span className="text-base font-black text-gray-800 dark:text-gray-200 truncate pr-2">{lesson.title}</span>
-                      <BookOpen className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition shrink-0" />
+                      <span className="text-base font-black text-text-primary truncate pr-2">{lesson.title}</span>
+                      <BookOpen className="w-5 h-5 text-text-muted group-hover:text-taiz-sky transition shrink-0" />
                    </div>
                    {progress > 0 && <ProgressBar percentage={progress} />}
                 </button>
@@ -177,17 +177,17 @@ const SyllabusesView = ({ syllabusesList, onSelectSyllabus, scrollRef }: any) =>
   <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
     <div className="grid gap-4 max-w-2xl mx-auto md:grid-cols-2">
        {syllabusesList.length === 0 ? (
-         <p className="text-center text-gray-500 py-10 col-span-full font-bold">لا توجد مقررات دراسية متاحة.</p>
+         <p className="text-center text-text-muted py-10 col-span-full font-bold">لا توجد مقررات دراسية متاحة.</p>
        ) : (
          syllabusesList.map((item: any) => (
            <button 
               key={item.id} 
               onClick={() => onSelectSyllabus(item)}
-              className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-emerald-100 dark:border-emerald-950 hover:border-emerald-500 hover:shadow-md transition text-right flex flex-col items-start gap-2 focus:outline-none"
+              className="bg-surface-card p-5 rounded-3xl shadow-soft border border-border-light hover:border-taiz-sky/30 hover:shadow-strong transition text-right flex flex-col items-start gap-3 focus:outline-none"
            >
-              <Calendar className="w-8 h-8 text-emerald-600 mb-2" />
-              <span className="text-base font-black text-gray-900 dark:text-gray-100">{item.title}</span>
-              {item.description && <span className="text-xs text-gray-600 dark:text-gray-400 font-bold">{item.description}</span>}
+              <Calendar className="w-8 h-8 text-taiz-royal mb-2" />
+              <span className="text-base font-black text-text-primary">{item.title}</span>
+              {item.description && <span className="text-xs text-text-secondary font-bold">{item.description}</span>}
            </button>
          ))
        )}
@@ -196,10 +196,10 @@ const SyllabusesView = ({ syllabusesList, onSelectSyllabus, scrollRef }: any) =>
 );
 
 const SyllabusDetailView = ({ selectedSyllabus, scrollRef }: any) => (
-  <div className="flex-1 overflow-y-auto px-4 py-8 relative bg-white dark:bg-gray-900" ref={scrollRef}>
-     <div className="max-w-2xl mx-auto p-2 leading-loose text-gray-800 dark:text-gray-200 text-lg md:text-xl font-medium" dir="rtl">
-        <h1 className="text-2xl md:text-3xl font-black text-center mb-4 text-emerald-800 dark:text-emerald-400 border-b border-emerald-100 dark:border-emerald-950 pb-4">{selectedSyllabus?.title}</h1>
-        {selectedSyllabus?.description && <p className="text-center mb-8 font-bold text-gray-500 text-sm">{selectedSyllabus.description}</p>}
+  <div className="flex-1 overflow-y-auto px-4 py-8 relative bg-surface-main" ref={scrollRef}>
+     <div className="max-w-2xl mx-auto p-2 leading-loose text-text-primary text-lg md:text-xl font-medium" dir="rtl">
+        <h1 className="text-2xl md:text-3xl font-black text-center mb-4 text-taiz-royal border-b border-border-light pb-4">{selectedSyllabus?.title}</h1>
+        {selectedSyllabus?.description && <p className="text-center mb-8 font-bold text-text-secondary text-sm">{selectedSyllabus.description}</p>}
         <div className="whitespace-pre-wrap text-base md:text-lg leading-[2.1]">{selectedSyllabus?.content || "تفاصيل المقرر غير متوفرة."}</div>
      </div>
   </div>
@@ -209,20 +209,20 @@ const ExcerptsView = ({ excerptsList, onSelectExcerpt, scrollRef }: any) => (
   <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
     <div className="space-y-4 max-w-lg mx-auto">
        {excerptsList.length === 0 ? (
-         <p className="text-center text-gray-500 py-10 font-bold">لا توجد مقتطفات متاحة.</p>
+         <p className="text-center text-text-muted py-10 font-bold">لا توجد مقتطفات متاحة.</p>
        ) : (
          excerptsList.map((item: any) => (
            <button 
               key={item.id} 
               onClick={() => onSelectExcerpt(item)}
-              className="w-full bg-amber-500/5 dark:bg-amber-500-[0.02] p-5 rounded-2xl shadow-sm border border-amber-500/10 dark:border-amber-900/10 hover:shadow-md transition text-right flex items-start gap-4 focus:outline-none"
+              className="w-full bg-surface-card p-5 rounded-3xl shadow-sm border border-taiz-sky/10 hover:shadow-md transition text-right flex items-start gap-4 focus:outline-none"
            >
-              <div className="bg-amber-100 dark:bg-amber-950/50 p-3 rounded-xl shrink-0">
-                 <Quote className="w-5 h-5 text-amber-700 dark:text-amber-400" />
+              <div className="bg-taiz-sky/10 p-3 rounded-xl shrink-0">
+                 <Quote className="w-5 h-5 text-taiz-royal" />
               </div>
               <div className="flex-1 min-w-0 pt-1">
-                 <span className="text-base font-black text-amber-900 dark:text-amber-100 block truncate mb-1">{item.title}</span>
-                 <span className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">{item.content}</span>
+                 <span className="text-base font-black text-text-primary block truncate mb-1">{item.title}</span>
+                 <span className="text-xs text-text-secondary line-clamp-2 leading-relaxed font-bold">{item.content}</span>
               </div>
            </button>
          ))
@@ -232,17 +232,17 @@ const ExcerptsView = ({ excerptsList, onSelectExcerpt, scrollRef }: any) => (
 );
 
 const ExcerptDetailView = ({ selectedExcerpt, scrollRef }: any) => (
-  <div className="flex-1 overflow-y-auto px-4 py-10 relative bg-[#FAF9F5] dark:bg-gray-900 animate-fade-in" ref={scrollRef}>
+  <div className="flex-1 overflow-y-auto px-4 py-10 relative bg-surface-main animate-fade-in" ref={scrollRef}>
      <div className="max-w-2xl mx-auto flex flex-col items-center">
         {selectedExcerpt?.imageUrl && (
-          <div className="w-full h-64 md:h-96 rounded-2xl overflow-hidden mb-8 shadow-md">
+          <div className="w-full h-64 md:h-96 rounded-3xl overflow-hidden mb-8 shadow-strong border border-border-light">
              <img src={selectedExcerpt.imageUrl} alt={selectedExcerpt.title} className="w-full h-full object-cover" />
           </div>
         )}
-        <div className="relative bg-white dark:bg-gray-800 p-8 md:p-12 rounded-3xl shadow-xl w-full border border-amber-500/10 dark:border-gray-700 text-right">
-           <Quote className="absolute top-6 right-6 w-12 h-12 text-amber-200 dark:text-gray-700 -z-10 opacity-30" />
-           <h1 className="text-2xl font-black mb-6 text-amber-900 dark:text-amber-400">{selectedExcerpt?.title}</h1>
-           <p className="text-lg md:text-xl leading-loose font-medium text-stone-800 dark:text-zinc-200 whitespace-pre-wrap">{selectedExcerpt?.content}</p>
+        <div className="relative bg-surface-card p-8 md:p-12 rounded-3xl shadow-strong w-full border border-border-light text-right">
+           <Quote className="absolute top-6 right-6 w-12 h-12 text-taiz-sky/10 -z-10 opacity-30" />
+           <h1 className="text-2xl font-black mb-6 text-text-primary">{selectedExcerpt?.title}</h1>
+           <p className="text-lg md:text-xl leading-loose font-bold text-text-secondary whitespace-pre-wrap">{selectedExcerpt?.content}</p>
         </div>
      </div>
   </div>
@@ -272,11 +272,11 @@ const LessonDetailView = ({ selectedLesson, selectedSeries, bookmarks, notes, hi
 };
 
 const SidebarItem = ({ icon, label, description, active = false, onClick }: { icon: any, label: string, description?: string, active?: boolean, onClick: () => void }) => (
-  <button onClick={onClick} className={`w-full flex items-center gap-4 px-6 py-4 transition-colors text-right focus:outline-none ${active ? 'bg-gray-200 dark:bg-zinc-800' : 'hover:bg-gray-100 dark:hover:bg-zinc-900/60'}`}>
-    <span className={`p-2 rounded-xl bg-white dark:bg-zinc-800 shadow-sm shrink-0 ${active ? 'ring-2 ring-emerald-500' : ''}`}>{icon}</span>
+  <button onClick={onClick} className={`w-full flex items-center gap-4 px-6 py-4 transition-colors text-right focus:outline-none ${active ? 'bg-taiz-navy/5' : 'hover:bg-surface-hover'}`}>
+    <span className={`p-2 rounded-xl bg-surface-main shadow-sm shrink-0 ${active ? 'ring-2 ring-taiz-sky' : ''}`}>{icon}</span>
     <div className="flex flex-col text-right">
-      <span className={`text-base font-black leading-tight ${active ? 'text-gray-950 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>{label}</span>
-      {description && <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold mt-1 whitespace-nowrap">{description}</span>}
+      <span className={`text-base font-black leading-tight ${active ? 'text-taiz-navy' : 'text-text-secondary'}`}>{label}</span>
+      {description && <span className="text-[10px] text-text-secondary font-bold mt-1 whitespace-nowrap">{description}</span>}
     </div>
   </button>
 );
@@ -291,7 +291,7 @@ const Header = ({ activeView, selectedSeries, selectedSyllabus, selectedExcerpt,
   if (activeView === 'stats') title = "لوحة التقدم";
 
   return (
-    <div className="bg-[#1e293b] text-white pt-2 pb-0 relative z-20 shadow-md flex-shrink-0">
+    <div className="bg-taiz-navy text-white pt-2 pb-0 relative z-20 shadow-md flex-shrink-0">
       <div className="flex items-center justify-between px-4 h-14">
         <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-white/10 rounded-full transition-colors focus:outline-none">
           <Menu className="w-6 h-6" />
@@ -302,13 +302,13 @@ const Header = ({ activeView, selectedSeries, selectedSyllabus, selectedExcerpt,
             <motion.div 
               initial={{ width: 0, opacity: 0 }}
               animate={{ width: '100%', opacity: 1 }}
-              className="flex items-center bg-[#2d3a4f] rounded-lg px-3 overflow-hidden w-full"
+              className="flex items-center bg-white/10 rounded-lg px-3 overflow-hidden w-full"
             >
-              <Search className="w-4 h-4 text-gray-400 shrink-0" />
+              <Search className="w-4 h-4 text-white/50 shrink-0" />
               <input 
                 autoFocus
                 placeholder="بحث في الدروس والمقتطفات..."
-                className="bg-transparent border-none outline-none p-2 w-full text-sm font-bold text-white focus:outline-none"
+                className="bg-transparent border-none outline-none p-2 w-full text-sm font-bold text-white focus:outline-none placeholder:text-white/50"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
@@ -317,7 +317,7 @@ const Header = ({ activeView, selectedSeries, selectedSyllabus, selectedExcerpt,
               </button>
             </motion.div>
           ) : (
-            <div className="bg-[#2d3a4f] px-8 py-2 relative w-full text-center truncate rounded-lg">
+            <div className="bg-white/10 px-8 py-2 relative w-full text-center truncate rounded-lg">
                <span className="relative z-10 text-sm md:text-base font-black tracking-wider truncate block">{title}</span>
             </div>
           )}
@@ -360,26 +360,26 @@ const Sidebar = ({ isSidebarOpen, setIsSidebarOpen, activeView, setActiveView, h
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="fixed top-0 right-0 bottom-0 w-[80%] max-w-[320px] bg-[#f3f4f6] dark:bg-gray-900 z-[101] shadow-2xl overflow-hidden flex flex-col font-sans rtl"
+          className="fixed top-0 right-0 bottom-0 w-[80%] max-w-[320px] bg-surface-main z-[101] shadow-strong overflow-hidden flex flex-col font-sans rtl"
           dir="rtl"
         >
-          <div className="bg-[#e5e7eb] dark:bg-gray-800 p-8 flex flex-col items-center justify-center border-b border-gray-300 dark:border-gray-700 relative shrink-0">
-             <button onClick={() => setIsSidebarOpen(false)} className="absolute top-4 left-4 p-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-full focus:outline-none">
-               <X className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+          <div className="bg-surface-card p-8 flex flex-col items-center justify-center border-b border-border-light relative shrink-0">
+             <button onClick={() => setIsSidebarOpen(false)} className="absolute top-4 left-4 p-2 bg-surface-main hover:bg-surface-hover rounded-full focus:outline-none">
+               <X className="w-5 h-5 text-text-secondary" />
              </button>
-             <div className="w-20 h-20 mb-4 rounded-full bg-slate-200 dark:bg-zinc-700 flex items-center justify-center overflow-hidden border-2 border-gray-400">
-               <User className="w-12 h-12 text-gray-600 dark:text-gray-300 translate-y-1.5" />
+             <div className="w-20 h-20 mb-4 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden border-2 border-border-light">
+               <User className="w-12 h-12 text-taiz-navy translate-y-1.5" />
              </div>
-             <h3 className="text-lg font-black text-gray-800 dark:text-white">هدي القرآن الكَريم</h3>
-             <p className="text-gray-600 dark:text-gray-400 text-xs font-bold mt-1 text-center">الشهيد القائد السيد حسين بدرالدين الحوثي</p>
+             <h3 className="text-lg font-black text-text-primary">هدي القرآن الكَريم</h3>
+             <p className="text-text-secondary text-xs font-bold mt-1 text-center">الشهيد القائد السيد حسين بدرالدين الحوثي</p>
           </div>
 
-          <div className="flex-1 overflow-y-auto py-4 bg-gray-50 dark:bg-gray-950">
-            <SidebarItem icon={<Library className="w-5 h-5 text-amber-500" />} label="دروس الهدى" description="قائمة السلاسل والدروس الكاملة" active={activeView === 'series' || activeView === 'lessons'} onClick={() => { setActiveView('series'); setIsSidebarOpen(false); }} />
-            <SidebarItem icon={<Trophy className="w-5 h-5 text-emerald-500 fill-emerald-500/10" />} label="لوحة التقدم" description="متابعة إنجازك وإحصائيات القراءة" active={activeView === 'stats'} onClick={() => { setActiveView('stats'); setIsSidebarOpen(false); }} />
-            <SidebarItem icon={<Undo2 className="w-5 h-5 rotate-180 text-amber-500" />} label="آخر قراءة" description="العودة لأخر درس توقفت عنده" onClick={handleLastReadClick} />
-            <SidebarItem icon={<Calendar className="w-5 h-5 text-purple-500" />} label="مقرر الدروس" description="المقررات الدراسية المحددة" active={activeView === 'syllabuses' || activeView === 'syllabus-detail'} onClick={() => { setActiveView('syllabuses'); setIsSidebarOpen(false); }} />
-            <SidebarItem icon={<Quote className="w-5 h-5 text-rose-500" />} label="المقتطفات" description="الجواهر المنتقاة من الدروس" active={activeView === 'excerpts' || activeView === 'excerpt-detail'} onClick={() => { setActiveView('excerpts'); setIsSidebarOpen(false); }} />
+          <div className="flex-1 overflow-y-auto py-4 bg-surface-main">
+            <SidebarItem icon={<Library className="w-5 h-5 text-taiz-royal" />} label="دروس الهدى" description="قائمة السلاسل والدروس الكاملة" active={activeView === 'series' || activeView === 'lessons'} onClick={() => { setActiveView('series'); setIsSidebarOpen(false); }} />
+            <SidebarItem icon={<Trophy className="w-5 h-5 text-taiz-sky" />} label="لوحة التقدم" description="متابعة إنجازك وإحصائيات القراءة" active={activeView === 'stats'} onClick={() => { setActiveView('stats'); setIsSidebarOpen(false); }} />
+            <SidebarItem icon={<Undo2 className="w-5 h-5 rotate-180 text-taiz-royal" />} label="آخر قراءة" description="العودة لأخر درس توقفت عنده" onClick={handleLastReadClick} />
+            <SidebarItem icon={<Calendar className="w-5 h-5 text-taiz-sky" />} label="مقرر الدروس" description="المقررات الدراسية المحددة" active={activeView === 'syllabuses' || activeView === 'syllabus-detail'} onClick={() => { setActiveView('syllabuses'); setIsSidebarOpen(false); }} />
+            <SidebarItem icon={<Quote className="w-5 h-5 text-taiz-royal" />} label="المقتطفات" description="الجواهر المنتقاة من الدروس" active={activeView === 'excerpts' || activeView === 'excerpt-detail'} onClick={() => { setActiveView('excerpts'); setIsSidebarOpen(false); }} />
           </div>
         </motion.div>
       </>
@@ -952,9 +952,9 @@ export function Quran() {
 
   if (loading) {
     return (
-      <div className="flex justify-center flex-col items-center h-full min-h-[50vh] bg-gray-100 dark:bg-gray-950">
-         <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-         <p className="text-slate-600 dark:text-gray-300 font-extrabold text-sm">جاري تنزيل المحتويات العلمية...</p>
+      <div className="flex justify-center flex-col items-center h-full min-h-[50vh] bg-gray-50">
+         <div className="w-12 h-12 border-4 border-taiz-royal border-t-transparent rounded-full animate-spin mb-4"></div>
+         <p className="text-taiz-soft font-black text-sm">جاري تنزيل المحتويات العلمية...</p>
       </div>
     );
   }

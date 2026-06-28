@@ -180,14 +180,14 @@ export function LeaderItem() {
   if (loading) {
     return (
       <div className="max-w-[800px] mx-auto p-4 py-12 animate-pulse font-sans">
-        <div className="h-4 bg-gray-200 dark:bg-gray-800 w-16 rounded mb-8"></div>
-        <div className="h-10 bg-gray-200 dark:bg-gray-800 w-4/5 rounded-xl mb-6"></div>
-        <div className="h-6 bg-gray-100 dark:bg-gray-800/60 w-1/3 rounded mb-10"></div>
+        <div className="h-4 bg-surface-card w-16 rounded mb-8"></div>
+        <div className="h-10 bg-surface-card w-4/5 rounded-xl mb-6"></div>
+        <div className="h-6 bg-surface-card w-1/3 rounded mb-10"></div>
         <div className="space-y-4">
-          <div className="h-4 bg-gray-200 dark:bg-gray-800 w-full rounded"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-800 w-11/12 rounded"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-800 w-10/12 rounded"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-800 w-full rounded"></div>
+          <div className="h-4 bg-surface-card w-full rounded"></div>
+          <div className="h-4 bg-surface-card w-11/12 rounded"></div>
+          <div className="h-4 bg-surface-card w-10/12 rounded"></div>
+          <div className="h-4 bg-surface-card w-full rounded"></div>
         </div>
       </div>
     );
@@ -196,14 +196,14 @@ export function LeaderItem() {
   if (error || !content) {
     return (
       <div className="max-w-[800px] mx-auto p-4 py-20 text-center font-sans">
-        <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Quote className="w-10 h-10 text-gray-400" />
+        <div className="w-20 h-20 bg-surface-card rounded-full flex items-center justify-center mx-auto mb-6">
+          <Quote className="w-10 h-10 text-text-muted" />
         </div>
-        <h2 className="text-2xl font-black mb-2 text-stone-900 dark:text-white">المادة غير موجودة</h2>
-        <p className="text-gray-500 mb-6 font-bold">قد يكون تم سحبها أو أن الرابط غير دقيق.</p>
+        <h2 className="text-2xl font-black mb-2 text-text-primary">المادة غير موجودة</h2>
+        <p className="text-text-secondary mb-6 font-bold">قد يكون تم سحبها أو أن الرابط غير دقيق.</p>
         <button 
           onClick={() => navigate(-1)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-bold transition duration-300 inline-flex items-center gap-2 shadow-lg"
+          className="btn btn-primary rounded-2xl inline-flex items-center gap-2 shadow-strong"
         >
           <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
         </button>
@@ -224,7 +224,7 @@ export function LeaderItem() {
     if (isSubHeader) {
       const cleanText = text.replace(/^[#-\s]+/, "");
       return (
-        <h3 key={idx} className="text-xl md:text-2xl font-black text-emerald-800 dark:text-emerald-400 mt-8 mb-4 border-r-4 border-emerald-600 pr-3 leading-relaxed">
+        <h3 key={idx} className="text-xl md:text-2xl font-black text-taiz-royal mt-8 mb-4 border-r-4 border-taiz-royal pr-3 leading-relaxed">
           {cleanText}
         </h3>
       );
@@ -243,7 +243,7 @@ export function LeaderItem() {
       parts.push(
         <span 
           key={`q-${idx}-${matchIndex}`} 
-          className="text-amber-700 dark:text-amber-500 font-serif font-black bg-amber-500/[0.04] px-1.5 py-0.5 rounded border border-amber-500/10 inline-block leading-loose text-center mx-1 shadow-sm"
+          className="text-[#B8860B] dark:text-[#DAA520] font-serif font-black bg-[#DAA520]/[0.05] px-1.5 py-0.5 rounded border border-[#DAA520]/20 inline-block leading-loose text-center mx-1 shadow-sm"
           style={{ fontSize: `${fontSize + 2}px` }}
         >
           ﴿ {match[1]} ﴾
@@ -275,7 +275,7 @@ export function LeaderItem() {
       case "night":
         return "bg-[#0B0F19] text-[#CBD5E1] border-slate-900";
       default:
-        return "bg-white dark:bg-gray-950 text-stone-900 dark:text-gray-100 border-gray-150 dark:border-gray-900";
+        return "bg-surface-main text-text-primary border-border-light";
     }
   };
 
@@ -283,22 +283,22 @@ export function LeaderItem() {
     <div className="max-w-[840px] mx-auto p-4 py-8 font-sans transition-colors relative">
       
       {/* Sticky Scroll Progress bar at the top */}
-      <div className="fixed top-0 left-0 right-0 h-1.5 bg-gray-100 dark:bg-zinc-900 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1.5 bg-surface-main z-50">
         <div 
-          className="h-full bg-gradient-to-l from-emerald-600 to-amber-500 transition-all duration-100" 
+          className="h-full bg-gradient-to-l from-taiz-navy to-taiz-sky transition-all duration-100" 
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
       <button 
         onClick={() => navigate(-1)}
-        className="mb-6 flex items-center gap-2 font-black text-sm text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition"
+        className="mb-6 flex items-center gap-2 font-black text-sm text-text-secondary hover:text-text-primary transition"
       >
         <ArrowRight className="w-4 h-4" /> عودة لقسم السيد القائد
       </button>
 
       {/* Hero Showcase Article Card */}
-      <div className={`rounded-3xl border shadow-xl p-5 md:p-10 transition-colors duration-300 relative overflow-hidden ${getThemeClass()}`} ref={cardRef}>
+      <div className={`rounded-3xl border shadow-soft p-5 md:p-10 transition-colors duration-300 relative overflow-hidden ${getThemeClass()}`} ref={cardRef}>
         
         {/* Decorative Quote Mark in background */}
         <div className="absolute left-6 top-6 opacity-5 pointer-events-none select-none">
@@ -308,7 +308,7 @@ export function LeaderItem() {
         {/* Article Header info */}
         <div className="relative z-10 space-y-4">
           <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-emerald-100/70 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 px-3 py-1 rounded-full border border-emerald-500/10">
+            <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-taiz-royal/10 text-taiz-royal px-3 py-1 rounded-full border border-taiz-royal/20">
               {content.type === "video" ? <PlayCircle className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
               {content.type === "video" ? "عرض مرئي" : "خطابات ودروس"}
             </span>
@@ -318,20 +318,20 @@ export function LeaderItem() {
             {content.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-bold text-stone-400 dark:text-zinc-500 pb-5 border-b border-light-gray-50 dark:border-zinc-800/60">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-bold text-text-secondary pb-5 border-b border-border-light">
             <div className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <Calendar className="w-4 h-4 text-taiz-royal" />
               <span>{format(content.createdAt, "dd MMMM yyyy", { locale: ar })}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-sky-500 dark:text-sky-400" />
+              <Eye className="w-4 h-4 text-taiz-sky" />
               <span>{(content.views || 0) + 1} مشاهدة مستمرة</span>
             </div>
           </div>
         </div>
 
         {content.thumbnailUrl && (
-          <div className="w-full aspect-video md:max-h-[380px] rounded-3xl overflow-hidden bg-stone-100 dark:bg-zinc-900/40 border border-stone-200/50 dark:border-zinc-800/50 relative shadow-md my-6 z-10">
+          <div className="w-full aspect-video md:max-h-[380px] rounded-3xl overflow-hidden bg-surface-card border border-border-light relative shadow-md my-6 z-10">
             <img 
               src={content.thumbnailUrl} 
               alt={content.title} 
@@ -344,16 +344,16 @@ export function LeaderItem() {
 
         {/* Elegant Reader Controller Box (Font Adjustment and Color Theme Selector) */}
         {content.type !== "video" && (
-          <div className="bg-zinc-50 dark:bg-zinc-900/40 border border-stone-200/50 dark:border-zinc-800/60 p-3.5 sm:p-4 rounded-2xl flex flex-wrap gap-4 items-center justify-between my-6 relative z-10 shadow-inner">
+          <div className="bg-surface-card border border-border-light p-3.5 sm:p-4 rounded-2xl flex flex-wrap gap-4 items-center justify-between my-6 relative z-10 shadow-inner">
             <div className="flex items-center gap-3.5">
-              <span className="text-[11px] font-black text-stone-400 dark:text-zinc-500 flex items-center gap-1">
+              <span className="text-[11px] font-black text-text-secondary flex items-center gap-1">
                 <Type className="w-3.5 h-3.5" />
                 حجم الخط:
               </span>
-              <div className="flex items-center gap-1 bg-stone-100 dark:bg-zinc-800/50 p-1.5 rounded-xl border dark:border-zinc-700/30">
+              <div className="flex items-center gap-1 bg-surface-main p-1.5 rounded-xl border border-border-light">
                 <button 
                   onClick={() => setFontSize(prev => Math.max(14, prev - 2))}
-                  className="p-1 px-2.5 hover:bg-white dark:hover:bg-zinc-700 rounded-lg text-xs font-bold transition-all disabled:opacity-40"
+                  className="p-1 px-2.5 hover:bg-surface-hover rounded-lg text-xs font-bold transition-all disabled:opacity-40"
                   disabled={fontSize <= 14}
                   title="تصغير الخط"
                 >
@@ -362,7 +362,7 @@ export function LeaderItem() {
                 <span className="text-xs font-black min-w-[24px] text-center">{fontSize}</span>
                 <button 
                   onClick={() => setFontSize(prev => Math.min(28, prev + 2))}
-                  className="p-1 px-2.5 hover:bg-white dark:hover:bg-zinc-700 rounded-lg text-xs font-bold transition-all disabled:opacity-40"
+                  className="p-1 px-2.5 hover:bg-surface-hover rounded-lg text-xs font-bold transition-all disabled:opacity-40"
                   disabled={fontSize >= 28}
                   title="تكبير الخط"
                 >
@@ -375,7 +375,7 @@ export function LeaderItem() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => setReadingTheme("default")}
-                className={`w-6 h-6 rounded-full bg-white border border-gray-300 dark:border-gray-800 flex items-center justify-center transition ${readingTheme === "default" ? "ring-2 ring-emerald-500 ring-offset-1" : ""}`}
+                className={`w-6 h-6 rounded-full bg-white border border-border-light flex items-center justify-center transition ${readingTheme === "default" ? "ring-2 ring-taiz-royal ring-offset-1" : ""}`}
                 title="الوضع الافتراضي"
               />
               <button 
@@ -385,7 +385,7 @@ export function LeaderItem() {
               />
               <button 
                 onClick={() => setReadingTheme("night")}
-                className={`w-6 h-6 rounded-full bg-[#0B0F19] border border-black flex items-center justify-center transition ${readingTheme === "night" ? "ring-2 ring-emerald-500 ring-offset-1" : ""}`}
+                className={`w-6 h-6 rounded-full bg-[#0B0F19] border border-black flex items-center justify-center transition ${readingTheme === "night" ? "ring-2 ring-taiz-royal ring-offset-1" : ""}`}
                 title="القراءة الليلية المريحة"
               />
             </div>
@@ -394,7 +394,7 @@ export function LeaderItem() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleCopyText}
-                className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${copied ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" : "bg-white dark:bg-zinc-800 hover:bg-gray-50 border-stone-200/50 dark:border-zinc-700/50 text-stone-700 dark:text-zinc-200"}`}
+                className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${copied ? "bg-status-success/10 text-status-success border-status-success/20" : "bg-surface-main hover:bg-surface-hover border-border-light text-text-primary"}`}
                 title="نسخ الخطاب"
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
@@ -402,7 +402,7 @@ export function LeaderItem() {
               </button>
               <button
                 onClick={shareText}
-                className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-sm"
+                className="btn btn-primary p-2 rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-sm"
                 title="مشاركة"
               >
                 <Share2 className="w-4 h-4" />
@@ -417,7 +417,7 @@ export function LeaderItem() {
           {content.type === "video" ? (
             <div className="space-y-6">
               {/* Theater Mode Video Frame Container */}
-              <div className="aspect-video w-full bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-stone-100 dark:border-zinc-900 relative">
+              <div className="aspect-video w-full bg-black rounded-3xl overflow-hidden shadow-strong border-4 border-surface-main relative">
                 <iframe 
                    src={getEmbedUrl(content.content)} 
                    className="w-full h-full border-0 absolute inset-0" 
@@ -427,18 +427,18 @@ export function LeaderItem() {
               </div>
               
               {/* Secondary details on the video under player */}
-              <div className="bg-stone-50 dark:bg-zinc-900/30 p-5 rounded-2xl border border-stone-100 dark:border-zinc-800/50 space-y-3 font-sans">
-                <h4 className="text-sm font-black text-emerald-800 dark:text-emerald-400 flex items-center gap-2">
-                  <span className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse" />
+              <div className="bg-surface-card p-5 rounded-2xl border border-border-light space-y-3 font-sans">
+                <h4 className="text-sm font-black text-taiz-royal flex items-center gap-2">
+                  <span className="w-2 h-2 bg-taiz-royal rounded-full animate-pulse" />
                   ملاحظات ومحاور المقطع المعروض:
                 </h4>
-                <p className="text-sm text-stone-600 dark:text-zinc-300 leading-relaxed text-justify whitespace-pre-line">
+                <p className="text-sm text-text-secondary leading-relaxed text-justify whitespace-pre-line">
                   {content.description || `يمكنكم متابعة المحاضرة بالكامل من خلال المشغل أعلاه. هذا المقطع يركز على الدروس والعِبَر الروحية المستمدة من آيات الله والوقائع المعاصرة لبناء المجتمع القرآني المتمسك بهويته الدينية في مواجهة الطغيان.`}
                 </p>
                 <div className="pt-2 flex justify-end gap-2">
                   <button 
                     onClick={shareText}
-                    className="px-4 py-2 bg-zinc-100 hover:bg-stone-200 text-stone-800 dark:bg-zinc-800 dark:text-zinc-200 rounded-xl text-xs font-bold transition flex items-center gap-1"
+                    className="px-4 py-2 bg-surface-main hover:bg-surface-hover text-text-primary rounded-xl text-xs font-bold transition flex items-center gap-1 border border-border-light"
                   >
                     <Share2 className="w-3.5 h-3.5" />
                     مشاركة رابط المادة
@@ -456,9 +456,9 @@ export function LeaderItem() {
 
         {/* Calligraphic/Slogan Footer block for the Speech */}
         {content.type !== "video" && (
-          <div className="mt-12 pt-8 border-t border-stone-200/50 dark:border-zinc-800/50 text-center font-sans">
-            <Quote className="w-8 h-8 mx-auto text-emerald-600/30 dark:text-emerald-400/30 mb-3" />
-            <p className="text-sm font-black text-emerald-800 dark:text-emerald-400">انتهى خطاب السيد القائد</p>
+          <div className="mt-12 pt-8 border-t border-border-light text-center font-sans">
+            <Quote className="w-8 h-8 mx-auto text-taiz-royal/30 mb-3" />
+            <p className="text-sm font-black text-taiz-royal">انتهى خطاب السيد القائد</p>
           </div>
         )}
       </div>
