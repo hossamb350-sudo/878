@@ -226,7 +226,7 @@ export function Admin() {
         localStorage.setItem("admin_profile", JSON.stringify(newProfile));
       }
     } catch (e) {
-      console.error("Error fetching profile:", e);
+      console.warn("Error fetching profile (using cache fallback):", e);
       const cachedProfileStr = localStorage.getItem("admin_profile");
       if (cachedProfileStr) {
         try {
@@ -822,10 +822,21 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
   const fetchNewsList = async () => {
     setLoadingList(true);
     try {
-      // Load from local storage cache first
+      // Load from local storage cache first (both idb and localStorage)
+      let mergedCached: NewsItem[] = [];
       const cached = await SyncService.getCache<NewsItem>("news");
       if (cached && cached.length > 0) {
-        setNewsList(cached);
+        mergedCached = cached;
+      } else {
+        const lsCached = localStorage.getItem("taiz_news_cache");
+        if (lsCached) {
+          try {
+            mergedCached = JSON.parse(lsCached);
+          } catch {}
+        }
+      }
+      if (mergedCached && mergedCached.length > 0) {
+        setNewsList(mergedCached);
       }
       
       // Try to fetch latest from Firestore and update cache
@@ -1425,6 +1436,18 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const cached = await SyncService.getCache<VideoItem>("videos");
+        if (cached && cached.length > 0) {
+          setVideos(cached);
+        }
+      } catch (e) {
+        console.warn("Could not load cached videos:", e);
+      }
+    };
+    loadCached();
+
     const q = query(collection(db, "videos"));
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as VideoItem));
@@ -1437,7 +1460,8 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
         return b.createdAt - a.createdAt;
       });
       setVideos(data);
-    }, (error) => console.error("Error fetching admin videos:", error));
+      SyncService.setCache("videos", data).catch(() => {});
+    }, (error) => console.warn("Error fetching admin videos (using cache fallback):", error));
     return () => unsub();
   }, []);
 
@@ -1654,10 +1678,24 @@ function AdminLive() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const cached = await SyncService.getCache<LiveStream>("livestreams");
+        if (cached && cached.length > 0) {
+          setStreams(cached);
+        }
+      } catch (e) {
+        console.warn("Could not load cached livestreams:", e);
+      }
+    };
+    loadCached();
+
     const q = query(collection(db, "livestreams"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
-      setStreams(snap.docs.map(d => ({ id: d.id, ...d.data() } as LiveStream)));
-    }, (error) => console.error("Error fetching livestreams on admin:", error));
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as LiveStream));
+      setStreams(items);
+      SyncService.setCache("livestreams", items).catch(() => {});
+    }, (error) => console.warn("Error fetching livestreams on admin (using cache fallback):", error));
     return () => unsub();
   }, []);
 
@@ -1811,6 +1849,18 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const cached = await SyncService.getCache<LeaderContent>("leader");
+        if (cached && cached.length > 0) {
+          setLeaderContents(cached);
+        }
+      } catch (e) {
+        console.warn("Could not load cached leader contents:", e);
+      }
+    };
+    loadCached();
+
     const q = query(collection(db, "leader"));
     const unsub = onSnapshot(q, (snap) => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as LeaderContent));
@@ -1823,7 +1873,8 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
         return b.createdAt - a.createdAt;
       });
       setLeaderContents(data);
-    }, (error) => console.error("Error fetching leader content:", error));
+      SyncService.setCache("leader", data).catch(() => {});
+    }, (error) => console.warn("Error fetching leader content (using cache fallback):", error));
     return () => unsub();
   }, []);
 
@@ -2135,9 +2186,23 @@ function AdminQuranSeries() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const cached = await SyncService.getCache<QuranSeries>("quran_series");
+        if (cached && cached.length > 0) {
+          setList(cached);
+        }
+      } catch (e) {
+        console.warn("Could not load cached quran series:", e);
+      }
+    };
+    loadCached();
+
     const unsub = onSnapshot(query(collection(db, "quran_series"), orderBy("order", "asc")), (snap) => {
-       setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSeries)));
-    }, (err) => console.error("Admin quran series err:", err));
+       const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSeries));
+       setList(items);
+       SyncService.setCache("quran_series", items).catch(() => {});
+    }, (err) => console.warn("Admin quran series err (using cache fallback):", err));
     return unsub;
   }, []);
 
@@ -2206,14 +2271,34 @@ function AdminQuranLessons() {
   const [notify, setNotify] = useState(true);
 
   useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const cachedSeries = await SyncService.getCache<QuranSeries>("quran_series");
+        if (cachedSeries && cachedSeries.length > 0) {
+          setSeriesList(cachedSeries);
+          if (cachedSeries.length > 0 && !seriesId) setSeriesId(cachedSeries[0].id);
+        }
+        const cachedLessons = await SyncService.getCache<QuranLesson>("quran_lessons");
+        if (cachedLessons && cachedLessons.length > 0) {
+          setList(cachedLessons);
+        }
+      } catch (e) {
+        console.warn("Could not load cached quran items:", e);
+      }
+    };
+    loadCached();
+
     const unsub1 = onSnapshot(query(collection(db, "quran_series"), orderBy("order", "asc")), (snap) => {
        const s = snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSeries));
        setSeriesList(s);
        if (s.length > 0 && !seriesId) setSeriesId(s[0].id);
-    }, (err) => console.error("Admin quran lessons series fetch err:", err));
+       SyncService.setCache("quran_series", s).catch(() => {});
+    }, (err) => console.warn("Admin quran lessons series fetch err (using cache fallback):", err));
     const unsub2 = onSnapshot(query(collection(db, "quran_lessons"), orderBy("order", "asc")), (snap) => {
-       setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranLesson)));
-    }, (err) => console.error("Admin quran lessons fetch err:", err));
+       const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranLesson));
+       setList(items);
+       SyncService.setCache("quran_lessons", items).catch(() => {});
+    }, (err) => console.warn("Admin quran lessons fetch err (using cache fallback):", err));
     return () => { unsub1(); unsub2(); };
   }, [seriesId]);
 
@@ -2300,9 +2385,23 @@ function AdminQuranSyllabuses() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const cached = await SyncService.getCache<QuranSyllabus>("quran_syllabuses");
+        if (cached && cached.length > 0) {
+          setList(cached);
+        }
+      } catch (e) {
+        console.warn("Could not load cached quran syllabuses:", e);
+      }
+    };
+    loadCached();
+
     const unsub = onSnapshot(query(collection(db, "quran_syllabuses"), orderBy("order", "asc")), (snap) => {
-       setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSyllabus)));
-    }, (err) => console.error("Admin quran syllabuses fetch err:", err));
+       const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranSyllabus));
+       setList(items);
+       SyncService.setCache("quran_syllabuses", items).catch(() => {});
+    }, (err) => console.warn("Admin quran syllabuses fetch err (using cache fallback):", err));
     return unsub;
   }, []);
 
@@ -2365,9 +2464,23 @@ function AdminQuranExcerpts() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const cached = await SyncService.getCache<QuranExcerpt>("quran_excerpts");
+        if (cached && cached.length > 0) {
+          setList(cached);
+        }
+      } catch (e) {
+        console.warn("Could not load cached quran excerpts:", e);
+      }
+    };
+    loadCached();
+
     const unsub = onSnapshot(query(collection(db, "quran_excerpts"), orderBy("order", "asc")), (snap) => {
-       setList(snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranExcerpt)));
-    }, (err) => console.error("Admin quran excerpts fetch err:", err));
+       const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as QuranExcerpt));
+       setList(items);
+       SyncService.setCache("quran_excerpts", items).catch(() => {});
+    }, (err) => console.warn("Admin quran excerpts fetch err (using cache fallback):", err));
     return unsub;
   }, []);
 
@@ -2433,9 +2546,25 @@ function AdminEvents() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    const loadCached = async () => {
+      try {
+        const cached = await SyncService.getCache<EventItem>("events");
+        if (cached && cached.length > 0) {
+          setEvents(cached);
+        }
+      } catch (e) {
+        console.warn("Could not load cached events:", e);
+      }
+    };
+    loadCached();
+
     const unsub = onSnapshot(query(collection(db, "events"), orderBy("timestamp", "asc")), (snap) => {
-      setEvents(snap.docs.map(d => ({ id: d.id, ...d.data() } as EventItem)));
-    }, (err) => console.error("Admin events fetch err:", err));
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() } as EventItem));
+      setEvents(items);
+      SyncService.setCache("events", items).catch(() => {});
+    }, (err) => {
+      console.warn("Admin events fetch error (using cache fallback):", err);
+    });
     return unsub;
   }, []);
 

@@ -91,7 +91,7 @@ export function Home() {
           localStorage.setItem("news_categories_color_cache", JSON.stringify(catMap));
         }
       } catch (e) {
-        console.error("Error fetching category colors (using cache):", e);
+        console.warn("Error fetching category colors (using cache fallback):", e);
       }
     };
     fetchCats();
