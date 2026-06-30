@@ -11,6 +11,7 @@ import { notificationService } from "../services/NotificationService";
 import { SyncService, handleFirestoreError } from "../services/SyncService";
 
 import { AdminNewsWizard } from "../components/AdminNewsWizard";
+import { AdminCategoryManager } from "../components/AdminCategoryManager";
 
 const ContactUsSection = () => {
   const [links, setLinks] = useState<SocialLink[]>([]);
@@ -97,9 +98,26 @@ const ContactUsSection = () => {
 };
 
 export function Admin() {
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<FirebaseUser | null>(() => {
+    const savedUser = localStorage.getItem("admin_user");
+    try {
+      return savedUser ? JSON.parse(savedUser) as FirebaseUser : null;
+    } catch {
+      return null;
+    }
+  });
+  const [profile, setProfile] = useState<UserProfile | null>(() => {
+    const savedProfile = localStorage.getItem("admin_profile");
+    try {
+      return savedProfile ? JSON.parse(savedProfile) as UserProfile : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(() => {
+    const savedProfile = localStorage.getItem("admin_profile");
+    return savedProfile ? false : true;
+  });
   const [activeTab, setActiveTab] = useState("dashboard");
 
   // Admin/Manager View Logic (Moved to top to follow Rules of Hooks)
@@ -141,9 +159,18 @@ export function Admin() {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser);
       if (firebaseUser) {
+        const simpleUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL
+        };
+        localStorage.setItem("admin_user", JSON.stringify(simpleUser));
         await checkProfile(firebaseUser);
       } else {
         setProfile(null);
+        localStorage.removeItem("admin_profile");
+        localStorage.removeItem("admin_user");
         setLoading(false);
       }
     });
@@ -151,14 +178,31 @@ export function Admin() {
   }, []);
 
   const checkProfile = async (firebaseUser: FirebaseUser) => {
-    setLoading(true);
+    const cachedProfile = localStorage.getItem("admin_profile");
+    if (!cachedProfile) {
+      setLoading(true);
+    }
     try {
       const userRef = doc(db, "users", firebaseUser.uid);
       const userSnap = await getDoc(userRef);
       
       if (userSnap.exists()) {
         const data = userSnap.data() as UserProfile;
+        
+        // Force admin role for hossamb350@gmail.com to restore full access
+        if (firebaseUser.email?.toLowerCase() === 'hossamb350@gmail.com') {
+          if (data.role !== 'admin') {
+            data.role = 'admin';
+            try {
+              await setDoc(userRef, { role: 'admin' }, { merge: true });
+            } catch (err) {
+              console.error("Could not auto-promote user to admin:", err);
+            }
+          }
+        }
+
         setProfile(data);
+        localStorage.setItem("admin_profile", JSON.stringify(data));
         // Update last login using setDoc with merge to be more robust
         try {
           await setDoc(userRef, { lastLogin: Date.now() }, { merge: true });
@@ -166,21 +210,46 @@ export function Admin() {
           console.warn("Could not update last login timestamp:", updateErr);
         }
       } else {
+        const isHossam = firebaseUser.email?.toLowerCase() === 'hossamb350@gmail.com';
         // Create new profile for common user
         const newProfile: UserProfile = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || "",
           displayName: firebaseUser.displayName || "مستخدم",
           photoURL: firebaseUser.photoURL || undefined,
-          role: "user",
+          role: isHossam ? "admin" : "user",
           createdAt: Date.now(),
           lastLogin: Date.now()
         };
         await setDoc(userRef, newProfile);
         setProfile(newProfile);
+        localStorage.setItem("admin_profile", JSON.stringify(newProfile));
       }
     } catch (e) {
       console.error("Error fetching profile:", e);
+      const cachedProfileStr = localStorage.getItem("admin_profile");
+      if (cachedProfileStr) {
+        try {
+          const cached = JSON.parse(cachedProfileStr) as UserProfile;
+          if (firebaseUser.email?.toLowerCase() === 'hossamb350@gmail.com') {
+            cached.role = 'admin';
+          }
+          setProfile(cached);
+        } catch {}
+      } else {
+        const isHossam = firebaseUser.email?.toLowerCase() === 'hossamb350@gmail.com';
+        const fallbackProfile: UserProfile = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          displayName: firebaseUser.displayName || "مستخدم",
+          photoURL: firebaseUser.photoURL || undefined,
+          role: isHossam ? "admin" : "user",
+          createdAt: Date.now(),
+          lastLogin: Date.now()
+        };
+        setProfile(fallbackProfile);
+        localStorage.setItem("admin_profile", JSON.stringify(fallbackProfile));
+      }
     } finally {
       setLoading(false);
     }
@@ -207,7 +276,11 @@ export function Admin() {
        }
     }
   };
-  const logout = () => signOut(auth);
+  const logout = () => {
+    localStorage.removeItem("admin_profile");
+    localStorage.removeItem("admin_user");
+    return signOut(auth);
+  };
 
   if (loading && user) {
     return (
@@ -323,7 +396,8 @@ export function Admin() {
                     filteredTabs={filteredTabs}
                   />
                 )}
-                {activeTab === "news" && <AdminNews isAdmin={isAdmin} />}
+                {activeTab === "news" && <AdminNews isAdmin={isAdmin} onBackToDashboard={() => setActiveTab("dashboard")} />}
+                {activeTab === "categories" && (isAdmin || isManager) && <AdminCategoryManager />}
                 {activeTab === "urgent" && <AdminUrgentNews />}
                 {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
                 {activeTab === "live" && isAdmin && <AdminLive />}
@@ -348,35 +422,53 @@ function AdminSummaryDashboard({ onNavigate, isAdmin, isManager, isEditor, filte
   });
 
   useEffect(() => {
+    // 1. Load initial stats from cache to show something immediately and act as fallback
+    const loadCachedStats = async () => {
+      try {
+        const newsCache = await SyncService.getCache('news');
+        const videosCache = await SyncService.getCache('videos');
+        const leaderCache = await SyncService.getCache('leader');
+        const quranCache = await SyncService.getCache('quran_lessons');
+        
+        setStats({
+          news: newsCache.length || 0,
+          videos: videosCache.length || 0,
+          leader: leaderCache.length || 0,
+          quran: quranCache.length || 0,
+        });
+      } catch (e) {
+        console.warn("Could not load cached stats:", e);
+      }
+    };
+    loadCachedStats();
+
+    // 2. Set up real-time listener, but handle errors gracefully
     const collectionsMap = { news: 'news', videos: 'videos', leader: 'leader', quran: 'quran_lessons' };
     const unsubs = Object.entries(collectionsMap).map(([key, col]) => {
-      return onSnapshot(collection(db, col), (snap) => {
-        setStats(prev => ({ ...prev, [key]: snap.size }));
-      }, (err) => console.error("Admin stats fetch error:", err));
+      try {
+        return onSnapshot(collection(db, col), (snap) => {
+          setStats(prev => ({ ...prev, [key]: snap.size }));
+        }, (err) => {
+          console.warn(`Admin stats fetch error for ${col} (using cache fallback):`, err);
+        });
+      } catch (err) {
+        console.warn(`Admin stats listener error for ${col}:`, err);
+        return () => {};
+      }
     });
     return () => unsubs.forEach(u => u());
   }, []);
 
   const adminSections = [
-    [
-      { id: "dashboard", label: "الرئيسية", icon: LayoutGrid, color: "blue", access: isAdmin },
-      { id: "roles", label: "إدارة الصلاحيات", icon: Users, color: "purple", access: isAdmin }
-    ],
-    [
-      { id: "news", label: "الأخبار", icon: FileText, color: "sky", access: isAdmin || isManager || (isEditor && filteredTabs.some(t => t.id === "news")) },
-      { id: "urgent", label: "الأخبار العاجلة", icon: AlertTriangle, color: "amber", access: isAdmin || isManager || (isEditor && filteredTabs.some(t => t.id === "urgent")) }
-    ],
-    [
-      { id: "leader", label: "السيد القائد", icon: Shield, color: "indigo", access: isAdmin || isManager || (isEditor && filteredTabs.some(t => t.id === "leader")) },
-      { id: "quran", label: "هدى القرآن", icon: BookOpen, color: "emerald", access: isAdmin || isManager || (isEditor && filteredTabs.some(t => t.id === "quran")) }
-    ],
-    [
-      { id: "events", label: "تقويم المناسبات", icon: CalendarIcon, color: "rose", access: isAdmin },
-      { id: "social", label: "روابط تابعنا", icon: Share2, color: "blue", access: isAdmin || isManager }
-    ]
+    { id: "news", label: "الأخبار", icon: FileText, color: "sky", access: isAdmin || isManager || (isEditor && filteredTabs.some(t => t.id === "news")) },
+    { id: "leader", label: "السيد القائد", icon: Shield, color: "indigo", access: isAdmin || isManager || (isEditor && filteredTabs.some(t => t.id === "leader")) },
+    { id: "quran", label: "هدى القرآن", icon: BookOpen, color: "emerald", access: isAdmin || isManager || (isEditor && filteredTabs.some(t => t.id === "quran")) },
+    { id: "events", label: "تقويم المناسبات", icon: CalendarIcon, color: "rose", access: isAdmin },
+    { id: "urgent", label: "الأخبار العاجلة", icon: AlertTriangle, color: "amber", access: isAdmin || isManager || (isEditor && filteredTabs.some(t => t.id === "urgent")) },
+    { id: "roles", label: "إدارة الصلاحيات", icon: Users, color: "purple", access: isAdmin }
   ];
 
-  const filteredSections = adminSections.map(row => row.filter(s => s.access)).filter(row => row.length > 0);
+  const filteredSections = adminSections.filter(s => s.access);
 
   return (
     <div className="space-y-6 md:space-y-10 w-full animate-fade-in" dir="rtl">
@@ -397,21 +489,21 @@ function AdminSummaryDashboard({ onNavigate, isAdmin, isManager, isEditor, filte
              أقسام الإدارة
           </h3>
           <div className="grid grid-cols-2 gap-4 sm:gap-6">
-             {filteredSections.flat().map((section) => (
+             {filteredSections.map((section) => (
                 <motion.button
                   whileHover={{ y: -8, scale: 1.02 }}
                   whileTap={{ scale: 0.92, scaleX: 0.98 }}
                   key={section.id}
                   onClick={() => onNavigate(section.id)}
-                  className="flex flex-col items-center justify-center p-6 sm:p-8 bg-surface-card hover:bg-surface-hover border border-border-light rounded-[2rem] sm:rounded-[3rem] transition-all duration-500 shadow-soft group hover:shadow-strong active:ring-4 active:ring-taiz-sky/10"
+                  className="flex flex-col items-center justify-center p-4 sm:p-6 bg-surface-card hover:bg-surface-hover border border-border-light rounded-[2rem] sm:rounded-[2.5rem] transition-all duration-500 shadow-soft group hover:shadow-strong active:ring-4 active:ring-taiz-sky/10"
                 >
-                   <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-surface-main flex items-center justify-center text-${section.color}-600 group-hover:scale-110 transition-transform shadow-sm ring-1 ring-border-light group-hover:ring-taiz-sky/30 relative`}>
-                      <section.icon className="w-8 h-8 sm:w-10 sm:h-10" />
+                   <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-surface-main flex items-center justify-center text-${section.color}-600 group-hover:scale-110 transition-transform shadow-sm ring-1 ring-border-light group-hover:ring-taiz-sky/30 relative`}>
+                      <section.icon className="w-5 h-5 sm:w-6 sm:h-6" />
                       <div className={`absolute inset-0 bg-${section.color}-500/5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity`}></div>
                    </div>
-                   <div className="text-center mt-4">
-                      <div className="text-sm sm:text-base font-black text-text-primary group-hover:text-taiz-sky transition-colors">{section.label}</div>
-                      <div className="text-[9px] text-text-muted font-bold uppercase tracking-widest mt-1 opacity-60">إدارة</div>
+                   <div className="text-center mt-3">
+                      <div className="text-xs sm:text-sm font-black text-text-primary group-hover:text-taiz-sky transition-colors">{section.label}</div>
+                      <div className="text-[8px] text-text-muted font-bold uppercase tracking-widest mt-0.5 opacity-60">إدارة</div>
                    </div>
                 </motion.button>
              ))}
@@ -559,7 +651,7 @@ function AdminUrgentNews() {
             <label className="block font-bold">نص الخبر العاجل:</label>
             <textarea 
               className="w-full p-4 text-xl font-bold bg-white dark:bg-gray-800 border-2 border-red-200 dark:border-red-800 rounded-xl h-32 focus:outline-none focus:border-red-500" 
-              placeholder="أدخل الخبر العاجل هنا..." 
+              placeholder="" 
               value={text} 
               onChange={e => setText(e.target.value)} 
             />
@@ -593,8 +685,8 @@ function AdminUrgentNews() {
 
 // Simple Admin Components
 
-function AdminNews({ isAdmin }: { isAdmin?: boolean }) {
-  return <AdminNewsWizard isAdmin={isAdmin} />;
+function AdminNews({ isAdmin, onBackToDashboard }: { isAdmin?: boolean, onBackToDashboard: () => void }) {
+  return <AdminNewsWizard isAdmin={isAdmin} onBackToDashboard={onBackToDashboard} />;
 }
 
 function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
@@ -682,20 +774,33 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
   const [savedAuthors, setSavedAuthors] = useState<string[]>([]);
 
   const fetchMetadata = async () => {
+    // Load initial metadata from cache
+    const cachedCats = localStorage.getItem("admin_saved_cats");
+    const cachedAuthors = localStorage.getItem("admin_saved_authors");
+    if (cachedCats) {
+      try { setSavedCats(JSON.parse(cachedCats)); } catch {}
+    }
+    if (cachedAuthors) {
+      try { setSavedAuthors(JSON.parse(cachedAuthors)); } catch {}
+    }
+
     try {
       const catDoc = await getDoc(doc(db, "newsMetadata", "categories"));
       if (catDoc.exists()) {
         const list = catDoc.data().list || [];
         const combined = Array.from(new Set([...["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"], ...list]));
         setSavedCats(combined);
+        localStorage.setItem("admin_saved_cats", JSON.stringify(combined));
       }
       
       const authDoc = await getDoc(doc(db, "newsMetadata", "authors"));
       if (authDoc.exists()) {
-        setSavedAuthors(authDoc.data().list || []);
+        const auths = authDoc.data().list || [];
+        setSavedAuthors(auths);
+        localStorage.setItem("admin_saved_authors", JSON.stringify(auths));
       }
     } catch (e) {
-      console.error("Error fetching metadata:", e);
+      console.warn("Error fetching metadata (using cache fallback):", e);
     }
   };
 
@@ -717,11 +822,24 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
   const fetchNewsList = async () => {
     setLoadingList(true);
     try {
-      const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      setNewsList(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem)));
+      // Load from local storage cache first
+      const cached = await SyncService.getCache<NewsItem>("news");
+      if (cached && cached.length > 0) {
+        setNewsList(cached);
+      }
+      
+      // Try to fetch latest from Firestore and update cache
+      try {
+        const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        const fetchedList = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem));
+        setNewsList(fetchedList);
+        await SyncService.setCache("news", fetchedList);
+      } catch (fireErr) {
+        console.warn("Firestore fetch error for news list, relying on local storage cache:", fireErr);
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Error loading news list from cache/Firestore:", e);
     } finally {
       setLoadingList(false);
     }
@@ -1186,7 +1304,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
                   </div>
                   <textarea 
                     className="w-full p-4 bg-white dark:bg-gray-900 border-none rounded-2xl h-40 focus:ring-2 focus:ring-red-500 transition-all text-sm leading-relaxed placeholder:text-red-200" 
-                    placeholder="نص التحديث | الوقت | رابط الصورة (اختياري)" 
+                    placeholder="" 
                     value={liveUpdatesText} 
                     onChange={e=>setLiveUpdatesText(e.target.value)} 
                   />
@@ -1208,7 +1326,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
                   <label className="block text-xs font-black text-gray-500 mb-2 uppercase tracking-wider">الصورة الرئيسية</label>
                   <input 
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500" 
-                    placeholder="رابط الصورة (URL)" 
+                    placeholder="" 
                     value={imageUrl} 
                     onChange={e=>setImageUrl(e.target.value)} 
                   />
@@ -1223,7 +1341,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
                   <label className="block text-xs font-black text-gray-500 mb-2 uppercase tracking-wider">معرض الصور (إضافي)</label>
                   <textarea 
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border-none rounded-xl text-xs font-medium h-24 focus:ring-2 focus:ring-blue-500" 
-                    placeholder="ضع كل رابط صورة في سطر منفصل..." 
+                    placeholder="" 
                     value={additionalImagesText} 
                     onChange={e=>setAdditionalImagesText(e.target.value)} 
                   />
@@ -1250,7 +1368,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
                   {cat === "custom" && (
                     <input 
                       className="w-full mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500 animate-fade-in" 
-                      placeholder="اكتب اسم التصنيف..." 
+                      placeholder="" 
                       value={customCat} 
                       onChange={e=>setCustomCat(e.target.value)} 
                     />
@@ -1261,7 +1379,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
                   <label className="block text-xs font-black text-gray-500 mb-2 uppercase tracking-wider">الكاتب</label>
                   <input 
                     className="w-full p-3 bg-gray-50 dark:bg-gray-900 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-blue-500" 
-                    placeholder="اسم المحرر" 
+                    placeholder="" 
                     value={author} 
                     onChange={e=>setAuthor(e.target.value)}
                     list="authors-list"
@@ -1392,9 +1510,9 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
            لرفع الفيديو، يرجى رفع الفيديو أولاً إلى <a href="https://meyon.com.ye/c/taizgio/" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-blue-500 transition-colors">منصة ميون</a>، ثم نسخ رابط الفيديو ولصقه في الحقل المخصص.
         </div>
         
-        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="العنوان" value={title} onChange={e=>setTitle(e.target.value)} />
-        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط الفيديو (YouTube, MP4...)" value={url} onChange={e=>setUrl(e.target.value)} />
-        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط الصورة المصغرة (اختياري)" value={thumb} onChange={e=>setThumb(e.target.value)} />
+        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="" value={title} onChange={e=>setTitle(e.target.value)} />
+        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="" value={url} onChange={e=>setUrl(e.target.value)} />
+        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="" value={thumb} onChange={e=>setThumb(e.target.value)} />
         
         <div className="space-y-2">
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">ترتيب العرض والأولوية (الأصغر يظهر أولاً):</label>
@@ -1413,7 +1531,7 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
           <div className="flex flex-col sm:flex-row gap-2">
             <input 
               className="flex-1 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm" 
-              placeholder="التصنيف (مثال: تقارير ميدانية، زوامل، محاضرات...)" 
+              placeholder="" 
               value={category} 
               onChange={e=>setCategory(e.target.value)} 
             />
@@ -1608,10 +1726,10 @@ function AdminLive() {
           <Radio className="w-5 h-5 text-red-600"/> 
           {editingId ? "تعديل بث مباشر" : "إضافة بث مباشر جديد"}
         </h2>
-        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="اسم القناة" value={name} onChange={e=>setName(e.target.value)} />
-        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط البث (YouTube, M3U8, أو iFrame)" value={url} onChange={e=>setUrl(e.target.value)} />
+        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="" value={name} onChange={e=>setName(e.target.value)} />
+        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="" value={url} onChange={e=>setUrl(e.target.value)} />
         <p className="text-[10px] text-gray-400 -mt-2 pr-1">يمكنك وضع رابط يوتيوب مباشر أو رابط تضمين (Embed) أو رابط M3U8.</p>
-        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="رابط أيقونة القناة (صورة مربعة - رمي رابط الصورة هنا)" value={iconUrl} onChange={e=>setIconUrl(e.target.value)} />
+        <input className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50" placeholder="" value={iconUrl} onChange={e=>setIconUrl(e.target.value)} />
         
         <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-fit">
            <input type="checkbox" checked={active} onChange={e=>setActive(e.target.checked)} className="w-5 h-5 accent-red-600 rounded" />
@@ -1803,7 +1921,7 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
           <label className="block text-sm font-bold mb-2">العنوان:</label>
           <input 
             className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 font-bold" 
-            placeholder="مثال: كلمة السيد القائد حول آخر التطورات" 
+            placeholder="" 
             value={title} 
             onChange={e=>setTitle(e.target.value)} 
           />
@@ -1839,7 +1957,7 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
             <label className="block text-sm font-bold mb-2">وصف الفيديو:</label>
             <textarea 
               className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl h-24 focus:outline-blue-500 text-sm" 
-              placeholder="اكتب وصفاً مناسباً للفيديو يعرض للمستخدمين..." 
+              placeholder="" 
               value={description} 
               onChange={e=>setDescription(e.target.value)} 
             />
@@ -1851,7 +1969,7 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
           <input 
             type="text"
             className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 text-sm" 
-            placeholder="ضع رابط الصورة المصغرة (مثال: https://...)" 
+            placeholder="" 
             value={thumbnailUrl} 
             onChange={e=>setThumbnailUrl(e.target.value)} 
           />
@@ -2050,8 +2168,8 @@ function AdminQuranSeries() {
     <div className="space-y-6">
        <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
           <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">{editingId ? "تعديل سلسلة" : "إضافة سلسلة جديدة"}</h3>
-          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="عنوان السلسلة" value={title} onChange={e=>setTitle(e.target.value)} />
-          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-20 dark:text-white" placeholder="وصف السلسلة (اختياري)" value={desc} onChange={e=>setDesc(e.target.value)} />
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="" value={title} onChange={e=>setTitle(e.target.value)} />
+          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-20 dark:text-white" placeholder="" value={desc} onChange={e=>setDesc(e.target.value)} />
           <input type="number" className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="الترتيب (رقم)" value={order} onChange={e=>setOrder(Number(e.target.value))} />
           <div className="flex gap-2">
             <button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors">{saving ? "جاري..." : "حفظ"}</button>
@@ -2143,8 +2261,8 @@ function AdminQuranLessons() {
                {seriesList.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
             </select>
           </div>
-          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="عنوان الدرس" value={title} onChange={e=>setTitle(e.target.value)} />
-          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white" placeholder="محتوى الدرس كاملًا" value={content} onChange={e=>setContent(e.target.value)} />
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="" value={title} onChange={e=>setTitle(e.target.value)} />
+          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white" placeholder="" value={content} onChange={e=>setContent(e.target.value)} />
           <input type="number" className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="الترتيب (رقم)" value={order} onChange={e=>setOrder(Number(e.target.value))} />
           
           <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-emerald-500/30 transition-colors">
@@ -2213,9 +2331,9 @@ function AdminQuranSyllabuses() {
     <div className="space-y-6">
        <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
           <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">{editingId ? "تعديل مقرر" : "إضافة مقرر جديد"}</h3>
-          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="عنوان المقرر" value={title} onChange={e=>setTitle(e.target.value)} />
-          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="وصف قصير" value={desc} onChange={e=>setDesc(e.target.value)} />
-          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white" placeholder="محتوى المقرر / تفاصيله" value={content} onChange={e=>setContent(e.target.value)} />
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="" value={title} onChange={e=>setTitle(e.target.value)} />
+          <input className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="" value={desc} onChange={e=>setDesc(e.target.value)} />
+          <textarea className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white" placeholder="" value={content} onChange={e=>setContent(e.target.value)} />
           <input type="number" className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white" placeholder="الترتيب (رقم)" value={order} onChange={e=>setOrder(Number(e.target.value))} />
           <div className="flex gap-2">
             <button onClick={save} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors">{saving ? "جاري..." : "حفظ"}</button>

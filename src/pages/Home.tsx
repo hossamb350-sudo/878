@@ -71,6 +71,12 @@ export function Home() {
 
   useEffect(() => {
     const fetchCats = async () => {
+      const cached = localStorage.getItem("news_categories_color_cache");
+      if (cached) {
+        try {
+          setCategories(JSON.parse(cached));
+        } catch {}
+      }
       try {
         const catDoc = await getDoc(doc(db, "newsMetadata", "categories"));
         if (catDoc.exists()) {
@@ -82,9 +88,10 @@ export function Home() {
             });
           }
           setCategories(catMap);
+          localStorage.setItem("news_categories_color_cache", JSON.stringify(catMap));
         }
       } catch (e) {
-        console.error("Error fetching category colors:", e);
+        console.error("Error fetching category colors (using cache):", e);
       }
     };
     fetchCats();
@@ -244,9 +251,9 @@ export function Home() {
             
             {/* HERO FEATURED POST */}
             {heroItem && (
-              <div className="block bg-surface-main pb-1.5 border-b border-border-light mb-4 font-sans">
+              <div className="block bg-surface-main pb-1.5 mb-4 font-sans">
                 {heroItem.imageUrl && (
-                  <Link to={`/news/${heroItem.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-surface-card mb-4 sm:rounded-3xl shadow-soft border border-border-light">
+                  <Link to={`/news/${heroItem.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-surface-card mb-4 sm:rounded-3xl shadow-soft">
                      <img 
                        src={heroItem.imageUrl} 
                        alt={heroItem.title} 
@@ -314,7 +321,7 @@ export function Home() {
                 <div key={item.id} className="pt-2">
                   <Link 
                     to={`/news/${item.id}`} 
-                    className="flex gap-4 p-3.5 hover:bg-surface-hover transition-all border border-border-light bg-surface-card rounded-2xl shadow-soft mb-4 mx-4 sm:mx-0 group relative"
+                    className="flex gap-4 p-3.5 hover:bg-surface-hover transition-all bg-surface-card rounded-2xl shadow-soft mb-4 mx-4 sm:mx-0 group relative"
                   >
                     {/* Category Tags Attached to Center-Top (Outside) */}
                     <CategoryBadges item={item} isHero={false} className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" />
@@ -322,44 +329,39 @@ export function Home() {
                     {/* Right Side News Content */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between py-1 text-right pr-0.5">
                        <div>
-                          {/* Top row: News Meta (Above Title) */}
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2.5 text-[9px] sm:text-[10px] text-text-muted font-bold">
-                             <span className="flex items-center gap-1 shrink-0">
-                               <Calendar className="w-2.5 h-2.5 text-taiz-sky/60" />
-                               <span>{formatPublishInfo(item.createdAt).mDate}</span>
-                             </span>
-                             
-                             <span className="shrink-0">{formatPublishInfo(item.createdAt).hDate}</span>
-                             
-                             <span className="flex items-center gap-1 shrink-0">
-                               <Clock className="w-2.5 h-2.5 text-taiz-sky/60" />
-                               <span>{formatPublishInfo(item.createdAt).mTime}</span>
-                             </span>
-
-                             {item.author && (
-                               <span className="flex items-center gap-1 text-text-muted max-w-[100px] truncate shrink-0">
-                                 <User className="w-2.5 h-2.5"/> 
-                                 {item.author}
-                               </span>
-                             )}
-                          </div>
-
-                          <h3 className="font-bold text-[15px] sm:text-[17px] text-text-primary leading-[1.45] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-3 tracking-tight">
+                          <h3 className="font-bold text-[13px] sm:text-[14px] text-text-primary leading-[1.35] transition-colors hover:text-taiz-sky mb-2.5 whitespace-normal line-clamp-3 tracking-tight">
                             {item.title}
                           </h3>
-                       </div>
 
-                       <div className="flex items-center mt-auto">
-                          <span className="mr-auto flex items-center gap-1 text-taiz-royal shrink-0 text-[9px] font-black bg-taiz-royal/5 px-1.5 py-0.5 rounded-md border border-taiz-royal/10">
-                            <Eye className="w-2.5 h-2.5"/> 
-                            {item.views || 0}
-                          </span>
+                          {/* Consistently aligned metadata line */}
+                          <div className="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] font-bold">
+                            {/* Right Side: Date/Author (First in RTL) */}
+                            <div className="flex items-center gap-2.5 text-text-muted overflow-hidden">
+                               <span className="flex items-center gap-1 shrink-0">
+                                 <Clock className="w-2.5 h-2.5 text-taiz-sky/60" />
+                                 <span>{formatPublishInfo(item.createdAt).mDate} {formatPublishInfo(item.createdAt).mTime}</span>
+                               </span>
+                               <span className="text-border-subtle opacity-50 shrink-0">•</span>
+                               {item.author && (
+                                 <span className="flex items-center gap-1 truncate shrink-0">
+                                   <User className="w-2.5 h-2.5"/> 
+                                   {item.author}
+                                 </span>
+                               )}
+                            </div>
+
+                            {/* Left Side: Views (Last in RTL) */}
+                            <span className="flex items-center gap-1 text-taiz-royal shrink-0 bg-taiz-royal/5 px-1.5 py-0.5 rounded-md">
+                              <Eye className="w-2.5 h-2.5"/> 
+                              {item.views || 0}
+                            </span>
+                          </div>
                        </div>
                     </div>
 
                     {/* Left Side Compact Image */}
                     {item.imageUrl && (
-                      <div className="w-[110px] h-[110px] sm:w-[130px] sm:h-[130px] rounded-2xl overflow-hidden shrink-0 bg-surface-main shadow-soft border border-border-light">
+                      <div className="w-[110px] h-[110px] sm:w-[130px] sm:h-[130px] rounded-2xl overflow-hidden shrink-0 bg-surface-main shadow-soft">
                          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                       </div>
                     )}
@@ -367,7 +369,7 @@ export function Home() {
 
                   {/* Insert Video Slider Container */}
                   {index === 1 && videos.length > 0 && (
-                    <div className="my-2 py-4 bg-surface-main border-y border-border-light px-5 relative overflow-hidden">
+                    <div className="my-2 py-4 bg-surface-main px-5 relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-taiz-sky/5 rounded-full blur-[40px] -mt-10 -mr-10"></div>
                       <div className="flex items-center justify-between mb-4 text-right relative z-10">
                         <Link to="/watch" className="flex items-center gap-3 group cursor-pointer inline-flex">
@@ -381,7 +383,7 @@ export function Home() {
                       <div className="flex overflow-x-auto gap-5 pb-4 snap-x hide-scrollbar relative z-10" style={{ scrollbarWidth: 'none' }}>
                         {videos.map(video => (
                            <Link key={video.id} to={`/watch/${video.id}`} className="snap-start shrink-0 w-[280px] sm:w-[320px] group block">
-                              <div className="relative aspect-[16/9] rounded-3xl overflow-hidden bg-taiz-navy mb-4 shadow-medium border border-border-light group-hover:shadow-strong group-hover:border-taiz-sky/30 transition-all">
+                              <div className="relative aspect-[16/9] rounded-3xl overflow-hidden bg-taiz-navy mb-4 shadow-medium group-hover:shadow-strong group-hover:border-taiz-sky/30 transition-all">
                                  {video.thumbnailUrl ? (
                                     <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" />
                                  ) : (

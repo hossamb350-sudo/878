@@ -99,6 +99,13 @@ export class SyncService {
       
       return sorted;
     } catch (e: any) {
+      const isQuotaExceeded = e.code === 'resource-exhausted' || 
+                             (e.message && (e.message.includes('Quota') || e.message.includes('quota')));
+      if (isQuotaExceeded) {
+        console.warn(`Firestore quota exceeded for collection "${collectionName}" during refresh. Falling back to cache.`);
+        const cached = await SyncService.getCache<T>(collectionName);
+        return SyncService.sortItems(cached, options);
+      }
       handleFirestoreError(e, collectionName, "query");
       return []; // never reached but satisfies TS
     }
@@ -205,7 +212,13 @@ export class SyncService {
       // Trigger callback with fresh merged data
       if (active) onUpdate(mergedList);
     } catch (e: any) {
-      handleFirestoreError(e, collectionName, "query");
+      const isQuotaExceeded = e.code === 'resource-exhausted' || 
+                             (e.message && (e.message.includes('Quota') || e.message.includes('quota')));
+      if (isQuotaExceeded) {
+        console.warn(`Firestore quota exceeded for collection "${collectionName}". Relying on cached data.`);
+      } else {
+        handleFirestoreError(e, collectionName, "query");
+      }
     }
 
     return () => {

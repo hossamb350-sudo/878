@@ -29,7 +29,7 @@ import { BASE_EVENTS } from "../data/staticEvents";
 export function Events() {
   const [dbEvents, setDbEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeView, setActiveView] = useState<"cards" | "table" | "calendar" | "timeline">("cards");
+  const [activeView, setActiveView] = useState<"cards" | "list" | "table" | "calendar" | "timeline">("cards");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
@@ -279,9 +279,10 @@ export function Events() {
         <div className="bg-gray-50 p-1 rounded-xl flex items-center gap-1 shrink-0 w-full lg:w-auto justify-center">
            {[
              { id: "cards", icon: LayoutGrid, label: "شبكي" },
-             { id: "table", icon: List, label: "جدولي" },
-             { id: "calendar", icon: CalendarDays, label: "تقويم تفاعلي" },
-             { id: "timeline", icon: Clock, label: "خط زمني" }
+             { id: "list", icon: List, label: "قائمة" },
+             { id: "table", icon: SlidersHorizontal, label: "جدولي" },
+             { id: "calendar", icon: CalendarDays, label: "تقويم" },
+             { id: "timeline", icon: Clock, label: "زمني" }
            ].map(view => (
              <button 
                 key={view.id}
@@ -324,6 +325,42 @@ export function Events() {
                  ))}
                  {filteredEvents.length === 0 && <NoResultsFound />}
               </div>
+           )}
+
+           {/* Compact List View */}
+           {activeView === "list" && (
+             <div className="space-y-4 max-w-4xl mx-auto">
+                {filteredEvents.map(event => {
+                  const status = getEventStatus(event.timestamp);
+                  return (
+                    <motion.div 
+                      key={event.id}
+                      onClick={() => setSelectedEventId(event.id)}
+                      whileHover={{ x: -4 }}
+                      className="bg-surface-card p-4 rounded-2xl border border-border-light shadow-sm flex items-center gap-4 cursor-pointer hover:border-taiz-sky/30 transition-all group"
+                    >
+                      <div className="w-14 h-14 rounded-2xl bg-surface-main border border-border-light flex flex-col items-center justify-center shrink-0">
+                        <span className="text-xs font-black text-taiz-royal">{format(new Date(event.timestamp), "d")}</span>
+                        <span className="text-[8px] font-black text-text-muted uppercase">{format(new Date(event.timestamp), "MMMM", { locale: ar })}</span>
+                      </div>
+                      <div className="flex-1 text-right min-w-0">
+                        <h4 className="text-sm sm:text-base font-black text-text-primary group-hover:text-taiz-royal transition-colors truncate">{event.title}</h4>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[10px] font-black text-taiz-sky flex items-center gap-1"><CalendarIcon className="w-3 h-3" /> {event.hijriDate}</span>
+                          <span className="text-[10px] font-black text-text-muted flex items-center gap-1"><Clock className="w-3 h-3" /> {event.gregorianDate}</span>
+                        </div>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-2">
+                        <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border hidden sm:inline-block ${status.text}`}>
+                          {status.label}
+                        </span>
+                        <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-taiz-royal group-hover:-translate-x-1 transition-all" />
+                      </div>
+                    </motion.div>
+                  );
+                })}
+                {filteredEvents.length === 0 && <NoResultsFound />}
+             </div>
            )}
 
            {/* Table Layout View */}

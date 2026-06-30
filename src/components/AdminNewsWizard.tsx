@@ -3,9 +3,9 @@ import {
   PlusCircle, Plus, List, ChevronDown, FileText, Edit, Trash2, ArrowRight, 
   X, Save, Type, User, Clock, Bold, Italic, Highlighter, CornerDownLeft, 
   Globe, Image as ImageIcon, Video, Settings, Tag, Check, CheckCircle, Eye, 
-  ChevronRight, ChevronLeft, Search 
+  ChevronRight, ChevronLeft, Search, Users, ExternalLink 
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   collection, query, orderBy, getDocs, addDoc, updateDoc, doc, 
   deleteDoc, getDoc, setDoc 
@@ -13,6 +13,8 @@ import {
 import { db } from "../firebase";
 import { notificationService } from "../services/NotificationService";
 import { SyncService } from "../services/SyncService";
+import { AdminCategoryManager } from "./AdminCategoryManager";
+import { AdminAuthorManager } from "./AdminAuthorManager";
 
 interface NewsItem {
   id: string;
@@ -41,23 +43,28 @@ interface CategoryItem {
   color?: string;
 }
 
-export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
+interface NewsWizardProps {
+  isAdmin?: boolean;
+  onBackToDashboard?: () => void;
+}
+
+export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps) {
   const [newsMode, setNewsMode] = useState<"add" | "list" | "edit">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isListExpanded, setIsListExpanded] = useState(false);
   
   // Wizard States
   const [currentStep, setCurrentStep] = useState(1);
-  const [publishStatus, setPublishStatus] = useState<"published" | "draft">("published");
   const [allowComments, setAllowComments] = useState(true);
   const [tags, setTags] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
-  const [lastAutoSave, setLastAutoSave] = useState<number | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
-  const [showCatManager, setShowCatManager] = useState(false);
-  const [editingCat, setEditingCat] = useState<{oldName: string, newName: string, color: string} | null>(null);
   const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
+  const [showCatManager, setShowCatManager] = useState(false);
+  const [showAuthorManager, setShowAuthorManager] = useState(false);
+  const [showAddCatModal, setShowAddCatModal] = useState(false);
+  const [showExitConfirm, setShowExitConfirm] = useState(false);
 
   // Fields
   const [title, setTitle] = useState("");
@@ -77,69 +84,26 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
   const [liveUpdatesText, setLiveUpdatesText] = useState("");
   const [views, setViews] = useState<number>(0);
 
-  // Auto-save logic
-  useEffect(() => {
-    if (newsMode !== "list" && (title || content || author)) {
-      const timer = setTimeout(() => {
-        const draftData = {
-          title, author, shortDesc, content, imageUrl, additionalImagesText, cat, customCat, isPinned, isBreaking, liveUpdatesText, publishStatus, allowComments, tags, videoUrl, currentStep, editingId
-        };
-        localStorage.setItem("news_draft", JSON.stringify(draftData));
-        setLastAutoSave(Date.now());
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [title, author, shortDesc, content, imageUrl, additionalImagesText, cat, customCat, isPinned, isBreaking, liveUpdatesText, publishStatus, allowComments, tags, videoUrl, currentStep, newsMode]);
-
-  // Restore draft
-  useEffect(() => {
-    const saved = localStorage.getItem("news_draft");
-    if (saved && newsMode === "list") {
-      try {
-        const draft = JSON.parse(saved);
-        if (draft.title && confirm("يوجد مسودة خبر غير مكتملة، هل تريد استعادتها؟")) {
-          setTitle(draft.title || "");
-          setAuthor(draft.author || "");
-          setShortDesc(draft.shortDesc || "");
-          setContent(draft.content || "");
-          setImageUrl(draft.imageUrl || "");
-          setAdditionalImagesText(draft.additionalImagesText || "");
-          setCat(draft.cat || "محلية");
-          setCustomCat(draft.customCat || "");
-          setIsPinned(!!draft.isPinned);
-          setIsBreaking(!!draft.isBreaking);
-          setLiveUpdatesText(draft.liveUpdatesText || "");
-          setPublishStatus(draft.publishStatus || "published");
-          setAllowComments(draft.allowComments !== false);
-          setTags(draft.tags || "");
-          setVideoUrl(draft.videoUrl || "");
-          setCurrentStep(draft.currentStep || 1);
-          setEditingId(draft.editingId || null);
-          setNewsMode(draft.editingId ? "edit" : "add");
-        } else {
-          localStorage.removeItem("news_draft");
-        }
-      } catch (e) {}
-    }
-  }, [newsMode]);
-  
-  const [saving, setSaving] = useState(false);
-  
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [loadingList, setLoadingList] = useState(false);
-
-  // Categories and Authors persistence
-  const [savedCats, setSavedCats] = useState<CategoryItem[]>([
-    { name: "محلية", color: "#049EDF" },
-    { name: "تعبئة عامة", color: "#032F69" },
-    { name: "اجتماعية", color: "#055198" },
-    { name: "أنشطة وزيارات", color: "#7C3AED" },
-    { name: "مشاريع", color: "#10B981" },
-    { name: "مقال", color: "#F59E0B" }
-  ]);
+  const [savedCats, setSavedCats] = useState<CategoryItem[]>([]);
   const [savedAuthors, setSavedAuthors] = useState<string[]>([]);
+  const [publishStatus, setPublishStatus] = useState<"published" | "draft">("published");
+  const [saving, setSaving] = useState(false);
+  const [lastAutoSave, setLastAutoSave] = useState<number | null>(null);
 
+  // Fetch metadata
   const fetchMetadata = async () => {
+    // Load initial metadata from cache
+    const cachedCats = localStorage.getItem("wizard_saved_cats");
+    const cachedAuthors = localStorage.getItem("wizard_saved_authors");
+    if (cachedCats) {
+      try { setSavedCats(JSON.parse(cachedCats)); } catch {}
+    }
+    if (cachedAuthors) {
+      try { setSavedAuthors(JSON.parse(cachedAuthors)); } catch {}
+    }
+
     try {
       const catDoc = await getDoc(doc(db, "newsMetadata", "categories"));
       if (catDoc.exists()) {
@@ -173,14 +137,17 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
         });
         
         setSavedCats(combined);
+        localStorage.setItem("wizard_saved_cats", JSON.stringify(combined));
       }
       
       const authDoc = await getDoc(doc(db, "newsMetadata", "authors"));
       if (authDoc.exists()) {
-        setSavedAuthors(authDoc.data().list || []);
+        const list = authDoc.data().list || [];
+        setSavedAuthors(list);
+        localStorage.setItem("wizard_saved_authors", JSON.stringify(list));
       }
     } catch (e) {
-      console.error("Error fetching metadata:", e);
+      console.warn("Error fetching metadata (using cache fallback):", e);
     }
   };
 
@@ -202,11 +169,24 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
   const fetchNewsList = async () => {
     setLoadingList(true);
     try {
-      const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
-      const snapshot = await getDocs(q);
-      setNewsList(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem)));
+      // Load from local storage cache first
+      const cached = await SyncService.getCache<NewsItem>("news");
+      if (cached && cached.length > 0) {
+        setNewsList(cached);
+      }
+      
+      // Try to fetch latest from Firestore and update cache
+      try {
+        const q = query(collection(db, "news"), orderBy("createdAt", "desc"));
+        const snapshot = await getDocs(q);
+        const fetchedList = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem));
+        setNewsList(fetchedList);
+        await SyncService.setCache("news", fetchedList);
+      } catch (fireErr) {
+        console.warn("Firestore fetch error for news list, relying on local storage cache:", fireErr);
+      }
     } catch (e) {
-      console.error(e);
+      console.error("Error loading news list from cache/Firestore:", e);
     } finally {
       setLoadingList(false);
     }
@@ -434,9 +414,9 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
           <button 
             onClick={() => {
               setShowSuccessModal(false);
-              window.open(`/news/${lastSavedId}`, '_blank');
               setNewsMode("list");
               resetForm();
+              window.location.href = `/news/${lastSavedId}`;
             }}
             className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-sm"
           >
@@ -448,9 +428,11 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
               setShowSuccessModal(false);
               setNewsMode("list");
               resetForm();
+              if (onBackToDashboard) onBackToDashboard();
             }}
-            className="w-full py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-white rounded-2xl font-black transition-all text-sm"
+            className="w-full py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-white rounded-2xl font-black transition-all text-sm flex items-center justify-center gap-2"
           >
+            <Settings className="w-4 h-4" />
             التحكم (لوحة الإدارة)
           </button>
           <button 
@@ -498,116 +480,19 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
     }
   };
 
-  const updateCategory = async () => {
-    if (!editingCat || !editingCat.newName.trim()) return;
-    const { oldName, newName, color } = editingCat;
-    
-    if (["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"].includes(oldName)) {
-      // Allow color update for defaults but not name? User asked for choice when adding.
-      // Let's allow updating color for all if they want, but name is risky for defaults.
-      // For now, allow color update for all.
-    }
-
-    try {
-      const newList = savedCats.map(c => c.name === oldName ? { ...c, name: newName, color } : c);
-      await setDoc(doc(db, "newsMetadata", "categories"), { items: newList });
-      setSavedCats(newList);
-      if (cat === oldName) setCat(newName);
-      setEditingCat(null);
-    } catch (e) {
-      alert("خطأ في التعديل");
-    }
-  };
-
-  const CategoryManagerModal = () => (
-    <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-8 max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
-      >
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-black text-gray-900 dark:text-white">إدارة التصنيفات</h3>
-          <button onClick={() => setShowCatManager(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-            <X className="w-6 h-6 text-gray-500" />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-          {savedCats.map(c => (
-            <div key={c.name} className="flex flex-col p-4 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800 group">
-              {editingCat?.oldName === c.name ? (
-                <div className="space-y-3 w-full">
-                  <div className="flex items-center gap-2">
-                    <input 
-                      autoFocus
-                      className="flex-1 bg-white dark:bg-gray-900 p-2 rounded-lg border border-blue-500 font-bold dark:text-white"
-                      value={editingCat.newName}
-                      disabled={["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"].includes(c.name)}
-                      onChange={e => setEditingCat({...editingCat, newName: e.target.value})}
-                      onKeyDown={e => e.key === 'Enter' && updateCategory()}
-                    />
-                    <div className="flex items-center gap-1">
-                      <input 
-                        type="color" 
-                        value={editingCat.color} 
-                        onChange={e => setEditingCat({...editingCat, color: e.target.value})}
-                        className="w-8 h-8 rounded cursor-pointer border-none bg-transparent"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <button onClick={() => setEditingCat(null)} className="px-4 py-1.5 text-xs font-black text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl">إلغاء</button>
-                    <button onClick={updateCategory} className="px-4 py-1.5 text-xs font-black bg-blue-600 text-white rounded-xl">حفظ التغييرات</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-4 h-4 rounded-full shadow-sm" style={{ backgroundColor: c.color || "#049EDF" }}></div>
-                    <span className="font-bold text-gray-700 dark:text-gray-300">{c.name}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button 
-                      onClick={() => setEditingCat({oldName: c.name, newName: c.name, color: c.color || "#049EDF"})}
-                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
-                      title="تعديل"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    {!["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"].includes(c.name) && (
-                      <button 
-                        onClick={() => deleteCategory(c.name)}
-                        className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
-                        title="حذف"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </motion.div>
-    </div>
-  );
-
   if (newsMode !== "list") {
     const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
     const readTime = Math.ceil(wordCount / 200) || 1;
 
     const handleCancel = () => {
-      if (title || content) {
-        if (confirm("هل أنت متأكد من إلغاء العملية؟ سيتم حفظ مسودة للرجوع إليها لاحقاً.")) {
-          setNewsMode("list");
-          resetForm();
-        }
-      } else {
-        setNewsMode("list");
-        resetForm();
-      }
+      setShowExitConfirm(true);
+    };
+
+    const confirmExit = () => {
+      setNewsMode("list");
+      resetForm();
+      setShowExitConfirm(false);
+      if (onBackToDashboard) onBackToDashboard();
     };
 
     return (
@@ -617,9 +502,10 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
           <div className="flex items-center gap-4">
             <button 
               onClick={handleCancel}
-              className="p-2.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors text-gray-500"
+              className="px-5 py-2.5 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-2xl transition-all text-red-600 dark:text-red-400 font-black text-sm flex items-center gap-2"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
+              إغلاق
             </button>
             <div className="min-w-0">
               <h2 className="text-lg font-black text-gray-900 dark:text-white leading-tight truncate">
@@ -679,7 +565,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                           <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">عنوان الخبر الرئيسي *</label>
                           <input 
                             className="w-full p-3.5 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-base placeholder:text-gray-300 dark:text-white" 
-                            placeholder="اكتب العنوان هنا..." 
+                            placeholder="" 
                             value={title} 
                             onChange={e=>setTitle(e.target.value)} 
                           />
@@ -691,7 +577,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                             <div className="relative">
                               <input 
                                 className="w-full p-3.5 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm placeholder:text-gray-300 dark:text-white" 
-                                placeholder="مثلاً: وحدة الإعلام" 
+                                placeholder="" 
                                 value={author} 
                                 onChange={e=>setAuthor(e.target.value)}
                                 onFocus={() => setShowAuthorDropdown(true)}
@@ -726,7 +612,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                           </div>
                           <div>
                             <div className="flex items-center justify-between mb-2.5">
-                              <label className="block text-sm font-black text-gray-700 dark:text-gray-300">التصنيفات (يمكنك اختيار أكثر من واحد) *</label>
+                              <label className="block text-sm font-black text-gray-700 dark:text-gray-300">التصنيفات *</label>
                             </div>
                             
                             {/* Selected Categories Badges */}
@@ -748,18 +634,32 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                                   )}
                                 </span>
                               ))}
-                              {cat === "custom" && customCat && (
-                                <span className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-[11px] font-black border border-purple-100 dark:border-purple-800/30">
-                                  {customCat} (جديد)
+                            </div>
+
+                            {/* New Category Input - Independent */}
+                            <div className="mb-4 bg-purple-50/30 dark:bg-purple-900/10 p-4 rounded-2xl border border-purple-100 dark:border-purple-800/30">
+                              <label className="block text-[10px] font-black text-purple-600 mb-2 uppercase tracking-wider">إضافة تصنيف جديد</label>
+                              <div className="flex gap-2">
+                                <input 
+                                  className="flex-1 p-3 bg-white dark:bg-gray-900 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all dark:text-white" 
+                                  placeholder="" 
+                                  value={customCat} 
+                                  onChange={e=>setCustomCat(e.target.value)} 
+                                />
+                                {customCat.trim() && (
                                   <button 
-                                    type="button" 
-                                    onClick={() => { setCat("محلية"); setCustomCat(""); }}
-                                    className="hover:text-red-500 transition-colors"
+                                    onClick={() => {
+                                      if (!selectedCats.includes(customCat.trim())) {
+                                        setSelectedCats(prev => [...prev, customCat.trim()]);
+                                      }
+                                      setCustomCat("");
+                                    }}
+                                    className="px-4 bg-purple-600 text-white rounded-xl text-xs font-black shadow-lg shadow-purple-500/20"
                                   >
-                                    <X className="w-3 h-3" />
+                                    إضافة
                                   </button>
-                                </span>
-                              )}
+                                )}
+                              </div>
                             </div>
 
                             {/* Searchable Dropdown */}
@@ -769,7 +669,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                                 <input 
                                   type="text"
                                   className="w-full p-3.5 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm dark:text-white"
-                                  placeholder="ابحث عن تصنيف أو اختر من القائمة..."
+                                  placeholder=""
                                   value={catSearch}
                                   onChange={(e) => {
                                     setCatSearch(e.target.value);
@@ -830,19 +730,8 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                                         );
                                       })}
                                     
-                                    <div className="mt-1 pt-1 border-t border-gray-50 dark:border-gray-800">
-                                      <button 
-                                        type="button"
-                                        onClick={() => {
-                                          setCat("custom");
-                                          setShowCatDropdown(false);
-                                        }}
-                                        className="w-full text-right p-3 rounded-xl text-sm font-black text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all flex items-center gap-2"
-                                      >
-                                        <PlusCircle className="w-4 h-4" />
-                                        إضافة تصنيف جديد...
-                                      </button>
-                                    </div>
+                                    {/* Removed Add Category button from dropdown */}
+
 
                                     {savedCats.filter(c => c.name.toLowerCase().includes(catSearch.toLowerCase())).length === 0 && catSearch && (
                                       <div className="p-4 text-center">
@@ -850,8 +739,8 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                                         <button 
                                           type="button"
                                           onClick={() => {
-                                            setCat("custom");
                                             setCustomCat(catSearch);
+                                            setShowAddCatModal(true);
                                             setShowCatDropdown(false);
                                           }}
                                           className="text-xs font-black text-blue-600 underline"
@@ -867,37 +756,66 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                           </div>
                         </div>
 
-                        {cat === "custom" && (
-                          <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                              <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">اسم التصنيف الجديد</label>
-                              <input 
-                                className="w-full p-4 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold dark:text-white" 
-                                placeholder="مثلاً: أخبار دولية" 
-                                value={customCat} 
-                                onChange={e=>setCustomCat(e.target.value)} 
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">لون التصنيف</label>
-                              <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-950 rounded-2xl h-[56px]">
-                                 <input 
-                                   type="color" 
-                                   value={customCatColor} 
-                                   onChange={e => setCustomCatColor(e.target.value)}
-                                   className="w-10 h-10 rounded-lg cursor-pointer border-none bg-transparent shrink-0"
-                                 />
-                                 <span className="text-xs font-bold text-gray-500">{customCatColor}</span>
+                        {/* Modal for Adding Custom Category */}
+                        {showAddCatModal && (
+                          <div className="fixed inset-0 z-[2500] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                            <motion.div 
+                              initial={{ scale: 0.9, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              className="bg-white dark:bg-gray-800 rounded-[2rem] p-6 max-w-sm w-full shadow-2xl"
+                            >
+                              <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-black text-gray-900 dark:text-white">إضافة تصنيف جديد</h3>
+                                <button onClick={() => setShowAddCatModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl">
+                                  <X className="w-5 h-5" />
+                                </button>
                               </div>
-                            </div>
-                          </motion.div>
+
+                              <div className="space-y-4">
+                                <div>
+                                  <label className="block text-xs font-black text-gray-500 mb-2 uppercase tracking-wider text-right">اسم التصنيف</label>
+                                  <input 
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold dark:text-white text-right" 
+                                    placeholder="" 
+                                    value={customCat} 
+                                    onChange={e=>setCustomCat(e.target.value)} 
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs font-black text-gray-500 mb-2 uppercase tracking-wider text-right">اختر لون التصنيف</label>
+                                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-950 rounded-2xl h-[56px]">
+                                     <input 
+                                       type="color" 
+                                       value={customCatColor} 
+                                       onChange={e => setCustomCatColor(e.target.value)}
+                                       className="w-10 h-10 rounded-lg cursor-pointer border-none bg-transparent shrink-0"
+                                     />
+                                     <span className="text-xs font-bold text-gray-500 uppercase flex-1 text-center font-mono">{customCatColor}</span>
+                                  </div>
+                                </div>
+
+                                <button 
+                                  onClick={() => {
+                                    if (!customCat.trim()) return alert("يرجى إدخال اسم التصنيف");
+                                    setCat("custom");
+                                    setSelectedCats(prev => Array.from(new Set([...prev, customCat.trim()])));
+                                    setShowAddCatModal(false);
+                                  }}
+                                  className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 mt-2"
+                                >
+                                  <Check className="w-5 h-5" />
+                                  اعتماد التصنيف
+                                </button>
+                              </div>
+                            </motion.div>
+                          </div>
                         )}
 
                         <div>
                           <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">مقدمة الخبر (اختياري)</label>
                           <textarea 
                             className="w-full p-4 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl h-32 focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 leading-relaxed dark:text-white" 
-                            placeholder="يمكنك هنا كتابة مقدمة الخبر ليظهر بشكل متميز" 
+                            placeholder="" 
                             value={shortDesc} 
                             onChange={e=>setShortDesc(e.target.value)} 
                           />
@@ -966,7 +884,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                     <textarea 
                       id="content-textarea"
                       className="w-full p-6 bg-gray-50 dark:bg-gray-950 border-none rounded-[2rem] h-[400px] focus:ring-2 focus:ring-blue-500 transition-all font-bold text-lg placeholder:text-gray-300 leading-[2] dark:text-white resize-none" 
-                      placeholder="ابدأ في كتابة تفاصيل الخبر هنا..." 
+                      placeholder="" 
                       value={content} 
                       onChange={e=>setContent(e.target.value)} 
                     />
@@ -997,7 +915,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                           <div className="flex-1 relative">
                             <input 
                               className="w-full p-4 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 dark:text-white" 
-                              placeholder="https://example.com/image.jpg" 
+                              placeholder="" 
                               value={imageUrl} 
                               onChange={e=>setImageUrl(e.target.value)} 
                             />
@@ -1018,7 +936,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                         <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-3">معرض الصور (رابط واحد في كل سطر)</label>
                         <textarea 
                           className="w-full p-4 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl h-32 focus:ring-2 focus:ring-blue-500 transition-all font-mono text-sm placeholder:text-gray-300 dark:text-white" 
-                          placeholder="ضع روابط الصور الإضافية هنا..." 
+                          placeholder="" 
                           value={additionalImagesText} 
                           onChange={e=>setAdditionalImagesText(e.target.value)} 
                         />
@@ -1029,7 +947,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                         <div className="relative">
                           <input 
                             className="w-full p-4 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 dark:text-white" 
-                            placeholder="مثلاً: https://www.youtube.com/watch?v=..." 
+                            placeholder="" 
                             value={videoUrl} 
                             onChange={e=>setVideoUrl(e.target.value)} 
                           />
@@ -1101,7 +1019,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                           <div className="relative">
                             <input 
                               className="w-full p-4 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 dark:text-white" 
-                              placeholder="مثلاً: اليمن، تعز، مسيرات" 
+                              placeholder="" 
                               value={tags} 
                               onChange={e=>setTags(e.target.value)} 
                             />
@@ -1110,20 +1028,12 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">حالة النشر</label>
-                          <div className="grid grid-cols-2 gap-3">
-                            <button 
-                              onClick={() => setPublishStatus("published")}
-                              className={`p-3.5 rounded-2xl font-black border-2 transition-all text-sm ${publishStatus === "published" ? "bg-blue-600 text-white border-blue-600" : "bg-white dark:bg-gray-900 text-gray-500 border-gray-100 dark:border-gray-800"}`}
-                            >
-                              نشر الآن
-                            </button>
-                            <button 
-                              onClick={() => setPublishStatus("draft")}
-                              className={`p-3.5 rounded-2xl font-black border-2 transition-all text-sm ${publishStatus === "draft" ? "bg-amber-500 text-white border-amber-500" : "bg-white dark:bg-gray-900 text-gray-500 border-gray-100 dark:border-gray-800"}`}
-                            >
-                              حفظ كمسودة
-                            </button>
+                          <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">نشر مباشر</label>
+                          <div className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-gray-100 dark:border-gray-800">
+                            <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center text-emerald-600">
+                               <CheckCircle className="w-5 h-5" />
+                            </div>
+                            <span className="font-bold text-sm text-gray-700 dark:text-gray-300">سيتم نشر الخبر فور الحفظ</span>
                           </div>
                         </div>
                       </div>
@@ -1134,7 +1044,7 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
                         <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-3">تحديثات التغطية المباشرة</label>
                         <textarea 
                           className="w-full p-4 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl h-32 focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm placeholder:text-gray-300 leading-relaxed dark:text-white" 
-                          placeholder="النص | الوقت | رابط الصورة (اختياري)" 
+                          placeholder="" 
                           value={liveUpdatesText} 
                           onChange={e=>setLiveUpdatesText(e.target.value)} 
                         />
@@ -1220,43 +1130,141 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
           </div>
         </div>
 
+        {/* Exit Confirmation Modal */}
+        <AnimatePresence>
+          {showExitConfirm && (
+            <div className="fixed inset-0 z-[4000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white dark:bg-gray-800 rounded-[2rem] p-8 max-w-sm w-full shadow-2xl text-center"
+              >
+                <div className="w-20 h-20 bg-red-50 dark:bg-red-900/30 rounded-full flex items-center justify-center text-red-600 mx-auto mb-6">
+                  <X className="w-10 h-10 stroke-[3]" />
+                </div>
+                <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">تنبيه</h3>
+                <p className="text-gray-500 dark:text-gray-400 font-bold mb-8">هل ترغب في الخروج من صفحة إنشاء الخبر؟</p>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <button 
+                    onClick={() => setShowExitConfirm(false)}
+                    className="py-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-2xl font-black transition-all"
+                  >
+                    لا
+                  </button>
+                  <button 
+                    onClick={confirmExit}
+                    className="py-4 bg-red-600 hover:bg-red-700 text-white rounded-2xl font-black shadow-lg shadow-red-500/20 transition-all"
+                  >
+                    نعم
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* Success Modal Overlay */}
         {showSuccessModal && <SuccessModal />}
-        {showCatManager && <CategoryManagerModal />}
       </div>
     );
   }
 
   return (
     <div className="space-y-8 animate-fade-in font-sans pb-12">
-      {/* Main Action Card: Add News */}
-      <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-[2.5rem] p-8 text-white shadow-xl shadow-blue-500/20 relative overflow-hidden group">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-white/20 transition-all duration-700"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-black flex items-center gap-3">
-              <PlusCircle className="w-8 h-8" />
-              إضافة خبر جديد
-            </h2>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mt-2">
-              <p className="text-blue-100 font-medium text-lg opacity-90 text-right">قم بنشر محتوى جديد للجمهور بضغطة زر واحدة</p>
-              <button 
-                onClick={() => setShowCatManager(true)}
-                className="flex items-center gap-1 text-[11px] font-black bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg border border-white/20 transition-all"
-              >
-                <Tag className="w-3 h-3" />
-                إدارة التصنيفات
-              </button>
+      <div className="grid grid-cols-1 gap-6">
+        {/* News Management Tools Card */}
+        <div className="bg-white dark:bg-gray-800/50 p-8 rounded-[2.5rem] border border-gray-100 dark:border-gray-700 shadow-sm relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-blue-600/10 transition-all duration-700"></div>
+          
+          <div className="relative z-10 flex flex-col items-center text-center gap-8">
+            <div className="w-full max-w-lg">
+              <h2 className="text-3xl font-black text-gray-900 dark:text-white flex flex-col items-center justify-center gap-4 mb-4">
+                 <PlusCircle className="w-16 h-16 text-blue-600" />
+                 <span>خبر جديد</span>
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400 font-medium mb-8">قم بنشر محتوى جديد أو إدارة التصنيفات والمصادر من هنا</p>
+              
+              <div className="flex flex-col items-center gap-6">
+                <div className="flex items-center justify-center gap-8 w-full py-4 bg-gray-50/50 dark:bg-gray-900/30 rounded-3xl border border-gray-100 dark:border-gray-800">
+                  <button 
+                    onClick={() => setShowCatManager(true)}
+                    className="flex flex-col items-center gap-2 text-purple-600 hover:text-purple-700 transition-all group/link"
+                  >
+                    <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center group-hover/link:scale-110 transition-transform">
+                      <Tag className="w-6 h-6" />
+                    </div>
+                    <span className="font-black text-xs">إدارة التصنيفات</span>
+                  </button>
+
+                  <button 
+                    onClick={() => setShowAuthorManager(true)}
+                    className="flex flex-col items-center gap-2 text-cyan-600 hover:text-cyan-700 transition-all group/link"
+                  >
+                    <div className="w-12 h-12 bg-cyan-50 dark:bg-cyan-900/30 rounded-2xl flex items-center justify-center group-hover/link:scale-110 transition-transform">
+                      <Users className="w-6 h-6" />
+                    </div>
+                    <span className="font-black text-xs">المحررين والمصادر</span>
+                  </button>
+                </div>
+
+                <button 
+                  onClick={() => { resetForm(); setNewsMode("add"); setCurrentStep(1); }}
+                  className="w-full py-5 bg-blue-600 hover:bg-blue-700 text-white rounded-[1.5rem] font-black text-2xl shadow-xl shadow-blue-500/20 hover:scale-[1.03] active:scale-95 transition-all flex items-center justify-center gap-3"
+                >
+                  <Plus className="w-8 h-8 stroke-[3]" />
+                  ابدأ الآن
+                </button>
+              </div>
             </div>
           </div>
-          <button 
-            onClick={() => { resetForm(); setNewsMode("add"); setCurrentStep(1); }}
-            className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-4 rounded-2xl font-black text-lg shadow-lg hover:scale-105 transition-all flex items-center justify-center gap-3 active:scale-95"
-          >
-            <Plus className="w-5 h-5 stroke-[3]" />
-            ابدأ الكتابة الآن
-          </button>
         </div>
+
+        {/* Categories/Authors Manager Modals */}
+        <AnimatePresence>
+          {showCatManager && (
+            <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+              <motion.div 
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="bg-white dark:bg-gray-950 w-full max-w-5xl h-[85vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-white/20"
+              >
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                   <button onClick={() => setShowCatManager(false)} className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors">
+                      <X className="w-6 h-6" />
+                   </button>
+                   <h3 className="text-xl font-black">إدارة التصنيفات</h3>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 md:p-10">
+                   <AdminCategoryManager />
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {showAuthorManager && (
+            <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+              <motion.div 
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="bg-white dark:bg-gray-950 w-full max-w-5xl h-[85vh] rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-white/20"
+              >
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                   <button onClick={() => setShowAuthorManager(false)} className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors">
+                      <X className="w-6 h-6" />
+                   </button>
+                   <h3 className="text-xl font-black">إدارة المحررين والمصادر</h3>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 md:p-10">
+                   <AdminAuthorManager />
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Collapsible News List Section */}
@@ -1340,7 +1348,8 @@ export function AdminNewsWizard({ isAdmin }: { isAdmin?: boolean }) {
           )}
         </AnimatePresence>
       </div>
-      {showCatManager && <CategoryManagerModal />}
     </div>
   );
 }
+
+export default AdminNewsWizard;
