@@ -38,7 +38,7 @@ interface QuranReaderProps {
     color: string,
     text?: string,
     startOffset?: number,
-    endOffset?: number,
+    endOffset?: number
   ) => void;
   onDeleteHighlight: (index: number) => void;
   onProgressUpdate: (percentage: number) => void;
@@ -68,7 +68,7 @@ export function QuranReader({
   const [readerTheme, setReaderTheme] = useState<"day" | "night" | "sepia">(
     () => {
       return (localStorage.getItem("quran_pref_theme") as any) || "day";
-    },
+    }
   );
   const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(() => {
     return (localStorage.getItem("quran_pref_size") as any) || "md";
@@ -76,7 +76,7 @@ export function QuranReader({
   const [lineHeight, setLineHeight] = useState<"compact" | "relaxed" | "loose">(
     () => {
       return (localStorage.getItem("quran_pref_height") as any) || "relaxed";
-    },
+    }
   );
   const [fontMedium, setFontMedium] = useState<boolean>(() => {
     return localStorage.getItem("quran_pref_weight") === "medium";
@@ -96,11 +96,10 @@ export function QuranReader({
 
   // Paragraph-specific interactions
   const [selectedParaIndex, setSelectedParaIndex] = useState<number | null>(
-    null,
+    null
   );
   const [noteEditIndex, setNoteEditIndex] = useState<number | null>(null);
   const [noteText, setNoteText] = useState("");
-  const [jumpPrompt, setJumpPrompt] = useState<number | null>(null);
 
   // Selection Menu state
   const [selectionMenu, setSelectionMenu] = useState<{
@@ -143,7 +142,7 @@ export function QuranReader({
   useEffect(() => {
     localStorage.setItem(
       "quran_pref_weight",
-      fontMedium ? "medium" : "regular",
+      fontMedium ? "medium" : "regular"
     );
   }, [fontMedium]);
 
@@ -157,11 +156,11 @@ export function QuranReader({
         try {
           const stats = JSON.parse(
             localStorage.getItem(statsKey) ||
-              '{"lessonsReadCount":0,"totalReadingTimeSeconds":0,"totalReadingTimeMinutes":0,"lastReadTimestamp":0}',
+              '{"lessonsReadCount":0,"totalReadingTimeSeconds":0,"totalReadingTimeMinutes":0,"lastReadTimestamp":0}'
           );
           stats.totalReadingTimeSeconds += 10;
           stats.totalReadingTimeMinutes = Math.floor(
-            stats.totalReadingTimeSeconds / 60,
+            stats.totalReadingTimeSeconds / 60
           );
           stats.lastReadTimestamp = Date.now();
           localStorage.setItem(statsKey, JSON.stringify(stats));
@@ -189,21 +188,36 @@ export function QuranReader({
     // 1. Check for lesson specific last saved position
     const key = `quran_last_pos_${lesson.id}`;
     const saved = localStorage.getItem(key);
-    if (saved) {
+    let autoJumpDone = false;
+    if (saved && jumpToParagraphIndex === null) {
       try {
         const num = parseFloat(saved);
         if (num > 50) {
-          setJumpPrompt(num);
+          // Auto jump to last read position
+          let attempts = 0;
+          const tryAutoScroll = () => {
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.style.scrollBehavior = "auto";
+              scrollContainerRef.current.scrollTop = num;
+              scrollContainerRef.current.style.scrollBehavior = "smooth";
+            } else if (attempts < 20) {
+              attempts++;
+              setTimeout(tryAutoScroll, 100);
+            }
+          };
+          setTimeout(tryAutoScroll, 100);
+          autoJumpDone = true;
         }
       } catch (e) {}
     }
 
     // 2. Handle immediate jump clicked from bookmarks/notes list
     if (jumpToParagraphIndex !== null) {
-      setJumpPrompt(null);
       let attempts = 0;
       const tryScroll = () => {
-        const exactEl = jumpToExactId ? document.getElementById(jumpToExactId) : null;
+        const exactEl = jumpToExactId
+          ? document.getElementById(jumpToExactId)
+          : null;
         const paraEl = document.getElementById(`para-${jumpToParagraphIndex}`);
         const el = exactEl || paraEl;
         const container = scrollContainerRef.current;
@@ -220,10 +234,17 @@ export function QuranReader({
           container.scrollTo({ top: targetScrollTop, behavior: "smooth" });
 
           // Add precise target highlight class
-          const highlightClassList = ["ring-4", "ring-emerald-500/80", "ring-offset-2", "scale-[1.01]", "transition-all", "duration-500"];
-          highlightClassList.forEach(cls => el.classList.add(cls));
+          const highlightClassList = [
+            "ring-4",
+            "ring-emerald-500/80",
+            "ring-offset-2",
+            "scale-[1.01]",
+            "transition-all",
+            "duration-500",
+          ];
+          highlightClassList.forEach((cls) => el.classList.add(cls));
           setTimeout(() => {
-            highlightClassList.forEach(cls => el.classList.remove(cls));
+            highlightClassList.forEach((cls) => el.classList.remove(cls));
           }, 4000);
 
           setSelectedParaIndex(jumpToParagraphIndex);
@@ -254,7 +275,7 @@ export function QuranReader({
     // Word calculations
     const wordsRemaining = Math.max(
       0,
-      Math.ceil(wordCount * (1 - percentage / 100)),
+      Math.ceil(wordCount * (1 - percentage / 100))
     );
     const minutesLeft = Math.ceil(wordsRemaining / 180); // Arabic average speed
 
@@ -271,16 +292,6 @@ export function QuranReader({
 
     // Save scroll position for restoring
     localStorage.setItem(`quran_last_pos_${lesson.id}`, scrollTop.toString());
-  };
-
-  const handleApplyJumpRestore = () => {
-    if (jumpPrompt && scrollContainerRef.current) {
-      // Disable smooth scroll temporarily for immediate jump
-      scrollContainerRef.current.style.scrollBehavior = "auto";
-      scrollContainerRef.current.scrollTop = jumpPrompt;
-      scrollContainerRef.current.style.scrollBehavior = "smooth";
-      setJumpPrompt(null);
-    }
   };
 
   const handleSelection = () => {
@@ -401,7 +412,7 @@ export function QuranReader({
     paraText: string,
     idx: number,
     inlineHighlights: any[],
-    paragraphNotes: any[],
+    paragraphNotes: any[]
   ) => {
     const matchSegments: {
       start: number;
@@ -477,7 +488,7 @@ export function QuranReader({
 
     // Sort segments by start, then by length descending
     const sorted = [...matchSegments].sort(
-      (a, b) => a.start - b.start || b.end - a.end,
+      (a, b) => a.start - b.start || b.end - a.end
     );
     const finalSegments: typeof sorted = [];
     let lastEnd = 0;
@@ -510,7 +521,7 @@ export function QuranReader({
             className={`${hClass} inline-block leading-relaxed`}
           >
             {paraText.substring(seg.start, seg.end)}
-          </span>,
+          </span>
         );
       } else if (seg.type === "bookmark") {
         elements.push(
@@ -523,7 +534,7 @@ export function QuranReader({
           >
             <Bookmark className="w-3.5 h-3.5 text-red-500 fill-red-500 shrink-0 inline-block align-middle ml-1 pointer-events-none" />
             {paraText.substring(seg.start, seg.end)}
-          </span>,
+          </span>
         );
       } else if (seg.type === "note") {
         elements.push(
@@ -536,7 +547,7 @@ export function QuranReader({
           >
             <FileText className="w-3.5 h-3.5 text-amber-600 shrink-0 inline-block align-middle ml-1 pointer-events-none" />
             {paraText.substring(seg.start, seg.end)}
-          </span>,
+          </span>
         );
       }
 
@@ -607,7 +618,11 @@ export function QuranReader({
             </button>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-xl transition duration-200 ${showSettings ? "bg-blue-600 text-white" : "bg-white/5 hover:bg-white/10"}`}
+              className={`p-2 rounded-xl transition duration-200 ${
+                showSettings
+                  ? "bg-blue-600 text-white"
+                  : "bg-white/5 hover:bg-white/10"
+              }`}
               title="تنسيق الألوان والخط"
             >
               <Sliders className="w-5 h-5" />
@@ -630,19 +645,31 @@ export function QuranReader({
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setReaderTheme("day")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-text-primary ${readerTheme === "day" ? "bg-surface-main border-taiz-royal" : "bg-surface-main/80 border-transparent"}`}
+                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-text-primary ${
+                    readerTheme === "day"
+                      ? "bg-surface-main border-taiz-royal"
+                      : "bg-surface-main/80 border-transparent"
+                  }`}
                 >
                   🎨 نهاراً
                 </button>
                 <button
                   onClick={() => setReaderTheme("sepia")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-[#422F1E] ${readerTheme === "sepia" ? "bg-[#F4ECD8] border-[#7F6E5D]" : "bg-[#F4ECD8]/80 border-transparent"}`}
+                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-[#422F1E] ${
+                    readerTheme === "sepia"
+                      ? "bg-[#F4ECD8] border-[#7F6E5D]"
+                      : "bg-[#F4ECD8]/80 border-transparent"
+                  }`}
                 >
                   👁️ دافئ
                 </button>
                 <button
                   onClick={() => setReaderTheme("night")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-white ${readerTheme === "night" ? "bg-[#121214] border-taiz-sky" : "bg-[#121214]/85 border-transparent"}`}
+                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-white ${
+                    readerTheme === "night"
+                      ? "bg-[#121214] border-taiz-sky"
+                      : "bg-[#121214]/85 border-transparent"
+                  }`}
                 >
                   🌙 ليلاً
                 </button>
@@ -656,25 +683,41 @@ export function QuranReader({
                 <div className="grid grid-cols-4 gap-1.5 text-xs text-text-primary">
                   <button
                     onClick={() => setFontSize("sm")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "sm" ? "bg-taiz-royal text-white" : "bg-surface-main"}`}
+                    className={`py-1.5 px-2 font-bold rounded-lg ${
+                      fontSize === "sm"
+                        ? "bg-taiz-royal text-white"
+                        : "bg-surface-main"
+                    }`}
                   >
                     صغير
                   </button>
                   <button
                     onClick={() => setFontSize("md")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "md" ? "bg-taiz-royal text-white" : "bg-surface-main"}`}
+                    className={`py-1.5 px-2 font-bold rounded-lg ${
+                      fontSize === "md"
+                        ? "bg-taiz-royal text-white"
+                        : "bg-surface-main"
+                    }`}
                   >
                     متوسط
                   </button>
                   <button
                     onClick={() => setFontSize("lg")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "lg" ? "bg-taiz-royal text-white" : "bg-surface-main"}`}
+                    className={`py-1.5 px-2 font-bold rounded-lg ${
+                      fontSize === "lg"
+                        ? "bg-taiz-royal text-white"
+                        : "bg-surface-main"
+                    }`}
                   >
                     كبير
                   </button>
                   <button
                     onClick={() => setFontSize("xl")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${fontSize === "xl" ? "bg-taiz-royal text-white" : "bg-surface-main"}`}
+                    className={`py-1.5 px-2 font-bold rounded-lg ${
+                      fontSize === "xl"
+                        ? "bg-taiz-royal text-white"
+                        : "bg-surface-main"
+                    }`}
                   >
                     مضاعف
                   </button>
@@ -701,7 +744,11 @@ export function QuranReader({
                 <div className="flex flex-col justify-end">
                   <button
                     onClick={() => setFontMedium(!fontMedium)}
-                    className={`p-2.5 rounded border text-xs font-bold transition ${fontMedium ? "bg-taiz-royal border-taiz-royal text-white" : "bg-black/20 border-white/10 text-white/70"}`}
+                    className={`p-2.5 rounded border text-xs font-bold transition ${
+                      fontMedium
+                        ? "bg-taiz-royal border-taiz-royal text-white"
+                        : "bg-black/20 border-white/10 text-white/70"
+                    }`}
                   >
                     تفعيل خط عريض (Medium/Medium)
                   </button>
@@ -732,7 +779,7 @@ export function QuranReader({
             const isSelectionBookmarked = bookmarks.some(
               (b) =>
                 b.lessonId === lesson.id &&
-                b.paragraphIndex === selectionMenu.paraIndex,
+                b.paragraphIndex === selectionMenu.paraIndex
             );
             return (
               <div
@@ -771,7 +818,7 @@ export function QuranReader({
                           "yellow",
                           selectionMenu.text,
                           selectionMenu.startOffset,
-                          selectionMenu.endOffset,
+                          selectionMenu.endOffset
                         );
                         setSelectionMenu(null);
                         window.getSelection()?.removeAllRanges();
@@ -790,7 +837,7 @@ export function QuranReader({
                           "green",
                           selectionMenu.text,
                           selectionMenu.startOffset,
-                          selectionMenu.endOffset,
+                          selectionMenu.endOffset
                         );
                         setSelectionMenu(null);
                         window.getSelection()?.removeAllRanges();
@@ -829,18 +876,26 @@ export function QuranReader({
                         e.stopPropagation();
                         onToggleBookmark(
                           selectionMenu.paraIndex,
-                          selectionMenu.text,
+                          selectionMenu.text
                         );
                         setSelectionMenu(null);
                         window.getSelection()?.removeAllRanges();
                       }}
-                      className={`p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition flex flex-col items-center gap-0.5 ${isSelectionBookmarked ? "text-status-error font-extrabold" : "text-text-primary"}`}
+                      className={`p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition flex flex-col items-center gap-0.5 ${
+                        isSelectionBookmarked
+                          ? "text-status-error font-extrabold"
+                          : "text-text-primary"
+                      }`}
                       title={
                         isSelectionBookmarked ? "إلغاء الإشارة" : "حفظ إشارة"
                       }
                     >
                       <Bookmark
-                        className={`w-5 h-5 ${isSelectionBookmarked ? "text-status-error fill-status-error" : ""}`}
+                        className={`w-5 h-5 ${
+                          isSelectionBookmarked
+                            ? "text-status-error fill-status-error"
+                            : ""
+                        }`}
                       />
                       <span className="text-[10px] font-black">
                         {isSelectionBookmarked ? "إشارة محفوظـة" : "حفظ إشارة"}
@@ -870,7 +925,7 @@ export function QuranReader({
               position: "fixed",
               top: Math.min(
                 window.innerHeight - 350,
-                Math.max(100, floatingNote.y),
+                Math.max(100, floatingNote.y)
               ),
               left: window.innerWidth / 2,
               transform: "translateX(-50%)",
@@ -915,7 +970,7 @@ export function QuranReader({
                       onSaveNote(
                         floatingNote.paraIndex,
                         noteText,
-                        floatingNote.quote,
+                        floatingNote.quote
                       );
                       setFloatingNote(null);
                     }}
@@ -930,29 +985,6 @@ export function QuranReader({
           </div>
         )}
       </AnimatePresence>
-
-      {/* Jump Restore Prompt */}
-      {jumpPrompt !== null && (
-        <div className="flex justify-between items-center bg-taiz-sky/90 backdrop-blur text-white px-4 py-3 z-40 shadow-md font-sans text-xs md:text-sm">
-          <span>
-            لقد توقفت هنا في آخر قراءة لك. هل تود العودة للموضع السابق؟
-          </span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setJumpPrompt(null)}
-              className="px-2.5 py-1 bg-white/10 hover:bg-white/20 text-white rounded font-bold"
-            >
-              لا، شكراً
-            </button>
-            <button
-              onClick={handleApplyJumpRestore}
-              className="px-3 py-1 bg-white text-taiz-navy rounded font-bold hover:bg-surface-hover transition-colors"
-            >
-              نعم، المتابعة
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Main text viewport */}
       <div
@@ -983,26 +1015,26 @@ export function QuranReader({
             <div className="space-y-6">
               {paragraphs.map((paraText, idx) => {
                 const hasHighlight = highlights.find(
-                  (h) => h.lessonId === lesson.id && h.paragraphIndex === idx,
+                  (h) => h.lessonId === lesson.id && h.paragraphIndex === idx
                 );
                 const isBookmarked = bookmarks.some(
-                  (b) => b.lessonId === lesson.id && b.paragraphIndex === idx,
+                  (b) => b.lessonId === lesson.id && b.paragraphIndex === idx
                 );
                 const paragraphNotes = notes.filter(
-                  (n) => n.lessonId === lesson.id && n.paragraphIndex === idx,
+                  (n) => n.lessonId === lesson.id && n.paragraphIndex === idx
                 );
 
                 const globalHighlights = highlights.filter(
                   (h) =>
                     h.lessonId === lesson.id &&
                     h.paragraphIndex === idx &&
-                    !h.text,
+                    !h.text
                 );
                 const inlineHighlights = highlights.filter(
                   (h) =>
                     h.lessonId === lesson.id &&
                     h.paragraphIndex === idx &&
-                    h.text,
+                    h.text
                 );
 
                 let blockHighlightClass = "";
@@ -1023,11 +1055,15 @@ export function QuranReader({
                     key={idx}
                     onClick={() => {
                       setSelectedParaIndex(
-                        selectedParaIndex === idx ? null : idx,
+                        selectedParaIndex === idx ? null : idx
                       );
                       if (noteEditIndex !== idx) setNoteEditIndex(null);
                     }}
-                    className={`relative group px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 border border-transparent hover:border-border-light hover:bg-surface-hover ${fontSizeClasses[fontSize]} ${lineHeightClasses[lineHeight]} ${fontMedium ? "font-medium" : "font-natural"} text-justify ${blockHighlightClass}`}
+                    className={`relative group px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 border border-transparent hover:border-border-light hover:bg-surface-hover ${
+                      fontSizeClasses[fontSize]
+                    } ${lineHeightClasses[lineHeight]} ${
+                      fontMedium ? "font-medium" : "font-natural"
+                    } text-justify ${blockHighlightClass}`}
                   >
                     {/* Floating top flags for bookmark or note indicator */}
                     <div className="absolute top-1 left-2 flex items-center gap-1 pointer-events-none scale-90">
@@ -1041,13 +1077,17 @@ export function QuranReader({
 
                     {/* Main paragraph Text body */}
                     <div
-                      className={`flex-1 transition-colors ${selectedParaIndex === idx ? "text-text-primary" : "text-text-primary/90"}`}
+                      className={`flex-1 transition-colors ${
+                        selectedParaIndex === idx
+                          ? "text-text-primary"
+                          : "text-text-primary/90"
+                      }`}
                     >
                       {renderParagraphText(
                         paraText,
                         idx,
                         inlineHighlights,
-                        paragraphNotes,
+                        paragraphNotes
                       )}
                     </div>
 
@@ -1091,12 +1131,24 @@ export function QuranReader({
                           <div className="flex items-center gap-1 bg-surface-hover p-1 rounded-full border border-border-light">
                             <button
                               onClick={() => onToggleHighlight(idx, "yellow")}
-                              className={`w-6 h-6 rounded-full bg-yellow-400 border border-white hover:scale-110 transition ${globalHighlights.some((h) => h.color === "yellow") ? "ring-2 ring-amber-500" : ""}`}
+                              className={`w-6 h-6 rounded-full bg-yellow-400 border border-white hover:scale-110 transition ${
+                                globalHighlights.some(
+                                  (h) => h.color === "yellow"
+                                )
+                                  ? "ring-2 ring-amber-500"
+                                  : ""
+                              }`}
                               title="تظليل الفقرة بالأصفر"
                             />
                             <button
                               onClick={() => onToggleHighlight(idx, "green")}
-                              className={`w-6 h-6 rounded-full bg-emerald-400 border border-white hover:scale-110 transition ${globalHighlights.some((h) => h.color === "green") ? "ring-2 ring-emerald-500" : ""}`}
+                              className={`w-6 h-6 rounded-full bg-emerald-400 border border-white hover:scale-110 transition ${
+                                globalHighlights.some(
+                                  (h) => h.color === "green"
+                                )
+                                  ? "ring-2 ring-emerald-500"
+                                  : ""
+                              }`}
                               title="تظليل الفقرة بالأخضر"
                             />
                             {(globalHighlights.length > 0 ||
@@ -1115,10 +1167,16 @@ export function QuranReader({
                           {/* Bookmark add */}
                           <button
                             onClick={() => onToggleBookmark(idx, paraText)}
-                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl font-bold border transition ${isBookmarked ? "bg-status-error text-white border-status-error" : "bg-black/10 text-text-primary dark:bg-white/5 border-transparent"}`}
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl font-bold border transition ${
+                              isBookmarked
+                                ? "bg-status-error text-white border-status-error"
+                                : "bg-black/10 text-text-primary dark:bg-white/5 border-transparent"
+                            }`}
                           >
                             <Bookmark
-                              className={`w-3.5 h-3.5 ${isBookmarked ? "fill-white" : ""}`}
+                              className={`w-3.5 h-3.5 ${
+                                isBookmarked ? "fill-white" : ""
+                              }`}
                             />
                             <span>
                               {isBookmarked ? "إشارة محفوظة" : "حفظ إشارة"}
@@ -1131,7 +1189,7 @@ export function QuranReader({
                               setNoteEditIndex(idx);
                               setNoteText(
                                 paragraphNotes[paragraphNotes.length - 1]
-                                  ?.noteText || "",
+                                  ?.noteText || ""
                               );
                             }}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-text-primary dark:bg-white/5 border-transparent font-bold"

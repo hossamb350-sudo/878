@@ -169,21 +169,10 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   const fetchNewsList = async () => {
     setLoadingList(true);
     try {
-      // Load from local storage cache first (both idb and localStorage)
-      let mergedCached: NewsItem[] = [];
+      // Load from local storage cache first
       const cached = await SyncService.getCache<NewsItem>("news");
       if (cached && cached.length > 0) {
-        mergedCached = cached;
-      } else {
-        const lsCached = localStorage.getItem("taiz_news_cache");
-        if (lsCached) {
-          try {
-            mergedCached = JSON.parse(lsCached);
-          } catch {}
-        }
-      }
-      if (mergedCached && mergedCached.length > 0) {
-        setNewsList(mergedCached);
+        setNewsList(cached);
       }
       
       // Try to fetch latest from Firestore and update cache

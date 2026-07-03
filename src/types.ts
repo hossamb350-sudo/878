@@ -122,19 +122,19 @@ export interface QuranLesson {
 
 export interface QuranSyllabus {
   id: string;
-  title: string;
-  description?: string;
-  content?: string;
-  order: number;
+  lessonId: string; // Refers to the lesson in Local Storage
+  startDate: number;
+  endDate: number;
+  eventId?: string; // Optional link to an Event
   createdAt: number;
 }
 
 export interface QuranExcerpt {
   id: string;
+  lessonId: string; // Mandatory
   title: string;
   content: string;
-  imageUrl?: string;
-  order: number;
+  mediaUrl?: string; // Optional media
   createdAt: number;
 }
 

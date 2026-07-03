@@ -1,9 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Cairo", ui-sans-serif, system-ui, sans-serif;
-  
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-cairo: "Cairo", sans-serif;
+
   /* Brand Colors */
   --color-taiz-navy: #032F69;
   --color-taiz-royal: #055198;
@@ -12,7 +14,7 @@
   --color-taiz-soft: #90BAD6;
 
   /* Surface & Background Colors */
-  --color-surface-main: #eef1f5; /* Updated to match logo/splash background */
+  --color-surface-main: #eef1f5;
   --color-surface-card: #ffffff;
   --color-surface-hover: #f1f5f9;
   
@@ -26,22 +28,22 @@
   --color-text-muted: #94a3b8;
 
   /* Status / Semantic Colors */
-  --color-status-success: #10b981; /* Emerald 500 */
-  --color-status-success-bg: #d1fae5; /* Emerald 100 */
-  --color-status-warning: #f59e0b; /* Amber 500 */
-  --color-status-warning-bg: #fef3c7; /* Amber 100 */
-  --color-status-error: #ef4444; /* Red 500 */
-  --color-status-error-bg: #fee2e2; /* Red 100 */
-  --color-status-info: #3b82f6; /* Blue 500 */
-  --color-status-info-bg: #dbeafe; /* Blue 100 */
+  --color-status-success: #10b981;
+  --color-status-success-bg: #d1fae5;
+  --color-status-warning: #f59e0b;
+  --color-status-warning-bg: #fef3c7;
+  --color-status-error: #ef4444;
+  --color-status-error-bg: #fee2e2;
+  --color-status-info: #3b82f6;
+  --color-status-info-bg: #dbeafe;
 
   /* Border Radius */
-  --radius-sm: 0.5rem;      /* 8px */
-  --radius-md: 0.75rem;     /* 12px */
-  --radius-lg: 1rem;        /* 16px */
-  --radius-xl: 1.5rem;      /* 24px */
-  --radius-2xl: 2rem;       /* 32px */
-  --radius-3xl: 2.5rem;     /* 40px */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+  --radius-3xl: 2.5rem;
   --radius-full: 9999px;
 
   /* Shadows */
@@ -56,117 +58,42 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-surface-main text-text-primary antialiased;
+    @apply bg-surface-main text-text-primary antialiased font-sans;
   }
 }
 
 @layer components {
-  /* ==========================================================================
-     Design System Components
-     ========================================================================== */
-
-  /* Buttons */
   .btn {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
+  .btn-primary { @apply bg-taiz-navy text-white hover:bg-taiz-royal focus:ring-taiz-sky shadow-md hover:shadow-lg transform hover:-translate-y-0.5; }
+  .btn-secondary { @apply bg-surface-main text-taiz-navy border border-border-subtle hover:bg-white hover:border-taiz-sky/30 focus:ring-taiz-sky shadow-sm; }
+  .input-field { @apply w-full bg-surface-main border border-border-subtle focus:border-taiz-sky focus:bg-white focus:outline-none focus:ring-4 focus:ring-taiz-sky/10 rounded-xl px-4 py-3 text-sm font-bold transition-all placeholder:text-text-muted; }
+  .card { @apply bg-surface-card rounded-2xl border border-border-light shadow-soft; }
+  .card-hover { @apply hover:shadow-medium hover:border-taiz-sky/20 hover:-translate-y-0.5 transition-all duration-300; }
   
-  .btn-primary {
-    @apply bg-taiz-navy text-white hover:bg-taiz-royal focus:ring-taiz-sky shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
-  }
-  
-  .btn-secondary {
-    @apply bg-surface-main text-taiz-navy border border-border-subtle hover:bg-white hover:border-taiz-sky/30 focus:ring-taiz-sky shadow-sm;
-  }
-
-  .btn-outline {
-    @apply bg-transparent text-taiz-navy border-2 border-taiz-navy hover:bg-taiz-navy hover:text-white focus:ring-taiz-navy;
-  }
-  
-  .btn-danger {
-    @apply bg-status-error text-white hover:bg-red-600 focus:ring-red-500 shadow-sm;
-  }
-
-  .btn-icon {
-    @apply p-2.5 rounded-xl transition-all duration-300 flex items-center justify-center;
-  }
-
-  /* Form Elements */
-  .input-label {
-    @apply block text-sm font-bold text-text-secondary mb-1.5;
-  }
-
-  .input-field {
-    @apply w-full bg-surface-main border border-border-subtle focus:border-taiz-sky focus:bg-white focus:outline-none focus:ring-4 focus:ring-taiz-sky/10 rounded-xl px-4 py-3 text-sm font-bold transition-all placeholder:text-text-muted;
-  }
-
-  /* Cards */
-  .card {
-    @apply bg-surface-card rounded-2xl border border-border-light shadow-soft;
-  }
-
-  .card-hover {
-    @apply hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300;
-  }
-
-  .card-interactive {
-    @apply cursor-pointer hover:shadow-medium hover:border-taiz-sky/30 hover:-translate-y-1 transition-all duration-300;
-  }
-
-  /* Badges */
-  .badge {
-    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold tracking-wide;
-  }
-
-  .badge-primary {
-    @apply bg-taiz-sky/10 text-taiz-royal border border-taiz-sky/20;
-  }
-
-  .badge-success {
-    @apply bg-status-success-bg text-status-success border border-emerald-200;
-  }
-
-  .badge-warning {
-    @apply bg-status-warning-bg text-status-warning border border-amber-200;
-  }
-
-  .badge-error {
-    @apply bg-status-error-bg text-status-error border border-red-200;
-  }
-
-  .badge-info {
-    @apply bg-status-info-bg text-status-info border border-blue-200;
-  }
-
-  /* Glassmorphism */
   .glass-panel {
-    @apply bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-border-light shadow-strong;
-  }
-
-  /* Tables */
-  .table-container {
-    @apply w-full overflow-hidden rounded-2xl border border-border-light bg-surface-card shadow-soft;
+    @apply bg-white/95 backdrop-blur-lg border border-border-light shadow-soft;
   }
   
-  .table-header {
-    @apply bg-surface-main text-text-secondary font-bold text-xs uppercase tracking-wider text-right py-4 px-6 border-b border-border-subtle;
-  }
-  
-  .table-cell {
-    @apply py-4 px-6 text-sm text-text-primary border-b border-border-light;
-  }
-  
-  .table-row {
-    @apply hover:bg-surface-hover transition-colors;
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
 
 @layer utilities {
-  .shimmer {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .shimmer-sweep {
     position: relative;
     overflow: hidden;
   }
   
-  .shimmer::after {
+  .shimmer-sweep::after {
     content: '';
     position: absolute;
     top: -50%;
@@ -182,12 +109,12 @@
       rgba(255, 255, 255, 0) 100%
     );
     transform: rotate(45deg);
-    animation: shimmer 4s infinite linear;
+    animation: shimmer-anim 4s infinite linear;
     pointer-events: none;
   }
 }
 
-@keyframes shimmer {
+@keyframes shimmer-anim {
   0% { transform: translateX(-150%) rotate(45deg); }
   100% { transform: translateX(150%) rotate(45deg); }
 }
@@ -202,8 +129,4 @@
 
 @utility bg-taiz-gradient {
   background-image: linear-gradient(to right, #032F69, #055198, #049EDF);
-}
-
-@utility bg-taiz-gradient-rev {
-  background-image: linear-gradient(to left, #032F69, #055198, #049EDF);
 }

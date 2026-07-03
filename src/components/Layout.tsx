@@ -240,7 +240,7 @@ export function Layout() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-main text-text-primary transition-colors">
+    <div className="flex flex-col min-h-screen bg-surface-main text-text-primary transition-colors" dir="rtl">
       <UrgentNewsBanner />
 
       {/* Main Header - Reverted to previous state */}
@@ -255,26 +255,26 @@ export function Layout() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto pb-24 min-w-0 w-full overflow-x-hidden">
+      <main className="flex-1 flex flex-col overflow-y-auto pb-32 min-w-0 w-full overflow-x-hidden">
         <Outlet />
       </main>
 
       {/* Navigation for All Devices */}
-      <nav className={`fixed bottom-0 left-0 right-0 glass-panel border-t border-border-light px-1 flex justify-center items-center z-40 pb-safe transition-transform duration-300 ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
-        <div className="grid grid-cols-6 w-full max-w-2xl justify-items-center">
+      <nav className={`fixed bottom-0 left-0 right-0 bg-white/98 backdrop-blur-xl border-t border-border-light flex justify-center items-center z-40 pb-safe transition-transform duration-300 ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100 shadow-[0_-8px_30px_rgba(0,0,0,0.08)]'}`}>
+        <div className="flex justify-around w-full max-w-2xl mx-auto items-stretch px-1">
           {[
             { to: "/", icon: Newspaper, label: "الأخبار" },
             { to: "/watch", icon: Tv, label: "شاهد" },
             { to: "/leader", icon: User, label: "السيد القائد" },
             { to: "/quran", icon: BookOpen, label: "هدي القرآن" },
-            { to: "/events", icon: CalendarIcon, label: "تقويم المناسبات" },
+            { to: "/events", icon: CalendarIcon, label: "المناسبات" },
             { to: "/admin", icon: User, label: "حسابي" }
           ].map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-start pt-2 pb-2 w-full transition-all relative min-h-[4.25rem] sm:min-h-[4.5rem] group ${
+                `flex-1 flex flex-col items-center justify-center pt-2.5 pb-1.5 transition-all relative min-h-[3.8rem] group ${
                   isActive
                     ? "text-taiz-sky"
                     : "text-text-muted hover:text-taiz-navy"
@@ -283,11 +283,16 @@ export function Layout() {
             >
               {({ isActive }) => (
                 <>
-                  {isActive && <motion.div layoutId="nav-active" className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-taiz-sky to-taiz-royal rounded-b-full shadow-glow"></motion.div>}
-                  <div className="h-6 w-full flex items-center justify-center mb-1 shrink-0 mt-1">
-                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isActive ? 'fill-taiz-sky/10 scale-110 text-taiz-sky' : 'group-hover:scale-110'}`} />
+                  {isActive && (
+                    <motion.div 
+                      layoutId="nav-active" 
+                      className="absolute top-0 left-1/2 -translate-x-1/2 w-7 h-0.5 bg-gradient-to-r from-taiz-sky to-taiz-royal rounded-b-full shadow-glow"
+                    />
+                  )}
+                  <div className="flex items-center justify-center mb-1 shrink-0">
+                    <item.icon className={`w-4.5 h-4.5 sm:w-5 sm:h-5 transition-all duration-300 ${isActive ? 'fill-taiz-sky/10 scale-110 text-taiz-sky' : 'group-hover:scale-110'}`} />
                   </div>
-                  <span className="text-[9px] min-[380px]:text-[10px] sm:text-xs font-bold text-center leading-tight line-clamp-2 px-0.5 tracking-tight w-full">
+                  <span className={`text-[7px] min-[340px]:text-[8px] min-[380px]:text-[9px] sm:text-[10px] font-bold text-center leading-none whitespace-nowrap overflow-hidden text-ellipsis w-full px-0.5 transition-all ${isActive ? 'text-taiz-navy' : ''}`}>
                     {item.label}
                   </span>
                 </>
