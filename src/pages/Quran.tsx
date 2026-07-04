@@ -30,12 +30,10 @@ import {
   AlertTriangle,
   Trash2,
 } from "lucide-react";
-import {
-  STATIC_QURAN_SERIES,
-  STATIC_QURAN_LESSONS,
-  STATIC_QURAN_SYLLABUSES,
-  STATIC_QURAN_EXCERPTS,
-} from "../data/staticQuranData";
+import { motion, AnimatePresence } from "motion/react";
+import { QuranReader } from "../components/QuranReader";
+import { QuranStats } from "../components/QuranStats";
+import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS } from "../data/staticQuranData";
 
 enum OperationType {
   CREATE = "create",
@@ -351,28 +349,6 @@ const ExcerptsView = ({
     </div>
   </div>
 );
-
-const SyllabusDetailView = ({
-  selectedSyllabus,
-  onBack,
-  onNavigateToLesson,
-}: {
-  selectedSyllabus: QuranSyllabus | null;
-  scrollRef: React.RefObject<HTMLDivElement>;
-  onBack: () => void;
-  onNavigateToLesson: (lesson: QuranLesson) => void;
-}) => {
-  if (!selectedSyllabus) return null;
-  return (
-    <div className="flex-1 flex flex-col p-4 bg-surface-main">
-      <button onClick={onBack} className="mb-4 flex items-center gap-2 text-taiz-navy font-bold">
-        <ChevronRight className="w-5 h-5" /> عودة للمقررات
-      </button>
-      <h2 className="text-xl font-black mb-4">{selectedSyllabus.title}</h2>
-      <p className="text-text-secondary mb-4">{selectedSyllabus.description}</p>
-    </div>
-  );
-};
 
 const ExcerptDetailView = ({
   selectedExcerpt,
@@ -794,22 +770,49 @@ export function Quran() {
     const savedBookmarks = localStorage.getItem("quran_bookmarks");
     if (savedBookmarks) {
       try {
-        setBookmarks(JSON.parse(savedBookmarks));
-      } catch (e) {}
+        const parsed = JSON.parse(savedBookmarks);
+        if (Array.isArray(parsed)) {
+          setBookmarks(parsed);
+        } else {
+          console.warn("Invalid quran_bookmarks format:", parsed);
+          setBookmarks([]);
+        }
+      } catch (e) {
+        console.error("Error parsing quran_bookmarks:", e);
+        setBookmarks([]);
+      }
     }
 
     const savedNotes = localStorage.getItem("quran_notes");
     if (savedNotes) {
       try {
-        setNotes(JSON.parse(savedNotes));
-      } catch (e) {}
+        const parsed = JSON.parse(savedNotes);
+        if (Array.isArray(parsed)) {
+          setNotes(parsed);
+        } else {
+          console.warn("Invalid quran_notes format:", parsed);
+          setNotes([]);
+        }
+      } catch (e) {
+        console.error("Error parsing quran_notes:", e);
+        setNotes([]);
+      }
     }
 
     const savedHighlights = localStorage.getItem("quran_highlights");
     if (savedHighlights) {
       try {
-        setHighlights(JSON.parse(savedHighlights));
-      } catch (e) {}
+        const parsed = JSON.parse(savedHighlights);
+        if (Array.isArray(parsed)) {
+          setHighlights(parsed);
+        } else {
+          console.warn("Invalid quran_highlights format:", parsed);
+          setHighlights([]);
+        }
+      } catch (e) {
+        console.error("Error parsing quran_highlights:", e);
+        setHighlights([]);
+      }
     }
 
     // 2. Set up Auth state for display purposes
@@ -817,34 +820,12 @@ export function Quran() {
       setUser(currentUser);
     });
 
-    // 3. Sync data from Firestore
+    // 3. Sync data
     let active = true;
 
-    // Optional cache check for faster initial render
-    const importedSeries = localStorage.getItem("quran_imported_series");
-    if (importedSeries) {
-      try {
-        setSeriesList(JSON.parse(importedSeries));
-      } catch (e) {}
-    } else if (STATIC_QURAN_SERIES.length > 0) {
-      setSeriesList(STATIC_QURAN_SERIES);
-    }
-
-    const importedLessons = localStorage.getItem("quran_imported_lessons");
-    if (importedLessons) {
-      try {
-        setLessonsList(JSON.parse(importedLessons));
-      } catch (e) {}
-    } else if (STATIC_QURAN_LESSONS.length > 0) {
-      setLessonsList(STATIC_QURAN_LESSONS);
-    }
-
-    // Removed Firestore sync for Series and Lessons
-    
-    // Set other static data as fallbacks
-    if (STATIC_QURAN_SYLLABUSES.length > 0) setSyllabusesList(STATIC_QURAN_SYLLABUSES);
-    if (STATIC_QURAN_EXCERPTS.length > 0) setExcerptsList(STATIC_QURAN_EXCERPTS);
-
+    // Load static data
+    setSeriesList(STATIC_QURAN_SERIES);
+    setLessonsList(STATIC_QURAN_LESSONS);
     setLoading(false);
 
     const unsubSyllabuses = SyncService.syncCollection<QuranSyllabus>(
@@ -872,14 +853,8 @@ export function Quran() {
     };
   }, []);
 
-  const navigateToLesson = (lesson: QuranLesson, series?: QuranSeries) => {
-    if (!series && lesson.seriesId) {
-      const foundSeries = seriesList.find(s => s.id === lesson.seriesId);
-      if (foundSeries) setSelectedSeries(foundSeries);
-    } else if (series) {
-      setSelectedSeries(series);
-    }
-    
+  const navigateToLesson = (lesson: QuranLesson, series: QuranSeries) => {
+    setSelectedSeries(series);
     setSelectedLesson(lesson);
     setJumpToParagraphIndex(null);
     setActiveView("lesson-detail");
@@ -1309,7 +1284,8 @@ export function Quran() {
                       const series = seriesList.find(
                         (s: any) => s.id === lesson.seriesId
                       );
-                      navigateToLesson(lesson, series || undefined);
+                      setSelectedSeries(series || null);
+                      navigateToLesson(lesson);
                     }}
                     scrollRef={scrollRef}
                   />
@@ -1343,7 +1319,8 @@ export function Quran() {
                       const series = seriesList.find(
                         (s: any) => s.id === lesson.seriesId
                       );
-                      navigateToLesson(lesson, series || undefined);
+                      setSelectedSeries(series || null);
+                      navigateToLesson(lesson);
                     }}
                   />
                 )}

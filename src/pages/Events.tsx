@@ -698,13 +698,6 @@ export function Events() {
         event={selectedEvent}
         events={events}
         onClose={() => setSelectedEventId(null)}
-        onNavigateToSyllabus={() => {
-          if (relatedSyllabus) {
-            navigate("/quran", { state: { syllabusId: relatedSyllabus.id } });
-          }
-          setSelectedEventId(null);
-        }}
-        relatedSyllabus={relatedSyllabus}
       />
     </div>
   );

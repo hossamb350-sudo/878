@@ -1092,30 +1092,36 @@ export function QuranReader({
                     </div>
 
                     {/* Render Multiple Notes Sticky below */}
-                    {paragraphNotes.map((note, nIdx) => (
-                      <div
-                        key={note.id || `note-${idx}-${nIdx}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="mt-3 bg-surface-card p-3 rounded-xl border-r-4 border-taiz-royal text-text-primary text-sm shadow-sm flex items-start gap-3"
-                      >
-                        <FileText className="w-4 h-4 shrink-0 text-taiz-royal mt-1" />
-                        <div className="flex-1">
-                          <span className="font-bold text-xs text-text-muted block mb-1">
-                            ملاحظة {paragraphNotes.length > 1 ? nIdx + 1 : ""}:
-                          </span>
-                          <p className="leading-relaxed whitespace-pre-wrap">
-                            {note.noteText}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => onDeleteNote(note.id || idx)}
-                          className="text-text-muted hover:text-status-error transition-colors p-1 bg-surface-hover rounded-lg shrink-0"
-                          title="حذف الملاحظة"
+                    {paragraphNotes.map((note, nIdx) => {
+                      console.log("QuranReader: rendering note:", note);
+                      return (
+                        <div
+                          key={note.id || `note-${idx}-${nIdx}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-3 bg-surface-card p-3 rounded-xl border-r-4 border-taiz-royal text-text-primary text-sm shadow-sm flex items-start gap-3"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                          <FileText className="w-4 h-4 shrink-0 text-taiz-royal mt-1" />
+                          <div className="flex-1">
+                            <span className="font-bold text-xs text-text-muted block mb-1">
+                              ملاحظة {paragraphNotes.length > 1 ? nIdx + 1 : ""}:
+                            </span>
+                            <p className="leading-relaxed whitespace-pre-wrap">
+                              {note.noteText}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => {
+                              console.log("QuranReader: deleting note:", note.id);
+                              onDeleteNote(note.id);
+                            }}
+                            className="text-text-muted hover:text-status-error transition-colors p-1 bg-surface-hover rounded-lg shrink-0"
+                            title="حذف الملاحظة"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      );
+                    })}
 
                     {/* Action box expanders inside paragraph click */}
                     <AnimatePresence>
@@ -1188,8 +1194,10 @@ export function QuranReader({
                             onClick={() => {
                               setNoteEditIndex(idx);
                               setNoteText(
-                                paragraphNotes[paragraphNotes.length - 1]
-                                  ?.noteText || ""
+                                paragraphNotes.length > 0
+                                  ? paragraphNotes[paragraphNotes.length - 1]
+                                      ?.noteText || ""
+                                  : ""
                               );
                             }}
                             className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-text-primary dark:bg-white/5 border-transparent font-bold"
