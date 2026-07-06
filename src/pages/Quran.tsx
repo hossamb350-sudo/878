@@ -99,6 +99,8 @@ type QuranView =
 
 // --- Sub-components moved outside to prevent re-mounting on every state update ---
 
+const SyllabusDetailView = () => <div className="p-4 text-center">تفاصيل المنهج (قيد التطوير)</div>;
+
 const ProgressBar = ({ percentage }: { percentage: number }) => (
   <div className="w-full bg-surface-main h-1 rounded-full mt-3 overflow-hidden">
     <div style={{ width: `${percentage}%` }} className="h-full bg-taiz-sky" />
@@ -231,7 +233,7 @@ const LessonsView = ({
           </p>
         ) : (
           seriesLessons.map((lesson: any) => {
-            const progress = lessonProgress[lesson.id] || 0;
+            const progress = lessonProgress?.[lesson.id] || 0;
             return (
               <button
                 key={lesson.id}
@@ -828,7 +830,39 @@ export function Quran() {
     setLessonsList(STATIC_QURAN_LESSONS);
     setLoading(false);
 
-    const unsubSyllabuses = SyncService.syncCollection<QuranSyllabus>(
+    const unsubSeries = SyncService.syncCollection(
+      "quran_series",
+      (data) => {
+        if (active) {
+          setSeriesList((prev) => {
+            const staticIds = new Set(STATIC_QURAN_SERIES.map((s) => s.id));
+            const newDynamic = data.filter((d) => !staticIds.has(d.id));
+            return [...STATIC_QURAN_SERIES, ...newDynamic].sort(
+              (a, b) => ((a as any).order || 0) - ((b as any).order || 0)
+            );
+          });
+        }
+      },
+      { orderByField: "order", orderDirection: "asc" }
+    );
+
+    const unsubLessons = SyncService.syncCollection(
+      "quran_lessons",
+      (data) => {
+        if (active) {
+          setLessonsList((prev) => {
+            const staticIds = new Set(STATIC_QURAN_LESSONS.map((l) => l.id));
+            const newDynamic = data.filter((d) => !staticIds.has(d.id));
+            return [...STATIC_QURAN_LESSONS, ...newDynamic].sort(
+              (a, b) => ((a as any).order || 0) - ((b as any).order || 0)
+            );
+          });
+        }
+      },
+      { orderByField: "order", orderDirection: "asc" }
+    );
+
+    const unsubSyllabuses = SyncService.syncCollection(
       "quran_syllabuses",
       (data) => {
         if (active) setSyllabusesList(data);
@@ -848,6 +882,8 @@ export function Quran() {
       unsubAuth();
       active = false;
 
+      unsubSeries.then((u) => u());
+      unsubLessons.then((u) => u());
       unsubSyllabuses.then((u) => u());
       unsubExcerpts.then((u) => u());
     };
@@ -1248,10 +1284,10 @@ export function Quran() {
                   <LessonsView
                     selectedSeries={selectedSeries}
                     lessonsList={lessonsList}
-                    progressList={lessonProgress}
+                    lessonProgress={lessonProgress}
                     syllabusesList={syllabusesList}
                     scrollRef={scrollRef}
-                    onSelectLesson={navigateToLesson}
+                    onNavigateToLesson={navigateToLesson}
                   />
                 )}
                 {activeView === "lesson-detail" && (
@@ -1285,7 +1321,7 @@ export function Quran() {
                         (s: any) => s.id === lesson.seriesId
                       );
                       setSelectedSeries(series || null);
-                      navigateToLesson(lesson);
+                      navigateToLesson(lesson, series!);
                     }}
                     scrollRef={scrollRef}
                   />
@@ -1320,7 +1356,7 @@ export function Quran() {
                         (s: any) => s.id === lesson.seriesId
                       );
                       setSelectedSeries(series || null);
-                      navigateToLesson(lesson);
+                      navigateToLesson(lesson, series!);
                     }}
                   />
                 )}

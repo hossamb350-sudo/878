@@ -698,6 +698,7 @@ export function Events() {
         event={selectedEvent}
         events={events}
         onClose={() => setSelectedEventId(null)}
+        onNavigateToSyllabus={() => {}}
       />
     </div>
   );

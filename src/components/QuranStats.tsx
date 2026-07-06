@@ -65,9 +65,9 @@ export function QuranStats({
 
   // Filter lessons that have any reading progress > 0
   const startedLessons = lessonsList
-    .filter((l) => (lessonProgress[l.id] || 0) > 0)
+    .filter((l) => (lessonProgress?.[l.id] || 0) > 0)
     .map((l) => {
-      const progress = lessonProgress[l.id] || 0;
+      const progress = lessonProgress?.[l.id] || 0;
       const series = seriesList.find((s) => s.id === l.seriesId);
       return {
         ...l,
@@ -80,13 +80,13 @@ export function QuranStats({
   // Find all lessons with ANY activity (progress, bookmarks, notes)
   const activeLessons = lessonsList
     .filter((l) => {
-      const hasProgress = (lessonProgress[l.id] || 0) > 0;
+      const hasProgress = (lessonProgress?.[l.id] || 0) > 0;
       const hasBookmarks = bookmarks.some((b) => b.lessonId === l.id);
       const hasNotes = notes.some((n) => n.lessonId === l.id);
       return hasProgress || hasBookmarks || hasNotes;
     })
     .map((l) => {
-      const progress = lessonProgress[l.id] || 0;
+      const progress = lessonProgress?.[l.id] || 0;
       const series = seriesList.find((s) => s.id === l.seriesId);
       const lessonBookmarks = bookmarks.filter((b) => b.lessonId === l.id);
       const lessonNotes = notes.filter((n) => n.lessonId === l.id);
@@ -101,7 +101,7 @@ export function QuranStats({
     .sort((a, b) => b.progress - a.progress);
 
   // Count lessons fully or partially read
-  const completedCount = Object.values(lessonProgress).filter(
+  const completedCount = Object.values(lessonProgress || {}).filter(
     (p) => p >= 92,
   ).length;
 

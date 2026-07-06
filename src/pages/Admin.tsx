@@ -88,6 +88,7 @@ import { notificationService } from "../services/NotificationService";
 import { SyncService, handleFirestoreError } from "../services/SyncService";
 
 import { AdminNewsWizard } from "../components/AdminNewsWizard";
+import { STATIC_QURAN_LESSONS } from "../data/staticQuranData";
 import { AdminCategoryManager } from "../components/AdminCategoryManager";
 
 const ContactUsSection = () => {
@@ -328,6 +329,12 @@ export function Admin() {
       icon: Shield,
       label: "السيد القائد",
       access: isAdmin || isManager || (isEditor && hasPermission("leader")),
+    },
+    {
+      id: "quran",
+      icon: BookOpen,
+      label: "هدي القرآن",
+      access: isAdmin || isManager,
     },
     {
       id: "events",
@@ -659,6 +666,7 @@ export function Admin() {
             {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
             {activeTab === "live" && isAdmin && <AdminLive />}
             {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
+            {activeTab === "quran" && (isAdmin || isManager) && <AdminQuran />}
             {activeTab === "events" && isAdmin && <AdminEvents />}
             {activeTab === "social" && (isAdmin || isManager) && (
               <AdminSocialLinks />
@@ -3036,9 +3044,9 @@ import {
 } from "../types";
 
 function AdminQuran() {
-  const [activeTab, setActiveTab] = useState<"syllabuses" | "excerpts">(
-    "syllabuses"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "series" | "lessons" | "syllabuses" | "excerpts"
+  >("series");
 
   return (
     <div className="space-y-6">
@@ -3049,6 +3057,8 @@ function AdminQuran() {
 
       <div className="flex gap-2 overflow-x-auto pb-2">
         {[
+          { id: "series", label: "السلاسل" },
+          { id: "lessons", label: "الدروس" },
           { id: "syllabuses", label: "المقررات" },
           { id: "excerpts", label: "المقتطفات" },
         ].map((tab) => (
@@ -3067,6 +3077,8 @@ function AdminQuran() {
       </div>
 
       <div className="space-y-6">
+        {activeTab === "series" && <AdminQuranSeries />}
+        {activeTab === "lessons" && <AdminQuranLessons />}
         {activeTab === "syllabuses" && <AdminQuranSyllabuses />}
         {activeTab === "excerpts" && <AdminQuranExcerpts />}
       </div>
@@ -3418,8 +3430,7 @@ function AdminQuranLessons() {
 function AdminQuranSyllabuses() {
   const [list, setList] = useState<QuranSyllabus[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
-  const [localLessons, setLocalLessons] = useState<QuranLesson[]>([]);
-
+  const [localLessons, setLocalLessons] = useState<QuranLesson[]>(STATIC_QURAN_LESSONS);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lessonId, setLessonId] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -3428,13 +3439,13 @@ function AdminQuranSyllabuses() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    // Load local lessons
-    try {
-      const saved = localStorage.getItem("quran_imported_lessons");
-      if (saved) {
-        setLocalLessons(JSON.parse(saved));
+    const unsubLessons = onSnapshot(
+      query(collection(db, "quran_lessons")),
+      (snap) => {
+        const firestoreLessons = snap.docs.map((d) => ({ id: d.id, ...d.data() } as QuranLesson));
+        setLocalLessons([...STATIC_QURAN_LESSONS, ...firestoreLessons]);
       }
-    } catch (e) {}
+    );
 
     const unsub = onSnapshot(
       query(collection(db, "quran_syllabuses"), orderBy("createdAt", "desc")),
@@ -3454,7 +3465,8 @@ function AdminQuranSyllabuses() {
     );
     return () => {
       unsub();
-      unsubEvents();
+      unsubEvents?.();
+      unsubLessons?.();
     };
   }, []);
 
@@ -3648,7 +3660,7 @@ function AdminQuranSyllabuses() {
 
 function AdminQuranExcerpts() {
   const [list, setList] = useState<QuranExcerpt[]>([]);
-  const [localLessons, setLocalLessons] = useState<QuranLesson[]>([]);
+  const [localLessons, setLocalLessons] = useState<QuranLesson[]>(STATIC_QURAN_LESSONS);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [lessonId, setLessonId] = useState("");
@@ -3658,10 +3670,13 @@ function AdminQuranExcerpts() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("quran_imported_lessons");
-      if (saved) setLocalLessons(JSON.parse(saved));
-    } catch (e) {}
+    const unsubLessons = onSnapshot(
+      query(collection(db, "quran_lessons")),
+      (snap) => {
+        const firestoreLessons = snap.docs.map((d) => ({ id: d.id, ...d.data() } as QuranLesson));
+        setLocalLessons([...STATIC_QURAN_LESSONS, ...firestoreLessons]);
+      }
+    );
 
     const unsub = onSnapshot(
       query(collection(db, "quran_excerpts"), orderBy("createdAt", "desc")),
@@ -3671,7 +3686,10 @@ function AdminQuranExcerpts() {
         );
       }
     );
-    return unsub;
+    return () => {
+      unsub();
+      unsubLessons?.();
+    };
   }, []);
 
   const save = async () => {
