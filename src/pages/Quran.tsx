@@ -180,39 +180,72 @@ const QuranSearchView = ({
   );
 };
 
-const SeriesView = ({ seriesList, onSelectSeries, scrollRef }: any) => (
-  <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
-    <div className="space-y-4 max-w-lg mx-auto">
-      {seriesList.length === 0 ? (
-        <p className="text-center text-text-muted py-10 font-bold">
-          لا توجد سلاسل متاحة حالياً
-        </p>
-      ) : (
-        seriesList.map((series: any) => (
-          <button
-            key={series.id}
-            onClick={() => onSelectSeries(series)}
-            className="w-full bg-surface-card hover:bg-surface-hover transition-all p-5 rounded-3xl flex items-center justify-between border-r-8 border-taiz-royal group shadow-sm text-right focus:outline-none"
-          >
-            <div className="flex flex-col gap-1 pr-1">
-              <span className="text-lg font-black text-text-primary">
-                {series.title}
-              </span>
-              {series.description && (
-                <span className="text-xs text-text-secondary font-bold">
-                  {series.description}
-                </span>
-              )}
-            </div>
-            <div className="w-8 h-8 rounded-full bg-taiz-navy/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shrink-0 mr-2 focus:outline-none">
-              <ChevronLeft className="w-5 h-5 text-taiz-navy" />
-            </div>
-          </button>
-        ))
-      )}
+const formatLessonCount = (count: number) => {
+  if (count === 1) return "درس واحد";
+  if (count === 2) return "درسان";
+  if (count >= 3 && count <= 10) return `${count} دروس`;
+  return `${count} درساً`;
+};
+
+const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }: any) => {
+  return (
+    <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
+      <div className="max-w-2xl mx-auto">
+        {seriesList.length === 0 ? (
+          <p className="text-center text-text-muted py-10 font-bold">
+            لا توجد سلاسل متاحة حالياً
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {seriesList.map((series: any) => {
+              const count = lessonsList.filter((l: any) => l.seriesId === series.id).length;
+              return (
+                <button
+                  key={series.id}
+                  onClick={() => onSelectSeries(series)}
+                  className="w-full bg-surface-card hover:bg-surface-hover hover:scale-[1.01] hover:border-taiz-royal/50 transition-all duration-200 p-5 rounded-2xl flex flex-col justify-between border border-border-light/60 group shadow-sm text-right focus:outline-none h-full relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 left-0 h-[3px] bg-gradient-to-l from-taiz-royal to-taiz-sky opacity-70" />
+                  
+                  <div className="flex flex-col gap-3 w-full">
+                    <div className="flex items-start justify-between gap-2 w-full">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-taiz-navy/5 flex items-center justify-center shrink-0">
+                          <Library className="w-4 h-4 text-taiz-royal" />
+                        </div>
+                        <span className="text-base font-bold text-text-primary group-hover:text-taiz-royal transition-colors line-clamp-2">
+                          {series.title}
+                        </span>
+                      </div>
+                      
+                      <div className="w-6 h-6 rounded-full bg-taiz-navy/5 flex items-center justify-center opacity-40 group-hover:opacity-100 group-hover:bg-taiz-navy/10 transition shrink-0">
+                        <ChevronLeft className="w-4 h-4 text-text-primary" />
+                      </div>
+                    </div>
+
+                    {series.description && (
+                      <p className="text-xs text-text-muted font-normal leading-relaxed line-clamp-2">
+                        {series.description}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-border-light/40 flex items-center justify-between w-full text-xs text-text-secondary">
+                    <span className="font-bold flex items-center gap-1.5 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 px-2.5 py-1 rounded-lg">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      {formatLessonCount(count)}
+                    </span>
+                    <span className="text-[10px] text-text-muted">انقر للتصفح</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const LessonsView = ({
   selectedSeries,
@@ -224,32 +257,55 @@ const LessonsView = ({
   const seriesLessons = lessonsList.filter(
     (l: any) => l.seriesId === selectedSeries?.id
   );
+  
   return (
     <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
-      <div className="space-y-3 max-w-lg mx-auto">
+      <div className="max-w-2xl mx-auto">
         {seriesLessons.length === 0 ? (
           <p className="text-center text-text-muted py-10 font-bold">
             لا توجد دروس في هذه السلسلة أو لم يتم إضافتها بعد.
           </p>
         ) : (
-          seriesLessons.map((lesson: any) => {
-            const progress = lessonProgress?.[lesson.id] || 0;
-            return (
-              <button
-                key={lesson.id}
-                onClick={() => onNavigateToLesson(lesson, selectedSeries!)}
-                className="w-full bg-surface-card hover:bg-surface-hover transition p-4 rounded-3xl flex flex-col shadow-sm border border-border-light text-right group focus:outline-none"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-base font-black text-text-primary truncate pr-2">
-                    {lesson.title}
-                  </span>
-                  <BookOpen className="w-5 h-5 text-text-muted group-hover:text-taiz-sky transition shrink-0" />
-                </div>
-                {progress > 0 && <ProgressBar percentage={progress} />}
-              </button>
-            );
-          })
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {seriesLessons.map((lesson: any) => {
+              const progress = lessonProgress?.[lesson.id] || 0;
+              return (
+                <button
+                  key={lesson.id}
+                  onClick={() => onNavigateToLesson(lesson, selectedSeries!)}
+                  className="w-full bg-surface-card hover:bg-surface-hover hover:scale-[1.01] hover:border-taiz-royal/50 transition-all duration-200 p-5 rounded-2xl flex flex-col justify-between border border-border-light/60 group shadow-sm text-right focus:outline-none h-full relative"
+                >
+                  <div className="flex flex-col gap-3 w-full">
+                    <div className="flex items-start justify-between gap-3 w-full">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-taiz-sky/10 flex items-center justify-center shrink-0 group-hover:bg-taiz-sky/20 transition-colors">
+                          <BookOpen className="w-4 h-4 text-taiz-sky" />
+                        </div>
+                        <span className="text-base font-bold text-text-primary group-hover:text-taiz-royal transition-colors line-clamp-2">
+                          {lesson.title}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="text-xs text-text-muted font-medium bg-surface-main px-3 py-1.5 rounded-lg flex items-center gap-1.5 mt-1 border border-border-light/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-taiz-sky" />
+                      <span>يتبع لـ: {selectedSeries?.title || "سلسلة غير معروفة"}</span>
+                    </div>
+                  </div>
+
+                  {progress > 0 && (
+                    <div className="mt-4 pt-1 w-full">
+                      <div className="flex items-center justify-between text-[10px] text-text-secondary mb-1 font-bold">
+                        <span>نسبة الإنجاز</span>
+                        <span>{Math.round(progress)}%</span>
+                      </div>
+                      <ProgressBar percentage={progress} />
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
@@ -264,7 +320,7 @@ const SyllabusesView = ({
 }: any) => {
   const now = Date.now();
   const activeSyllabuses = syllabusesList.filter(
-    (s: any) => now >= s.startDate && now <= s.endDate
+    (s: any) => !s.expiresAt || now <= s.expiresAt
   );
 
   return (
@@ -294,10 +350,18 @@ const SyllabusesView = ({
                 <span className="text-lg font-black text-text-primary">
                   {lesson.title}
                 </span>
-                <span className="text-xs text-text-secondary font-bold">
-                  من {new Date(item.startDate).toLocaleDateString("ar-EG")} إلى{" "}
-                  {new Date(item.endDate).toLocaleDateString("ar-EG")}
-                </span>
+                {item.expiresAt ? (
+                  <span className="text-xs text-text-secondary font-bold">
+                    ينتهي في: {new Date(item.expiresAt).toLocaleDateString("ar-YE")}
+                  </span>
+                ) : (
+                  item.startDate && item.endDate && (
+                    <span className="text-xs text-text-secondary font-bold">
+                      من {new Date(item.startDate).toLocaleDateString("ar-EG")} إلى{" "}
+                      {new Date(item.endDate).toLocaleDateString("ar-EG")}
+                    </span>
+                  )
+                )}
               </button>
             );
           })
@@ -822,70 +886,30 @@ export function Quran() {
       setUser(currentUser);
     });
 
-    // 3. Sync data
+    // 3. Load static data only (no dynamic fetching from Firebase for series/lessons/excerpts)
     let active = true;
 
-    // Load static data
     setSeriesList(STATIC_QURAN_SERIES);
     setLessonsList(STATIC_QURAN_LESSONS);
+    setExcerptsList([]);
     setLoading(false);
-
-    const unsubSeries = SyncService.syncCollection(
-      "quran_series",
-      (data) => {
-        if (active) {
-          setSeriesList((prev) => {
-            const staticIds = new Set(STATIC_QURAN_SERIES.map((s) => s.id));
-            const newDynamic = data.filter((d) => !staticIds.has(d.id));
-            return [...STATIC_QURAN_SERIES, ...newDynamic].sort(
-              (a, b) => ((a as any).order || 0) - ((b as any).order || 0)
-            );
-          });
-        }
-      },
-      { orderByField: "order", orderDirection: "asc" }
-    );
-
-    const unsubLessons = SyncService.syncCollection(
-      "quran_lessons",
-      (data) => {
-        if (active) {
-          setLessonsList((prev) => {
-            const staticIds = new Set(STATIC_QURAN_LESSONS.map((l) => l.id));
-            const newDynamic = data.filter((d) => !staticIds.has(d.id));
-            return [...STATIC_QURAN_LESSONS, ...newDynamic].sort(
-              (a, b) => ((a as any).order || 0) - ((b as any).order || 0)
-            );
-          });
-        }
-      },
-      { orderByField: "order", orderDirection: "asc" }
-    );
 
     const unsubSyllabuses = SyncService.syncCollection(
       "quran_syllabuses",
       (data) => {
-        if (active) setSyllabusesList(data);
-      },
-      { orderByField: "order", orderDirection: "asc" }
-    );
-
-    const unsubExcerpts = SyncService.syncCollection<QuranExcerpt>(
-      "quran_excerpts",
-      (data) => {
-        if (active) setExcerptsList(data);
-      },
-      { orderByField: "order", orderDirection: "asc" }
+        if (active) {
+          // Filter out expired syllabuses in real-time
+          const now = Date.now();
+          const activeSyllabuses = data.filter((s: any) => !s.expiresAt || now <= s.expiresAt);
+          setSyllabusesList(activeSyllabuses);
+        }
+      }
     );
 
     return () => {
       unsubAuth();
       active = false;
-
-      unsubSeries.then((u) => u());
-      unsubLessons.then((u) => u());
       unsubSyllabuses.then((u) => u());
-      unsubExcerpts.then((u) => u());
     };
   }, []);
 
@@ -1273,6 +1297,7 @@ export function Quran() {
                 {activeView === "series" && (
                   <SeriesView
                     seriesList={seriesList}
+                    lessonsList={lessonsList}
                     scrollRef={scrollRef}
                     onSelectSeries={(s: any) => {
                       setSelectedSeries(s);
