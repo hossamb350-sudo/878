@@ -33,7 +33,8 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { QuranReader } from "../components/QuranReader";
 import { QuranStats } from "../components/QuranStats";
-import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS } from "../data/staticQuranData";
+import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData } from "../data/staticQuranData";
+import { loadQuranData } from "../data/importedQuranData";
 
 enum OperationType {
   CREATE = "create",
@@ -889,18 +890,14 @@ export function Quran() {
     // 3. Load data asynchronously from JSON file
     let active = true;
 
-    import("../data/importedQuranData").then(({ loadQuranData }) => {
-      return loadQuranData();
-    }).then((data) => {
+    loadQuranData().then((data) => {
       if (!active) return;
       
-      import("../data/staticQuranData").then(({ processQuranData }) => {
-        const processed = processQuranData(data);
-        setSeriesList(processed.series);
-        setLessonsList(processed.lessons);
-        setExcerptsList(processed.excerpts);
-        setLoading(false);
-      });
+      const processed = processQuranData(data);
+      setSeriesList(processed.series);
+      setLessonsList(processed.lessons);
+      setExcerptsList(processed.excerpts);
+      setLoading(false);
     }).catch(err => {
       console.error("Failed to load Quran data:", err);
       if (active) setLoading(false);
