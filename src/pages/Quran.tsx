@@ -897,28 +897,20 @@ export function Quran() {
       setSeriesList(processed.series);
       setLessonsList(processed.lessons);
       setExcerptsList(processed.excerpts);
+      
+      const now = Date.now();
+      const activeSyllabuses = (processed.syllabuses || []).filter((s: any) => !s.expiresAt || now <= s.expiresAt);
+      setSyllabusesList(activeSyllabuses);
+      
       setLoading(false);
     }).catch(err => {
       console.error("Failed to load Quran data:", err);
       if (active) setLoading(false);
     });
 
-    const unsubSyllabuses = SyncService.syncCollection(
-      "quran_syllabuses",
-      (data) => {
-        if (active) {
-          // Filter out expired syllabuses in real-time
-          const now = Date.now();
-          const activeSyllabuses = data.filter((s: any) => !s.expiresAt || now <= s.expiresAt);
-          setSyllabusesList(activeSyllabuses);
-        }
-      }
-    );
-
     return () => {
       unsubAuth();
       active = false;
-      unsubSyllabuses.then((u) => u());
     };
   }, []);
 

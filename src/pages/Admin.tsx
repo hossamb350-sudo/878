@@ -334,8 +334,8 @@ export function Admin() {
     },
     {
       id: "quran",
-      icon: BookOpen,
-      label: "هدي القرآن",
+      icon: Settings,
+      label: "إعداد محتوى المنصة",
       access: isAdmin || isManager,
     },
     {
@@ -781,7 +781,7 @@ function AdminSummaryDashboard({
     },
     {
       id: "quran",
-      label: "هدي القرآن",
+      label: "إعداد محتوى المنصة",
       icon: BookOpen,
       color: "emerald",
       access: filteredTabs.some((t) => t.id === "quran"),
@@ -3022,15 +3022,65 @@ import {
 } from "../types";
 
 function AdminQuran() {
+  const [subTab, setSubTab] = useState<"syllabuses" | "series" | "lessons" | "excerpts">("series");
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2 border-b dark:border-gray-700 pb-3">
-        <BookOpen className="w-6 h-6 text-emerald-600" />
-        <h2 className="text-xl font-bold">إدارة المقررات الدراسية (هدي القرآن)</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
+        <div className="flex items-center gap-2">
+          <Settings className="w-6 h-6 text-emerald-600" />
+          <h2 className="text-xl font-bold">إعداد محتوى المنصة (هدي القرآن)</h2>
+        </div>
+        
+        <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl shrink-0" dir="rtl">
+          <button
+            onClick={() => setSubTab("series")}
+            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
+              subTab === "series" 
+                ? "bg-white dark:bg-gray-800 text-emerald-600 shadow-sm" 
+                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            السلاسل
+          </button>
+          <button
+            onClick={() => setSubTab("lessons")}
+            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
+              subTab === "lessons" 
+                ? "bg-white dark:bg-gray-800 text-emerald-600 shadow-sm" 
+                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            الدروس
+          </button>
+          <button
+            onClick={() => setSubTab("excerpts")}
+            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
+              subTab === "excerpts" 
+                ? "bg-white dark:bg-gray-800 text-emerald-600 shadow-sm" 
+                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            المقتطفات
+          </button>
+          <button
+            onClick={() => setSubTab("syllabuses")}
+            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
+              subTab === "syllabuses" 
+                ? "bg-white dark:bg-gray-800 text-emerald-600 shadow-sm" 
+                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            المقررات
+          </button>
+        </div>
       </div>
 
-      <div className="space-y-6">
-        <AdminQuranSyllabuses />
+      <div className="animate-fade-in">
+        {subTab === "series" && <AdminQuranSeries />}
+        {subTab === "lessons" && <AdminQuranLessons />}
+        {subTab === "syllabuses" && <AdminQuranSyllabuses />}
+        {subTab === "excerpts" && <AdminQuranExcerpts />}
       </div>
     </div>
   );
@@ -3038,118 +3088,195 @@ function AdminQuran() {
 
 function AdminQuranSeries() {
   const [list, setList] = useState<QuranSeries[]>([]);
+  const [fullData, setFullData] = useState<{ series: QuranSeries[]; lessons: QuranLesson[] }>({ series: [], lessons: [] });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [order, setOrder] = useState<number>(0);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onSnapshot(
-      query(collection(db, "quran_series"), orderBy("order", "asc")),
-      (snap) => {
-        setList(
-          snap.docs.map((d) => ({ id: d.id, ...d.data() } as QuranSeries))
-        );
-      },
-      (err) => console.warn("Admin quran series err:", err)
-    );
-    return unsub;
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/quran-data");
+      const data = await res.json();
+      setFullData(data);
+      setList(data.series || []);
+    } catch (e) {
+      console.error("Error fetching Quran data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const save = async () => {
     if (!title) return;
     setSaving(true);
     try {
-      const payload = { title, description: desc, order: Number(order) };
+      let newList = [...list];
       if (editingId) {
-        await updateDoc(doc(db, "quran_series", editingId), payload);
-        alert("تم التعديل بنجاح");
+        newList = newList.map(s => s.id === editingId ? { ...s, title, description: desc, order: Number(order) } : s);
       } else {
-        await addDoc(collection(db, "quran_series"), {
-          ...payload,
-          createdAt: Date.now(),
-        });
-        alert("تمت الإضافة بنجاح");
+        const newSeries: QuranSeries = {
+          id: Date.now().toString(),
+          title,
+          description: desc,
+          order: Number(order),
+          createdAt: Date.now()
+        };
+        newList.push(newSeries);
       }
-      setEditingId(null);
-      setTitle("");
-      setDesc("");
-      setOrder(0);
+      
+      const newFullData = { ...fullData, series: newList };
+      const res = await fetch("/api/quran-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newFullData)
+      });
+
+      if (res.ok) {
+        setFullData(newFullData);
+        setList(newList);
+        alert("تم الحفظ بنجاح في ملفات المنصة");
+        resetForm(newList);
+      } else {
+        throw new Error("Failed to save");
+      }
     } catch (e) {
+      alert("حدث خطأ أثناء الحفظ");
     } finally {
       setSaving(false);
     }
   };
 
+  const resetForm = (updatedList?: QuranSeries[]) => {
+    setEditingId(null);
+    setTitle("");
+    setDesc("");
+    setOrder(newListOrder(updatedList || list));
+  };
+
+  const newListOrder = (l: QuranSeries[]) => {
+    if (l.length === 0) return 1;
+    return Math.max(...l.map(s => s.order || 0)) + 1;
+  };
+
+  useEffect(() => {
+    if (!editingId && list.length > 0) {
+      setOrder(newListOrder(list));
+    }
+  }, [list, editingId]);
+
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف؟")) {
-      await deleteDoc(doc(db, "quran_series", id));
-      await SyncService.trackDeletion("quran_series", id);
+    if (confirm("تأكيد الحذف من ملفات المنصة؟ سيتم حذف جميع الدروس التابعة لهذه السلسلة أيضاً.")) {
+      const newList = list.filter(s => s.id !== id);
+      const newLessons = fullData.lessons.filter(l => l.seriesId !== id);
+      const newFullData = { series: newList, lessons: newLessons };
+      
+      try {
+        const res = await fetch("/api/quran-data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newFullData)
+        });
+        if (res.ok) {
+          setFullData(newFullData);
+          setList(newList);
+          alert("تم الحذف بنجاح");
+        }
+      } catch (e) {
+        alert("خطأ في الحذف");
+      }
     }
   };
 
+  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل البيانات من الملفات...</div>;
+
   return (
     <div className="space-y-6">
-      <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-        <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">
-          {editingId ? "تعديل سلسلة" : "إضافة سلسلة جديدة"}
+      <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm" dir="rtl">
+        <h3 className="font-black text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+          {editingId ? <Edit className="w-5 h-5 text-blue-500" /> : <PlusCircle className="w-5 h-5 text-emerald-500" />}
+          {editingId ? "تعديل سلسلة" : "إضافة سلسلة جديدة يدوياً"}
         </h3>
-        <input
-          className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white"
-          placeholder=""
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <textarea
-          className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-20 dark:text-white"
-          placeholder=""
-          value={desc}
-          onChange={(e) => setDesc(e.target.value)}
-        />
-        <input
-          type="number"
-          className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white"
-          placeholder="الترتيب (رقم)"
-          value={order}
-          onChange={(e) => setOrder(Number(e.target.value))}
-        />
-        <div className="flex gap-2">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-black text-gray-500 pr-1">عنوان السلسلة</label>
+            <input
+              className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-bold focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+              placeholder="مثال: دروس من هدي القرآن الكريم"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-black text-gray-500 pr-1">الترتيب</label>
+            <input
+              type="number"
+              className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-bold focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+              value={order}
+              onChange={(e) => setOrder(Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-xs font-black text-gray-500 pr-1">وصف السلسلة (اختياري)</label>
+          <textarea
+            className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl h-24 dark:text-white font-medium focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+            placeholder="وصف مختصر لمحتوى السلسلة..."
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+          />
+        </div>
+
+        <div className="flex gap-3 pt-2">
           <button
             onClick={save}
-            disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors"
+            disabled={saving || !title}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-black transition-all shadow-lg shadow-emerald-600/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
           >
-            {saving ? "جاري..." : "حفظ"}
+            <Save className="w-4 h-4" />
+            {saving ? "جاري الحفظ..." : "حفظ في ملفات المنصة"}
           </button>
           {editingId && (
             <button
-              onClick={() => {
-                setEditingId(null);
-                setTitle("");
-                setDesc("");
-                setOrder(0);
-              }}
-              className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition-colors"
+              onClick={() => resetForm()}
+              className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-8 py-3 rounded-xl font-black transition-all hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95"
             >
-              إلغاء
+              إلغاء التعديل
             </button>
           )}
         </div>
       </div>
-      <div className="space-y-2 mt-4">
-        {list.map((s) => (
+
+      <div className="space-y-3 mt-6" dir="rtl">
+        <div className="flex items-center justify-between px-2 mb-2">
+          <h4 className="text-sm font-black text-gray-500 uppercase tracking-wider">السلاسل الحالية ({list.length})</h4>
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full">بيانات مخزنة محلياً</span>
+        </div>
+        
+        {list.sort((a, b) => (a.order || 0) - (b.order || 0)).map((s) => (
           <div
             key={s.id}
-            className="flex justify-between items-center p-4 bg-white dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-emerald-500/30 transition-colors group"
+            className="flex justify-between items-center p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl hover:border-emerald-500/30 transition-all group shadow-sm"
           >
-            <div>
-              <span className="font-bold dark:text-white">{s.title}</span>{" "}
-              <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md mr-2 text-gray-500">
-                ترتيب: {s.order}
-              </span>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center font-black text-gray-400 group-hover:text-emerald-500 transition-colors border border-gray-100 dark:border-gray-800">
+                {s.order}
+              </div>
+              <div>
+                <div className="font-black dark:text-white text-lg">{s.title}</div>
+                {s.description && <div className="text-xs text-gray-500 font-medium mt-0.5 line-clamp-1">{s.description}</div>}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 mt-2 sm:mt-0 shrink-0">
+            <div className="flex gap-2">
               <button
                 onClick={() => {
                   setEditingId(s.id);
@@ -3157,19 +3284,28 @@ function AdminQuranSeries() {
                   setDesc(s.description || "");
                   setOrder(s.order);
                 }}
-                className="text-blue-600 hover:text-blue-800 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40 px-3 py-1.5 rounded-lg font-bold text-sm transition-colors flex items-center gap-1"
+                className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all active:scale-90"
+                title="تعديل"
               >
-                <Edit className="w-4 h-4" /> تعديل
+                <Edit className="w-5 h-5" />
               </button>
               <button
                 onClick={() => del(s.id)}
-                className="text-red-500 hover:text-red-700 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40 px-3 py-1.5 rounded-lg font-bold text-sm transition-colors flex items-center gap-1"
+                className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all active:scale-90"
+                title="حذف"
               >
-                <Trash2 className="w-4 h-4" /> حذف
+                <Trash2 className="w-5 h-5" />
               </button>
             </div>
           </div>
         ))}
+        
+        {list.length === 0 && (
+          <div className="text-center py-20 bg-gray-50 dark:bg-gray-900/30 rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-gray-800">
+            <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4 opacity-20" />
+            <p className="text-gray-400 font-bold">لا توجد سلاسل مضافة حالياً</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3178,6 +3314,7 @@ function AdminQuranSeries() {
 function AdminQuranLessons() {
   const [seriesList, setSeriesList] = useState<QuranSeries[]>([]);
   const [list, setList] = useState<QuranLesson[]>([]);
+  const [fullData, setFullData] = useState<{ series: QuranSeries[]; lessons: QuranLesson[] }>({ series: [], lessons: [] });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [seriesId, setSeriesId] = useState("");
@@ -3185,159 +3322,214 @@ function AdminQuranLessons() {
   const [content, setContent] = useState("");
   const [order, setOrder] = useState<number>(0);
   const [saving, setSaving] = useState(false);
-  const [notify, setNotify] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub1 = onSnapshot(
-      query(collection(db, "quran_series"), orderBy("order", "asc")),
-      (snap) => {
-        const s = snap.docs.map(
-          (d) => ({ id: d.id, ...d.data() } as QuranSeries)
-        );
-        setSeriesList(s);
-        if (s.length > 0 && !seriesId) setSeriesId(s[0].id);
-      },
-      (err) => console.warn("Admin quran lessons series fetch err:", err)
-    );
-    const unsub2 = onSnapshot(
-      query(collection(db, "quran_lessons"), orderBy("order", "asc")),
-      (snap) => {
-        setList(
-          snap.docs.map((d) => ({ id: d.id, ...d.data() } as QuranLesson))
-        );
-      },
-      (err) => console.warn("Admin quran lessons fetch err:", err)
-    );
-    return () => {
-      unsub1();
-      unsub2();
-    };
-  }, [seriesId]);
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/quran-data");
+      const data = await res.json();
+      setFullData(data);
+      setSeriesList(data.series || []);
+      setList(data.lessons || []);
+      if (data.series?.length > 0 && !seriesId) {
+        setSeriesId(data.series[0].id);
+      }
+    } catch (e) {
+      console.error("Error fetching Quran data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const save = async () => {
     if (!title || !seriesId || !content) return alert("أكمل البيانات");
     setSaving(true);
     try {
-      const payload = { seriesId, title, content, order: Number(order) };
-      let lessonId = editingId;
+      let newList = [...list];
       if (editingId) {
-        await updateDoc(doc(db, "quran_lessons", editingId), payload);
+        newList = newList.map(l => l.id === editingId ? { ...l, seriesId, title, content, order: Number(order) } : l);
       } else {
-        const docRef = await addDoc(collection(db, "quran_lessons"), {
-          ...payload,
-          createdAt: Date.now(),
-        });
-        lessonId = docRef.id;
+        const newLesson: QuranLesson = {
+          id: Date.now().toString(),
+          seriesId,
+          title,
+          content,
+          order: Number(order),
+          createdAt: Date.now()
+        };
+        newList.push(newLesson);
       }
-      setEditingId(null);
-      setTitle("");
-      setContent("");
-      setOrder(0);
+      
+      const newFullData = { ...fullData, lessons: newList };
+      const res = await fetch("/api/quran-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newFullData)
+      });
+
+      if (res.ok) {
+        setFullData(newFullData);
+        setList(newList);
+        alert("تم حفظ الدرس بنجاح في ملفات المنصة");
+        resetForm(newList);
+      } else {
+        throw new Error("Failed to save");
+      }
     } catch (e) {
+      alert("حدث خطأ أثناء الحفظ");
     } finally {
       setSaving(false);
     }
   };
 
+  const resetForm = (updatedList?: QuranLesson[]) => {
+    setEditingId(null);
+    setTitle("");
+    setContent("");
+    const lessonsInSeries = (updatedList || list).filter(l => l.seriesId === seriesId);
+    setOrder(lessonsInSeries.length + 1);
+  };
+
+  useEffect(() => {
+    if (!editingId) {
+      const lessonsInSeries = list.filter(l => l.seriesId === seriesId);
+      setOrder(lessonsInSeries.length + 1);
+    }
+  }, [seriesId, list, editingId]);
+
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف؟")) {
-      await deleteDoc(doc(db, "quran_lessons", id));
-      await SyncService.trackDeletion("quran_lessons", id);
+    if (confirm("تأكيد حذف الدرس من ملفات المنصة؟")) {
+      const newList = list.filter(l => l.id !== id);
+      const newFullData = { ...fullData, lessons: newList };
+      
+      try {
+        const res = await fetch("/api/quran-data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newFullData)
+        });
+        if (res.ok) {
+          setFullData(newFullData);
+          setList(newList);
+          alert("تم الحذف بنجاح");
+        }
+      } catch (e) {
+        alert("خطأ في الحذف");
+      }
     }
   };
 
+  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل الدروس من الملفات...</div>;
+
   return (
     <div className="space-y-6">
-      <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-        <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">
-          {editingId ? "تعديل درس" : "إضافة درس جديد"}
+      <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm" dir="rtl">
+        <h3 className="font-black text-gray-800 dark:text-white mb-4 flex items-center gap-2">
+          {editingId ? <Edit className="w-5 h-5 text-blue-500" /> : <PlusCircle className="w-5 h-5 text-emerald-500" />}
+          {editingId ? "تعديل محتوى الدرس" : "إضافة درس جديد يدوياً"}
         </h3>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 pr-1">
-            السلسلة التابع لها
-          </label>
-          <select
-            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg font-bold dark:text-white"
-            value={seriesId}
-            onChange={(e) => setSeriesId(e.target.value)}
-          >
-            {seriesList.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title}
-              </option>
-            ))}
-          </select>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-black text-gray-500 pr-1">اختر السلسلة</label>
+            <select
+              className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl font-bold dark:text-white focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+              value={seriesId}
+              onChange={(e) => setSeriesId(e.target.value)}
+            >
+              {seriesList.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.title}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1 lg:col-span-1">
+            <label className="text-xs font-black text-gray-500 pr-1">عنوان الدرس</label>
+            <input
+              className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-bold focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+              placeholder="مثال: الدرس الأول - فضل القرآن"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-black text-gray-500 pr-1">الترتيب في السلسلة</label>
+            <input
+              type="number"
+              className="w-full p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-bold focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all"
+              value={order}
+              onChange={(e) => setOrder(Number(e.target.value))}
+            />
+          </div>
         </div>
-        <input
-          className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white"
-          placeholder=""
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <textarea
-          className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white"
-          placeholder=""
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-        />
-        <input
-          type="number"
-          className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white"
-          placeholder="الترتيب (رقم)"
-          value={order}
-          onChange={(e) => setOrder(Number(e.target.value))}
-        />
 
-        <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-900 rounded-lg cursor-pointer border border-gray-200 dark:border-gray-700 hover:border-emerald-500/30 transition-colors">
-          <input
-            type="checkbox"
-            checked={notify}
-            onChange={(e) => setNotify(e.target.checked)}
-            className="w-4 h-4 accent-emerald-600 rounded"
+        <div className="space-y-1">
+          <label className="text-xs font-black text-gray-500 pr-1">محتوى الدرس الكامل</label>
+          <textarea
+            className="w-full p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl h-64 leading-loose dark:text-white font-medium focus:ring-2 focus:ring-emerald-500/20 outline-none transition-all resize-y"
+            placeholder="اكتب أو الصق محتوى الدرس هنا..."
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
           />
-          <span className="text-sm font-bold text-gray-700 dark:text-gray-200">
-            إرسال تنبيه بهذا الدرس
-          </span>
-        </label>
+        </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-3 pt-2">
           <button
             onClick={save}
-            disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors"
+            disabled={saving || !title || !content}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-black transition-all shadow-lg shadow-emerald-600/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
           >
-            {saving ? "جاري..." : "حفظ"}
+            <Save className="w-4 h-4" />
+            {saving ? "جاري الحفظ..." : "حفظ الدرس في الملفات"}
           </button>
           {editingId && (
             <button
-              onClick={() => {
-                setEditingId(null);
-                setTitle("");
-                setContent("");
-                setOrder(0);
-              }}
-              className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition-colors"
+              onClick={() => resetForm()}
+              className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-8 py-3 rounded-xl font-black transition-all hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-95"
             >
-              إلغاء
+              إلغاء التعديل
             </button>
           )}
         </div>
       </div>
-      <div className="space-y-2 mt-4">
+
+      <div className="space-y-3 mt-6" dir="rtl">
+        <div className="flex items-center justify-between px-2 mb-2">
+          <div className="flex items-center gap-4">
+            <h4 className="text-sm font-black text-gray-500 uppercase tracking-wider">
+              الدروس في السلسلة المختارة ({list.filter(l => l.seriesId === seriesId).length})
+            </h4>
+          </div>
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full">تخزين داخلي (JSON)</span>
+        </div>
+        
         {list
           .filter((l) => l.seriesId === seriesId)
+          .sort((a, b) => (a.order || 0) - (b.order || 0))
           .map((l) => (
             <div
               key={l.id}
-              className="flex justify-between items-center p-4 bg-white dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-emerald-500/30 transition-colors group"
+              className="flex justify-between items-center p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl hover:border-emerald-500/30 transition-all group shadow-sm"
             >
-              <div>
-                <span className="font-bold dark:text-white">{l.title}</span>{" "}
-                <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded-md mr-2 text-gray-500">
-                  ترتيب: {l.order}
-                </span>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-900 flex items-center justify-center font-black text-gray-400 group-hover:text-emerald-500 transition-colors border border-gray-100 dark:border-gray-800">
+                  {l.order}
+                </div>
+                <div>
+                  <div className="font-black dark:text-white text-lg">{l.title}</div>
+                  <div className="text-[10px] text-gray-400 font-bold mt-1 uppercase flex items-center gap-1.5">
+                    <Clock className="w-3 h-3" />
+                    {new Date(l.createdAt || 0).toLocaleDateString('ar-YE')}
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-2">
                 <button
                   onClick={() => {
                     setEditingId(l.id);
@@ -3346,26 +3538,46 @@ function AdminQuranLessons() {
                     setContent(l.content);
                     setOrder(l.order);
                   }}
-                  className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                  className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all active:scale-90"
+                  title="تعديل"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Edit className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => del(l.id)}
-                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  className="p-2.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all active:scale-90"
+                  title="حذف"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-5 h-5" />
                 </button>
               </div>
             </div>
           ))}
+          
+        {seriesList.length === 0 && (
+          <div className="text-center py-10 bg-amber-50 dark:bg-amber-900/10 rounded-3xl border border-amber-100 dark:border-amber-900/30 p-6">
+            <AlertTriangle className="w-8 h-8 text-amber-600 mx-auto mb-2" />
+            <p className="text-amber-800 dark:text-amber-400 font-black">يجب إضافة سلسلة أولاً قبل إضافة الدروس</p>
+          </div>
+        )}
+        
+        {seriesList.length > 0 && list.filter(l => l.seriesId === seriesId).length === 0 && (
+          <div className="text-center py-20 bg-gray-50 dark:bg-gray-900/30 rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-gray-800">
+            <Plus className="w-12 h-12 text-gray-300 mx-auto mb-4 opacity-20" />
+            <p className="text-gray-400 font-bold">لا توجد دروس في هذه السلسلة بعد</p>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
+
 function AdminQuranSyllabuses() {
   const [list, setList] = useState<QuranSyllabus[]>([]);
+  const [lessons, setLessons] = useState<QuranLesson[]>([]);
+  const [series, setSeries] = useState<QuranSeries[]>([]);
+  const [fullData, setFullData] = useState<any>({ series: [], lessons: [], excerpts: [], syllabuses: [] });
   const [events, setEvents] = useState<EventItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lessonId, setLessonId] = useState("");
@@ -3373,16 +3585,10 @@ function AdminQuranSyllabuses() {
   const [durationType, setDurationType] = useState<"weeks" | "months">("weeks");
   const [eventId, setEventId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onSnapshot(
-      query(collection(db, "quran_syllabuses"), orderBy("createdAt", "desc")),
-      (snap) => {
-        setList(
-          snap.docs.map((d) => ({ id: d.id, ...d.data() } as QuranSyllabus))
-        );
-      }
-    );
+    fetchData();
     const unsubEvents = onSnapshot(
       query(collection(db, "events"), orderBy("timestamp", "desc")),
       (snap) => {
@@ -3392,10 +3598,25 @@ function AdminQuranSyllabuses() {
       }
     );
     return () => {
-      unsub();
       unsubEvents?.();
     };
   }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/quran-data");
+      const data = await res.json();
+      setFullData(data);
+      setList(data.syllabuses || []);
+      setLessons(data.lessons || []);
+      setSeries(data.series || []);
+    } catch (e) {
+      console.error("Error fetching Quran data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const save = async () => {
     if (!lessonId || !durationVal)
@@ -3406,12 +3627,12 @@ function AdminQuranSyllabuses() {
       return alert("الرجاء إدخال عدد صحيح للمدة");
     }
 
-    const selectedLesson = STATIC_QURAN_LESSONS.find(l => l.id === lessonId);
+    const selectedLesson = lessons.find(l => l.id === lessonId);
     if (!selectedLesson) {
       return alert("الدرس المحدد غير موجود");
     }
 
-    const selectedSeries = STATIC_QURAN_SERIES.find(s => s.id === selectedLesson.seriesId);
+    const selectedSeries = series.find(s => s.id === selectedLesson.seriesId);
     const seriesTitle = selectedSeries ? selectedSeries.title : "سلسلة غير معروفة";
     const seriesId = selectedLesson.seriesId;
     const lessonTitle = selectedLesson.title;
@@ -3424,7 +3645,9 @@ function AdminQuranSyllabuses() {
         : num * 30 * 24 * 60 * 60 * 1000;
       const expiresAt = now + durationMs;
 
+      let newList = [...list];
       const payload = {
+        id: editingId || Date.now().toString(),
         lessonId,
         lessonTitle,
         seriesId,
@@ -3433,20 +3656,34 @@ function AdminQuranSyllabuses() {
         durationType,
         expiresAt,
         eventId: eventId || null,
-        createdAt: editingId ? undefined : now,
+        createdAt: now,
       };
 
       if (editingId) {
-        // @ts-ignore
-        await updateDoc(doc(db, "quran_syllabuses", editingId), payload);
+        newList = newList.map(s => s.id === editingId ? payload : s);
       } else {
-        await addDoc(collection(db, "quran_syllabuses"), payload);
+        newList.push(payload);
       }
-      setEditingId(null);
-      setLessonId("");
-      setDurationVal("1");
-      setDurationType("weeks");
-      setEventId("");
+
+      const newFullData = { ...fullData, syllabuses: newList };
+      const res = await fetch("/api/quran-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newFullData)
+      });
+
+      if (res.ok) {
+        setFullData(newFullData);
+        setList(newList);
+        alert("تم الحفظ بنجاح في ملفات المنصة");
+        setEditingId(null);
+        setLessonId("");
+        setDurationVal("1");
+        setDurationType("weeks");
+        setEventId("");
+      } else {
+        throw new Error("Failed to save");
+      }
     } catch (e) {
       console.error(e);
       alert("حدث خطأ أثناء الحفظ");
@@ -3456,17 +3693,34 @@ function AdminQuranSyllabuses() {
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف؟")) {
-      await deleteDoc(doc(db, "quran_syllabuses", id));
-      await SyncService.trackDeletion("quran_syllabuses", id);
+    if (confirm("تأكيد الحذف من ملفات المنصة؟")) {
+      const newList = list.filter(s => s.id !== id);
+      const newFullData = { ...fullData, syllabuses: newList };
+      
+      try {
+        const res = await fetch("/api/quran-data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newFullData)
+        });
+        if (res.ok) {
+          setFullData(newFullData);
+          setList(newList);
+          alert("تم الحذف بنجاح");
+        }
+      } catch (e) {
+        alert("خطأ في الحذف");
+      }
     }
   };
+
+  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل البيانات...</div>;
 
   return (
     <div className="space-y-6">
       <div className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-200 p-4 rounded-xl text-sm leading-relaxed border border-emerald-200 dark:border-emerald-800">
-        يتم اختيار المقرر من الدروس المخزنة محلياً. يتم رفع عنوان الدرس وعنوان السلسلة فقط ومشاركة المقرر عبر الشبكة.
-        بعد انتهاء المدة المحددة (سواء أسابيع أو أشهر)، يتم إخفاء المقرر وحذفه تلقائياً.
+        يتم اختيار المقرر من الدروس المخزنة محلياً. يتم حفظ هذه البيانات في ملفات المنصة وتظهر لجميع المستخدمين كجزء أساسي من التطبيق.
+        بعد انتهاء المدة المحددة، يتم إخفاء المقرر تلقائياً.
       </div>
 
       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
@@ -3484,8 +3738,8 @@ function AdminQuranSyllabuses() {
             onChange={(e) => setLessonId(e.target.value)}
           >
             <option value="">-- اختر الدرس --</option>
-            {STATIC_QURAN_LESSONS.map((l) => {
-              const s = STATIC_QURAN_SERIES.find(x => x.id === l.seriesId);
+            {lessons.map((l) => {
+              const s = series.find(x => x.id === l.seriesId);
               return (
                 <option key={l.id} value={l.id}>
                   {s ? `[${s.title}] ` : ""}{l.title}
@@ -3632,7 +3886,8 @@ function AdminQuranSyllabuses() {
 
 function AdminQuranExcerpts() {
   const [list, setList] = useState<QuranExcerpt[]>([]);
-  const [localLessons, setLocalLessons] = useState<QuranLesson[]>(STATIC_QURAN_LESSONS);
+  const [lessons, setLessons] = useState<QuranLesson[]>([]);
+  const [fullData, setFullData] = useState<any>({ series: [], lessons: [], excerpts: [], syllabuses: [] });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [lessonId, setLessonId] = useState("");
@@ -3640,53 +3895,67 @@ function AdminQuranExcerpts() {
   const [content, setContent] = useState("");
   const [mediaUrl, setMediaUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubLessons = onSnapshot(
-      query(collection(db, "quran_lessons")),
-      (snap) => {
-        const firestoreLessons = snap.docs.map((d) => ({ id: d.id, ...d.data() } as QuranLesson));
-        setLocalLessons([...STATIC_QURAN_LESSONS, ...firestoreLessons]);
-      }
-    );
-
-    const unsub = onSnapshot(
-      query(collection(db, "quran_excerpts"), orderBy("createdAt", "desc")),
-      (snap) => {
-        setList(
-          snap.docs.map((d) => ({ id: d.id, ...d.data() } as QuranExcerpt))
-        );
-      }
-    );
-    return () => {
-      unsub();
-      unsubLessons?.();
-    };
+    fetchData();
   }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/quran-data");
+      const data = await res.json();
+      setFullData(data);
+      setList(data.excerpts || []);
+      setLessons(data.lessons || []);
+    } catch (e) {
+      console.error("Error fetching Quran data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const save = async () => {
     if (!lessonId || !title || !content)
       return alert("أكمل البيانات المطلوبة (الدرس، العنوان، النص)");
     setSaving(true);
     try {
+      let newList = [...list];
       const payload = {
+        id: editingId || Date.now().toString(),
         lessonId,
         title,
         content,
         mediaUrl,
-        createdAt: editingId ? undefined : Date.now(),
+        createdAt: Date.now(),
       };
+
       if (editingId) {
-        // @ts-ignore
-        await updateDoc(doc(db, "quran_excerpts", editingId), payload);
+        newList = newList.map(s => s.id === editingId ? payload : s);
       } else {
-        await addDoc(collection(db, "quran_excerpts"), payload);
+        newList.push(payload);
       }
-      setEditingId(null);
-      setLessonId("");
-      setTitle("");
-      setContent("");
-      setMediaUrl("");
+
+      const newFullData = { ...fullData, excerpts: newList };
+      const res = await fetch("/api/quran-data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newFullData)
+      });
+
+      if (res.ok) {
+        setFullData(newFullData);
+        setList(newList);
+        alert("تم الحفظ في ملفات المنصة");
+        setEditingId(null);
+        setLessonId("");
+        setTitle("");
+        setContent("");
+        setMediaUrl("");
+      } else {
+        throw new Error("Failed to save");
+      }
     } catch (e) {
       console.error(e);
       alert("حدث خطأ");
@@ -3696,17 +3965,34 @@ function AdminQuranExcerpts() {
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف؟")) {
-      await deleteDoc(doc(db, "quran_excerpts", id));
-      await SyncService.trackDeletion("quran_excerpts", id);
+    if (confirm("تأكيد الحذف من ملفات المنصة؟")) {
+      const newList = list.filter(s => s.id !== id);
+      const newFullData = { ...fullData, excerpts: newList };
+      
+      try {
+        const res = await fetch("/api/quran-data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(newFullData)
+        });
+        if (res.ok) {
+          setFullData(newFullData);
+          setList(newList);
+          alert("تم الحذف بنجاح");
+        }
+      } catch (e) {
+        alert("خطأ في الحذف");
+      }
     }
   };
+
+  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل المقتطفات...</div>;
 
   return (
     <div className="space-y-6">
       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
         <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">
-          {editingId ? "تعديل مقتطف" : "إضافة مقتطف جديد"}
+          {editingId ? "تعديل مقتطف" : "إضافة مقتطف جديد يدوياً"}
         </h3>
 
         <div className="space-y-1">
@@ -3719,7 +4005,7 @@ function AdminQuranExcerpts() {
             onChange={(e) => setLessonId(e.target.value)}
           >
             <option value="">-- اختر الدرس --</option>
-            {localLessons.map((l) => (
+            {lessons.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.title}
               </option>
@@ -3785,7 +4071,7 @@ function AdminQuranExcerpts() {
       </div>
       <div className="space-y-2 mt-4">
         {list.map((s) => {
-          const l = localLessons.find((x) => x.id === s.lessonId);
+          const l = lessons.find((x) => x.id === s.lessonId);
           return (
             <div
               key={s.id}

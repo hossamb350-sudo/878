@@ -67,6 +67,82 @@ const upload = multer({
 // Serve uploads statically
 app.use("/uploads", express.static(UPLOADS_DIR));
 
+// API for Quran data (Hady Al-Quran)
+app.get("/api/quran-data", (req, res) => {
+  const filePath = path.join(process.cwd(), "public/quranData.json");
+  try {
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, "utf8");
+      if (!content || content.trim() === "") {
+        return res.json({ series: [], lessons: [], excerpts: [], syllabuses: [] });
+      }
+      res.json(JSON.parse(content));
+    } else {
+      res.json({ series: [], lessons: [], excerpts: [], syllabuses: [] });
+    }
+  } catch (error) {
+    console.error("Error reading Quran data:", error);
+    res.status(500).json({ error: "فشل في قراءة بيانات هدي القرآن" });
+  }
+});
+
+app.post("/api/quran-data", async (req, res) => {
+  const data = req.body;
+  const filePath = path.join(process.cwd(), "public/quranData.json");
+  const tempPath = filePath + ".tmp";
+  
+  try {
+    // 1. Save locally using atomic write (write to temp then rename)
+    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf8");
+    fs.renameSync(tempPath, filePath);
+    
+    // 2. Sync with GitHub if configured (optional but recommended since user asked for GitHub persistence before)
+    const { token, owner, repo, branch } = getGitHubConfig();
+    if (token && owner && repo) {
+      const base64Content = Buffer.from(JSON.stringify(data, null, 2), "utf8").toString("base64");
+      const url = `https://api.github.com/repos/${owner}/${repo}/contents/public/quranData.json`;
+      
+      try {
+        let sha: string | undefined;
+        const getRes = await fetch(`${url}?ref=${branch}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.v3+json",
+            "User-Agent": "Taiz-Platform-App",
+          },
+        });
+        if (getRes.ok) {
+          const getJson = await getRes.json();
+          sha = getJson.sha;
+        }
+
+        await fetch(url, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.v3+json",
+            "Content-Type": "application/json",
+            "User-Agent": "Taiz-Platform-App",
+          },
+          body: JSON.stringify({
+            message: "تحديث بيانات هدي القرآن عبر لوحة التحكم",
+            content: base64Content,
+            sha,
+            branch,
+          }),
+        });
+      } catch (ghErr) {
+        console.error("GitHub sync error for Quran data:", ghErr);
+      }
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error saving Quran data:", error);
+    res.status(500).json({ error: "فشل في حفظ بيانات هدي القرآن" });
+  }
+});
+
 // File upload API route
 app.post("/api/upload", upload.single("image"), (req, res) => {
   if (!req.file) {

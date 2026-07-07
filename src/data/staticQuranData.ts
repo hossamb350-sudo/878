@@ -3,6 +3,8 @@ import { QuranSeries, QuranLesson, QuranSyllabus, QuranExcerpt } from "../types"
 export function processQuranData(importedData: any) {
   const rawSeries: QuranSeries[] = (importedData?.series || []) as QuranSeries[];
   const rawLessons: QuranLesson[] = (importedData?.lessons || []) as QuranLesson[];
+  const rawExcerpts: QuranExcerpt[] = (importedData?.excerpts || []) as QuranExcerpt[];
+  const rawSyllabuses: QuranSyllabus[] = (importedData?.syllabuses || []) as QuranSyllabus[];
 
   // Reorganize series to combine IDs "4", "5", "6", "7" into a single series "4"
   // named "السلسلة الثالثة - معرفة الله"
@@ -34,8 +36,8 @@ export function processQuranData(importedData: any) {
   return {
     series: processedSeries,
     lessons: processedLessons,
-    syllabuses: [] as QuranSyllabus[],
-    excerpts: [] as QuranExcerpt[]
+    syllabuses: rawSyllabuses,
+    excerpts: rawExcerpts
   };
 }
 
