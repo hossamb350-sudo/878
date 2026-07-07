@@ -1,2 +1,4 @@
-import importedQuranDataJson from './importedQuranData.json';
-export const importedQuranData = importedQuranDataJson;
+// @ts-ignore
+import importedQuranDataRaw from './importedQuranData.json?raw';
+
+export const importedQuranData = JSON.parse(importedQuranDataRaw);
