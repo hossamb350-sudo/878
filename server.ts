@@ -3,11 +3,22 @@ import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
+import multer from "multer";
+import axios from "axios";
+import FormData from "form-data";
+import ImageKit from "imagekit";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
+
+// Initialize ImageKit
+const imagekit = new ImageKit({
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY || "",
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "",
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || "",
+});
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -16,6 +27,91 @@ const CACHE_DIR = path.join(process.cwd(), "cache");
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
+
+// Uploads directory setup
+const UPLOADS_DIR = path.join(process.cwd(), "public/uploads");
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Configure multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname);
+    cb(null, `upload-${uniqueSuffix}${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+});
+
+// Serve uploads statically
+app.use("/uploads", express.static(UPLOADS_DIR));
+
+// File upload API route
+app.post("/api/upload", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+  const fileUrl = `/uploads/${req.file.filename}`;
+  res.json({ url: fileUrl });
+});
+
+// ImageKit upload API route
+app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  if (!process.env.IMAGEKIT_PRIVATE_KEY || !process.env.IMAGEKIT_PUBLIC_KEY || !process.env.IMAGEKIT_URL_ENDPOINT) {
+    console.error("ImageKit credentials are not fully set in environment variables");
+    return res.status(500).json({ error: "خدمة رفع الصور غير مهيأة (بيانات ImageKit مفقودة)" });
+  }
+
+  try {
+    const fileContent = fs.readFileSync(req.file.path);
+    
+    const uploadResponse = await imagekit.upload({
+      file: fileContent,
+      fileName: req.file.originalname,
+      folder: "/uploads",
+    });
+
+    // Clean up the temporary file
+    try {
+      fs.unlinkSync(req.file.path);
+    } catch (err) {
+      console.error("Error deleting temp file:", err);
+    }
+
+    res.json({ 
+      url: uploadResponse.url,
+      thumbnail: uploadResponse.thumbnailUrl,
+      status: "success",
+      fileId: uploadResponse.fileId
+    });
+  } catch (error: any) {
+    console.error("ImageKit upload error:", error);
+    
+    // Clean up temp file on error too
+    if (req.file && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (e) {}
+    }
+
+    res.status(500).json({ 
+      error: "حدث خطأ أثناء الرفع إلى ImageKit",
+      message: error.message 
+    });
+  }
+});
 
 // In-memory cache metadata
 const memoryCache: Record<string, { data: any; lastFetched: number }> = {};

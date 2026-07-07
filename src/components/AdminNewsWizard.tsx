@@ -11,10 +11,10 @@ import {
   deleteDoc, getDoc, setDoc 
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { notificationService } from "../services/NotificationService";
 import { SyncService } from "../services/SyncService";
 import { AdminCategoryManager } from "./AdminCategoryManager";
 import { AdminAuthorManager } from "./AdminAuthorManager";
+import { ImageUpload } from "./ImageUpload";
 
 interface NewsItem {
   id: string;
@@ -72,7 +72,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   const [content, setContent] = useState("");
   const [author, setAuthor] = useState("");
   const [imageUrl, setImageUrl] = useState("");
-  const [additionalImagesText, setAdditionalImagesText] = useState("");
+  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
   const [cat, setCat] = useState("محلية");
   const [selectedCats, setSelectedCats] = useState<string[]>(["محلية"]);
   const [catSearch, setCatSearch] = useState("");
@@ -233,7 +233,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     setContent("");
     setAuthor("");
     setImageUrl("");
-    setAdditionalImagesText("");
+    setAdditionalImages([]);
     setCat("محلية");
     setSelectedCats(["محلية"]);
     setCustomCat("");
@@ -259,9 +259,9 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     setImageUrl(item.imageUrl || "");
     setViews(item.views || 0);
     if (item.additionalImages) {
-      setAdditionalImagesText(item.additionalImages.join("\n"));
+      setAdditionalImages(item.additionalImages);
     } else {
-      setAdditionalImagesText("");
+      setAdditionalImages([]);
     }
     
     if (item.categories && item.categories.length > 0) {
@@ -327,7 +327,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       finalSnippet = strippedContent.substring(0, 150) + (strippedContent.length > 150 ? "..." : "");
     }
 
-    const additionalImages = additionalImagesText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    const filteredAdditionalImages = additionalImages.map(l => l.trim()).filter(l => l.length > 0);
 
     const payload: any = {
       title,
@@ -335,7 +335,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       shortDescription: finalSnippet,
       author: author || "منصة تعز",
       imageUrl: imageUrl || null,
-      additionalImages: additionalImages || null,
+      additionalImages: filteredAdditionalImages.length > 0 ? filteredAdditionalImages : null,
       category: finalSelectedCats[0] || "محلية",
       categories: finalSelectedCats,
       isBreaking,
@@ -376,14 +376,6 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
           createdAt: Date.now()
         });
         savedId = docRef.id;
-        
-        // Only send notification for NEW posts
-        await notificationService.sendNewsNotification({
-          id: savedId,
-          title: payload.title,
-          category: payload.category,
-          imageUrl: payload.imageUrl || undefined
-        });
       }
       
       setLastSavedId(savedId);
@@ -910,36 +902,88 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
 
                     <div className="space-y-10">
                       <div>
-                        <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-3">الصورة الرئيسية (رابط)</label>
-                        <div className="flex gap-4">
-                          <div className="flex-1 relative">
-                            <input 
-                              className="w-full p-4 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 dark:text-white" 
-                              placeholder="" 
-                              value={imageUrl} 
-                              onChange={e=>setImageUrl(e.target.value)} 
-                            />
-                            <Globe className="absolute right-4 top-4 w-5 h-5 text-gray-400" />
-                          </div>
-                        </div>
-                        {imageUrl && (
-                          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="mt-4 relative group">
-                            <img src={imageUrl} className="w-full h-48 object-cover rounded-3xl shadow-md border border-gray-100 dark:border-gray-800" alt="Preview" />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl flex items-center justify-center">
-                              <button onClick={()=>setImageUrl("")} className="p-3 bg-red-600 text-white rounded-full"><Trash2 className="w-6 h-6"/></button>
-                            </div>
-                          </motion.div>
-                        )}
+                        <ImageUpload
+                          value={imageUrl}
+                          onChange={setImageUrl}
+                          label="الصورة الرئيسية للخبر"
+                          placeholder="اختر أو اسحب صورة الخبر الرئيسية هنا"
+                        />
                       </div>
 
-                      <div>
-                        <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-3">معرض الصور (رابط واحد في كل سطر)</label>
-                        <textarea 
-                          className="w-full p-4 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl h-32 focus:ring-2 focus:ring-blue-500 transition-all font-mono text-sm placeholder:text-gray-300 dark:text-white" 
-                          placeholder="" 
-                          value={additionalImagesText} 
-                          onChange={e=>setAdditionalImagesText(e.target.value)} 
+                      <div className="pt-6 border-t border-gray-100 dark:border-gray-800 space-y-6">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-sm font-black text-gray-700 dark:text-gray-300">
+                            معرض صور الخبر (إضافي)
+                          </label>
+                          <span className="text-[10px] font-bold text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-md">
+                            {additionalImages.length} صور مضافة
+                          </span>
+                        </div>
+
+                        {/* Bulk Upload Component */}
+                        <ImageUpload
+                          label=""
+                          placeholder="رفع صور متعددة للمعرض دفعة واحدة"
+                          multiple={true}
+                          onUploadsComplete={(urls) => {
+                            setAdditionalImages(prev => [...prev, ...urls]);
+                          }}
+                          className="bg-blue-50/30 dark:bg-blue-900/10 border-blue-100 dark:border-blue-800/30"
                         />
+                        
+                        <div className="grid grid-cols-1 gap-4">
+                          {additionalImages.map((img: string, idx: number) => (
+                            <div key={idx} className="relative group">
+                              <ImageUpload
+                                value={img}
+                                label={`صورة المعرض #${idx + 1}`}
+                                onChange={(url: string) => {
+                                  const newArr = [...additionalImages];
+                                  if (url) {
+                                    newArr[idx] = url;
+                                  } else {
+                                    newArr.splice(idx, 1);
+                                  }
+                                  setAdditionalImages(newArr);
+                                }}
+                                onRemove={() => {
+                                  const newArr = [...additionalImages];
+                                  newArr.splice(idx, 1);
+                                  setAdditionalImages(newArr);
+                                }}
+                              />
+                              <button 
+                                onClick={() => {
+                                  const newArr = [...additionalImages];
+                                  newArr.splice(idx, 1);
+                                  setAdditionalImages(newArr);
+                                }}
+                                className="absolute top-2 left-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                                title="حذف هذه الصورة"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {additionalImages.length === 0 && (
+                          <div className="text-center py-8 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-[2rem]">
+                            <ImageIcon className="w-8 h-8 text-gray-200 dark:text-gray-700 mx-auto mb-2" />
+                            <p className="text-xs font-bold text-gray-400">لا توجد صور إضافية بعد</p>
+                          </div>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAdditionalImages([...additionalImages, ""]);
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 py-3 px-4 bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-750 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-300 transition-all cursor-pointer"
+                        >
+                          <Plus className="w-4 h-4 text-blue-600" />
+                          <span>إضافة حقل صورة واحد</span>
+                        </button>
                       </div>
 
                       <div>

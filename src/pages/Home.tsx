@@ -161,7 +161,7 @@ export function Home() {
         }
         return b.createdAt - a.createdAt;
       });
-      const sliced = sorted.slice(0, 10);
+      const sliced = sorted.slice(0, 5);
       setVideos(sliced);
       localStorage.setItem("taiz_videos_cache", JSON.stringify(sliced));
       videosDone = true;
@@ -210,7 +210,7 @@ export function Home() {
         }
         return (b.createdAt || 0) - (a.createdAt || 0);
       });
-      setVideos(sortedVideos.slice(0, 10));
+      setVideos(sortedVideos.slice(0, 5));
     } catch (e) {
       console.error(e);
       throw e;
@@ -371,12 +371,20 @@ export function Home() {
                   {index === 1 && videos.length > 0 && (
                     <div className="my-2 py-4 bg-surface-main px-5 relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-taiz-sky/5 rounded-full blur-[40px] -mt-10 -mr-10"></div>
-                      <div className="flex items-center justify-between mb-4 text-right relative z-10">
+                      <div className="flex items-center justify-between mb-4 text-right relative z-10" style={{ direction: "rtl" }}>
                         <Link to="/watch" className="flex items-center gap-3 group cursor-pointer inline-flex">
                            <div className="bg-gradient-to-br from-taiz-navy to-taiz-royal p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all">
                               <MonitorPlay className="w-5 h-5 text-white" />
                            </div>
                            <h2 className="font-black text-[22px] select-none text-text-primary group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
+                        </Link>
+
+                        <Link
+                          to="/watch"
+                          className="flex items-center gap-1 text-xs font-bold text-taiz-sky hover:text-taiz-navy transition-colors py-1.5 px-3 bg-taiz-sky/10 hover:bg-taiz-sky/20 rounded-full"
+                        >
+                          <span>عرض الكل</span>
+                          <ChevronLeft className="w-4 h-4" />
                         </Link>
                       </div>
                       

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { ImageUpload } from "../components/ImageUpload";
 import {
   signInWithPopup,
   GoogleAuthProvider,
@@ -84,8 +85,8 @@ import {
   SocialLink,
 } from "../types";
 import { motion, AnimatePresence } from "motion/react";
-import { notificationService } from "../services/NotificationService";
 import { SyncService, handleFirestoreError } from "../services/SyncService";
+import { GitHubClient } from "../services/githubClient";
 
 import { AdminNewsWizard } from "../components/AdminNewsWizard";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES } from "../data/staticQuranData";
@@ -747,44 +748,63 @@ function AdminSummaryDashboard({
       label: "الأخبار",
       icon: FileText,
       color: "sky",
-      access:
-        isAdmin ||
-        isManager ||
-        (isEditor && filteredTabs.some((t) => t.id === "news")),
-    },
-    {
-      id: "leader",
-      label: "السيد القائد",
-      icon: Shield,
-      color: "indigo",
-      access:
-        isAdmin ||
-        isManager ||
-        (isEditor && filteredTabs.some((t) => t.id === "leader")),
-    },
-    {
-      id: "events",
-      label: "تقويم المناسبات",
-      icon: CalendarIcon,
-      color: "rose",
-      access: isAdmin,
+      access: filteredTabs.some((t) => t.id === "news"),
     },
     {
       id: "urgent",
       label: "الأخبار العاجلة",
       icon: AlertTriangle,
       color: "amber",
-      access:
-        isAdmin ||
-        isManager ||
-        (isEditor && filteredTabs.some((t) => t.id === "urgent")),
+      access: filteredTabs.some((t) => t.id === "urgent"),
+    },
+    {
+      id: "videos",
+      label: "الفيديوهات",
+      icon: Video,
+      color: "blue",
+      access: filteredTabs.some((t) => t.id === "videos"),
+    },
+    {
+      id: "live",
+      label: "البث المباشر",
+      icon: Radio,
+      color: "red",
+      access: filteredTabs.some((t) => t.id === "live"),
+    },
+    {
+      id: "leader",
+      label: "السيد القائد",
+      icon: Shield,
+      color: "indigo",
+      access: filteredTabs.some((t) => t.id === "leader"),
+    },
+    {
+      id: "quran",
+      label: "هدي القرآن",
+      icon: BookOpen,
+      color: "emerald",
+      access: filteredTabs.some((t) => t.id === "quran"),
+    },
+    {
+      id: "events",
+      label: "تقويم المناسبات",
+      icon: CalendarIcon,
+      color: "rose",
+      access: filteredTabs.some((t) => t.id === "events"),
+    },
+    {
+      id: "social",
+      label: "روابط تابعنا",
+      icon: Share2,
+      color: "teal",
+      access: filteredTabs.some((t) => t.id === "social"),
     },
     {
       id: "roles",
       label: "إدارة الصلاحيات",
       icon: Users,
       color: "purple",
-      access: isAdmin,
+      access: filteredTabs.some((t) => t.id === "roles"),
     },
   ];
 
@@ -805,13 +825,13 @@ function AdminSummaryDashboard({
         </div>
       </div>
 
-      {/* Navigation Grid - 2 columns, vertical style matching channels */}
+      {/* Navigation Grid - 2/3/4 columns, vertical style matching channels */}
       <div className="flex flex-col gap-6">
         <h3 className="text-lg font-black text-text-primary px-2 flex items-center gap-2">
           <LayoutGrid className="w-6 h-6 text-taiz-sky" />
           أقسام الإدارة
         </h3>
-        <div className="grid grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
           {filteredSections.map((section) => (
             <motion.button
               whileHover={{ y: -8, scale: 1.02 }}
@@ -923,60 +943,6 @@ function UserProfileView({
               </span>
             </div>
 
-            <div className="mt-10" dir="rtl">
-              <div className="p-6 md:p-8 bg-blue-50/50 dark:bg-slate-900/40 border border-blue-100 dark:border-slate-800 rounded-3xl text-right transition">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                  <div className="flex-1 space-y-2">
-                    <h3 className="text-xl font-black text-blue-950 dark:text-blue-100 flex items-center gap-2.5">
-                      <Bell className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                      إشعارات الهاتف الفورية (Push Notifications)
-                    </h3>
-                  </div>
-
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-sm font-extrabold text-gray-500">
-                      {localStorage.getItem("push_notifications_enabled") ===
-                        null ||
-                      localStorage.getItem("push_notifications_enabled") ===
-                        "true"
-                        ? "مفعّلة الآن"
-                        : "غير مفعّلة"}
-                    </span>
-                    <button
-                      onClick={async () => {
-                        const current =
-                          localStorage.getItem("push_notifications_enabled") ===
-                            null ||
-                          localStorage.getItem("push_notifications_enabled") ===
-                            "true";
-                        const nextVal = !current;
-                        const success = await notificationService.setEnabled(
-                          nextVal
-                        );
-                        if (nextVal && !success) {
-                          alert(
-                            "تنبيه: يرجى تمكين صلاحية الإشعارات من إعدادات النظام لتلقي التنبيهات."
-                          );
-                          await notificationService.setEnabled(false);
-                        }
-                        window.location.reload();
-                      }}
-                      className={`w-14 h-8 flex items-center rounded-full p-1 cursor-pointer transition-all duration-300 ${
-                        localStorage.getItem("push_notifications_enabled") ===
-                          null ||
-                        localStorage.getItem("push_notifications_enabled") ===
-                          "true"
-                          ? "bg-emerald-500 justify-start"
-                          : "bg-gray-300 dark:bg-gray-700 justify-end"
-                      }`}
-                    >
-                      <div className="w-6 h-6 rounded-full bg-white shadow-md flex items-center justify-center font-bold text-[10px]" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
             <div className="mt-12">
               <ContactUsSection />
             </div>
@@ -1000,13 +966,6 @@ function AdminUrgentNews() {
         text,
         createdAt: Date.now(),
         expiresAt: Date.now() + duration * 60000,
-      });
-      await addDoc(collection(db, "notifications"), {
-        title: "خبر عاجل 🔴",
-        body: text,
-        category: "news",
-        link: "/",
-        createdAt: Date.now(),
       });
       alert(
         `تم نشر الخبر العاجل بنجاح (سيختفي تلقائياً بعد ${duration} دقيقة)`
@@ -1497,12 +1456,6 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
           createdAt: Date.now(),
         });
         savedId = docRef.id;
-        await notificationService.sendNewsNotification({
-          id: savedId,
-          title: payload.title,
-          category: payload.category,
-          imageUrl: payload.imageUrl || undefined,
-        });
       }
 
       setLastSavedId(savedId);
@@ -1908,37 +1861,60 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
                   الوسائط والصور
                 </h4>
 
-                <div>
-                  <label className="block text-xs font-black text-gray-500 mb-2 uppercase tracking-wider">
-                    الصورة الرئيسية
-                  </label>
-                  <input
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500"
-                    placeholder=""
+                <div className="space-y-4">
+                  <ImageUpload
                     value={imageUrl}
-                    onChange={(e) => setImageUrl(e.target.value)}
+                    onChange={setImageUrl}
+                    label="الصورة الرئيسية للخبر"
+                    placeholder="اختر أو اسحب صورة الخبر الرئيسية"
                   />
-                  {imageUrl && (
-                    <div className="mt-2 rounded-xl overflow-hidden aspect-video bg-gray-100">
-                      <img
-                        src={imageUrl}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-black text-gray-500 mb-2 uppercase tracking-wider">
-                    معرض الصور (إضافي)
+                <div className="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                    معرض صور الخبر (إضافي)
                   </label>
-                  <textarea
-                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 border-none rounded-xl text-xs font-medium h-24 focus:ring-2 focus:ring-blue-500"
-                    placeholder=""
-                    value={additionalImagesText}
-                    onChange={(e) => setAdditionalImagesText(e.target.value)}
-                  />
+                  
+                  <div className="space-y-3">
+                    {(() => {
+                      const imgList = (additionalImagesText || "")
+                        .split("\n")
+                        .map((l) => l.trim())
+                        .filter((l) => l.length > 0);
+                      
+                      return imgList.map((img: string, idx: number) => (
+                        <ImageUpload
+                          key={idx}
+                          value={img}
+                          label={`صورة المعرض #${idx + 1}`}
+                          onChange={(url: string) => {
+                            const newArr = [...imgList];
+                            if (url) {
+                              newArr[idx] = url;
+                            } else {
+                              newArr.splice(idx, 1);
+                            }
+                            setAdditionalImagesText(newArr.join("\n"));
+                          }}
+                        />
+                      ));
+                    })()}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const arr = additionalImagesText
+                        .split("\n")
+                        .map((l) => l.trim())
+                        .filter((l) => l.length > 0);
+                      setAdditionalImagesText([...arr, ""].join("\n"));
+                    }}
+                    className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 transition-all cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 text-blue-600" />
+                    <span>إضافة صورة جديدة لمعرض الصور</span>
+                  </button>
                 </div>
               </div>
 
@@ -2060,6 +2036,31 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const [categoriesList, setCategoriesList] = useState<string[]>([
+    "تقارير ميدانية",
+    "زوامل وأناشيد",
+    "محاضرات ودروس",
+    "أفلام وثائقية",
+  ]);
+
+  useEffect(() => {
+    let active = true;
+    const loadCategories = async () => {
+      try {
+        const list = await GitHubClient.fetchContent<string>("video_categories");
+        if (active && list && list.length > 0) {
+          setCategoriesList(list);
+        }
+      } catch (err) {
+        console.warn("Failed to load categories from GitHub:", err);
+      }
+    };
+    loadCategories();
+    return () => {
+      active = false;
+    };
+  }, []);
+
   useEffect(() => {
     const q = query(collection(db, "videos"));
     const unsub = onSnapshot(
@@ -2103,32 +2104,35 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
     if (!title || !url) return alert("بيانات ناقصة");
     setSaving(true);
     const parsedOrder = order.trim() ? Number(order) : 9999;
+    const trimmedCategory = category.trim();
     try {
+      // Sync video categories with GitHub if it is a new category
+      if (trimmedCategory && !categoriesList.some(cat => cat.toLowerCase() === trimmedCategory.toLowerCase())) {
+        const updatedCategories = [...categoriesList, trimmedCategory];
+        setCategoriesList(updatedCategories);
+        try {
+          console.log("Saving new category to GitHub...", trimmedCategory);
+          await GitHubClient.saveContent("video_categories", updatedCategories);
+        } catch (githubErr) {
+          console.warn("Failed to save new category to GitHub:", githubErr);
+        }
+      }
+
+      const payload = {
+        title,
+        url,
+        thumbnailUrl: thumb,
+        category: trimmedCategory,
+        order: parsedOrder,
+        views: Number(views) || 0,
+      };
+
       if (editingId) {
-        await updateDoc(doc(db, "videos", editingId), {
-          title,
-          url,
-          thumbnailUrl: thumb,
-          category: category.trim(),
-          order: parsedOrder,
-          views: Number(views) || 0,
-        });
+        await updateDoc(doc(db, "videos", editingId), payload);
         alert("تم تعديل الفيديو بنجاح");
       } else {
-        const docRef = await addDoc(collection(db, "videos"), {
-          title,
-          url,
-          thumbnailUrl: thumb,
-          category: category.trim(),
-          order: parsedOrder,
-          views: Number(views) || 0,
-          createdAt: Date.now(),
-        });
-        await addDoc(collection(db, "notifications"), {
-          title: "محتوى مرئي جديد 🎥",
-          body: `تم إضافة فيديو جديد: "${title}"`,
-          category: "video",
-          link: `/watch/${docRef.id}`,
+        await addDoc(collection(db, "videos"), {
+          ...payload,
           createdAt: Date.now(),
         });
         alert("تم إضافة الفيديو بنجاح");
@@ -2192,24 +2196,38 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
           ، ثم نسخ رابط الفيديو ولصقه في الحقل المخصص.
         </div>
 
-        <input
-          className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          placeholder=""
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <input
-          className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          placeholder=""
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
-        <input
-          className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          placeholder=""
-          value={thumb}
-          onChange={(e) => setThumb(e.target.value)}
-        />
+        <div className="space-y-1">
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+            عنوان الفيديو / التقرير المرئي:
+          </label>
+          <input
+            className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm"
+            placeholder="ادخل عنواناً جذاباً وواضحاً للفيديو هنا..."
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+            رابط الفيديو (يدعم منصة ميون، يوتيوب، إلخ):
+          </label>
+          <input
+            className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm font-mono"
+            placeholder="الصق رابط الفيديو المباشر هنا (مثال: https://meyon.com.ye/...)"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <ImageUpload
+            value={thumb}
+            onChange={setThumb}
+            label="الصورة المصغرة (الغلاف)"
+            placeholder="اختر أو اسحب صورة غلاف الفيديو"
+          />
+        </div>
 
         <div className="space-y-2">
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
@@ -2235,7 +2253,7 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
           <div className="flex flex-col sm:flex-row gap-2">
             <input
               className="flex-1 p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm"
-              placeholder=""
+              placeholder="اكتب تصنيفاً جديداً هنا..."
               value={category}
               onChange={(e) => setCategory(e.target.value)}
             />
@@ -2249,10 +2267,11 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
               <option value="" disabled>
                 تصنيفات مقترحة
               </option>
-              <option value="تقارير ميدانية">تقارير ميدانية</option>
-              <option value="زوامل وأناشيد">زوامل وأناشيد</option>
-              <option value="محاضرات ودروس">محاضرات ودروس</option>
-              <option value="أفلام وثائقية">أفلام وثائقية</option>
+              {categoriesList.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -2462,13 +2481,6 @@ function AdminLive() {
       } else {
         await addDoc(collection(db, "livestreams"), {
           ...payload,
-          createdAt: Date.now(),
-        });
-        await addDoc(collection(db, "notifications"), {
-          title: "بث مباشر جديد 🔴",
-          body: `بدأ البث المباشر لـ: "${name}" الآن.`,
-          category: "news",
-          link: "/watch",
           createdAt: Date.now(),
         });
         alert("تم إضافة البث بنجاح");
@@ -2735,16 +2747,6 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
           createdAt: Date.now(),
         });
 
-        if (notify) {
-          await addDoc(collection(db, "notifications"), {
-            title: "تحديث في قسم السيد القائد",
-            body: `تم إضافة محتوى جديد: "${title}"`,
-            category: "leader",
-            link: "/leader",
-            createdAt: Date.now(),
-          });
-        }
-
         alert("تمت الإضافة بنجاح!");
       }
       resetForm();
@@ -2859,32 +2861,12 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
         )}
 
         <div>
-          <label className="block text-sm font-bold mb-2">
-            رابط الصورة المصغرة (اختياري):
-          </label>
-          <input
-            type="text"
-            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 text-sm"
-            placeholder=""
+          <ImageUpload
             value={thumbnailUrl}
-            onChange={(e) => setThumbnailUrl(e.target.value)}
+            onChange={setThumbnailUrl}
+            label={type === "text" ? "صورة المحاضرة أو النص (اختياري)" : "الصورة المصغرة للفيديو (اختياري)"}
+            placeholder={type === "text" ? "اختر أو اسحب صورة للمحاضرة" : "اختر أو اسحب صورة مصغرة للفيديو"}
           />
-          {thumbnailUrl.trim() && (
-            <div className="mt-2 text-center bg-gray-100 dark:bg-gray-800 p-2 rounded-xl">
-              <span className="block text-[10px] text-gray-500 mb-1">
-                معاينة الصورة المصغرة:
-              </span>
-              <img
-                src={thumbnailUrl}
-                alt="معاينة الصورة المصغرة"
-                className="max-h-32 rounded-lg mx-auto object-cover border"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "https://placehold.co/600x400/047857/FFFFFF?text=Preview";
-                }}
-              />
-            </div>
-          )}
         </div>
 
         <div>
@@ -3250,19 +3232,6 @@ function AdminQuranLessons() {
           createdAt: Date.now(),
         });
         lessonId = docRef.id;
-
-        if (notify) {
-          const series = seriesList.find((s) => s.id === seriesId);
-          await addDoc(collection(db, "notifications"), {
-            title: "درس جديد مضاف",
-            body: `تم إضافة درس جديد: "${title}" في سلسلة ${
-              series?.title || ""
-            }`,
-            category: "quran",
-            link: "/quran",
-            createdAt: Date.now(),
-          });
-        }
       }
       setEditingId(null);
       setTitle("");
@@ -3926,13 +3895,6 @@ function AdminEvents() {
       } else {
         await addDoc(collection(db, "events"), {
           ...data,
-          createdAt: Date.now(),
-        });
-        await addDoc(collection(db, "notifications"), {
-          title: "فعالية جديدة 📅",
-          body: `تم إضافة فعالية جديدة: "${data.title}"`,
-          category: "news",
-          link: "/events",
           createdAt: Date.now(),
         });
         alert("تمت الإضافة");

@@ -1,14 +1,19 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X, Bell } from "lucide-react";
+import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
-import { UrgentNews, AppNotification } from "../types";
+import { UrgentNews } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 
 function NotificationCenter() {
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  return null;
+}
+
+/*
+function NotificationCenterDeprecated() {
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [readIds, setReadIds] = useState<string[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -110,6 +115,7 @@ function NotificationCenter() {
     </div>
   );
 }
+*/
 
 function UrgentNewsBanner() {
   const [urgentNews, setUrgentNews] = useState<UrgentNews | null>(null);
@@ -250,7 +256,6 @@ export function Layout() {
               <span className="font-black text-lg sm:text-xl text-taiz-navy leading-tight">منصة تعز الإعلامية</span>
               <span className="text-[10px] font-bold text-taiz-sky uppercase tracking-wider">إخبارية .. ثقافية | TAIZ MEDIA PLATFORM</span>
             </div>
-            <NotificationCenter />
         </div>
       </header>
 

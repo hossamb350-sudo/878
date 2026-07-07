@@ -1,270 +1,318 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
+import { Newspaper, PlayCircle, BookOpen, AlertCircle } from "lucide-react";
+import { GoogleAuthProvider, signInWithCredential, signInWithPopup } from "firebase/auth";
+import { auth, db } from "../firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { Capacitor } from "@capacitor/core";
+import { GoogleAuth } from "@southdevs/capacitor-google-auth";
+import { UserProfile } from "../types";
 
 const LOGO_SRC = "/logo.png";
 
+// Official colorful Google icon
+const GoogleIcon = () => (
+  <svg className="w-5 h-5 ml-2 mr-1" viewBox="0 0 24 24" width="24" height="24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+  </svg>
+);
+
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
-  const [sweep, setSweep] = useState(0); // 0: none, 1: first, 2: second
-  const [sparkles, setSparkles] = useState(false);
-  const [pulse, setPulse] = useState(false);
+  const [isFirstLaunch, setIsFirstLaunch] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Phase transitions for staggered animation
+  const [showName, setShowName] = useState(false);
+  const [showChips, setShowChips] = useState(false);
+  const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
-    // 1.2s: First Light Sweep
-    const sweep1 = setTimeout(() => setSweep(1), 1200);
-    const sweep1End = setTimeout(() => setSweep(0), 2000);
+    // Determine first launch status
+    const completedOnboarding = localStorage.getItem("taiz_onboarding_completed");
+    const isFirst = completedOnboarding !== "true";
+    setIsFirstLaunch(isFirst);
 
-    // 1.8s: First Sparkles
-    const sparkle1 = setTimeout(() => setSparkles(true), 1800);
-    const sparkle1End = setTimeout(() => setSparkles(false), 2600);
+    // Timeline of animations
+    const nameTimer = setTimeout(() => setShowName(true), 600);
+    const chipsTimer = setTimeout(() => setShowChips(true), 1200);
 
-    // 4s: Start Halo Pulse
-    const pulseStart = setTimeout(() => setPulse(true), 4000);
+    let authTimer: NodeJS.Timeout | null = null;
+    let autoDismissTimer: NodeJS.Timeout | null = null;
 
-    // 5s: Second Light Sweep + Sparkle
-    const sweep2 = setTimeout(() => setSweep(2), 5000);
-    const sweep2End = setTimeout(() => setSweep(0), 5800);
-    const sparkle2 = setTimeout(() => setSparkles(true), 5000);
-    const sparkle2End = setTimeout(() => setSparkles(false), 5800);
-
-    // Periodic sweep every 4 seconds after the first ones
-    const recurringSweep = setInterval(() => {
-      setSweep(prev => (prev === 0 ? 3 : 0));
-      setTimeout(() => setSweep(0), 1000);
-    }, 4000);
-
-    // 9s: Complete
-    const timer = setTimeout(() => {
-      onComplete();
-    }, 9500);
+    if (isFirst) {
+      // For first launch, show auth controls after chips appear
+      authTimer = setTimeout(() => setShowAuth(true), 2400);
+    } else {
+      // For subsequent launches, auto-dismiss after exactly 5 seconds
+      autoDismissTimer = setTimeout(() => {
+        onComplete();
+      }, 5000);
+    }
 
     return () => {
-      clearTimeout(sweep1);
-      clearTimeout(sweep1End);
-      clearTimeout(sparkle1);
-      clearTimeout(sparkle1End);
-      clearTimeout(pulseStart);
-      clearTimeout(sweep2);
-      clearTimeout(sweep2End);
-      clearTimeout(sparkle2);
-      clearTimeout(sparkle2End);
-      clearInterval(recurringSweep);
-      clearTimeout(timer);
+      clearTimeout(nameTimer);
+      clearTimeout(chipsTimer);
+      if (authTimer) clearTimeout(authTimer);
+      if (autoDismissTimer) clearTimeout(autoDismissTimer);
     };
   }, [onComplete]);
 
+  const syncUserProfile = async (firebaseUser: any) => {
+    try {
+      const userRef = doc(db, "users", firebaseUser.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        const newProfile: UserProfile = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || "",
+          displayName: firebaseUser.displayName || "مستخدم جديد",
+          photoURL: firebaseUser.photoURL || undefined,
+          role: "user",
+          createdAt: Date.now(),
+          lastLogin: Date.now()
+        };
+        await setDoc(userRef, newProfile);
+      } else {
+        await setDoc(userRef, { lastLogin: Date.now() }, { merge: true });
+      }
+    } catch (e) {
+      console.warn("Could not sync Firestore user profile from splash screen:", e);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await (GoogleAuth.signIn as any)();
+        if (googleUser.authentication.idToken) {
+          const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+          const userCredential = await signInWithCredential(auth, credential);
+          await syncUserProfile(userCredential.user);
+        } else {
+          throw new Error("No ID Token found");
+        }
+      } else {
+        const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());
+        await syncUserProfile(userCredential.user);
+      }
+      
+      // Save onboarding complete state and dismiss
+      localStorage.setItem("taiz_onboarding_completed", "true");
+      onComplete();
+    } catch (err: any) {
+      console.error("Google Auth error from splash:", err);
+      if (err.code === "auth/operation-not-allowed") {
+        setError("تسجيل الدخول عبر جوجل غير مفعل حالياً. يرجى التواصل مع الإدارة.");
+      } else {
+        setError("حدث خطأ أثناء الاتصال بجوجل. يرجى المحاولة لاحقاً.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSkip = () => {
+    localStorage.setItem("taiz_onboarding_completed", "true");
+    onComplete();
+  };
+
+  if (isFirstLaunch === null) {
+    return null; // Prevent flash of unstyled content
+  }
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden bg-[#f8f9fa] font-cairo">
-      {/* BACKGROUND LAYER */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="absolute inset-0"
-      >
-        {/* Radial Gradient: Center White to Gray Edge */}
-        <div 
-          className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,1)_0%,rgba(220,225,230,1)_80%,rgba(200,205,210,1)_100%)]" 
-        />
-        
-        {/* Vignette Effect */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.03)_100%)]" />
+    <div className="fixed inset-0 z-[100] flex flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-[#0b172a] via-[#07101f] to-[#040914] font-cairo text-white px-6 py-12" style={{ direction: "rtl" }}>
+      {/* AMBIENT GLOW EFFECTS */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Soft cyan/blue backlight behind logo */}
+        <div className="absolute top-[10%] left-1/2 -translate-x-1/2 w-[80%] h-[50%] bg-[#049edf]/10 blur-[130px] rounded-full" />
+      </div>
 
-        {/* Soft Noise Texture */}
-        <div 
-          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
-          style={{ 
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
+      {/* HEADER SECTION (EMPTY FOR SPACING / CENTERING) */}
+      <div className="h-4" />
+
+      {/* CENTRAL BRANDING & LOGO */}
+      <div className="flex flex-col items-center text-center max-w-md w-full z-10 my-auto">
+        {/* Logo Container */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{
+            duration: 1.0,
+            ease: "easeOut"
           }}
-        />
-
-        {/* Bloom / Halo behind Logo */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ 
-            opacity: 0.6,
-            scale: pulse ? [1, 1.05, 1] : 1
-          }}
-          transition={{ 
-            opacity: { delay: 0.3, duration: 1.5 },
-            scale: { repeat: pulse ? Infinity : 0, duration: 3, ease: "easeInOut" }
-          }}
-          className="absolute top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[45%] h-[45%] bg-white blur-[120px] rounded-full"
-        />
-
-        {/* Floating Particles (Max 20) */}
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{ 
-              opacity: 0, 
-              x: `${Math.random() * 100 - 50}%`, 
-              y: `${Math.random() * 100 - 50}%` 
-            }}
-            animate={{ 
-              opacity: [0, 0.4, 0],
-              y: [`${Math.random() * 20 - 10}%`, `${Math.random() * 20 - 10}%`],
-              x: [`${Math.random() * 20 - 10}%`, `${Math.random() * 20 - 10}%`]
-            }}
-            transition={{ 
-              duration: 8 + Math.random() * 10, 
-              repeat: Infinity, 
-              delay: Math.random() * 5 
-            }}
-            className="absolute w-[2px] h-[2px] bg-white rounded-full blur-[0.5px]"
+          className="relative w-64 h-56 md:w-80 md:h-64 flex items-center justify-center mb-2"
+        >
+          {/* Real logo image directly on background without surrounding circle or glow layers */}
+          <img
+            src={LOGO_SRC}
+            alt="شعار منصة تعز الإعلامية"
+            className="w-full h-full object-contain relative z-20"
           />
-        ))}
-      </motion.div>
+        </motion.div>
 
-      {/* CONTENT CONTAINER */}
-      <div className="relative flex flex-col items-center justify-center text-center w-full max-w-lg z-10">
-        
-        {/* LOGO & EFFECTS SECTION */}
-        <div className="relative mb-16">
-          {/* Logo Halo (Blue Glow) */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ 
-              opacity: 0.3,
-              scale: pulse ? [1.35, 1.42, 1.35] : 1.35
-            }}
-            transition={{ 
-              opacity: { delay: 0.8, duration: 2 },
-              scale: { repeat: pulse ? Infinity : 0, duration: 3, ease: "easeInOut" }
-            }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[#049EDF] blur-[60px] rounded-full pointer-events-none"
-          />
-
-          {/* Oval Shadow below Logo */}
-          <motion.div 
-            initial={{ opacity: 0, scaleX: 0.5 }}
-            animate={{ opacity: 0.25, scaleX: 1 }}
-            transition={{ delay: 0.8, duration: 1.5, ease: "easeOut" }}
-            className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[70%] h-8 bg-[#032F69] blur-[25px] rounded-[100%]"
-          />
-
-          {/* Main Logo Container */}
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ 
-              delay: 0.3, 
-              duration: 1.2, 
-              ease: [0.22, 1, 0.36, 1] 
-            }}
-            className="relative w-80 h-80 md:w-[450px] md:h-[450px] flex items-center justify-center"
-          >
-            {/* Logo Image */}
-            <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-              <img 
-                src={LOGO_SRC} 
-                alt="Logo" 
-                className="w-full h-full object-contain relative z-20"
-              />
-
-              {/* Light Sweep Effect */}
-              <AnimatePresence>
-                {sweep > 0 && (
-                  <motion.div 
-                    initial={{ x: "-150%", rotate: 25 }}
-                    animate={{ x: "150%" }}
-                    exit={{ opacity: 0 }}
-                    transition={{ 
-                      duration: 0.8, 
-                      ease: "easeInOut"
-                    }}
-                    className="absolute inset-0 z-30 pointer-events-none"
-                    style={{
-                      background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)",
-                      width: "100%",
-                      height: "200%",
-                      top: "-50%"
-                    }}
-                  />
-                )}
-              </AnimatePresence>
-
-              {/* Glass Reflection effect overlay */}
-              <div className="absolute inset-0 z-25 bg-gradient-to-tr from-white/15 to-transparent opacity-50 pointer-events-none rounded-full" />
-            </div>
-
-            {/* Sparkles Layer */}
-            <AnimatePresence>
-              {sparkles && (
-                <div className="absolute inset-0 z-40 pointer-events-none">
-                  {/* Top Right Sparkle */}
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
-                    transition={{ duration: 0.6 }}
-                    className="absolute top-10 right-16 w-6 h-6"
-                  >
-                    <div className="absolute inset-0 bg-white blur-[3px] rounded-full" />
-                    <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-white shadow-[0_0_8px_white]" />
-                    <div className="absolute top-0 left-1/2 w-[1.5px] h-full bg-white shadow-[0_0_8px_white]" />
-                  </motion.div>
-                  
-                  {/* Additional Sparkle */}
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: [0, 1, 0], scale: [0, 1.2, 0] }}
-                    transition={{ duration: 0.6, delay: 0.2 }}
-                    className="absolute bottom-20 left-10 w-4 h-4"
-                  >
-                    <div className="absolute inset-0 bg-white blur-[2px] rounded-full" />
-                    <div className="absolute top-1/2 left-0 w-full h-[1px] bg-white" />
-                    <div className="absolute top-0 left-1/2 w-[1px] h-full bg-white" />
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+        {/* Platform Name and Slogan */}
+        <div className="space-y-4 w-full">
+          <AnimatePresence>
+            {showName && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="space-y-3"
+              >
+                <h1 className="text-[28px] md:text-3xl font-black text-white tracking-normal leading-normal">
+                  منصة تعز الإعلامية
+                </h1>
+                <p className="text-xs md:text-sm font-bold tracking-[0.25em] text-[#049edf] uppercase font-sans">
+                  TAIZ MEDIA PLATFORM
+                </p>
+                <p className="text-sm md:text-base text-gray-400 font-bold max-w-xs mx-auto leading-relaxed">
+                  إعلام ينقل الواقع ويستنير بالقرآن والقائد
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {/* TEXT CONTENT SECTION */}
-        <div className="flex flex-col items-center space-y-6">
-          {/* Arabic Title */}
-          <motion.h1 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 2.4, duration: 0.8, ease: "easeOut" }}
-            className="text-4xl md:text-5xl font-black text-[#032F69] font-cairo tracking-tight"
-            style={{ direction: 'rtl' }}
-          >
-            منصة تعز الإعلامية
-          </motion.h1>
+        {/* FEATURE CHIPS */}
+        <div className="mt-10 w-full min-h-[120px] max-w-sm">
+          <AnimatePresence>
+            {showChips && (
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: {
+                    transition: {
+                      staggerChildren: 0.2
+                    }
+                  }
+                }}
+                className="flex flex-col items-center gap-3 w-full"
+              >
+                {/* Row 1: Side by Side */}
+                <div className="flex items-center justify-center gap-3 w-full">
+                  {/* Chip 1 */}
+                  <motion.div
+                    variants={{
+                      hidden: { opacity: 0, y: 15 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+                    }}
+                    className="flex items-center gap-2 bg-[#0a1528]/80 hover:bg-[#0a1528] border border-white/10 rounded-2xl py-3 px-5 transition-all duration-300 shadow-md cursor-pointer"
+                  >
+                    <Newspaper className="w-5 h-5 text-[#049edf]" />
+                    <span className="text-xs md:text-sm font-black text-gray-100">أخبار وتقارير</span>
+                  </motion.div>
 
-          {/* English Title */}
-          <motion.h2 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 3.0, duration: 1, ease: "easeOut" }}
-            className="text-sm md:text-base font-bold text-[#032F69] tracking-[0.5em] uppercase font-sans"
-          >
-            TAIZ MEDIA PLATFORM
-          </motion.h2>
+                  {/* Chip 2 */}
+                  <motion.div
+                    variants={{
+                      hidden: { opacity: 0, y: 15 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+                    }}
+                    className="flex items-center gap-2 bg-[#0a1528]/80 hover:bg-[#0a1528] border border-white/10 rounded-2xl py-3 px-5 transition-all duration-300 shadow-md cursor-pointer"
+                  >
+                    <PlayCircle className="w-5 h-5 text-red-500" />
+                    <span className="text-xs md:text-sm font-black text-gray-100">محتوى مرئي متجدد</span>
+                  </motion.div>
+                </div>
 
-          {/* Slogan / Definition */}
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 3.5, duration: 1.2 }}
-            className="text-sm md:text-base text-[#475569]/80 font-medium mt-6 font-cairo"
-            style={{ direction: 'rtl' }}
-          >
-            إعلام ينقل الواقع، ويستنير بالقرآن والقائد
-          </motion.p>
+                {/* Row 2: Centered */}
+                <motion.div
+                  variants={{
+                    hidden: { opacity: 0, y: 15 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+                  }}
+                  className="flex items-center gap-2 bg-[#0a1528]/80 hover:bg-[#0a1528] border border-white/10 rounded-2xl py-3 px-6 transition-all duration-300 shadow-md cursor-pointer"
+                >
+                  <BookOpen className="w-5 h-5 text-emerald-500" />
+                  <span className="text-xs md:text-sm font-black text-gray-100">دروس من هدي القرآن</span>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* BOTTOM FOOTER / SYSTEM INFO */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.4 }}
-        transition={{ delay: 7 }}
-        className="absolute bottom-10 text-xs tracking-[0.2em] text-[#032F69] font-bold font-cairo"
-      >
-        مكتب الإعلام محافظة تعز
-      </motion.div>
+      {/* FOOTER / FIRST LAUNCH SIGN IN ACTIONS */}
+      <div className="w-full max-w-sm flex flex-col items-center justify-end z-20 min-h-[140px] mt-8">
+        <AnimatePresence mode="wait">
+          {isFirstLaunch && showAuth ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="w-full flex flex-col items-center space-y-5"
+            >
+              {/* Error Message */}
+              {error && (
+                <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/35 text-red-200 text-xs py-2.5 px-4 rounded-xl w-full text-right">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-500" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              {/* Google Sign In Button (MD3 Compliant) */}
+              <button
+                disabled={loading}
+                onClick={handleGoogleLogin}
+                className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 hover:bg-gray-100 active:scale-[0.98] transition-all duration-300 py-3.5 px-6 rounded-full font-bold shadow-[0_4px_18px_rgba(255,255,255,0.15)] disabled:opacity-75 text-sm md:text-base cursor-pointer relative overflow-hidden"
+              >
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin" />
+                    <span>جاري تسجيل الدخول...</span>
+                  </div>
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    <span className="font-black text-gray-900">تسجيل الدخول باستخدام Google</span>
+                  </>
+                )}
+              </button>
+
+              {/* Skip / تخطي Button */}
+              <button
+                disabled={loading}
+                onClick={handleSkip}
+                className="text-gray-400 hover:text-white transition-colors duration-200 text-sm font-black tracking-wide py-2 cursor-pointer"
+              >
+                تخطي والدخول للتطبيق
+              </button>
+            </motion.div>
+          ) : (
+            // On subsequent launches, or before auth shows, display a elegant progress bar or simple credit
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              transition={{ delay: 1 }}
+              className="flex flex-col items-center space-y-3"
+            >
+              {!isFirstLaunch && (
+                <div className="w-24 h-[3px] bg-white/15 rounded-full overflow-hidden relative">
+                  <motion.div
+                    initial={{ left: "-100%" }}
+                    animate={{ left: "100%" }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-0 bottom-0 w-1/2 bg-[#049edf] rounded-full"
+                  />
+                </div>
+              )}
+              <span className="text-xs tracking-[0.25em] text-gray-400 font-bold uppercase">
+                مكتب الإعلام بمحافظة تعز
+              </span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
