@@ -148,6 +148,65 @@
       },
       "required": ["lessonsReadCount", "totalReadingTimeMinutes", "lastReadTimestamp"]
     },
+    "QuranSeries": {
+      "title": "Quran Series",
+      "description": "A series of Quran lessons",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "title", "order"]
+    },
+    "QuranLesson": {
+      "title": "Quran Lesson",
+      "description": "A single Quran lesson with content",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "seriesId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "seriesId", "title", "content", "order"]
+    },
+    "QuranExcerpt": {
+      "title": "Quran Excerpt",
+      "description": "A short highlight from a Quran lesson",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "mediaUrl": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "lessonId", "title", "content"]
+    },
+    "QuranSyllabus": {
+      "title": "Quran Syllabus",
+      "description": "Scheduled Quran study item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "lessonId": { "type": "string" },
+        "lessonTitle": { "type": "string" },
+        "seriesId": { "type": "string" },
+        "seriesTitle": { "type": "string" },
+        "durationType": { "type": "string", "enum": ["weeks", "months"] },
+        "expiresAt": { "type": "number" },
+        "eventId": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["id", "lessonId", "expiresAt"]
+    },
     "SocialLink": {
       "title": "Social Link",
       "description": "External social media links",
@@ -215,6 +274,22 @@
     "/social_links/{linkId}": {
       "schema": { "$ref": "SocialLink" },
       "description": "External social media links"
+    },
+    "/quran_series/{id}": {
+      "schema": { "$ref": "QuranSeries" },
+      "description": "Quran series data"
+    },
+    "/quran_lessons/{id}": {
+      "schema": { "$ref": "QuranLesson" },
+      "description": "Quran lessons content"
+    },
+    "/quran_excerpts/{id}": {
+      "schema": { "$ref": "QuranExcerpt" },
+      "description": "Quran highlights"
+    },
+    "/quran_syllabuses/{id}": {
+      "schema": { "$ref": "QuranSyllabus" },
+      "description": "Quran scheduled syllabuses"
     }
   }
 }

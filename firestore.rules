@@ -1,8 +1,51 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserData().role == 'admin';
+    }
+    
+    function isManager() {
+      return isAuthenticated() && (getUserData().role == 'admin' || getUserData().role == 'manager');
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if request.auth.uid == userId || isAdmin();
+    }
+
+    match /quran_series/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+    
+    match /quran_lessons/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+    
+    match /quran_excerpts/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+    
+    match /quran_syllabuses/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
     match /{document=**} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
   }
 }

@@ -3023,13 +3023,65 @@ import {
 
 function AdminQuran() {
   const [subTab, setSubTab] = useState<"syllabuses" | "series" | "lessons" | "excerpts">("series");
+  const [migrating, setMigrating] = useState(false);
+
+  const migrateToFirestore = async () => {
+    if (!confirm("هل تريد مزامنة كافة البيانات الحالية من الملفات إلى Firestore؟ سيؤدي هذا إلى الكتابة فوق البيانات الموجودة في Firestore.")) return;
+    setMigrating(true);
+    try {
+      const res = await fetch("/api/quran-data");
+      const data = await res.json();
+      
+      const batch = writeBatch(db);
+      
+      // Migrate Series
+      (data.series || []).forEach((s: any) => {
+        batch.set(doc(db, "quran_series", s.id), s);
+      });
+      
+      // Migrate Lessons
+      (data.lessons || []).forEach((l: any) => {
+        batch.set(doc(db, "quran_lessons", l.id), l);
+      });
+      
+      // Migrate Excerpts
+      (data.excerpts || []).forEach((e: any) => {
+        batch.set(doc(db, "quran_excerpts", e.id), e);
+      });
+      
+      // Migrate Syllabuses
+      (data.syllabuses || []).forEach((s: any) => {
+        batch.set(doc(db, "quran_syllabuses", s.id), s);
+      });
+      
+      await batch.commit();
+      alert("تمت المزامنة بنجاح إلى Firestore!");
+      // Clear local cache to force refresh
+      localStorage.removeItem('quran_data_cache');
+      localStorage.removeItem('quran_data_timestamp');
+    } catch (e) {
+      console.error(e);
+      alert("حدث خطأ أثناء المزامنة");
+    } finally {
+      setMigrating(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
-        <div className="flex items-center gap-2">
-          <Settings className="w-6 h-6 text-emerald-600" />
-          <h2 className="text-xl font-bold">إعداد محتوى المنصة (هدي القرآن)</h2>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Settings className="w-6 h-6 text-emerald-600" />
+            <h2 className="text-xl font-bold">إعداد محتوى المنصة (هدي القرآن)</h2>
+          </div>
+          <button
+            onClick={migrateToFirestore}
+            disabled={migrating}
+            className="text-[10px] bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded-lg font-bold transition-all disabled:opacity-50"
+          >
+            {migrating ? "جاري المزامنة..." : "مزامنة الملفات إلى Firestore"}
+          </button>
         </div>
         
         <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl shrink-0" dir="rtl">
@@ -3088,7 +3140,6 @@ function AdminQuran() {
 
 function AdminQuranSeries() {
   const [list, setList] = useState<QuranSeries[]>([]);
-  const [fullData, setFullData] = useState<{ series: QuranSeries[]; lessons: QuranLesson[] }>({ series: [], lessons: [] });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
@@ -3097,56 +3148,39 @@ function AdminQuranSeries() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    const unsub = onSnapshot(
+      query(collection(db, "quran_series"), orderBy("order", "asc")),
+      (snap) => {
+        setList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranSeries)));
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Firestore error:", err);
+        setLoading(false);
+      }
+    );
+    return () => unsub();
   }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/quran-data");
-      const data = await res.json();
-      setFullData(data);
-      setList(data.series || []);
-    } catch (e) {
-      console.error("Error fetching Quran data:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const save = async () => {
     if (!title) return;
     setSaving(true);
     try {
-      let newList = [...list];
-      if (editingId) {
-        newList = newList.map(s => s.id === editingId ? { ...s, title, description: desc, order: Number(order) } : s);
-      } else {
-        const newSeries: QuranSeries = {
-          id: Date.now().toString(),
-          title,
-          description: desc,
-          order: Number(order),
-          createdAt: Date.now()
-        };
-        newList.push(newSeries);
-      }
+      const id = editingId || Date.now().toString();
+      const data = {
+        title,
+        description: desc,
+        order: Number(order),
+        createdAt: editingId ? undefined : Date.now()
+      };
       
-      const newFullData = { ...fullData, series: newList };
-      const res = await fetch("/api/quran-data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newFullData)
-      });
-
-      if (res.ok) {
-        setFullData(newFullData);
-        setList(newList);
-        alert("تم الحفظ بنجاح في ملفات المنصة");
-        resetForm(newList);
-      } else {
-        throw new Error("Failed to save");
-      }
+      await setDoc(doc(db, "quran_series", id), data, { merge: true });
+      
+      // Clear local cache
+      localStorage.removeItem('quran_data_cache');
+      
+      alert("تم الحفظ في Firebase");
+      resetForm();
     } catch (e) {
       alert("حدث خطأ أثناء الحفظ");
     } finally {
@@ -3173,29 +3207,18 @@ function AdminQuranSeries() {
   }, [list, editingId]);
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف من ملفات المنصة؟ سيتم حذف جميع الدروس التابعة لهذه السلسلة أيضاً.")) {
-      const newList = list.filter(s => s.id !== id);
-      const newLessons = fullData.lessons.filter(l => l.seriesId !== id);
-      const newFullData = { series: newList, lessons: newLessons };
-      
+    if (confirm("تأكيد الحذف من Firebase؟")) {
       try {
-        const res = await fetch("/api/quran-data", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newFullData)
-        });
-        if (res.ok) {
-          setFullData(newFullData);
-          setList(newList);
-          alert("تم الحذف بنجاح");
-        }
+        await deleteDoc(doc(db, "quran_series", id));
+        localStorage.removeItem('quran_data_cache');
+        alert("تم الحذف بنجاح");
       } catch (e) {
         alert("خطأ في الحذف");
       }
     }
   };
 
-  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل البيانات من الملفات...</div>;
+  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل البيانات من Firebase...</div>;
 
   return (
     <div className="space-y-6">
@@ -3259,7 +3282,7 @@ function AdminQuranSeries() {
       <div className="space-y-3 mt-6" dir="rtl">
         <div className="flex items-center justify-between px-2 mb-2">
           <h4 className="text-sm font-black text-gray-500 uppercase tracking-wider">السلاسل الحالية ({list.length})</h4>
-          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full">بيانات مخزنة محلياً</span>
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full">بيانات Firebase</span>
         </div>
         
         {list.sort((a, b) => (a.order || 0) - (b.order || 0)).map((s) => (
@@ -3314,7 +3337,6 @@ function AdminQuranSeries() {
 function AdminQuranLessons() {
   const [seriesList, setSeriesList] = useState<QuranSeries[]>([]);
   const [list, setList] = useState<QuranLesson[]>([]);
-  const [fullData, setFullData] = useState<{ series: QuranSeries[]; lessons: QuranLesson[] }>({ series: [], lessons: [] });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [seriesId, setSeriesId] = useState("");
@@ -3325,61 +3347,49 @@ function AdminQuranLessons() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/quran-data");
-      const data = await res.json();
-      setFullData(data);
-      setSeriesList(data.series || []);
-      setList(data.lessons || []);
-      if (data.series?.length > 0 && !seriesId) {
-        setSeriesId(data.series[0].id);
+    const unsubSeries = onSnapshot(
+      query(collection(db, "quran_series"), orderBy("order", "asc")),
+      (snap) => {
+        const sList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranSeries));
+        setSeriesList(sList);
+        if (sList.length > 0 && !seriesId) {
+          setSeriesId(sList[0].id);
+        }
       }
-    } catch (e) {
-      console.error("Error fetching Quran data:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
+
+    const unsubLessons = onSnapshot(
+      query(collection(db, "quran_lessons"), orderBy("order", "asc")),
+      (snap) => {
+        setList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranLesson)));
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      unsubSeries();
+      unsubLessons();
+    };
+  }, []);
 
   const save = async () => {
     if (!title || !seriesId || !content) return alert("أكمل البيانات");
     setSaving(true);
     try {
-      let newList = [...list];
-      if (editingId) {
-        newList = newList.map(l => l.id === editingId ? { ...l, seriesId, title, content, order: Number(order) } : l);
-      } else {
-        const newLesson: QuranLesson = {
-          id: Date.now().toString(),
-          seriesId,
-          title,
-          content,
-          order: Number(order),
-          createdAt: Date.now()
-        };
-        newList.push(newLesson);
-      }
+      const id = editingId || Date.now().toString();
+      const data = {
+        seriesId,
+        title,
+        content,
+        order: Number(order),
+        createdAt: editingId ? undefined : Date.now()
+      };
       
-      const newFullData = { ...fullData, lessons: newList };
-      const res = await fetch("/api/quran-data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newFullData)
-      });
-
-      if (res.ok) {
-        setFullData(newFullData);
-        setList(newList);
-        alert("تم حفظ الدرس بنجاح في ملفات المنصة");
-        resetForm(newList);
-      } else {
-        throw new Error("Failed to save");
-      }
+      await setDoc(doc(db, "quran_lessons", id), data, { merge: true });
+      localStorage.removeItem('quran_data_cache');
+      
+      alert("تم حفظ الدرس في Firebase");
+      resetForm();
     } catch (e) {
       alert("حدث خطأ أثناء الحفظ");
     } finally {
@@ -3403,28 +3413,18 @@ function AdminQuranLessons() {
   }, [seriesId, list, editingId]);
 
   const del = async (id: string) => {
-    if (confirm("تأكيد حذف الدرس من ملفات المنصة؟")) {
-      const newList = list.filter(l => l.id !== id);
-      const newFullData = { ...fullData, lessons: newList };
-      
+    if (confirm("تأكيد الحذف من Firebase؟")) {
       try {
-        const res = await fetch("/api/quran-data", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newFullData)
-        });
-        if (res.ok) {
-          setFullData(newFullData);
-          setList(newList);
-          alert("تم الحذف بنجاح");
-        }
+        await deleteDoc(doc(db, "quran_lessons", id));
+        localStorage.removeItem('quran_data_cache');
+        alert("تم الحذف");
       } catch (e) {
         alert("خطأ في الحذف");
       }
     }
   };
 
-  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل الدروس من الملفات...</div>;
+  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل الدروس من Firebase...</div>;
 
   return (
     <div className="space-y-6">
@@ -3486,7 +3486,7 @@ function AdminQuranLessons() {
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-black transition-all shadow-lg shadow-emerald-600/20 active:scale-95 disabled:opacity-50 flex items-center gap-2"
           >
             <Save className="w-4 h-4" />
-            {saving ? "جاري الحفظ..." : "حفظ الدرس في الملفات"}
+            {saving ? "جاري الحفظ..." : "حفظ الدرس في Firebase"}
           </button>
           {editingId && (
             <button
@@ -3506,7 +3506,7 @@ function AdminQuranLessons() {
               الدروس في السلسلة المختارة ({list.filter(l => l.seriesId === seriesId).length})
             </h4>
           </div>
-          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full">تخزين داخلي (JSON)</span>
+          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-1 rounded-full">بيانات Firebase</span>
         </div>
         
         {list
@@ -3577,7 +3577,6 @@ function AdminQuranSyllabuses() {
   const [list, setList] = useState<QuranSyllabus[]>([]);
   const [lessons, setLessons] = useState<QuranLesson[]>([]);
   const [series, setSeries] = useState<QuranSeries[]>([]);
-  const [fullData, setFullData] = useState<any>({ series: [], lessons: [], excerpts: [], syllabuses: [] });
   const [events, setEvents] = useState<EventItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lessonId, setLessonId] = useState("");
@@ -3588,35 +3587,42 @@ function AdminQuranSyllabuses() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    const unsubSeries = onSnapshot(
+      query(collection(db, "quran_series"), orderBy("order", "asc")),
+      (snap) => {
+        setSeries(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranSeries)));
+      }
+    );
+
+    const unsubLessons = onSnapshot(
+      query(collection(db, "quran_lessons"), orderBy("order", "asc")),
+      (snap) => {
+        setLessons(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranLesson)));
+      }
+    );
+
+    const unsubSyllabuses = onSnapshot(
+      query(collection(db, "quran_syllabuses"), orderBy("createdAt", "desc")),
+      (snap) => {
+        setList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranSyllabus)));
+        setLoading(false);
+      }
+    );
+
     const unsubEvents = onSnapshot(
       query(collection(db, "events"), orderBy("timestamp", "desc")),
       (snap) => {
-        setEvents(
-          snap.docs.map((d) => ({ id: d.id, ...d.data() } as EventItem))
-        );
+        setEvents(snap.docs.map((d) => ({ id: d.id, ...d.data() } as EventItem)));
       }
     );
+
     return () => {
-      unsubEvents?.();
+      unsubSeries();
+      unsubLessons();
+      unsubSyllabuses();
+      unsubEvents();
     };
   }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/quran-data");
-      const data = await res.json();
-      setFullData(data);
-      setList(data.syllabuses || []);
-      setLessons(data.lessons || []);
-      setSeries(data.series || []);
-    } catch (e) {
-      console.error("Error fetching Quran data:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const save = async () => {
     if (!lessonId || !durationVal)
@@ -3645,9 +3651,8 @@ function AdminQuranSyllabuses() {
         : num * 30 * 24 * 60 * 60 * 1000;
       const expiresAt = now + durationMs;
 
-      let newList = [...list];
+      const id = editingId || Date.now().toString();
       const payload = {
-        id: editingId || Date.now().toString(),
         lessonId,
         lessonTitle,
         seriesId,
@@ -3656,34 +3661,18 @@ function AdminQuranSyllabuses() {
         durationType,
         expiresAt,
         eventId: eventId || null,
-        createdAt: now,
+        createdAt: editingId ? undefined : now,
       };
 
-      if (editingId) {
-        newList = newList.map(s => s.id === editingId ? payload : s);
-      } else {
-        newList.push(payload);
-      }
+      await setDoc(doc(db, "quran_syllabuses", id), payload, { merge: true });
+      localStorage.removeItem('quran_data_cache');
 
-      const newFullData = { ...fullData, syllabuses: newList };
-      const res = await fetch("/api/quran-data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newFullData)
-      });
-
-      if (res.ok) {
-        setFullData(newFullData);
-        setList(newList);
-        alert("تم الحفظ بنجاح في ملفات المنصة");
-        setEditingId(null);
-        setLessonId("");
-        setDurationVal("1");
-        setDurationType("weeks");
-        setEventId("");
-      } else {
-        throw new Error("Failed to save");
-      }
+      alert("تم الحفظ بنجاح في Firebase");
+      setEditingId(null);
+      setLessonId("");
+      setDurationVal("1");
+      setDurationType("weeks");
+      setEventId("");
     } catch (e) {
       console.error(e);
       alert("حدث خطأ أثناء الحفظ");
@@ -3693,33 +3682,23 @@ function AdminQuranSyllabuses() {
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف من ملفات المنصة؟")) {
-      const newList = list.filter(s => s.id !== id);
-      const newFullData = { ...fullData, syllabuses: newList };
-      
+    if (confirm("تأكيد الحذف من Firebase؟")) {
       try {
-        const res = await fetch("/api/quran-data", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newFullData)
-        });
-        if (res.ok) {
-          setFullData(newFullData);
-          setList(newList);
-          alert("تم الحذف بنجاح");
-        }
+        await deleteDoc(doc(db, "quran_syllabuses", id));
+        localStorage.removeItem('quran_data_cache');
+        alert("تم الحذف بنجاح");
       } catch (e) {
         alert("خطأ في الحذف");
       }
     }
   };
 
-  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل البيانات...</div>;
+  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل البيانات من Firebase...</div>;
 
   return (
     <div className="space-y-6">
       <div className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-200 p-4 rounded-xl text-sm leading-relaxed border border-emerald-200 dark:border-emerald-800">
-        يتم اختيار المقرر من الدروس المخزنة محلياً. يتم حفظ هذه البيانات في ملفات المنصة وتظهر لجميع المستخدمين كجزء أساسي من التطبيق.
+        يتم اختيار المقرر من الدروس المخزنة في Firebase. يتم حفظ هذه البيانات في Firebase وتظهر لجميع المستخدمين.
         بعد انتهاء المدة المحددة، يتم إخفاء المقرر تلقائياً.
       </div>
 
@@ -3887,7 +3866,6 @@ function AdminQuranSyllabuses() {
 function AdminQuranExcerpts() {
   const [list, setList] = useState<QuranExcerpt[]>([]);
   const [lessons, setLessons] = useState<QuranLesson[]>([]);
-  const [fullData, setFullData] = useState<any>({ series: [], lessons: [], excerpts: [], syllabuses: [] });
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const [lessonId, setLessonId] = useState("");
@@ -3898,64 +3876,50 @@ function AdminQuranExcerpts() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const unsubLessons = onSnapshot(
+      query(collection(db, "quran_lessons"), orderBy("order", "asc")),
+      (snap) => {
+        setLessons(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranLesson)));
+      }
+    );
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/quran-data");
-      const data = await res.json();
-      setFullData(data);
-      setList(data.excerpts || []);
-      setLessons(data.lessons || []);
-    } catch (e) {
-      console.error("Error fetching Quran data:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const unsubExcerpts = onSnapshot(
+      query(collection(db, "quran_excerpts"), orderBy("createdAt", "desc")),
+      (snap) => {
+        setList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranExcerpt)));
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      unsubLessons();
+      unsubExcerpts();
+    };
+  }, []);
 
   const save = async () => {
     if (!lessonId || !title || !content)
       return alert("أكمل البيانات المطلوبة (الدرس، العنوان، النص)");
     setSaving(true);
     try {
-      let newList = [...list];
+      const id = editingId || Date.now().toString();
       const payload = {
-        id: editingId || Date.now().toString(),
         lessonId,
         title,
         content,
         mediaUrl,
-        createdAt: Date.now(),
+        createdAt: editingId ? undefined : Date.now(),
       };
 
-      if (editingId) {
-        newList = newList.map(s => s.id === editingId ? payload : s);
-      } else {
-        newList.push(payload);
-      }
+      await setDoc(doc(db, "quran_excerpts", id), payload, { merge: true });
+      localStorage.removeItem('quran_data_cache');
 
-      const newFullData = { ...fullData, excerpts: newList };
-      const res = await fetch("/api/quran-data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newFullData)
-      });
-
-      if (res.ok) {
-        setFullData(newFullData);
-        setList(newList);
-        alert("تم الحفظ في ملفات المنصة");
-        setEditingId(null);
-        setLessonId("");
-        setTitle("");
-        setContent("");
-        setMediaUrl("");
-      } else {
-        throw new Error("Failed to save");
-      }
+      alert("تم الحفظ في Firebase");
+      setEditingId(null);
+      setLessonId("");
+      setTitle("");
+      setContent("");
+      setMediaUrl("");
     } catch (e) {
       console.error(e);
       alert("حدث خطأ");
@@ -3965,34 +3929,24 @@ function AdminQuranExcerpts() {
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف من ملفات المنصة؟")) {
-      const newList = list.filter(s => s.id !== id);
-      const newFullData = { ...fullData, excerpts: newList };
-      
+    if (confirm("تأكيد الحذف من Firebase؟")) {
       try {
-        const res = await fetch("/api/quran-data", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(newFullData)
-        });
-        if (res.ok) {
-          setFullData(newFullData);
-          setList(newList);
-          alert("تم الحذف بنجاح");
-        }
+        await deleteDoc(doc(db, "quran_excerpts", id));
+        localStorage.removeItem('quran_data_cache');
+        alert("تم الحذف بنجاح");
       } catch (e) {
         alert("خطأ في الحذف");
       }
     }
   };
 
-  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل المقتطفات...</div>;
+  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل المقتطفات من Firebase...</div>;
 
   return (
     <div className="space-y-6">
       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-        <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">
-          {editingId ? "تعديل مقتطف" : "إضافة مقتطف جديد يدوياً"}
+        <h3 className="font-bold text-gray-700 dark:text-white mb-2">
+          {editingId ? "تعديل مقتطف" : "إضافة مقتطف جديد إلى Firebase"}
         </h3>
 
         <div className="space-y-1">
