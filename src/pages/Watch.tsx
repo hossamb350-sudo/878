@@ -186,7 +186,7 @@ export function Watch() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-taiz-sky opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-taiz-royal"></span>
           </div>
-          <h1 className="text-2xl font-black text-text-primary select-none">البث المباشر</h1>
+          <h1 className="text-xl sm:text-2xl font-black text-text-primary select-none">البث المباشر</h1>
         </div>
 
         {channels.length > 0 && (
@@ -320,7 +320,7 @@ export function Watch() {
               <div className="bg-gradient-to-br from-taiz-navy to-taiz-royal p-2 rounded-xl shadow-md">
                  <MonitorPlay className="w-5 h-5 text-white shrink-0" />
               </div>
-              <h2 className="font-black text-xl text-text-primary select-none">المحتوى المرئي</h2>
+              <h2 className="font-black text-lg text-text-primary select-none">المحتوى المرئي</h2>
               <span className="text-[10px] bg-taiz-sky text-white font-black px-2 py-0.5 rounded-full shadow-sm mr-2 animate-bounce">محدّث</span>
             </div>
 
@@ -538,7 +538,7 @@ export function Watch() {
 
                     {/* Meta info below image */}
                     <div className="p-5 space-y-3">
-                      <h4 className="text-text-primary font-black leading-[1.45] line-clamp-2 text-right text-[14px] sm:text-[15px] group-hover:text-taiz-royal transition-colors h-10 overflow-hidden">
+                      <h4 className="text-text-primary font-black leading-[1.45] line-clamp-2 text-right text-[12px] sm:text-[13px] group-hover:text-taiz-royal transition-colors h-10 overflow-hidden">
                         {vid.title}
                       </h4>
                       

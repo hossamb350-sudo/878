@@ -22,6 +22,19 @@ const imagekit = new ImageKit({
 
 app.use(express.json({ limit: "50mb" }));
 
+// Health check route
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Request logging middleware
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  }
+  next();
+});
+
 // Cache directory setup
 const CACHE_DIR = path.join(process.cwd(), "cache");
 if (!fs.existsSync(CACHE_DIR)) {
@@ -344,6 +357,24 @@ app.post("/api/content/:collection", async (req, res) => {
 
   // Return success response instantly
   res.json({ success: true, savedLocally: true });
+});
+
+// API 404 Handler - MUST be before Vite/Static middleware
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });
+});
+
+// Global error handler
+app.use((err: any, req: any, res: any, next: any) => {
+  console.error("Global error handler caught:", err);
+  if (req.path.startsWith("/api/")) {
+    return res.status(err.status || 500).json({
+      error: "Internal Server Error",
+      message: err.message,
+      path: req.path
+    });
+  }
+  next(err);
 });
 
 async function startServer() {

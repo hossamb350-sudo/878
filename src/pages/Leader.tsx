@@ -49,21 +49,6 @@ export function Leader() {
 
   return (
     <div className="max-w-4xl mx-auto w-full p-4 pb-12 animate-fade-in" dir="rtl">
-      <div className="bg-gradient-to-br from-taiz-navy to-taiz-royal text-white p-8 md:p-12 rounded-3xl mb-8 flex items-center justify-between shadow-md relative overflow-hidden">
-         <div className="relative z-10 w-full max-w-lg">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="bg-taiz-sky/50 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold border border-white/20">محاضرات ودروس</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-black mb-4 leading-tight text-white drop-shadow-sm">السيد القائد</h1>
-            <p className="text-white/80 text-lg md:text-xl font-medium leading-relaxed opacity-90">الدروس والمحاضرات للثقافة القرآنية المباركة</p>
-         </div>
-         {/* Decorative Element */}
-         <div className="absolute left-[-20%] top-[-20%] opacity-10 pointer-events-none rotate-12">
-            <Quote className="w-96 h-96" />
-         </div>
-         <div className="absolute right-0 bottom-0 top-0 w-1/3 bg-gradient-to-l from-black/20 to-transparent pointer-events-none"></div>
-      </div>
-
       {/* Advanced Control & Filter Center */}
       <div className="bg-surface-card p-4 rounded-3xl border border-border-light shadow-soft flex flex-col md:flex-row items-center gap-4 mb-8">
         {/* Modern Unified Search Input */}
@@ -139,7 +124,7 @@ export function Leader() {
                       </span>
                     )}
                  </div>
-                 <h2 className="text-xl font-black mb-3 text-text-primary leading-snug group-hover:text-taiz-royal transition-colors line-clamp-3">{item.title}</h2>
+                 <h2 className="text-base sm:text-lg font-black mb-3 text-text-primary leading-snug group-hover:text-taiz-royal transition-colors line-clamp-3">{item.title}</h2>
                </div>
                
                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border-light">

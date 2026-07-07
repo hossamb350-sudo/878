@@ -9,7 +9,7 @@ export interface GitHubStatus {
 }
 
 // Check if running in Node environment
-const isNode = typeof window === "undefined" || (typeof process !== "undefined" && process.release?.name === "node");
+const isNode = typeof window === "undefined";
 
 // In-memory cache for browser-side requests
 const memoryCache: Record<string, { data: any; timestamp: number }> = {};
@@ -36,7 +36,10 @@ export class GitHubClient {
 
     try {
       const response = await fetch("/api/github/status");
-      if (!response.ok) throw new Error("Failed to fetch GitHub status");
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Failed to fetch GitHub status: ${response.status} ${text.slice(0, 100)}`);
+      }
       return await response.json();
     } catch (error) {
       console.error("Error getting GitHub status on client:", error);
@@ -111,7 +114,8 @@ export class GitHubClient {
         }
 
         if (!response.ok) {
-          throw new Error(`GitHub responded with ${response.status}: ${response.statusText}`);
+          const text = await response.text();
+          throw new Error(`GitHub responded with ${response.status}: ${text.slice(0, 100)}`);
         }
 
         const json = await response.json();
@@ -125,7 +129,18 @@ export class GitHubClient {
       // Browser environment: request via Express API
       try {
         const response = await fetch(`/api/content/${collection}`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(`HTTP error! status: ${response.status} content: ${text.slice(0, 100)}`);
+        }
+        
+        // Check content-type to avoid parsing HTML as JSON
+        const contentType = response.headers.get("content-type");
+        if (contentType && !contentType.includes("application/json")) {
+          const text = await response.text();
+          throw new Error(`Expected JSON but received ${contentType}. Content: ${text.slice(0, 100)}`);
+        }
+
         fetchedData = await response.json();
       } catch (err) {
         console.error(`[GitHubClient] API fetch failed for ${collection}:`, err);

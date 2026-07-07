@@ -179,11 +179,6 @@ export function Events() {
               </h1>
             </div>
           </div>
-          <p className="text-text-secondary text-sm max-w-2xl font-bold leading-relaxed">
-            نافذة تفاعلية توثق المناسبات الإسلامية والوطنية الهامة، مع رصد
-            الفواصل الزمنية والتصنيفات الدقيقة لتتبع مسيرة الهداية ومحطات الأمة
-            الإسلامية.
-          </p>
         </div>
 
         {/* Dynamic Counter Widgets */}

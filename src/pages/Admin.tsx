@@ -9,6 +9,7 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth, db } from "../firebase";
+import copyrightImg from "../assets/copyright.png";
 import { Capacitor } from "@capacitor/core";
 import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 import {
@@ -256,7 +257,7 @@ const ContactUsSection = () => {
       <div className="w-full flex flex-col items-center justify-center py-6 px-4 gap-4">
         <div className="w-full max-w-md">
           <img
-            src="/copyright.png"
+            src={copyrightImg}
             alt="حقوق النشر"
             className="w-full h-auto opacity-80 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
           />
@@ -1060,7 +1061,6 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
   const [publishStatus, setPublishStatus] = useState<"published" | "draft">(
     "published"
   );
-  const [allowComments, setAllowComments] = useState(true);
   const [tags, setTags] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [lastAutoSave, setLastAutoSave] = useState<number | null>(null);
@@ -1098,7 +1098,6 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
           isBreaking,
           liveUpdatesText,
           publishStatus,
-          allowComments,
           tags,
           videoUrl,
           currentStep,
@@ -1122,7 +1121,6 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
     isBreaking,
     liveUpdatesText,
     publishStatus,
-    allowComments,
     tags,
     videoUrl,
     currentStep,
@@ -1151,7 +1149,6 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
           setIsBreaking(!!draft.isBreaking);
           setLiveUpdatesText(draft.liveUpdatesText || "");
           setPublishStatus(draft.publishStatus || "published");
-          setAllowComments(draft.allowComments !== false);
           setTags(draft.tags || "");
           setVideoUrl(draft.videoUrl || "");
           setCurrentStep(draft.currentStep || 1);
@@ -1411,7 +1408,6 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
       views: Number(views) || 0,
       updatedAt: Date.now(),
       publishStatus,
-      allowComments,
       tags: tags
         .split(",")
         .map((t) => t.trim())

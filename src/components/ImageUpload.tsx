@@ -219,6 +219,19 @@ export function ImageUpload({
         </div>
       )}
 
+      {/* MANUAL URL INPUT */}
+      {!multiple && (
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="أو ضع رابط الصورة هنا مباشرة..."
+            className="flex-1 p-3 text-xs font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-red-500/50 outline-none transition-all dark:text-white"
+            value={value || ""}
+            onChange={(e) => onChange && onChange(e.target.value)}
+          />
+        </div>
+      )}
+
       {/* UPLOAD PANEL */}
       <div
         onDragOver={handleDragOver}

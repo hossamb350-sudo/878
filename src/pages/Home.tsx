@@ -257,18 +257,18 @@ export function Home() {
                      <img 
                        src={heroItem.imageUrl} 
                        alt={heroItem.title} 
-                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                      />
                      <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
                      
-                     {/* Category Labels */}
+                     {/* Category Labels Attached to Center-Top (Outside) */}
                      <CategoryBadges item={heroItem} isHero={true} className="absolute top-2 left-1/2 -translate-x-1/2" />
                   </Link>
                 )}
                 
                 <div className="px-5 sm:px-2">
                   {/* Info Row: News Meta (Above Title) */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2.5 text-[10px] sm:text-[11px] font-bold text-text-secondary">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2.5 text-[9px] sm:text-[10px] font-bold text-text-secondary/80">
                     {heroItem.isBreaking && (
                       <div className="flex items-center gap-1.5 text-status-error font-extrabold select-none bg-status-error/5 px-2 py-0.5 rounded-full shrink-0">
                         <span className="relative flex h-1.5 w-1.5">
@@ -279,32 +279,34 @@ export function Home() {
                       </div>
                     )}
                     
-                    <span className="flex items-center gap-1 shrink-0">
-                      <Calendar className="w-3 h-3 text-taiz-sky/70" />
-                      <span>{formatPublishInfo(heroItem.createdAt).mDate}</span>
-                    </span>
-                    
-                    <span className="shrink-0 text-text-muted">{formatPublishInfo(heroItem.createdAt).hDate}</span>
-                    
-                    <span className="flex items-center gap-1 shrink-0">
-                      <Clock className="w-3 h-3 text-taiz-sky/70" />
-                      <span>{formatPublishInfo(heroItem.createdAt).mTime}</span>
-                    </span>
-                    
-                    {heroItem.author && (
-                      <span className="flex items-center gap-1 text-text-muted shrink-0 max-w-[120px] truncate">
-                        <User className="w-3 h-3"/> 
-                        {heroItem.author}
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex items-center gap-1 shrink-0">
+                        <Calendar className="w-2.5 h-2.5 text-taiz-sky/50" />
+                        <span>{formatPublishInfo(heroItem.createdAt).mDate}</span>
                       </span>
-                    )}
+                      
+                      <span className="shrink-0 text-text-muted/60">{formatPublishInfo(heroItem.createdAt).hDate}</span>
+                      
+                      <span className="flex items-center gap-1 shrink-0">
+                        <Clock className="w-2.5 h-2.5 text-taiz-sky/50" />
+                        <span>{formatPublishInfo(heroItem.createdAt).mTime}</span>
+                      </span>
+                      
+                      {heroItem.author && (
+                        <span className="flex items-center gap-1 text-text-muted shrink-0 max-w-[120px] truncate">
+                          <User className="w-2.5 h-2.5 text-taiz-sky/50"/> 
+                          {heroItem.author}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <Link to={`/news/${heroItem.id}`} className="block hover:text-taiz-sky transition-colors group">
-                    <h2 className="font-black text-[19px] sm:text-[23px] text-text-primary leading-[1.4] mb-2.5 text-right tracking-tight group-hover:text-taiz-sky transition-colors">
+                    <h2 className="font-black text-[17px] sm:text-[20px] text-text-primary leading-[1.4] mb-2.5 text-right tracking-tight group-hover:text-taiz-sky transition-colors">
                        {heroItem.title}
                     </h2>
                   </Link>
-
+                  
                   <div className="flex items-center mt-2">
                     <div className="mr-auto flex items-center gap-1 text-taiz-royal shrink-0 text-[10px] sm:text-[11px] font-black bg-taiz-royal/5 w-fit px-2 py-0.5 rounded-lg border border-taiz-royal/10">
                       <Eye className="w-3 h-3"/> 
@@ -329,32 +331,35 @@ export function Home() {
                     {/* Right Side News Content */}
                     <div className="flex-1 min-w-0 flex flex-col justify-between py-1 text-right pr-0.5">
                        <div>
-                          <h3 className="font-bold text-[13px] sm:text-[14px] text-text-primary leading-[1.35] transition-colors hover:text-taiz-sky mb-2.5 whitespace-normal line-clamp-3 tracking-tight">
+                          <h3 className="font-bold text-[12px] sm:text-[13px] text-text-primary leading-[1.35] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-3 tracking-tight">
                             {item.title}
                           </h3>
 
                           {/* Consistently aligned metadata line */}
-                          <div className="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] font-bold">
-                            {/* Right Side: Date/Author (First in RTL) */}
-                            <div className="flex items-center gap-2.5 text-text-muted overflow-hidden">
-                               <span className="flex items-center gap-1 shrink-0">
-                                 <Clock className="w-2.5 h-2.5 text-taiz-sky/60" />
-                                 <span>{formatPublishInfo(item.createdAt).mDate} {formatPublishInfo(item.createdAt).mTime}</span>
-                               </span>
-                               <span className="text-border-subtle opacity-50 shrink-0">•</span>
-                               {item.author && (
-                                 <span className="flex items-center gap-1 truncate shrink-0">
-                                   <User className="w-2.5 h-2.5"/> 
-                                   {item.author}
-                                 </span>
-                               )}
-                            </div>
+                          <div className="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] font-bold text-text-muted/80">
+                             {/* Date/Time/Author */}
+                             <div className="flex items-center gap-2.5 overflow-hidden">
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <Calendar className="w-2.5 h-2.5 text-taiz-sky/40" />
+                                  <span>{formatPublishInfo(item.createdAt).mDate}</span>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <Clock className="w-2.5 h-2.5 text-taiz-sky/40" />
+                                  <span>{formatPublishInfo(item.createdAt).mTime}</span>
+                                </div>
+                                {item.author && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <User className="w-2.5 h-2.5 text-taiz-sky/40" />
+                                    <span className="text-[9px] sm:text-[10px] opacity-90">{item.author}</span>
+                                  </div>
+                                )}
+                             </div>
 
-                            {/* Left Side: Views (Last in RTL) */}
-                            <span className="flex items-center gap-1 text-taiz-royal shrink-0 bg-taiz-royal/5 px-1.5 py-0.5 rounded-md">
-                              <Eye className="w-2.5 h-2.5"/> 
-                              {item.views || 0}
-                            </span>
+                             {/* Views */}
+                             <span className="flex items-center gap-1 text-taiz-royal shrink-0 bg-taiz-royal/5 px-1.5 py-0.5 rounded-md border border-taiz-royal/10">
+                               <Eye className="w-2.5 h-2.5"/> 
+                               {item.views || 0}
+                             </span>
                           </div>
                        </div>
                     </div>
@@ -376,7 +381,7 @@ export function Home() {
                            <div className="bg-gradient-to-br from-taiz-navy to-taiz-royal p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all">
                               <MonitorPlay className="w-5 h-5 text-white" />
                            </div>
-                           <h2 className="font-black text-[22px] select-none text-text-primary group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
+                           <h2 className="font-black text-[18px] sm:text-[20px] select-none text-text-primary group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
                         </Link>
 
                         <Link

@@ -55,7 +55,6 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   
   // Wizard States
   const [currentStep, setCurrentStep] = useState(1);
-  const [allowComments, setAllowComments] = useState(true);
   const [tags, setTags] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -244,7 +243,6 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     setEditingId(null);
     setNewsMode("add"); // Reset mode to add
     setPublishStatus("published");
-    setAllowComments(true);
     setTags("");
     setVideoUrl("");
     setCurrentStep(1);
@@ -295,7 +293,6 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     
     // Wizard specific fields
     setPublishStatus(item.publishStatus || "published");
-    setAllowComments(item.allowComments !== false);
     setTags(item.tags ? item.tags.join(", ") : "");
     setVideoUrl(item.videoUrl || "");
     
@@ -344,7 +341,6 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       views: Number(views) || 0,
       updatedAt: Date.now(),
       publishStatus,
-      allowComments,
       tags: tags.split(",").map(t => t.trim()).filter(t => t.length > 0),
       videoUrl: videoUrl || null
     };
@@ -425,7 +421,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
             className="w-full py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-white rounded-2xl font-black transition-all text-sm flex items-center justify-center gap-2"
           >
             <Settings className="w-4 h-4" />
-            التحكم (لوحة الإدارة)
+            لوحة الإدارة
           </button>
           <button 
             onClick={() => {
@@ -437,6 +433,17 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
             className="w-full py-3 text-emerald-600 font-black hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl transition-all text-sm border border-emerald-100 dark:border-emerald-900/30"
           >
             إضافة خبر جديد
+          </button>
+          <button 
+            onClick={() => {
+              setShowSuccessModal(false);
+              setNewsMode("list");
+              resetForm();
+              window.location.href = "/";
+            }}
+            className="w-full py-3 text-gray-500 font-black hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-sm border border-gray-100 dark:border-gray-700"
+          >
+            الرئيسية
           </button>
         </div>
       </motion.div>
@@ -477,12 +484,14 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     const readTime = Math.ceil(wordCount / 200) || 1;
 
     const handleCancel = () => {
-      setShowExitConfirm(true);
+      resetForm();
+      setNewsMode("list");
+      if (onBackToDashboard) onBackToDashboard();
     };
 
     const confirmExit = () => {
-      setNewsMode("list");
       resetForm();
+      setNewsMode("list");
       setShowExitConfirm(false);
       if (onBackToDashboard) onBackToDashboard();
     };
@@ -556,7 +565,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                         <div>
                           <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">عنوان الخبر الرئيسي *</label>
                           <input 
-                            className="w-full p-3.5 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-base placeholder:text-gray-300 dark:text-white" 
+                            className="w-full p-3.5 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm placeholder:text-gray-300 dark:text-white" 
                             placeholder="" 
                             value={title} 
                             onChange={e=>setTitle(e.target.value)} 
@@ -568,7 +577,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                             <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">المحرر أو المصدر *</label>
                             <div className="relative">
                               <input 
-                                className="w-full p-3.5 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm placeholder:text-gray-300 dark:text-white" 
+                                className="w-full p-3.5 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs placeholder:text-gray-300 dark:text-white" 
                                 placeholder="" 
                                 value={author} 
                                 onChange={e=>setAuthor(e.target.value)}
@@ -633,7 +642,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                               <label className="block text-[10px] font-black text-purple-600 mb-2 uppercase tracking-wider">إضافة تصنيف جديد</label>
                               <div className="flex gap-2">
                                 <input 
-                                  className="flex-1 p-3 bg-white dark:bg-gray-900 border-none rounded-xl text-sm font-bold focus:ring-2 focus:ring-purple-500 transition-all dark:text-white" 
+                                  className="flex-1 p-3 bg-white dark:bg-gray-900 border-none rounded-xl text-xs font-bold focus:ring-2 focus:ring-purple-500 transition-all dark:text-white" 
                                   placeholder="" 
                                   value={customCat} 
                                   onChange={e=>setCustomCat(e.target.value)} 
@@ -660,7 +669,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                 <input 
                                   type="text"
-                                  className="w-full p-3.5 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm dark:text-white"
+                                  className="w-full p-3.5 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs dark:text-white"
                                   placeholder=""
                                   value={catSearch}
                                   onChange={(e) => {
@@ -767,7 +776,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                                 <div>
                                   <label className="block text-xs font-black text-gray-500 mb-2 uppercase tracking-wider text-right">اسم التصنيف</label>
                                   <input 
-                                    className="w-full p-4 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold dark:text-white text-right" 
+                                    className="w-full p-4 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold dark:text-white text-right text-xs" 
                                     placeholder="" 
                                     value={customCat} 
                                     onChange={e=>setCustomCat(e.target.value)} 
@@ -806,7 +815,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                         <div>
                           <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">مقدمة الخبر (اختياري)</label>
                           <textarea 
-                            className="w-full p-4 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl h-32 focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 leading-relaxed dark:text-white" 
+                            className="w-full p-4 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl h-32 focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 leading-relaxed dark:text-white text-sm" 
                             placeholder="" 
                             value={shortDesc} 
                             onChange={e=>setShortDesc(e.target.value)} 
@@ -875,7 +884,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
 
                     <textarea 
                       id="content-textarea"
-                      className="w-full p-6 bg-gray-50 dark:bg-gray-950 border-none rounded-[2rem] h-[400px] focus:ring-2 focus:ring-blue-500 transition-all font-bold text-lg placeholder:text-gray-300 leading-[2] dark:text-white resize-none" 
+                      className="w-full p-6 bg-gray-50 dark:bg-gray-950 border-none rounded-[2rem] h-[400px] focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm placeholder:text-gray-300 leading-[2] dark:text-white resize-none" 
                       placeholder="" 
                       value={content} 
                       onChange={e=>setContent(e.target.value)} 
@@ -990,7 +999,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                         <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-3">رابط فيديو (YouTube / Almasirah)</label>
                         <div className="relative">
                           <input 
-                            className="w-full p-4 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 dark:text-white" 
+                            className="w-full p-4 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 dark:text-white text-xs" 
                             placeholder="" 
                             value={videoUrl} 
                             onChange={e=>setVideoUrl(e.target.value)} 
@@ -1044,16 +1053,22 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                             </div>
                           </label>
 
-                          <label className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-transparent hover:border-emerald-500/30 transition-all cursor-pointer group">
-                            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${allowComments ? "bg-emerald-600 border-emerald-600" : "border-gray-300 dark:border-gray-700"}`}>
-                              {allowComments && <Check className="w-4 h-4 text-white" />}
+                          {/* Manual Views Count (Admin Only) */}
+                          {isAdmin && (
+                            <div className="p-4 bg-blue-50/30 dark:bg-blue-900/10 rounded-2xl border border-blue-100/30 dark:border-blue-800/30 space-y-3">
+                              <label className="block text-sm font-black text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                <Eye className="w-4 h-4 text-blue-500" />
+                                عدد المشاهدات يدوياً
+                              </label>
+                              <input 
+                                type="number"
+                                className="w-full p-3 bg-white dark:bg-gray-900 border-none rounded-xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-sm dark:text-white" 
+                                placeholder="أدخل عدد المشاهدات..." 
+                                value={views} 
+                                onChange={e => setViews(parseInt(e.target.value) || 0)} 
+                              />
                             </div>
-                            <input type="checkbox" className="hidden" checked={allowComments} onChange={e=>setAllowComments(e.target.checked)} />
-                            <div className="flex-1">
-                              <span className="block text-sm font-black text-gray-900 dark:text-white text-right">تفعيل التعليقات</span>
-                              <span className="text-[10px] text-gray-500 font-bold text-right block">السماح للمستخدمين بالتعليق على هذا الخبر</span>
-                            </div>
-                          </label>
+                          )}
                         </div>
                       </div>
 
