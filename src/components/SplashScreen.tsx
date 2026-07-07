@@ -8,7 +8,7 @@ import { Capacitor } from "@capacitor/core";
 import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 import { UserProfile } from "../types";
 
-const LOGO_SRC = "/logo.png";
+const LOGO_SRC = "logo.png";
 
 // Official colorful Google icon
 const GoogleIcon = () => (
@@ -31,6 +31,12 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [showAuth, setShowAuth] = useState(false);
 
   useEffect(() => {
+    // Failsafe: Ensure the app opens after 12 seconds no matter what
+    const failsafeTimer = setTimeout(() => {
+      console.warn("SplashScreen failsafe triggered");
+      onComplete();
+    }, 12000);
+
     // Determine first launch status
     const completedOnboarding = localStorage.getItem("taiz_onboarding_completed");
     const isFirst = completedOnboarding !== "true";

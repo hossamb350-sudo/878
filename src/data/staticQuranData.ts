@@ -1,8 +1,8 @@
 import { QuranSeries, QuranLesson, QuranSyllabus, QuranExcerpt } from "../types";
 import { importedQuranData as importedData } from "./importedQuranData";
 
-const rawSeries: QuranSeries[] = importedData.series as QuranSeries[];
-const rawLessons: QuranLesson[] = importedData.lessons as QuranLesson[];
+const rawSeries: QuranSeries[] = (importedData?.series || []) as QuranSeries[];
+const rawLessons: QuranLesson[] = (importedData?.lessons || []) as QuranLesson[];
 
 // Reorganize series to combine IDs "4", "5", "6", "7" into a single series "4"
 // named "السلسلة الثالثة - معرفة الله"
