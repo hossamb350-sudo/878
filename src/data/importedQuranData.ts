@@ -1,39 +1,37 @@
-// Dynamic data loading from public folder to avoid build-time JSON parsing errors
+// Dynamic data loading from public folder
 let cachedData: any = null;
 
 export async function loadQuranData() {
   if (cachedData) return cachedData;
   
   try {
-    // Try multiple paths to ensure compatibility with both Web and Capacitor/APK
-    const paths = ['./quranData.json', 'quranData.json', '/quranData.json'];
-    let response = null;
+    // In Capacitor, fetching from the root or relative path is standard
+    // We try 'quranData.json' which refers to the file in the public folder
+    console.log('Loading Quran data from local assets...');
     
-    for (const path of paths) {
-      try {
-        console.log(`Attempting to fetch Quran data from: ${path}`);
-        const res = await fetch(path);
-        if (res.ok) {
-          response = res;
-          break;
-        }
-      } catch (e) {
-        console.warn(`Failed to fetch from ${path}:`, e);
+    // Using a more robust fetch for mobile
+    const response = await fetch('./quranData.json', {
+      headers: {
+        'Accept': 'application/json'
       }
+    });
+
+    if (!response.ok) {
+      // Fallback for some Capacitor versions
+      const fallbackResponse = await fetch('quranData.json');
+      if (!fallbackResponse.ok) throw new Error('Could not find quranData.json in assets');
+      cachedData = await fallbackResponse.json();
+    } else {
+      cachedData = await response.json();
     }
 
-    if (!response) {
-      throw new Error('Failed to fetch Quran data from all attempted paths');
-    }
-
-    cachedData = await response.json();
-    console.log('Successfully loaded Quran data via fetch');
+    console.log('Quran data loaded successfully');
     return cachedData;
   } catch (error) {
-    console.error('Error loading Quran data:', error);
+    console.error('Critical error loading Quran data:', error);
+    // Return empty but valid structure to prevent app crash
     return { series: [], lessons: [] };
   }
 }
 
-// Keeping for backward compatibility
 export const importedQuranData = { series: [], lessons: [] };
