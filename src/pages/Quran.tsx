@@ -886,13 +886,25 @@ export function Quran() {
       setUser(currentUser);
     });
 
-    // 3. Load static data only (no dynamic fetching from Firebase for series/lessons/excerpts)
+    // 3. Load data asynchronously from JSON file
     let active = true;
 
-    setSeriesList(STATIC_QURAN_SERIES);
-    setLessonsList(STATIC_QURAN_LESSONS);
-    setExcerptsList([]);
-    setLoading(false);
+    import("../data/importedQuranData").then(({ loadQuranData }) => {
+      return loadQuranData();
+    }).then((data) => {
+      if (!active) return;
+      
+      import("../data/staticQuranData").then(({ processQuranData }) => {
+        const processed = processQuranData(data);
+        setSeriesList(processed.series);
+        setLessonsList(processed.lessons);
+        setExcerptsList(processed.excerpts);
+        setLoading(false);
+      });
+    }).catch(err => {
+      console.error("Failed to load Quran data:", err);
+      if (active) setLoading(false);
+    });
 
     const unsubSyllabuses = SyncService.syncCollection(
       "quran_syllabuses",
