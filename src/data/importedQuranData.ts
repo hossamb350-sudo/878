@@ -1,24 +1,32 @@
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../firebase";
+import { get as getIDB, set as setIDB } from "idb-keyval";
 
-// Dynamic data loading from Firestore with local caching
+// Dynamic data loading from Firestore with IndexedDB caching
 let cachedData: any = null;
 
 export async function loadQuranData() {
   if (cachedData) return cachedData;
   
-  // Check local storage for cached data
-  const localCache = localStorage.getItem('quran_data_cache');
-  const cacheTimestamp = localStorage.getItem('quran_data_timestamp');
+  // Check IndexedDB for cached data
+  const CACHE_KEY = 'quran_data_cache';
+  const TIMESTAMP_KEY = 'quran_data_timestamp';
   const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 hours
   
-  if (localCache && cacheTimestamp) {
-    const now = Date.now();
-    if (now - parseInt(cacheTimestamp) < CACHE_EXPIRATION) {
-      console.log('Loading Quran data from local cache');
-      cachedData = JSON.parse(localCache);
-      return cachedData;
+  try {
+    const localCache = await getIDB(CACHE_KEY);
+    const cacheTimestamp = await getIDB(TIMESTAMP_KEY);
+    
+    if (localCache && cacheTimestamp) {
+      const now = Date.now();
+      if (now - Number(cacheTimestamp) < CACHE_EXPIRATION) {
+        console.log('Loading Quran data from IndexedDB cache');
+        cachedData = localCache;
+        return cachedData;
+      }
     }
+  } catch (e) {
+    console.warn('Error reading from IndexedDB:', e);
   }
 
   try {
@@ -43,7 +51,6 @@ export async function loadQuranData() {
       const res = await fetch('/api/quran-data');
       if (res.ok) {
         const apiData = await res.json();
-        // Optionally seed Firestore here, but better to let Admin do it or separate script
         cachedData = apiData;
       }
     } else {
@@ -51,8 +58,9 @@ export async function loadQuranData() {
     }
 
     if (cachedData) {
-      localStorage.setItem('quran_data_cache', JSON.stringify(cachedData));
-      localStorage.setItem('quran_data_timestamp', Date.now().toString());
+      // Save to IndexedDB (supports much larger data than localStorage)
+      await setIDB(CACHE_KEY, cachedData);
+      await setIDB(TIMESTAMP_KEY, Date.now());
     }
 
     console.log('Quran data loaded successfully');

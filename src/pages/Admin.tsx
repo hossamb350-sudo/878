@@ -88,6 +88,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { SyncService, handleFirestoreError } from "../services/SyncService";
 import { GitHubClient } from "../services/githubClient";
+import { del as delIDB } from "idb-keyval";
 
 import { AdminNewsWizard } from "../components/AdminNewsWizard";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES } from "../data/staticQuranData";
@@ -3057,8 +3058,7 @@ function AdminQuran() {
       await batch.commit();
       alert("تمت المزامنة بنجاح إلى Firestore!");
       // Clear local cache to force refresh
-      localStorage.removeItem('quran_data_cache');
-      localStorage.removeItem('quran_data_timestamp');
+      await delIDB('quran_data_cache');
     } catch (e) {
       console.error(e);
       alert("حدث خطأ أثناء المزامنة");
@@ -3177,7 +3177,7 @@ function AdminQuranSeries() {
       await setDoc(doc(db, "quran_series", id), data, { merge: true });
       
       // Clear local cache
-      localStorage.removeItem('quran_data_cache');
+      await delIDB('quran_data_cache');
       
       alert("تم الحفظ في Firebase");
       resetForm();
@@ -3210,7 +3210,7 @@ function AdminQuranSeries() {
     if (confirm("تأكيد الحذف من Firebase؟")) {
       try {
         await deleteDoc(doc(db, "quran_series", id));
-        localStorage.removeItem('quran_data_cache');
+        await delIDB('quran_data_cache');
         alert("تم الحذف بنجاح");
       } catch (e) {
         alert("خطأ في الحذف");
@@ -3386,7 +3386,7 @@ function AdminQuranLessons() {
       };
       
       await setDoc(doc(db, "quran_lessons", id), data, { merge: true });
-      localStorage.removeItem('quran_data_cache');
+      await delIDB('quran_data_cache');
       
       alert("تم حفظ الدرس في Firebase");
       resetForm();
@@ -3665,7 +3665,7 @@ function AdminQuranSyllabuses() {
       };
 
       await setDoc(doc(db, "quran_syllabuses", id), payload, { merge: true });
-      localStorage.removeItem('quran_data_cache');
+      await delIDB('quran_data_cache');
 
       alert("تم الحفظ بنجاح في Firebase");
       setEditingId(null);
@@ -3685,7 +3685,7 @@ function AdminQuranSyllabuses() {
     if (confirm("تأكيد الحذف من Firebase؟")) {
       try {
         await deleteDoc(doc(db, "quran_syllabuses", id));
-        localStorage.removeItem('quran_data_cache');
+        await delIDB('quran_data_cache');
         alert("تم الحذف بنجاح");
       } catch (e) {
         alert("خطأ في الحذف");
@@ -3912,7 +3912,7 @@ function AdminQuranExcerpts() {
       };
 
       await setDoc(doc(db, "quran_excerpts", id), payload, { merge: true });
-      localStorage.removeItem('quran_data_cache');
+      await delIDB('quran_data_cache');
 
       alert("تم الحفظ في Firebase");
       setEditingId(null);
@@ -3932,7 +3932,7 @@ function AdminQuranExcerpts() {
     if (confirm("تأكيد الحذف من Firebase؟")) {
       try {
         await deleteDoc(doc(db, "quran_excerpts", id));
-        localStorage.removeItem('quran_data_cache');
+        await delIDB('quran_data_cache');
         alert("تم الحذف بنجاح");
       } catch (e) {
         alert("خطأ في الحذف");
