@@ -9,7 +9,6 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth, db } from "../firebase";
-import copyrightImg from "../assets/copyright.png";
 import { Capacitor } from "@capacitor/core";
 import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 import {
@@ -258,7 +257,7 @@ const ContactUsSection = () => {
       <div className="w-full flex flex-col items-center justify-center py-6 px-4 gap-4">
         <div className="w-full max-w-md">
           <img
-            src={copyrightImg}
+            src="/copyright.png"
             alt="حقوق النشر"
             className="w-full h-auto opacity-80 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
           />
