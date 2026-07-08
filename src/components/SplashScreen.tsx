@@ -5,9 +5,9 @@ import { Newspaper, PlayCircle, BookOpen } from "lucide-react";
 const LOGO_SRC = "logo.png";
 
 const CARDS = [
-  { id: 0, title: "أخبار وتقارير", icon: Newspaper, color: "text-[#049edf]", bg: "bg-[#049edf]/10" },
-  { id: 1, title: "محتوى مرئي متجدد", icon: PlayCircle, color: "text-red-500", bg: "bg-red-500/10" },
-  { id: 2, title: "دروس من هدي القرآن", icon: BookOpen, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+  { id: 0, title: "أخبار موثوقة", subtitle: "لحظة بلحظة", icon: Newspaper, color: "text-[#049edf]", bg: "bg-[#049edf]/10", border: "border-[#049edf]/50" },
+  { id: 1, title: "محتوى مرئي", subtitle: "متجدد", icon: PlayCircle, color: "text-[#049edf]", bg: "bg-[#049edf]/10", border: "border-[#049edf]/50" },
+  { id: 2, title: "دروس من", subtitle: "هدي القرآن", icon: BookOpen, color: "text-[#049edf]", bg: "bg-[#049edf]/10", border: "border-[#049edf]/50" },
 ];
 
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
@@ -46,7 +46,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="flex flex-col items-center mt-6 z-10"
+        className="flex flex-col items-center mt-8 z-10"
       >
         <motion.img 
           initial={{ scale: 0.8 }}
@@ -54,16 +54,12 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           transition={{ duration: 1, ease: "easeOut" }}
           src={LOGO_SRC} 
           alt="شعار منصة تعز الإعلامية" 
-          className="w-40 h-40 md:w-48 md:h-48 object-contain drop-shadow-2xl mb-4" 
+          className="w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-2xl mb-4" 
         />
-        <h1 className="text-2xl font-black text-white tracking-wide">منصة تعز الإعلامية</h1>
-        <p className="text-[10px] tracking-[0.25em] text-[#049edf] font-bold uppercase mt-2">
-          TAIZ MEDIA PLATFORM
-        </p>
       </motion.div>
 
       {/* CAROUSEL */}
-      <div className="relative w-full max-w-[260px] h-[220px] z-10 my-auto">
+      <div className="relative w-full max-w-[130px] h-[140px] md:max-w-[150px] md:h-[160px] z-10 my-auto mx-auto flex items-center justify-center">
         {CARDS.map((card, index) => {
           // Calculate offset relative to active index
           // 0 = Center, 1 = Right (Next), -1 = Left (Previous)
@@ -76,26 +72,29 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           return (
             <motion.div
               key={card.id}
-              className={`absolute inset-0 border rounded-3xl shadow-2xl flex flex-col items-center justify-center p-6 text-center transition-colors duration-500 ${
+              className={`absolute inset-0 border-[1.5px] rounded-[1.5rem] shadow-lg flex flex-col items-center justify-center p-3 text-center transition-colors duration-500 ${
                 isCenter 
-                  ? "bg-[#0c1933] border-white/10" 
+                  ? `bg-[#0c1933] ${card.border}`
                   : "bg-[#081225] border-transparent"
               }`}
               initial={false}
               animate={{
-                x: `${offset * 110}%`,
-                scale: isCenter ? 1 : 0.85,
-                opacity: isCenter ? 1 : 0.4,
+                x: `${offset * 115}%`,
+                scale: isCenter ? 1.05 : 0.85,
+                opacity: isCenter ? 1 : 0.35,
                 zIndex: isCenter ? 20 : 10,
               }}
               transition={{ duration: 0.8, ease: "easeInOut" }}
             >
-              <div className={`p-4 rounded-full mb-4 shadow-inner ${card.bg}`}>
-                <card.icon className={`w-12 h-12 ${card.color}`} />
+              <div className={`p-3 rounded-full mb-2 md:mb-3 shadow-inner transition-colors duration-500 ${isCenter ? card.bg : "bg-white/5"}`}>
+                <card.icon className={`w-6 h-6 md:w-7 md:h-7 transition-colors duration-500 ${isCenter ? card.color : "text-gray-500"}`} />
               </div>
-              <h3 className={`text-lg font-black leading-tight ${isCenter ? 'text-white' : 'text-gray-400'}`}>
+              <h3 className={`text-[12px] md:text-[14px] font-black leading-tight transition-colors duration-500 ${isCenter ? 'text-white' : 'text-gray-500'}`}>
                 {card.title}
               </h3>
+              <p className={`text-[10px] md:text-[11px] font-bold mt-1 transition-colors duration-500 ${isCenter ? 'text-gray-400' : 'text-gray-600'}`}>
+                {card.subtitle}
+              </p>
             </motion.div>
           );
         })}
