@@ -1,4 +1,7 @@
 import { get, set } from "idb-keyval";
+import { Capacitor } from "@capacitor/core";
+
+const API_BASE = Capacitor.isNativePlatform() ? "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" : "";
 
 export interface GitHubStatus {
   configured: boolean;
@@ -35,7 +38,7 @@ export class GitHubClient {
     }
 
     try {
-      const response = await fetch("/api/github/status");
+      const response = await fetch(`${API_BASE}/api/github/status`);
       if (!response.ok) {
         const text = await response.text();
         throw new Error(`Failed to fetch GitHub status: ${response.status} ${text.slice(0, 100)}`);
@@ -128,7 +131,7 @@ export class GitHubClient {
     } else {
       // Browser environment: request via Express API
       try {
-        const response = await fetch(`/api/content/${collection}`);
+        const response = await fetch(`${API_BASE}/api/content/${collection}`);
         if (!response.ok) {
           const text = await response.text();
           throw new Error(`HTTP error! status: ${response.status} content: ${text.slice(0, 100)}`);
@@ -257,7 +260,7 @@ export class GitHubClient {
     } else {
       // Browser environment: send to Express API
       try {
-        const response = await fetch(`/api/content/${collection}`, {
+        const response = await fetch(`${API_BASE}/api/content/${collection}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

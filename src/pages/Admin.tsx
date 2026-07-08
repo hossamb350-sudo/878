@@ -10,6 +10,9 @@ import {
 } from "firebase/auth";
 import { auth, db } from "../firebase";
 import { Capacitor } from "@capacitor/core";
+
+const API_BASE = Capacitor.isNativePlatform() ? "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" : "";
+
 import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 import {
   collection,
@@ -3029,7 +3032,7 @@ function AdminQuran() {
     if (!confirm("هل تريد مزامنة كافة البيانات الحالية من الملفات إلى Firestore؟ سيؤدي هذا إلى الكتابة فوق البيانات الموجودة في Firestore.")) return;
     setMigrating(true);
     try {
-      const res = await fetch("/api/quran-data");
+      const res = await fetch(`${API_BASE}/api/quran-data`);
       const data = await res.json();
       
       const batch = writeBatch(db);
@@ -3607,6 +3610,18 @@ function AdminQuranSyllabuses() {
         setLoading(false);
       }
     );
+
+    // Initial fetch from API if Firestore fails or empty
+    const fetchApiData = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/quran-data`);
+        if (res.ok) {
+          const data = await res.json();
+          // Use this data if Firestore yields nothing later
+        }
+      } catch (e) {}
+    };
+    fetchApiData();
 
     const unsubEvents = onSnapshot(
       query(collection(db, "events"), orderBy("timestamp", "desc")),

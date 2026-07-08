@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Upload, X, RefreshCw, AlertCircle, Image as ImageIcon } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 
 interface ImageUploadProps {
   key?: React.Key;
@@ -47,6 +48,9 @@ export function ImageUpload({
     // Initialize tracking for multiple files
     setUploadingFiles(files.map(f => ({ name: f.name, progress: 0 })));
 
+    const isNative = Capacitor.isNativePlatform();
+    const API_BASE = isNative ? "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" : "";
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
@@ -60,7 +64,7 @@ export function ImageUpload({
           formData.append("image", file);
 
           const xhr = new XMLHttpRequest();
-          xhr.open("POST", "/api/upload/imagekit", true);
+          xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
 
           xhr.upload.onprogress = (event) => {
             if (event.lengthComputable) {
@@ -119,11 +123,14 @@ export function ImageUpload({
     setError(null);
     setProgress(0);
 
+    const isNative = Capacitor.isNativePlatform();
+    const API_BASE = isNative ? "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" : "";
+
     const formData = new FormData();
     formData.append("image", file);
 
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "/api/upload/imagekit", true);
+    xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
 
     // Track upload progress
     xhr.upload.onprogress = (event) => {

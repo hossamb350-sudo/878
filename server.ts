@@ -7,11 +7,15 @@ import multer from "multer";
 import axios from "axios";
 import FormData from "form-data";
 import ImageKit from "imagekit";
+import cors from "cors";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
+
+// Enable CORS for all origins
+app.use(cors());
 
 // Initialize ImageKit
 const imagekit = new ImageKit({

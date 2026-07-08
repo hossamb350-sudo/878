@@ -1,9 +1,11 @@
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
 import { db } from "../firebase";
 import { get as getIDB, set as setIDB } from "idb-keyval";
+import { Capacitor } from "@capacitor/core";
 
 // Dynamic data loading from Firestore with IndexedDB caching
 let cachedData: any = null;
+const API_BASE = Capacitor.isNativePlatform() ? "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" : "";
 
 export async function loadQuranData() {
   if (cachedData) return cachedData;
@@ -48,7 +50,7 @@ export async function loadQuranData() {
     // Fallback to API if Firestore is empty (initial migration)
     if (series.length === 0 && lessons.length === 0) {
       console.warn('Firestore is empty, falling back to API...');
-      const res = await fetch('/api/quran-data');
+      const res = await fetch(`${API_BASE}/api/quran-data`);
       if (res.ok) {
         const apiData = await res.json();
         cachedData = apiData;
@@ -70,7 +72,7 @@ export async function loadQuranData() {
     
     // Fallback to API/Local JSON if Firestore fails
     try {
-      const res = await fetch('/api/quran-data');
+      const res = await fetch(`${API_BASE}/api/quran-data`);
       if (res.ok) {
         return await res.json();
       }
