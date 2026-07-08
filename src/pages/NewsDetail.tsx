@@ -121,18 +121,19 @@ export function NewsDetail() {
 
   const handleShare = async () => {
     if (!news) return;
+    const shareUrl = "https://taiz-media-platform-ye.vercel.app" + window.location.pathname;
     if (navigator.share) {
       try {
         await navigator.share({
           title: news.title,
           text: news.shortDescription,
-          url: window.location.href,
+          url: shareUrl,
         });
       } catch (err) {
         console.error(err);
       }
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(shareUrl);
       alert("تم نسخ الرابط!");
     }
   };

@@ -165,15 +165,16 @@ export function LeaderItem() {
 
   const shareText = () => {
     if (!content) return;
+    const shareUrl = "https://taiz-media-platform-ye.vercel.app" + window.location.pathname;
     if (navigator.share) {
       navigator.share({
         title: content.title,
         text: `بشأن: ${content.title}\nمن السيد القائد حفظه الله`,
-        url: window.location.href,
+        url: shareUrl,
       }).catch(err => console.debug("Share failed", err));
     } else {
-      handleCopyText();
-      alert("تم نسخ رابط وتفاصيل المادة لمشاركتها!");
+      navigator.clipboard.writeText(shareUrl);
+      alert("تم نسخ رابط المادة لمشاركتها!");
     }
   };
 
