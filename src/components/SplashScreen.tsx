@@ -54,7 +54,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           transition={{ duration: 1, ease: "easeOut" }}
           src={LOGO_SRC} 
           alt="شعار منصة تعز الإعلامية" 
-          className="w-24 h-24 object-contain drop-shadow-2xl mb-4" 
+          className="w-40 h-40 md:w-48 md:h-48 object-contain drop-shadow-2xl mb-4" 
         />
         <h1 className="text-2xl font-black text-white tracking-wide">منصة تعز الإعلامية</h1>
         <p className="text-[10px] tracking-[0.25em] text-[#049edf] font-bold uppercase mt-2">
