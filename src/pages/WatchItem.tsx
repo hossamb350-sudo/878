@@ -99,15 +99,14 @@ export function WatchItem() {
 
   const handleShare = () => {
     if (!video) return;
-    const shareUrl = "https://taiz-media-platform-ye.vercel.app" + window.location.pathname;
     if (navigator.share) {
       navigator.share({
         title: video.title,
         text: `شاهد: ${video.title}\nعبر منصة تغذية شاهد الإعلامية`,
-        url: shareUrl
+        url: window.location.href
       }).catch(err => console.debug("Share failed", err));
     } else {
-      navigator.clipboard.writeText(shareUrl);
+      navigator.clipboard.writeText(window.location.href);
       setShareSuccess(true);
       setTimeout(() => setShareSuccess(false), 2000);
     }
