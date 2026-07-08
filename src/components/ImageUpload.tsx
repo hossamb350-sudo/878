@@ -49,7 +49,10 @@ export function ImageUpload({
     setUploadingFiles(files.map(f => ({ name: f.name, progress: 0 })));
 
     const isNative = Capacitor.isNativePlatform();
-    const API_BASE = isNative ? "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" : "";
+    // Use the Vite environment variable if available, otherwise use the shared URL or empty for relative
+    const API_BASE = isNative 
+      ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
+      : "";
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
@@ -59,40 +62,30 @@ export function ImageUpload({
       if (file.size > 10 * 1024 * 1024) continue;
 
       try {
-        const url = await new Promise<string>((resolve, reject) => {
-          const formData = new FormData();
-          formData.append("image", file);
+        const formData = new FormData();
+        formData.append("image", file);
 
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
-
-          xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-              const percent = Math.round((event.loaded / event.total) * 100);
-              setUploadingFiles(prev => {
-                const next = [...prev];
-                if (next[i]) next[i].progress = percent;
-                return next;
-              });
-            }
-          };
-
-          xhr.onload = () => {
-            if (xhr.status === 200) {
-              const res = JSON.parse(xhr.responseText);
-              resolve(res.url);
-            } else {
-              reject(new Error(`Failed to upload ${file.name}`));
-            }
-          };
-
-          xhr.onerror = () => reject(new Error("Network error"));
-          xhr.send(formData);
+        // First attempt using fetch for better CORS handling in Android
+        const response = await fetch(`${API_BASE}/api/upload/imagekit`, {
+          method: "POST",
+          body: formData,
         });
 
-        uploadedUrls.push(url);
+        if (!response.ok) {
+          throw new Error(`Upload failed with status ${response.status}`);
+        }
+
+        const res = await response.json();
+        if (res.url) {
+          uploadedUrls.push(res.url);
+          setUploadingFiles(prev => {
+            const next = [...prev];
+            if (next[i]) next[i].progress = 100;
+            return next;
+          });
+        }
       } catch (err) {
-        console.error(err);
+        console.error("Fetch upload failed:", err);
         setError(`فشل رفع بعض الملفات`);
       }
     }
@@ -124,46 +117,42 @@ export function ImageUpload({
     setProgress(0);
 
     const isNative = Capacitor.isNativePlatform();
-    const API_BASE = isNative ? "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" : "";
+    const API_BASE = isNative 
+      ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
+      : "";
 
     const formData = new FormData();
     formData.append("image", file);
 
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
-
-    // Track upload progress
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percentComplete = Math.round((event.loaded / event.total) * 100);
-        setProgress(percentComplete);
-      }
-    };
-
-    xhr.onload = () => {
-      setProgress(null);
-      if (xhr.status === 200) {
-        try {
-          const res = JSON.parse(xhr.responseText);
-          if (res.url && onChange) {
-            onChange(res.url);
-          } else {
-            setError("لم يتم استلام رابط الصورة بشكل صحيح");
-          }
-        } catch (err) {
-          setError("خطأ في معالجة استجابة الخادم");
+    // Using fetch for better CORS compatibility on Capacitor/Android
+    // Fallback pseudo-progress by setting it to 50% during fetch
+    setProgress(50);
+    
+    fetch(`${API_BASE}/api/upload/imagekit`, {
+      method: "POST",
+      body: formData,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`فشل الرفع: كود الخطأ ${response.status}`);
         }
-      } else {
-        setError(`فشل الرفع: كود الخطأ ${xhr.status}`);
-      }
-    };
-
-    xhr.onerror = () => {
-      setProgress(null);
-      setError("حدث خطأ في الشبكة أثناء رفع الصورة");
-    };
-
-    xhr.send(formData);
+        return response.json();
+      })
+      .then((res) => {
+        setProgress(100);
+        setTimeout(() => setProgress(null), 500); // Clear progress after a short delay
+        
+        if (res.url && onChange) {
+          onChange(res.url);
+        } else {
+          setError("لم يتم استلام رابط الصورة بشكل صحيح");
+        }
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+        setProgress(null);
+        setError("حدث خطأ في الشبكة أثناء رفع الصورة");
+      });
   };
 
   const triggerSelect = () => {

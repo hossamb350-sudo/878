@@ -5,34 +5,49 @@ import { Capacitor } from "@capacitor/core";
 
 // Dynamic data loading from Firestore with IndexedDB caching
 let cachedData: any = null;
-const API_BASE = Capacitor.isNativePlatform() ? "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" : "";
 
 export async function loadQuranData() {
   if (cachedData) return cachedData;
   
-  // Check IndexedDB for cached data
   const CACHE_KEY = 'quran_data_cache';
   const TIMESTAMP_KEY = 'quran_data_timestamp';
   const CACHE_EXPIRATION = 24 * 60 * 60 * 1000; // 24 hours
   
+  const isNative = Capacitor.isNativePlatform();
+  const API_BASE = isNative 
+    ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
+    : "";
+  
+  let localCache: any = null;
+  let cacheTimestamp: number = 0;
+
+  // 1. Check IndexedDB for cached data (Hydrate UI immediately if offline or fresh)
   try {
-    const localCache = await getIDB(CACHE_KEY);
-    const cacheTimestamp = await getIDB(TIMESTAMP_KEY);
+    localCache = await getIDB(CACHE_KEY);
+    const ts = await getIDB(TIMESTAMP_KEY);
+    if (ts) cacheTimestamp = Number(ts);
     
     if (localCache && cacheTimestamp) {
       const now = Date.now();
-      if (now - Number(cacheTimestamp) < CACHE_EXPIRATION) {
-        console.log('Loading Quran data from IndexedDB cache');
+      const isOffline = !navigator.onLine;
+      
+      // If offline, OR cache is fresh, return local data instantly
+      if (isOffline || (now - cacheTimestamp < CACHE_EXPIRATION)) {
+        console.log(`[SyncService] Hydrating Quran data from IndexedDB cache. Offline: ${isOffline}`);
         cachedData = localCache;
+        
+        // If we are online but just returning fresh cache, we could optionally 
+        // trigger background sync here. But for now, returning cache is sufficient.
         return cachedData;
       }
     }
   } catch (e) {
-    console.warn('Error reading from IndexedDB:', e);
+    console.warn('[SyncService] Error reading from IndexedDB:', e);
   }
 
+  // 2. Fetch from Firestore (Network)
   try {
-    console.log('Loading Quran data from Firestore...');
+    console.log('[SyncService] Loading Quran data from Firestore...');
     
     // Fetch all collections in parallel
     const [seriesSnap, lessonsSnap, excerptsSnap, syllabusesSnap] = await Promise.all([
@@ -49,34 +64,45 @@ export async function loadQuranData() {
 
     // Fallback to API if Firestore is empty (initial migration)
     if (series.length === 0 && lessons.length === 0) {
-      console.warn('Firestore is empty, falling back to API...');
+      console.warn('[SyncService] Firestore is empty, falling back to API...');
       const res = await fetch(`${API_BASE}/api/quran-data`);
       if (res.ok) {
         const apiData = await res.json();
         cachedData = apiData;
+      } else {
+        cachedData = { series, lessons, excerpts, syllabuses };
       }
     } else {
       cachedData = { series, lessons, excerpts, syllabuses };
     }
 
     if (cachedData) {
-      // Save to IndexedDB (supports much larger data than localStorage)
+      // Save to IndexedDB (Persistent local cache)
       await setIDB(CACHE_KEY, cachedData);
       await setIDB(TIMESTAMP_KEY, Date.now());
+      console.log('[SyncService] Quran data synced and persisted to local storage.');
     }
 
-    console.log('Quran data loaded successfully');
     return cachedData;
   } catch (error) {
-    console.error('Critical error loading Quran data from Firestore:', error);
+    console.error('[SyncService] Critical error loading Quran data from network:', error);
     
-    // Fallback to API/Local JSON if Firestore fails
+    // 3. OFFLINE FALLBACK: if network fails and we HAVE old cache, hydrate UI with it
+    if (localCache) {
+       console.log("[SyncService] Network failed. Falling back to persistent local cache (Offline Mode).");
+       cachedData = localCache;
+       return cachedData;
+    }
+
+    // Try API as last resort
     try {
       const res = await fetch(`${API_BASE}/api/quran-data`);
       if (res.ok) {
         return await res.json();
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("[SyncService] API fallback also failed.", e);
+    }
 
     return { series: [], lessons: [], excerpts: [], syllabuses: [] };
   }
