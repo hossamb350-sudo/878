@@ -2,6 +2,23 @@ import React, { useRef, useState } from "react";
 import { Upload, X, RefreshCw, AlertCircle, Image as ImageIcon } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 
+const fetchWithRetry = async (url: string, options: RequestInit, retries = 3): Promise<Response> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      if (response.status >= 500) {
+        throw new Error(`Server Error: ${response.status}`);
+      }
+      return response;
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise(res => setTimeout(res, 1000 * (i + 1)));
+    }
+  }
+  throw new Error("Max retries reached");
+};
+
 interface ImageUploadProps {
   key?: React.Key;
   value?: string;
@@ -62,23 +79,13 @@ export function ImageUpload({
       if (file.size > 10 * 1024 * 1024) continue;
 
       try {
-        const base64: string = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = error => reject(error);
-        });
+        const formData = new FormData();
+        formData.append("image", file);
 
-        // Use JSON base64 upload for better compatibility with Capacitor
-        const response = await fetch(`${API_BASE}/api/upload/imagekit`, {
+        // Use fetchWithRetry for better connection stability in Capacitor
+        const response = await fetchWithRetry(`${API_BASE}/api/upload/imagekit`, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            imageBase64: base64,
-            fileName: file.name
-          }),
+          body: formData,
         });
 
         if (!response.ok) {
@@ -133,28 +140,19 @@ export function ImageUpload({
 
     setProgress(50); // Fallback pseudo-progress by setting it to 50% during fetch
     
-    // Read file as Base64 first to avoid FormData network bugs on Capacitor
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      
-      fetch(`${API_BASE}/api/upload/imagekit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          imageBase64: base64,
-          fileName: file.name
-        }),
+    const formData = new FormData();
+    formData.append("image", file);
+
+    fetchWithRetry(`${API_BASE}/api/upload/imagekit`, {
+      method: "POST",
+      body: formData,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(`فشل الرفع: كود الخطأ ${response.status}`);
+        }
+        return response.json();
       })
-        .then(async (response) => {
-          if (!response.ok) {
-            throw new Error(`فشل الرفع: كود الخطأ ${response.status}`);
-          }
-          return response.json();
-        })
       .then((res) => {
         setProgress(100);
         setTimeout(() => setProgress(null), 500); // Clear progress after a short delay
@@ -170,11 +168,6 @@ export function ImageUpload({
         setProgress(null);
         setError("حدث خطأ في الشبكة أثناء رفع الصورة");
       });
-    };
-    reader.onerror = () => {
-      setProgress(null);
-      setError("فشل في قراءة ملف الصورة");
-    };
   };
 
   const triggerSelect = () => {
