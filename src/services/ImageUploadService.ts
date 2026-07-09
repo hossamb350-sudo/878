@@ -1,4 +1,5 @@
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, CapacitorHttp } from "@capacitor/core";
+import { IMAGEKIT_CONFIG } from "../config/imagekitConfig";
 
 export interface UploadResponse {
   url: string;
@@ -8,9 +9,9 @@ export interface UploadResponse {
 
 export class ImageUploadService {
   /**
-   * Uploads a file with XMLHttpRequest, progress tracking, and retries.
-   * Designed specifically to bypass Android WebView/Capacitor CORS and FormData issues
-   * by converting the file to Base64 first.
+   * Uploads a file with progress tracking and retries.
+   * Uses native CapacitorHttp on mobile to completely bypass WebView CORS restrictions,
+   * and falls back to robust XMLHttpRequest on web.
    */
   static async uploadFile(
     file: File | Blob,
@@ -50,6 +51,69 @@ export class ImageUploadService {
       throw new Error(`فشل في معالجة ملف الصورة: ${err.message || err}`);
     }
 
+    // 1. Native Upload Implementation (Bypasses WebView Sandbox and CORS)
+    if (isNative) {
+      const uploadAttemptNative = async (): Promise<UploadResponse> => {
+        try {
+          console.log(`[ImageUploadService] Sending native request to ${API_BASE}/api/upload/imagekit`);
+          
+          const response = await CapacitorHttp.post({
+            url: `${API_BASE}/api/upload/imagekit`,
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            data: {
+              imageBase64: base64Data,
+              fileName: fileName
+            }
+          });
+
+          console.log("[ImageUploadService] Native response status:", response.status);
+
+          if (response.status >= 200 && response.status < 300) {
+            const data = response.data;
+            if (data && data.url) {
+              return {
+                url: data.url,
+                thumbnail: data.thumbnail,
+                fileId: data.fileId
+              };
+            } else {
+              throw new Error(`استجابة غير صالحة من الخادم (رابط الصورة مفقود). الاستجابة: ${JSON.stringify(data)}`);
+            }
+          } else {
+            const errorMsg = response.data?.message || response.data?.error || `كود الخطأ: ${response.status}`;
+            throw new Error(`فشل الرفع من الخادم: ${errorMsg}`);
+          }
+        } catch (err: any) {
+          console.error("[ImageUploadService] Native request error:", err);
+          throw err;
+        }
+      };
+
+      let lastError: any;
+      for (let i = 0; i < retries; i++) {
+        try {
+          if (i > 0) {
+            console.log(`[ImageUploadService] Retrying native upload... Attempt ${i + 1}/${retries}`);
+          }
+          if (onProgress) onProgress(20 + i * 20); // Simulate progress for better UX on retry
+          const res = await uploadAttemptNative();
+          if (onProgress) onProgress(100);
+          return res;
+        } catch (err) {
+          lastError = err;
+          console.warn(`[ImageUploadService] Native upload failed on attempt ${i + 1}:`, err);
+          if (i < retries - 1) {
+            await new Promise(res => setTimeout(res, 1000 * Math.pow(2, i)));
+          }
+        }
+      }
+      throw lastError || new Error("فشلت عملية الرفع من خلال التطبيق");
+    }
+
+    // 2. Web Upload Implementation (Uses standard XMLHttpRequest)
     const uploadAttempt = (): Promise<UploadResponse> => {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();

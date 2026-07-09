@@ -8,6 +8,7 @@ import axios from "axios";
 import FormData from "form-data";
 import ImageKit from "imagekit";
 import cors from "cors";
+import { IMAGEKIT_CONFIG } from "./src/config/imagekitConfig";
 
 dotenv.config();
 
@@ -24,9 +25,9 @@ app.use(cors({
 
 // Initialize ImageKit
 const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY || "public_Zs+0QoId6cKbJ6RaYcqq/A7KRcs=+WHkfzjg=",
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "private_hEfX4huhE9HYYoIaUwm",
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/scwjupjlq",
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY || IMAGEKIT_CONFIG.publicKey,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || IMAGEKIT_CONFIG.privateKey,
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || IMAGEKIT_CONFIG.urlEndpoint,
 });
 
 app.use(express.json({ limit: "50mb" }));
