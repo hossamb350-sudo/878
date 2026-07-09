@@ -19,8 +19,11 @@ export class ImageUploadService {
     retries: number = 3
   ): Promise<UploadResponse> {
     const isNative = Capacitor.isNativePlatform();
+    const isProd = import.meta.env.PROD;
+    const DEV_URL = "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
+    const PROD_URL = "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
     const API_BASE = isNative
-      ? (import.meta.env.VITE_API_BASE_URL || "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
+      ? (import.meta.env.VITE_API_BASE_URL || (isProd ? PROD_URL : DEV_URL))
       : "";
 
     const uploadAttempt = (): Promise<UploadResponse> => {

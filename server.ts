@@ -14,8 +14,13 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-// Enable CORS for all origins
-app.use(cors());
+// Enable CORS for all origins dynamically
+app.use(cors({
+  origin: true,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept", "X-Requested-With"]
+}));
 
 // Initialize ImageKit
 const imagekit = new ImageKit({
