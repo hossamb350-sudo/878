@@ -23,19 +23,16 @@ export class ImageUploadService {
       ? (import.meta.env.VITE_API_BASE_URL || "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
       : "";
 
-    const uploadAttempt = (): Promise<UploadResponse> => {
+    // Primary method: XMLHttpRequest (allows progress tracking)
+    const uploadWithXHR = (): Promise<UploadResponse> => {
       return new Promise((resolve, reject) => {
         const formData = new FormData();
-        // Append the file using 'image' key, matching multer config in server.ts
         formData.append("image", file, fileName);
 
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
-        
-        // Accept JSON response
         xhr.setRequestHeader("Accept", "application/json");
 
-        // Track progress
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable && onProgress) {
             const percentComplete = Math.round((event.loaded / event.total) * 100);
@@ -43,57 +40,83 @@ export class ImageUploadService {
           }
         };
 
-        // Handle load
         xhr.onload = () => {
-          const diagnostics = {
-            event: "onload",
-            status: xhr.status,
-            statusText: xhr.statusText,
-            responseType: xhr.responseType,
-            responseText: xhr.responseText ? xhr.responseText.substring(0, 200) : null
-          };
-          console.log("[Diagnostic Interceptor] XHR Response:", JSON.stringify(diagnostics));
-
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const res = JSON.parse(xhr.responseText);
-              if (res.url) {
-                resolve(res);
-              } else {
-                reject(new Error(`Invalid response (Missing URL). Status: ${xhr.status}, Body: ${xhr.responseText}`));
-              }
+              if (res.url) resolve(res);
+              else reject(new Error(`Invalid response (Missing URL). Status: ${xhr.status}`));
             } catch (err) {
-              reject(new Error(`Failed to parse server response. Status: ${xhr.status}, Body: ${xhr.responseText}`));
+              reject(new Error(`Failed to parse response. Status: ${xhr.status}`));
             }
           } else {
-            reject(new Error(`Server Error ${xhr.status}: ${xhr.responseText}`));
+            reject(new Error(`Server Error ${xhr.status}: ${xhr.responseText || "Unknown error"}`));
           }
         };
 
-        // Handle network errors
         xhr.onerror = () => {
-          console.error("[Diagnostic Interceptor] XHR Network Error (CORS, DNS, or Offline). Status:", xhr.status, "ReadyState:", xhr.readyState);
-          reject(new Error(`Network Error (status: ${xhr.status}, readyState: ${xhr.readyState}) - Possible CORS issue or server unreachable`));
+          reject(new Error(`Network Error (status: ${xhr.status}, readyState: ${xhr.readyState})`));
         };
 
-        xhr.onabort = () => {
-          console.warn("[Diagnostic Interceptor] XHR Aborted");
-          reject(new Error("Upload aborted"));
-        };
+        xhr.onabort = () => reject(new Error("Upload aborted"));
+        xhr.ontimeout = () => reject(new Error("Upload timed out"));
 
-        xhr.ontimeout = () => {
-          console.error("[Diagnostic Interceptor] XHR Timeout");
-          reject(new Error("Upload timed out"));
-        };
-
-        // Send the FormData payload
         try {
           xhr.send(formData);
         } catch (e: any) {
-          console.error("[Diagnostic Interceptor] XHR Send Error:", e);
-          reject(new Error(`XHR Send Exception: ${e.message}`));
+          reject(e);
         }
       });
+    };
+
+    // Fallback method: fetch (highly robust, fully routed by CapacitorHttp native bridge bypassing CORS)
+    const uploadWithFetch = async (): Promise<UploadResponse> => {
+      console.log("[ImageUploadService] Falling back to fetch upload...");
+      const formData = new FormData();
+      formData.append("image", file, fileName);
+
+      if (onProgress) onProgress(15);
+
+      const response = await fetch(`${API_BASE}/api/upload/imagekit`, {
+        method: "POST",
+        headers: {
+          "Accept": "application/json",
+        },
+        body: formData,
+      });
+
+      if (onProgress) onProgress(75);
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Server Error ${response.status}: ${text || "Unknown error"}`);
+      }
+
+      const res = await response.json();
+      if (!res.url) {
+        throw new Error("Invalid response from server (Missing URL).");
+      }
+
+      if (onProgress) onProgress(100);
+      return res;
+    };
+
+    const uploadAttempt = async (): Promise<UploadResponse> => {
+      try {
+        return await uploadWithXHR();
+      } catch (xhrError: any) {
+        // If the error is a status 0 / network error, fall back to native-friendly fetch
+        const isNetworkError = xhrError.message?.includes("Network Error") || xhrError.message?.includes("status: 0");
+        if (isNetworkError) {
+          console.warn("[ImageUploadService] XHR upload returned status 0. Attempting fallback via native fetch:", xhrError.message);
+          try {
+            return await uploadWithFetch();
+          } catch (fetchError: any) {
+            throw new Error(`Upload failed on both XHR and Fetch fallback. XHR: ${xhrError.message}, Fetch: ${fetchError.message}`);
+          }
+        }
+        throw xhrError;
+      }
     };
 
     let lastError: any;
@@ -108,9 +131,7 @@ export class ImageUploadService {
         lastError = err;
         console.warn(`[ImageUploadService] Upload failed on attempt ${i + 1}:`, err);
         
-        // Don't wait on the last attempt
         if (i < retries - 1) {
-          // Exponential backoff: 1s, 2s, 4s...
           await new Promise(res => setTimeout(res, 1000 * Math.pow(2, i)));
         }
       }
