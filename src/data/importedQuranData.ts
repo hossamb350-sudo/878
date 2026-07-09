@@ -15,7 +15,7 @@ export async function loadQuranData() {
   
   const isNative = Capacitor.isNativePlatform();
   const API_BASE = isNative 
-    ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
+    ? (import.meta.env.VITE_API_BASE_URL || "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
     : "";
   
   let localCache: any = null;
