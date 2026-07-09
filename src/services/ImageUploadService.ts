@@ -23,31 +23,48 @@ export class ImageUploadService {
       ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
       : "";
 
-    // 1. Read file as Base64 to avoid Android WebView FormData empty file bug
-    const base64Data = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        resolve(reader.result as string);
-      };
-      reader.onerror = () => {
-        reject(new Error("فشل في قراءة الملف"));
-      };
-      reader.readAsDataURL(file);
-    });
+    // 1. Try reading file as Base64 to avoid Android WebView FormData empty file bug
+    let base64Data: string | null = null;
+    try {
+      base64Data = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          resolve(reader.result as string);
+        };
+        reader.onerror = () => {
+          reject(new Error("FileReader failed to read the file"));
+        };
+        reader.readAsDataURL(file);
+      });
+    } catch (e) {
+      console.warn("[ImageUploadService] Base64 conversion failed, falling back to direct FormData:", e);
+    }
 
-    const payload = JSON.stringify({
-      imageBase64: base64Data,
-      fileName: fileName
-    });
+    const useBase64 = base64Data !== null;
+    const payload = useBase64
+      ? JSON.stringify({
+          imageBase64: base64Data,
+          fileName: fileName
+        })
+      : (() => {
+          const fd = new FormData();
+          fd.append("image", file, fileName);
+          return fd;
+        })();
 
     const uploadAttempt = (): Promise<UploadResponse> => {
       return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
         
-        // Accept JSON response and set Content-Type to JSON
+        // Accept JSON response
         xhr.setRequestHeader("Accept", "application/json");
-        xhr.setRequestHeader("Content-Type", "application/json");
+        
+        // ONLY set Content-Type if we are sending JSON.
+        // For FormData, let the browser/WebView set Content-Type and boundary automatically.
+        if (useBase64) {
+          xhr.setRequestHeader("Content-Type", "application/json");
+        }
 
         // Track progress
         xhr.upload.onprogress = (event) => {
