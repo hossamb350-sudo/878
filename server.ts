@@ -19,9 +19,9 @@ app.use(cors());
 
 // Initialize ImageKit
 const imagekit = new ImageKit({
-  publicKey: process.env.IMAGEKIT_PUBLIC_KEY || "",
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "",
-  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || "",
+  publicKey: process.env.IMAGEKIT_PUBLIC_KEY || "public_Zs+0QoId6cKbJ6RaYcqq/A7KRcs=+WHkfzjg=",
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "private_hEfX4huhE9HYYoIaUwm",
+  urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || "https://ik.imagekit.io/scwjupjlq",
 });
 
 app.use(express.json({ limit: "50mb" }));
@@ -182,8 +182,8 @@ app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
     return res.status(400).json({ error: "No file or base64 image uploaded" });
   }
 
-  if (!process.env.IMAGEKIT_PRIVATE_KEY || !process.env.IMAGEKIT_PUBLIC_KEY || !process.env.IMAGEKIT_URL_ENDPOINT) {
-    console.error("ImageKit credentials are not fully set in environment variables");
+  if (!imagekit.options.publicKey || !imagekit.options.privateKey || !imagekit.options.urlEndpoint) {
+    console.error("ImageKit credentials are not fully set");
     if (isTempFile) {
       try { fs.unlinkSync(tempFilePath); } catch (e) {}
     }
