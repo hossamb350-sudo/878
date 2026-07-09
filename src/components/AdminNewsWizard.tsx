@@ -1001,7 +1001,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                           <input 
                             className="w-full p-4 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 dark:text-white text-xs" 
                             placeholder="" 
-                            value={videoUrl} 
+                            value={videoUrl || ""} 
                             onChange={e=>setVideoUrl(e.target.value)} 
                           />
                           <Video className="absolute right-4 top-4 w-5 h-5 text-gray-400" />

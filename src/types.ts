@@ -23,6 +23,8 @@ export interface NewsItem {
   author?: string;
   views?: number;
   liveUpdates?: LiveUpdate[];
+  tags?: string[];
+  videoUrl?: string;
 }
 
 export interface UrgentNews {

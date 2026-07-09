@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import { ImageUpload } from "../components/ImageUpload";
 import {
   signInWithPopup,
@@ -102,6 +102,9 @@ import { AdminCategoryManager } from "../components/AdminCategoryManager";
 const ContactUsSection = () => {
   const [links, setLinks] = useState<SocialLink[]>([]);
   const [imageError, setImageError] = useState(false);
+  const [footerImage, setFooterImage] = useState<string>(() => {
+    return localStorage.getItem("custom_footer_cached_image") || "/custom_footer.png";
+  });
 
   useEffect(() => {
     let active = true;
@@ -113,6 +116,33 @@ const ContactUsSection = () => {
       },
       { orderByField: "order", orderDirection: "asc" }
     );
+
+    // Load and cache custom footer image from Firestore
+    const loadAndCacheFooterImage = async () => {
+      try {
+        const cachedTime = localStorage.getItem("custom_footer_cached_time") || "0";
+        const docRef = doc(db, "settings", "custom_footer");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const imageUrl = data.imageUrl;
+          const updatedAt = data.updatedAt || 0;
+          
+          if (imageUrl && (String(updatedAt) !== cachedTime || !localStorage.getItem("custom_footer_cached_image"))) {
+            localStorage.setItem("custom_footer_cached_image", imageUrl);
+            localStorage.setItem("custom_footer_cached_time", String(updatedAt));
+            if (active) {
+              setFooterImage(imageUrl);
+              setImageError(false);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to load custom footer image from Firestore, using cache if available:", e);
+      }
+    };
+    loadAndCacheFooterImage();
 
     return () => {
       active = false;
@@ -263,31 +293,26 @@ const ContactUsSection = () => {
       {/* قسم الصورة المخصصة في الأسفل */}
       <div className="w-full flex flex-col items-center justify-center pt-4 pb-2 px-2">
         <div className="w-full max-w-md bg-[#0c1933]/40 dark:bg-gray-800/40 border border-white/5 dark:border-gray-700/50 rounded-[2rem] p-5 flex flex-col items-center shadow-lg relative overflow-hidden backdrop-blur-sm">
-          {imageError ? (
-            <div className="flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-[#049edf]/30 rounded-2xl w-full">
-              <div className="p-3 bg-[#049edf]/10 rounded-full mb-3 text-[#049edf]">
-                <Image className="w-8 h-8" />
-              </div>
-              <p className="text-sm font-black text-white/90">مساحة الصورة الخاصة بك</p>
-              <p className="text-xs text-gray-400 mt-2 leading-relaxed" dir="rtl">
-                يرجى رفع صورتك الخاصة باسم <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[#049edf]">custom_footer.png</code> إلى المجلد <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[#049edf]">Resources/</code> لتظهر هنا كجزء من التصميم.
+          <div className="w-full flex flex-col items-center">
+            <img
+              src={footerImage}
+              alt="المحتوى الخاص"
+              className="w-full h-auto rounded-2xl object-contain opacity-95 hover:opacity-100 transition-all duration-500 shadow-md"
+              onError={() => {
+                // If the firestore/cached image fails, fall back to /custom_footer.png
+                if (footerImage !== "/custom_footer.png") {
+                  setFooterImage("/custom_footer.png");
+                } else {
+                  setImageError(true);
+                }
+              }}
+            />
+            <div className="text-center pt-3 opacity-60">
+              <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
+                تصميم وإعداد خاص بالمنصة
               </p>
             </div>
-          ) : (
-            <div className="w-full flex flex-col items-center">
-              <img
-                src="/custom_footer.png"
-                alt="المحتوى الخاص"
-                className="w-full h-auto rounded-2xl object-contain opacity-95 hover:opacity-100 transition-all duration-500 shadow-md"
-                onError={() => setImageError(true)}
-              />
-              <div className="text-center pt-3 opacity-60">
-                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
-                  تصميم وإعداد خاص بالمنصة
-                </p>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
@@ -1342,6 +1367,8 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
     setIsPinned(false);
     setLiveUpdatesText("");
     setViews(0);
+    setTags("");
+    setVideoUrl("");
     setEditingId(null);
   };
 
@@ -1353,6 +1380,8 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
     setAuthor(item.author || "");
     setImageUrl(item.imageUrl || "");
     setViews(item.views || 0);
+    setTags(item.tags ? item.tags.join(", ") : "");
+    setVideoUrl(item.videoUrl || "");
     if (item.additionalImages) {
       setAdditionalImagesText(item.additionalImages.join("\n"));
     } else {
@@ -2174,8 +2203,8 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   };
 
   const handleEdit = (video: VideoItem) => {
-    setTitle(video.title);
-    setUrl(video.url);
+    setTitle(video.title || "");
+    setUrl(video.url || "");
     setThumb(video.thumbnailUrl || "");
     setCategory(video.category || "");
     setOrder(
@@ -2785,15 +2814,15 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
   };
 
   const handleEdit = (item: LeaderContent) => {
-    setTitle(item.title);
-    setContent(item.content);
+    setTitle(item.title || "");
+    setContent(item.content || "");
     setDescription(item.description || "");
     setThumbnailUrl(item.thumbnailUrl || "");
     setOrder(
       item.order !== undefined && item.order !== null ? String(item.order) : ""
     );
     setViews(item.views || 0);
-    setType(item.type);
+    setType(item.type || "text");
     setEditingId(item.id);
   };
 
@@ -3321,9 +3350,9 @@ function AdminQuranSeries() {
               <button
                 onClick={() => {
                   setEditingId(s.id);
-                  setTitle(s.title);
+                  setTitle(s.title || "");
                   setDesc(s.description || "");
-                  setOrder(s.order);
+                  setOrder(s.order ?? 0);
                 }}
                 className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all active:scale-90"
                 title="تعديل"
@@ -3551,10 +3580,10 @@ function AdminQuranLessons() {
                 <button
                   onClick={() => {
                     setEditingId(l.id);
-                    setSeriesId(l.seriesId);
-                    setTitle(l.title);
-                    setContent(l.content);
-                    setOrder(l.order);
+                    setSeriesId(l.seriesId || "");
+                    setTitle(l.title || "");
+                    setContent(l.content || "");
+                    setOrder(l.order ?? 0);
                   }}
                   className="p-2.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all active:scale-90"
                   title="تعديل"
@@ -3869,7 +3898,7 @@ function AdminQuranSyllabuses() {
                 <button
                   onClick={() => {
                     setEditingId(s.id);
-                    setLessonId(s.lessonId);
+                    setLessonId(s.lessonId || "");
                     setDurationVal(String(s.durationVal || 1));
                     setDurationType(s.durationType || "weeks");
                     setEventId(s.eventId || "");
@@ -4071,9 +4100,9 @@ function AdminQuranExcerpts() {
                 <button
                   onClick={() => {
                     setEditingId(s.id);
-                    setLessonId(s.lessonId);
-                    setTitle(s.title);
-                    setContent(s.content);
+                    setLessonId(s.lessonId || "");
+                    setTitle(s.title || "");
+                    setContent(s.content || "");
                     setMediaUrl(s.mediaUrl || "");
                   }}
                   className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
@@ -4186,13 +4215,13 @@ function AdminEvents() {
 
   const edit = (e: EventItem) => {
     setEditingId(e.id);
-    setTitle(e.title);
+    setTitle(e.title || "");
     setDescription(e.description || "");
-    setDayName(e.dayName);
-    setHijriDate(e.hijriDate);
-    setGregorianDate(e.gregorianDate);
-    setCategory(e.category);
-    setTimestamp(new Date(e.timestamp).toISOString().split("T")[0] + "T00:00");
+    setDayName(e.dayName || "");
+    setHijriDate(e.hijriDate || "");
+    setGregorianDate(e.gregorianDate || "");
+    setCategory(e.category || "all");
+    setTimestamp(e.timestamp ? new Date(e.timestamp).toISOString().split("T")[0] + "T00:00" : "");
   };
 
   const remove = async (id: string) => {
@@ -5019,6 +5048,9 @@ function AdminSocialLinks() {
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const [footerImageUrl, setFooterImageUrl] = useState("");
+  const [footerImageSaving, setFooterImageSaving] = useState(false);
+
   const fetchLinks = async () => {
     setLoading(true);
     try {
@@ -5036,7 +5068,54 @@ function AdminSocialLinks() {
 
   useEffect(() => {
     fetchLinks();
+
+    const fetchFooterImage = async () => {
+      try {
+        const docRef = doc(db, "settings", "custom_footer");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setFooterImageUrl(docSnap.data().imageUrl || "");
+        }
+      } catch (e) {
+        console.error("Error fetching custom footer image setting:", e);
+      }
+    };
+    fetchFooterImage();
   }, []);
+
+  const saveFooterImage = async () => {
+    if (!footerImageUrl) return alert("يرجى اختيار صورة أو وضع رابط أولاً");
+    setFooterImageSaving(true);
+    try {
+      await setDoc(doc(db, "settings", "custom_footer"), {
+        imageUrl: footerImageUrl,
+        updatedAt: Date.now(),
+      });
+      localStorage.setItem("custom_footer_cached_image", footerImageUrl);
+      localStorage.setItem("custom_footer_cached_time", String(Date.now()));
+      alert("تم حفظ صورة القسم بنجاح!");
+    } catch (e) {
+      console.error("Error saving custom footer image:", e);
+      alert("حدث خطأ أثناء الحفظ في Firestore");
+    } finally {
+      setFooterImageSaving(false);
+    }
+  };
+
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 800000) {
+      alert("حجم الصورة كبير جداً. يرجى اختيار صورة أصغر من 800 كيلوبايت لضمان سرعة التحميل وتوافق قواعد البيانات.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result as string;
+      setFooterImageUrl(base64);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const save = async () => {
     if (!label || !url) return alert("يرجى تعبئة جميع الحقول المطلوبة");
@@ -5094,7 +5173,7 @@ function AdminSocialLinks() {
     setLabel(link.label);
     setUrl(link.url);
     setDescription(link.description || "");
-    setOrder(link.order);
+    setOrder(link.order ?? 1);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -5118,7 +5197,7 @@ function AdminSocialLinks() {
           <div className="space-y-2">
             <label className="block text-sm font-black">المنصة:</label>
             <select
-              value={platform}
+              value={platform || "whatsapp"}
               onChange={(e) => setPlatform(e.target.value)}
               className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl font-bold"
             >
@@ -5135,7 +5214,7 @@ function AdminSocialLinks() {
             <label className="block text-sm font-black">الاسم / التسمية:</label>
             <input
               type="text"
-              value={label}
+              value={label || ""}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="مثال: قناة الواتساب"
               className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl font-bold"
@@ -5145,7 +5224,7 @@ function AdminSocialLinks() {
             <label className="block text-sm font-black">الرابط (URL):</label>
             <input
               type="text"
-              value={url}
+              value={url || ""}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="https://..."
               className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl font-mono text-xs text-left"
@@ -5156,7 +5235,7 @@ function AdminSocialLinks() {
             <label className="block text-sm font-black">وصف قصير:</label>
             <input
               type="text"
-              value={description}
+              value={description || ""}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="مثال: انضم لقناتنا للمتابعة..."
               className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl font-bold"
@@ -5166,8 +5245,8 @@ function AdminSocialLinks() {
             <label className="block text-sm font-black">الترتيب:</label>
             <input
               type="number"
-              value={order}
-              onChange={(e) => setOrder(Number(e.target.value))}
+              value={order === null || order === undefined ? "" : order}
+              onChange={(e) => setOrder(e.target.value === "" ? "" as any : Number(e.target.value))}
               className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl font-bold"
             />
           </div>
@@ -5277,6 +5356,63 @@ function AdminSocialLinks() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* إدارة صورة قسم حسابي */}
+      <div className="bg-gray-50 dark:bg-gray-900/40 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-4 mt-8">
+        <h3 className="font-black text-lg text-blue-600 mb-2 flex items-center justify-end gap-2">
+          <span>إدارة صورة قسم حسابي</span>
+          <Image className="w-5 h-5 text-blue-600" />
+        </h3>
+        <p className="text-gray-500 text-xs font-bold leading-relaxed">
+          يمكنك تغيير الصورة الترويجية أو الخاصة التي تظهر أسفل قسم "تابعنا" في صفحة حسابي. يتم حفظ الصورة في Firestore وتنزيلها لمرة واحدة فقط لتظهر للعملاء بشكل أسرع دون استهلاك بيانات.
+        </p>
+
+        <div className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <label className="block text-sm font-black">تحميل صورة جديدة:</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl font-bold text-xs"
+            />
+            <p className="text-[10px] text-gray-400">يفضل اختيار صورة مربعة أو أفقية بحجم أقل من 800 كيلوبايت.</p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-black">أو رابط الصورة المباشر (URL):</label>
+            <input
+              type="text"
+              value={footerImageUrl}
+              onChange={(e) => setFooterImageUrl(e.target.value)}
+              placeholder="https://example.com/image.png أو بيانات base64"
+              className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl font-mono text-xs text-left"
+              dir="ltr"
+            />
+          </div>
+
+          {footerImageUrl && (
+            <div className="space-y-2 pt-2">
+              <label className="block text-sm font-black">معاينة الصورة الحالية:</label>
+              <div className="max-w-[200px] border dark:border-gray-700 rounded-2xl overflow-hidden shadow">
+                <img
+                  src={footerImageUrl}
+                  alt="Footer preview"
+                  className="w-full h-auto object-contain"
+                />
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={saveFooterImage}
+            disabled={footerImageSaving}
+            className="w-full bg-blue-600 text-white p-4 rounded-2xl font-black shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition disabled:opacity-50 mt-4"
+          >
+            {footerImageSaving ? "جاري الحفظ..." : "حفظ صورة القسم الجديدة"}
+          </button>
+        </div>
       </div>
     </div>
   );

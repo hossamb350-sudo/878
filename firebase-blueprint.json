@@ -220,6 +220,16 @@
         "createdAt": { "type": "number" }
       },
       "required": ["platform", "label", "url", "order", "createdAt"]
+    },
+    "CustomFooter": {
+      "title": "Custom Footer Image Settings",
+      "description": "Custom footer image settings",
+      "type": "object",
+      "properties": {
+        "imageUrl": { "type": "string" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["imageUrl"]
     }
   },
   "firestore": {
@@ -258,6 +268,10 @@
     "/settings/quran": {
       "schema": { "$ref": "QuranContent" },
       "description": "Quran section config"
+    },
+    "/settings/custom_footer": {
+      "schema": { "$ref": "CustomFooter" },
+      "description": "Custom footer image settings"
     },
     "/leader/{contentId}": {
       "schema": { "$ref": "LeaderContent" },
