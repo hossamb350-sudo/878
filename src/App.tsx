@@ -45,17 +45,20 @@ import { SplashScreen } from "./components/SplashScreen";
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [isFirstTime, setIsFirstTime] = useState(true);
 
   useEffect(() => {
-    // Check if session storage indicates we already viewed splash in this session
-    const alreadySeen = sessionStorage.getItem("quran_splash_seen");
-    if (alreadySeen === "true") {
-      setShowSplash(false);
+    // Check if onboarding was completed ever
+    const onboardingCompleted = localStorage.getItem("taiz_onboarding_completed");
+    if (onboardingCompleted === "true") {
+      setIsFirstTime(false);
+    } else {
+      setIsFirstTime(true);
     }
   }, []);
 
   const handleEnter = () => {
-    sessionStorage.setItem("quran_splash_seen", "true");
+    localStorage.setItem("taiz_onboarding_completed", "true");
     setShowSplash(false);
   };
 
@@ -72,7 +75,7 @@ export default function App() {
             }}
             className="fixed inset-0 z-[100]"
           >
-            <SplashScreen onComplete={handleEnter} />
+            <SplashScreen onComplete={handleEnter} isFirstTime={isFirstTime} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -10,16 +10,29 @@ const CARDS = [
   { id: 2, title: "دروس من", subtitle: "هدي القرآن", icon: BookOpen, color: "text-[#049edf]", bg: "bg-[#049edf]/10", border: "border-[#049edf]/50" },
 ];
 
-export function SplashScreen({ onComplete }: { onComplete: () => void }) {
+export function SplashScreen({ 
+  onComplete, 
+  isFirstTime = true 
+}: { 
+  onComplete: () => void; 
+  isFirstTime?: boolean; 
+}) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    // Advance carousel every 3.5 seconds
+    if (!isFirstTime) {
+      // Subsequent opens: quick 2-second transition with just the logo and loading
+      const quickTimer = setTimeout(() => {
+        onComplete();
+      }, 2000);
+      return () => clearTimeout(quickTimer);
+    }
+
+    // First open: full 10-second onboarding carousel
     const timer = setInterval(() => {
       setActiveIndex((prev) => prev + 1);
     }, 3500);
 
-    // Auto-dismiss and enter app after 10 seconds
     const autoDismissTimer = setTimeout(() => {
       localStorage.setItem("taiz_onboarding_completed", "true");
       onComplete();
@@ -29,7 +42,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
       clearInterval(timer);
       clearTimeout(autoDismissTimer);
     };
-  }, [onComplete]);
+  }, [onComplete, isFirstTime]);
 
   return (
     <div 
@@ -46,7 +59,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="flex flex-col items-center mt-8 z-10"
+        className={`flex flex-col items-center z-10 ${isFirstTime ? "mt-8" : "my-auto"}`}
       >
         <motion.img 
           initial={{ scale: 0.8 }}
@@ -54,70 +67,84 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           transition={{ duration: 1, ease: "easeOut" }}
           src={LOGO_SRC} 
           alt="شعار منصة تعز الإعلامية" 
-          className="w-64 h-64 md:w-80 md:h-80 object-contain drop-shadow-2xl mb-4" 
+          className={`${isFirstTime ? "w-64 h-64 md:w-80 md:h-80" : "w-72 h-72 md:w-96 md:h-96"} object-contain drop-shadow-2xl mb-4`} 
         />
+        {!isFirstTime && (
+          <motion.h1
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.8 }}
+            className="text-xl md:text-2xl font-bold text-center mt-4 tracking-wide bg-gradient-to-r from-white via-gray-200 to-[#049edf] bg-clip-text text-transparent"
+          >
+            منصة تعز الإعلامية
+          </motion.h1>
+        )}
       </motion.div>
 
-      {/* CAROUSEL */}
-      <div className="relative w-full max-w-[130px] h-[140px] md:max-w-[150px] md:h-[160px] z-10 my-auto mx-auto flex items-center justify-center">
-        {CARDS.map((card, index) => {
-          // Calculate offset relative to active index
-          // 0 = Center, 1 = Right (Next), -1 = Left (Previous)
-          let offset = (index - (activeIndex % 3)) % 3;
-          if (offset > 1) offset -= 3;
-          if (offset < -1) offset += 3;
+      {/* CAROUSEL - Only if isFirstTime */}
+      {isFirstTime && (
+        <div className="relative w-full max-w-[130px] h-[140px] md:max-w-[150px] md:h-[160px] z-10 my-auto mx-auto flex items-center justify-center">
+          {CARDS.map((card, index) => {
+            // Calculate offset relative to active index
+            // 0 = Center, 1 = Right (Next), -1 = Left (Previous)
+            let offset = (index - (activeIndex % 3)) % 3;
+            if (offset > 1) offset -= 3;
+            if (offset < -1) offset += 3;
 
-          const isCenter = offset === 0;
+            const isCenter = offset === 0;
 
-          return (
-            <motion.div
-              key={card.id}
-              className={`absolute inset-0 border-[1.5px] rounded-[1.5rem] shadow-lg flex flex-col items-center justify-center p-3 text-center transition-colors duration-500 ${
-                isCenter 
-                  ? `bg-[#0c1933] ${card.border}`
-                  : "bg-[#081225] border-transparent"
-              }`}
-              initial={false}
-              animate={{
-                x: `${offset * 115}%`,
-                scale: isCenter ? 1.05 : 0.85,
-                opacity: isCenter ? 1 : 0.35,
-                zIndex: isCenter ? 20 : 10,
-              }}
-              transition={{ duration: 0.8, ease: "easeInOut" }}
-            >
-              <div className={`p-3 rounded-full mb-2 md:mb-3 shadow-inner transition-colors duration-500 ${isCenter ? card.bg : "bg-white/5"}`}>
-                <card.icon className={`w-6 h-6 md:w-7 md:h-7 transition-colors duration-500 ${isCenter ? card.color : "text-gray-500"}`} />
-              </div>
-              <h3 className={`text-[12px] md:text-[14px] font-black leading-tight transition-colors duration-500 ${isCenter ? 'text-white' : 'text-gray-500'}`}>
-                {card.title}
-              </h3>
-              <p className={`text-[10px] md:text-[11px] font-bold mt-1 transition-colors duration-500 ${isCenter ? 'text-gray-400' : 'text-gray-600'}`}>
-                {card.subtitle}
-              </p>
-            </motion.div>
-          );
-        })}
-      </div>
+            return (
+              <motion.div
+                key={card.id}
+                className={`absolute inset-0 border-[1.5px] rounded-[1.5rem] shadow-lg flex flex-col items-center justify-center p-3 text-center transition-colors duration-500 ${
+                  isCenter 
+                    ? `bg-[#0c1933] ${card.border}`
+                    : "bg-[#081225] border-transparent"
+                }`}
+                initial={false}
+                animate={{
+                  x: `${offset * 115}%`,
+                  scale: isCenter ? 1.05 : 0.85,
+                  opacity: isCenter ? 1 : 0.35,
+                  zIndex: isCenter ? 20 : 10,
+                }}
+                transition={{ duration: 0.8, ease: "easeInOut" }}
+              >
+                <div className={`p-3 rounded-full mb-2 md:mb-3 shadow-inner transition-colors duration-500 ${isCenter ? card.bg : "bg-white/5"}`}>
+                  <card.icon className={`w-6 h-6 md:w-7 md:h-7 transition-colors duration-500 ${isCenter ? card.color : "text-gray-500"}`} />
+                </div>
+                <h3 className={`text-[12px] md:text-[14px] font-black leading-tight transition-colors duration-500 ${isCenter ? 'text-white' : 'text-gray-500'}`}>
+                  {card.title}
+                </h3>
+                <p className={`text-[10px] md:text-[11px] font-bold mt-1 transition-colors duration-500 ${isCenter ? 'text-gray-400' : 'text-gray-600'}`}>
+                  {card.subtitle}
+                </p>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
 
       {/* DOTS & LOADING BAR */}
-      <div className="flex flex-col items-center z-10 mb-8 space-y-10 w-full">
-        {/* Dots Indicator */}
-        <div className="flex items-center gap-2">
-          {CARDS.map((_, index) => (
-            <motion.div
-              key={index}
-              className={`h-1.5 rounded-full transition-all duration-500 ${
-                index === (activeIndex % 3) ? "w-6 bg-[#049edf]" : "w-1.5 bg-white/20"
-              }`}
-            />
-          ))}
-        </div>
+      <div className={`flex flex-col items-center z-10 mb-8 space-y-10 w-full ${!isFirstTime ? "mt-auto" : ""}`}>
+        {/* Dots Indicator - Only if isFirstTime */}
+        {isFirstTime && (
+          <div className="flex items-center gap-2">
+            {CARDS.map((_, index) => (
+              <motion.div
+                key={index}
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  index === (activeIndex % 3) ? "w-6 bg-[#049edf]" : "w-1.5 bg-white/20"
+                }`}
+              />
+            ))}
+          </div>
+        )}
         
         {/* Loading Bar */}
         <div className="flex flex-col items-center space-y-3 opacity-60 w-full max-w-[200px]">
           <span className="text-[10px] tracking-widest text-gray-400 font-bold uppercase">
-            جاري الدخول للتطبيق...
+            {isFirstTime ? "جاري الدخول للتطبيق..." : "جاري تحميل المنصة..."}
           </span>
           <div className="w-full h-[2px] bg-white/10 rounded-full overflow-hidden relative">
             <motion.div
