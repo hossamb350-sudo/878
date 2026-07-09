@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -60,6 +60,7 @@ export function Home() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const prevVideoIdsRef = useRef<string[]>([]);
   const [categories, setCategories] = useState<Record<string, string>>({
     "محلية": "#049EDF",
     "تعبئة عامة": "#032F69",
@@ -174,6 +175,32 @@ export function Home() {
       unsubVideosPromise.then(unsub => unsub());
     };
   }, []);
+
+  // Auto-scroll to newly added videos in the latest videos slider
+  useEffect(() => {
+    if (videos.length === 0) return;
+
+    // Check if we already loaded videos before (meaning this is a dynamic update/addition)
+    if (prevVideoIdsRef.current.length > 0) {
+      const newVideo = videos.find(v => !prevVideoIdsRef.current.includes(v.id));
+      if (newVideo) {
+        // Scroll to the newly added video smoothly
+        setTimeout(() => {
+          const element = document.getElementById(`home-video-${newVideo.id}`);
+          if (element) {
+            element.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+              inline: "center"
+            });
+          }
+        }, 300); // Small timeout to ensure the DOM element is rendered and styled
+      }
+    }
+
+    // Keep track of the current video IDs for future additions
+    prevVideoIdsRef.current = videos.map(v => v.id);
+  }, [videos]);
 
   // Filter items
   let filteredNews = [...news];
@@ -395,7 +422,12 @@ export function Home() {
                       
                       <div className="flex overflow-x-auto gap-5 pb-4 snap-x hide-scrollbar relative z-10" style={{ scrollbarWidth: 'none' }}>
                         {videos.map(video => (
-                           <Link key={video.id} to={`/watch/${video.id}`} className="snap-start shrink-0 w-[280px] sm:w-[320px] group block">
+                           <Link 
+                             id={`home-video-${video.id}`}
+                             key={video.id} 
+                             to={`/watch/${video.id}`} 
+                             className="snap-start shrink-0 w-[280px] sm:w-[320px] group block"
+                           >
                               <div className="relative aspect-[16/9] rounded-3xl overflow-hidden bg-taiz-navy mb-4 shadow-medium group-hover:shadow-strong group-hover:border-taiz-sky/30 transition-all">
                                  {video.thumbnailUrl ? (
                                     <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" />

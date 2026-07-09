@@ -270,7 +270,7 @@ const ContactUsSection = () => {
               </div>
               <p className="text-sm font-black text-white/90">مساحة الصورة الخاصة بك</p>
               <p className="text-xs text-gray-400 mt-2 leading-relaxed" dir="rtl">
-                يرجى رفع صورتك الخاصة باسم <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[#049edf]">custom_footer.png</code> إلى المجلد <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[#049edf]">public/</code> لتظهر هنا كجزء من التصميم.
+                يرجى رفع صورتك الخاصة باسم <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[#049edf]">custom_footer.png</code> إلى المجلد <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[#049edf]">Resources/</code> لتظهر هنا كجزء من التصميم.
               </p>
             </div>
           ) : (

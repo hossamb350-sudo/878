@@ -38,6 +38,7 @@ export function Watch() {
   const [tempSort, setTempSort] = useState<"newest" | "oldest" | "popular">("newest");
 
   const activeVideoRef = useRef<HTMLDivElement>(null);
+  const prevVideoIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -85,6 +86,32 @@ export function Watch() {
       unsubVideosPromise.then(unsub => unsub());
     };
   }, []);
+
+  // Auto-scroll to newly added videos in the Watch page list/grid
+  useEffect(() => {
+    if (videos.length === 0) return;
+
+    // Check if we already loaded videos before (meaning this is a dynamic update/addition)
+    if (prevVideoIdsRef.current.length > 0) {
+      const newVideo = videos.find(v => !prevVideoIdsRef.current.includes(v.id));
+      if (newVideo) {
+        // Scroll to the newly added video smoothly
+        setTimeout(() => {
+          const element = document.getElementById(`watch-video-${newVideo.id}`);
+          if (element) {
+            element.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+              inline: "nearest"
+            });
+          }
+        }, 300); // Small timeout to ensure the DOM element is rendered and styled
+      }
+    }
+
+    // Keep track of the current video IDs for future additions
+    prevVideoIdsRef.current = videos.map(v => v.id);
+  }, [videos]);
 
   const activeChannel = channels.find(c => c.id === activeChannelId);
 
@@ -493,6 +520,7 @@ export function Watch() {
                   key={vid.id}
                 >
                   <Link 
+                    id={`watch-video-${vid.id}`}
                     to={`/watch/${vid.id}`} 
                     className="card card-hover group block p-0"
                   >
