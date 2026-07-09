@@ -14,18 +14,8 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
-// Enable dynamic CORS for all origins (highly critical for Capacitor WebViews)
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow all origins dynamically (echoes requesting origin in Access-Control-Allow-Origin)
-      callback(null, true);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Accept", "X-Requested-With"],
-  })
-);
+// Enable CORS for all origins
+app.use(cors());
 
 // Initialize ImageKit
 const imagekit = new ImageKit({

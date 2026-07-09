@@ -7,9 +7,6 @@ export default defineConfig(() => {
   return {
     base: './',
     publicDir: 'Resources',
-    define: {
-      'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.APP_URL || ''),
-    },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

@@ -5,9 +5,6 @@ const config: CapacitorConfig = {
   appName: 'المنصة الإعلامية',
   webDir: 'dist',
   plugins: {
-    CapacitorHttp: {
-      enabled: true,
-    },
     GoogleAuth: {
       scopes: ['profile', 'email'],
       serverClientId: '565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com',
