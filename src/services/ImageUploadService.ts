@@ -76,8 +76,49 @@ export class ImageUploadService {
     // 1. Native Upload Implementation (Bypasses WebView Sandbox and CORS)
     if (isNative) {
       const uploadAttemptNative = async (): Promise<UploadResponse> => {
+        // Try direct upload first as it is the most robust and bypasses any backend routing/404 issues
         try {
-          console.log(`[ImageUploadService] Sending native request to ${API_BASE}/api/upload/imagekit`);
+          console.log("[ImageUploadService] Attempting direct upload to ImageKit API...");
+          
+          // Generate Basic Auth token using private key from unified configuration
+          const authCredentials = btoa(`${IMAGEKIT_CONFIG.privateKey}:`);
+          
+          const response = await CapacitorHttp.post({
+            url: "https://upload.imagekit.io/api/v1/files/upload",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Basic ${authCredentials}`,
+              "Accept": "application/json"
+            },
+            data: {
+              file: base64Data,
+              fileName: fileName,
+              folder: "/uploads"
+            }
+          });
+
+          console.log("[ImageUploadService] ImageKit direct API response status:", response.status);
+
+          if (response.status >= 200 && response.status < 300) {
+            const data = response.data;
+            if (data && data.url) {
+              console.log("[ImageUploadService] Direct ImageKit upload succeeded:", data.url);
+              return {
+                url: data.url,
+                thumbnail: data.thumbnailUrl || data.url,
+                fileId: data.fileId
+              };
+            }
+          }
+          
+          console.warn("[ImageUploadService] Direct upload returned unsuccessful status, trying backend fallback...", response.status);
+        } catch (directErr) {
+          console.error("[ImageUploadService] Direct ImageKit upload failed, trying backend fallback...", directErr);
+        }
+
+        // Fallback to Backend proxy if direct upload failed
+        try {
+          console.log(`[ImageUploadService] Attempting backend fallback upload to ${API_BASE}/api/upload/imagekit`);
           
           const response = await CapacitorHttp.post({
             url: `${API_BASE}/api/upload/imagekit`,
@@ -91,26 +132,26 @@ export class ImageUploadService {
             }
           });
 
-          console.log("[ImageUploadService] Native response status:", response.status);
+          console.log("[ImageUploadService] Backend fallback response status:", response.status);
 
           if (response.status >= 200 && response.status < 300) {
             const data = response.data;
             if (data && data.url) {
               return {
                 url: data.url,
-                thumbnail: data.thumbnail,
+                thumbnail: data.thumbnail || data.url,
                 fileId: data.fileId
               };
             } else {
-              throw new Error(`استجابة غير صالحة من الخادم (رابط الصورة مفقود). الاستجابة: ${JSON.stringify(data)}`);
+              throw new Error(`استجابة غير صالحة من الخادم (رابط الصورة مفقود).`);
             }
           } else {
             const errorMsg = response.data?.message || response.data?.error || `كود الخطأ: ${response.status}`;
             throw new Error(`فشل الرفع من الخادم: ${errorMsg}`);
           }
-        } catch (err: any) {
-          console.error("[ImageUploadService] Native request error:", err);
-          throw err;
+        } catch (backendErr: any) {
+          console.error("[ImageUploadService] Backend fallback upload failed:", backendErr);
+          throw new Error(backendErr.message || "فشلت عملية الرفع من خلال تطبيق أندرويد");
         }
       };
 
