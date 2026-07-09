@@ -26,19 +26,40 @@ export class ImageUploadService {
       ? (import.meta.env.VITE_API_BASE_URL || (isProd ? PROD_URL : DEV_URL))
       : "";
 
+    // Convert file to Base64 to bypass any binary or multipart/form-data CORS issues on Android WebView
+    const fileToBase64 = (f: File | Blob): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            resolve(reader.result);
+          } else {
+            reject(new Error("Failed to convert file to base64 string."));
+          }
+        };
+        reader.onerror = (error) => reject(error);
+        reader.readAsDataURL(f);
+      });
+    };
+
+    let base64Data: string;
+    try {
+      base64Data = await fileToBase64(file);
+    } catch (err: any) {
+      console.error("[ImageUploadService] FileReader error:", err);
+      throw new Error(`فشل في معالجة ملف الصورة: ${err.message || err}`);
+    }
+
     const uploadAttempt = (): Promise<UploadResponse> => {
       return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        // Append the file using 'image' key, matching multer config in server.ts
-        formData.append("image", file, fileName);
-
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
         
-        // Accept JSON response
+        // Use JSON content type to ensure standard, robust headers
+        xhr.setRequestHeader("Content-Type", "application/json");
         xhr.setRequestHeader("Accept", "application/json");
 
-        // Track progress
+        // Track progress (since payload is sent as JSON body, modern browsers still emit upload progress)
         xhr.upload.onprogress = (event) => {
           if (event.lengthComputable && onProgress) {
             const percentComplete = Math.round((event.loaded / event.total) * 100);
@@ -89,9 +110,12 @@ export class ImageUploadService {
           reject(new Error("Upload timed out"));
         };
 
-        // Send the FormData payload
+        // Send the JSON payload
         try {
-          xhr.send(formData);
+          xhr.send(JSON.stringify({
+            imageBase64: base64Data,
+            fileName: fileName
+          }));
         } catch (e: any) {
           console.error("[Diagnostic Interceptor] XHR Send Error:", e);
           reject(new Error(`XHR Send Exception: ${e.message}`));
