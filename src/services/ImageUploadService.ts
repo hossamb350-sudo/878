@@ -28,26 +28,48 @@ export class ImageUploadService {
       : "";
 
     // Convert file to Base64 to bypass any binary or multipart/form-data CORS issues on Android WebView
-    const fileToBase64 = (f: File | Blob): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          if (typeof reader.result === "string") {
-            resolve(reader.result);
-          } else {
-            reject(new Error("Failed to convert file to base64 string."));
-          }
-        };
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(f);
-      });
+    const fileToBase64 = async (f: File | Blob): Promise<string> => {
+      try {
+        console.log("[ImageUploadService] Converting file via modern arrayBuffer...");
+        const buffer = await f.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        const chunks: string[] = [];
+        const chunkSize = 0xffff; // 64k chunks
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize) as any));
+        }
+        const base64 = btoa(chunks.join(""));
+        return `data:${f.type || "image/jpeg"};base64,${base64}`;
+      } catch (arrayBufferErr: any) {
+        console.warn("[ImageUploadService] arrayBuffer conversion failed, trying FileReader fallback:", arrayBufferErr);
+        
+        return new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === "string") {
+              resolve(reader.result);
+            } else {
+              reject(new Error("محتوى الملف المقروء غير صالح (ليس سلسلة نصية)"));
+            }
+          };
+          reader.onerror = () => {
+            const domErr = reader.error;
+            const detailMsg = domErr 
+              ? `${domErr.name}: ${domErr.message}` 
+              : "فشل غير معروف أثناء استخدام FileReader";
+            console.error("[ImageUploadService] FileReader onerror triggered:", domErr);
+            reject(new Error(detailMsg));
+          };
+          reader.readAsDataURL(f);
+        });
+      }
     };
 
     let base64Data: string;
     try {
       base64Data = await fileToBase64(file);
     } catch (err: any) {
-      console.error("[ImageUploadService] FileReader error:", err);
+      console.error("[ImageUploadService] fileToBase64 conversion exception:", err);
       throw new Error(`فشل في معالجة ملف الصورة: ${err.message || err}`);
     }
 
