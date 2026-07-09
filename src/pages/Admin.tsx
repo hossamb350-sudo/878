@@ -101,6 +101,7 @@ import { AdminCategoryManager } from "../components/AdminCategoryManager";
 
 const ContactUsSection = () => {
   const [links, setLinks] = useState<SocialLink[]>([]);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -259,25 +260,37 @@ const ContactUsSection = () => {
         </div>
       </div>
 
-      {/* Copyright Footer Section */}
-      <div className="w-full flex flex-col items-center justify-center py-6 px-4 gap-4">
-        <div className="w-full max-w-md">
-          <img
-            src="/copyright.png"
-            alt="حقوق النشر"
-            className="w-full h-auto opacity-80 dark:opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
-          />
-        </div>
-        <div className="text-center pt-2">
-          <p className="text-[9px] sm:text-[10px] font-black text-gray-400 dark:text-gray-500 tracking-wider flex flex-wrap items-center justify-center gap-1.5 opacity-80">
-            <span className="uppercase">
-              Designed & Developed by : Al Basha Taiz
-            </span>
-            <span className="text-gray-300 dark:text-gray-700">|</span>
-            <span className="font-bold">تصميم، إعداد وبرمجة : الباشا تعز</span>
-          </p>
+      {/* قسم الصورة المخصصة في الأسفل */}
+      <div className="w-full flex flex-col items-center justify-center pt-4 pb-2 px-2">
+        <div className="w-full max-w-md bg-[#0c1933]/40 dark:bg-gray-800/40 border border-white/5 dark:border-gray-700/50 rounded-[2rem] p-5 flex flex-col items-center shadow-lg relative overflow-hidden backdrop-blur-sm">
+          {imageError ? (
+            <div className="flex flex-col items-center justify-center p-6 text-center border-2 border-dashed border-[#049edf]/30 rounded-2xl w-full">
+              <div className="p-3 bg-[#049edf]/10 rounded-full mb-3 text-[#049edf]">
+                <Image className="w-8 h-8" />
+              </div>
+              <p className="text-sm font-black text-white/90">مساحة الصورة الخاصة بك</p>
+              <p className="text-xs text-gray-400 mt-2 leading-relaxed" dir="rtl">
+                يرجى رفع صورتك الخاصة باسم <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[#049edf]">custom_footer.png</code> إلى المجلد <code className="bg-white/10 px-1.5 py-0.5 rounded font-mono text-[#049edf]">public/</code> لتظهر هنا كجزء من التصميم.
+              </p>
+            </div>
+          ) : (
+            <div className="w-full flex flex-col items-center">
+              <img
+                src="/custom_footer.png"
+                alt="المحتوى الخاص"
+                className="w-full h-auto rounded-2xl object-contain opacity-95 hover:opacity-100 transition-all duration-500 shadow-md"
+                onError={() => setImageError(true)}
+              />
+              <div className="text-center pt-3 opacity-60">
+                <p className="text-[10px] font-bold text-gray-400 dark:text-gray-500 tracking-wider">
+                  تصميم وإعداد خاص بالمنصة
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
     </div>
   );
 };

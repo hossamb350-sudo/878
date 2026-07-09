@@ -69,16 +69,7 @@ export function SplashScreen({
           alt="شعار منصة تعز الإعلامية" 
           className={`${isFirstTime ? "w-64 h-64 md:w-80 md:h-80" : "w-72 h-72 md:w-96 md:h-96"} object-contain drop-shadow-2xl mb-4`} 
         />
-        {!isFirstTime && (
-          <motion.h1
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-            className="text-xl md:text-2xl font-bold text-center mt-4 tracking-wide bg-gradient-to-r from-white via-gray-200 to-[#049edf] bg-clip-text text-transparent"
-          >
-            منصة تعز الإعلامية
-          </motion.h1>
-        )}
+        {/* No text phrase "منصة تعز الإعلامية" as requested */}
       </motion.div>
 
       {/* CAROUSEL - Only if isFirstTime */}
