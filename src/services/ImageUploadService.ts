@@ -9,7 +9,8 @@ export interface UploadResponse {
 export class ImageUploadService {
   /**
    * Uploads a file with XMLHttpRequest, progress tracking, and retries.
-   * Designed specifically to bypass Android WebView/Capacitor CORS issues.
+   * Designed specifically to bypass Android WebView/Capacitor CORS and FormData issues
+   * by converting the file to Base64 first.
    */
   static async uploadFile(
     file: File | Blob,
@@ -22,17 +23,31 @@ export class ImageUploadService {
       ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
       : "";
 
+    // 1. Read file as Base64 to avoid Android WebView FormData empty file bug
+    const base64Data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = () => {
+        reject(new Error("فشل في قراءة الملف"));
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const payload = JSON.stringify({
+      imageBase64: base64Data,
+      fileName: fileName
+    });
+
     const uploadAttempt = (): Promise<UploadResponse> => {
       return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        // Ensure it's treated as a Blob/File with the correct name
-        formData.append("image", file, fileName);
-
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
         
-        // Accept JSON response
+        // Accept JSON response and set Content-Type to JSON
         xhr.setRequestHeader("Accept", "application/json");
+        xhr.setRequestHeader("Content-Type", "application/json");
 
         // Track progress
         xhr.upload.onprogress = (event) => {
@@ -44,37 +59,54 @@ export class ImageUploadService {
 
         // Handle load
         xhr.onload = () => {
+          const diagnostics = {
+            event: "onload",
+            status: xhr.status,
+            statusText: xhr.statusText,
+            responseType: xhr.responseType,
+            responseText: xhr.responseText ? xhr.responseText.substring(0, 200) : null
+          };
+          console.log("[Diagnostic Interceptor] XHR Response:", JSON.stringify(diagnostics));
+
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const res = JSON.parse(xhr.responseText);
               if (res.url) {
                 resolve(res);
               } else {
-                reject(new Error("Invalid response: Missing URL"));
+                reject(new Error(`Invalid response (Missing URL). Status: ${xhr.status}, Body: ${xhr.responseText}`));
               }
             } catch (err) {
-              reject(new Error("Failed to parse server response"));
+              reject(new Error(`Failed to parse server response. Status: ${xhr.status}, Body: ${xhr.responseText}`));
             }
           } else {
-            reject(new Error(`Server error: ${xhr.status} - ${xhr.responseText}`));
+            reject(new Error(`Server Error ${xhr.status}: ${xhr.responseText}`));
           }
         };
 
         // Handle network errors
         xhr.onerror = () => {
-          reject(new Error("Network Error - CORS or connection issue"));
+          console.error("[Diagnostic Interceptor] XHR Network Error (CORS, DNS, or Offline). Status:", xhr.status, "ReadyState:", xhr.readyState);
+          reject(new Error(`Network Error (status: ${xhr.status}, readyState: ${xhr.readyState}) - Possible CORS issue or server unreachable`));
         };
 
         xhr.onabort = () => {
+          console.warn("[Diagnostic Interceptor] XHR Aborted");
           reject(new Error("Upload aborted"));
         };
 
         xhr.ontimeout = () => {
+          console.error("[Diagnostic Interceptor] XHR Timeout");
           reject(new Error("Upload timed out"));
         };
 
-        // Send the FormData
-        xhr.send(formData);
+        // Send the JSON payload
+        try {
+          xhr.send(payload);
+        } catch (e: any) {
+          console.error("[Diagnostic Interceptor] XHR Send Error:", e);
+          reject(new Error(`XHR Send Exception: ${e.message}`));
+        }
       });
     };
 

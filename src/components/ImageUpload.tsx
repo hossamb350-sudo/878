@@ -76,9 +76,9 @@ export function ImageUpload({
             return next;
           });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Upload failed:", err);
-        setError(`فشل رفع بعض الملفات`);
+        setError(`خطأ أثناء رفع الصور: ${err.message || "فشل الاتصال بالشبكة"}`);
       }
     }
 
@@ -128,7 +128,7 @@ export function ImageUpload({
       .catch((err) => {
         console.error("Upload error:", err);
         setProgress(null);
-        setError("حدث خطأ في الشبكة أثناء رفع الصورة");
+        setError(`خطأ أثناء رفع الصورة: ${err.message || "فشل الاتصال بالشبكة"}`);
       });
   };
 
