@@ -1,23 +1,6 @@
 import React, { useRef, useState } from "react";
 import { Upload, X, RefreshCw, AlertCircle, Image as ImageIcon } from "lucide-react";
-import { Capacitor } from "@capacitor/core";
-
-const fetchWithRetry = async (url: string, options: RequestInit, retries = 3): Promise<Response> => {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const response = await fetch(url, options);
-      if (response.ok) return response;
-      if (response.status >= 500) {
-        throw new Error(`Server Error: ${response.status}`);
-      }
-      return response;
-    } catch (err) {
-      if (i === retries - 1) throw err;
-      await new Promise(res => setTimeout(res, 1000 * (i + 1)));
-    }
-  }
-  throw new Error("Max retries reached");
-};
+import { ImageUploadService } from "../services/ImageUploadService";
 
 interface ImageUploadProps {
   key?: React.Key;
@@ -65,12 +48,6 @@ export function ImageUpload({
     // Initialize tracking for multiple files
     setUploadingFiles(files.map(f => ({ name: f.name, progress: 0 })));
 
-    const isNative = Capacitor.isNativePlatform();
-    // Use the Vite environment variable if available, otherwise use the shared URL or empty for relative
-    const API_BASE = isNative 
-      ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
-      : "";
-
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
@@ -79,20 +56,18 @@ export function ImageUpload({
       if (file.size > 10 * 1024 * 1024) continue;
 
       try {
-        const formData = new FormData();
-        formData.append("image", file);
-
-        // Use fetchWithRetry for better connection stability in Capacitor
-        const response = await fetchWithRetry(`${API_BASE}/api/upload/imagekit`, {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!response.ok) {
-          throw new Error(`Upload failed with status ${response.status}`);
-        }
-
-        const res = await response.json();
+        const res = await ImageUploadService.uploadFile(
+          file,
+          file.name,
+          (percent) => {
+            setUploadingFiles(prev => {
+              const next = [...prev];
+              if (next[i]) next[i].progress = percent;
+              return next;
+            });
+          }
+        );
+        
         if (res.url) {
           uploadedUrls.push(res.url);
           setUploadingFiles(prev => {
@@ -102,7 +77,7 @@ export function ImageUpload({
           });
         }
       } catch (err) {
-        console.error("Fetch upload failed:", err);
+        console.error("Upload failed:", err);
         setError(`فشل رفع بعض الملفات`);
       }
     }
@@ -133,26 +108,13 @@ export function ImageUpload({
     setError(null);
     setProgress(0);
 
-    const isNative = Capacitor.isNativePlatform();
-    const API_BASE = isNative 
-      ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
-      : "";
-
-    setProgress(50); // Fallback pseudo-progress by setting it to 50% during fetch
-    
-    const formData = new FormData();
-    formData.append("image", file);
-
-    fetchWithRetry(`${API_BASE}/api/upload/imagekit`, {
-      method: "POST",
-      body: formData,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`فشل الرفع: كود الخطأ ${response.status}`);
-        }
-        return response.json();
-      })
+    ImageUploadService.uploadFile(
+      file,
+      file.name,
+      (percent) => {
+        setProgress(percent);
+      }
+    )
       .then((res) => {
         setProgress(100);
         setTimeout(() => setProgress(null), 500); // Clear progress after a short delay
@@ -164,7 +126,7 @@ export function ImageUpload({
         }
       })
       .catch((err) => {
-        console.error("Fetch error:", err);
+        console.error("Upload error:", err);
         setProgress(null);
         setError("حدث خطأ في الشبكة أثناء رفع الصورة");
       });
