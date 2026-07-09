@@ -158,29 +158,51 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
 
 // ImageKit upload API route
 app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: "No file uploaded" });
+  let fileContent;
+  let originalName = "uploaded_image.jpg";
+  let isTempFile = false;
+  let tempFilePath = "";
+
+  if (req.file) {
+    fileContent = fs.readFileSync(req.file.path);
+    originalName = req.file.originalname;
+    isTempFile = true;
+    tempFilePath = req.file.path;
+  } else if (req.body && req.body.imageBase64) {
+    let base64String = req.body.imageBase64;
+    if (base64String.startsWith('data:image')) {
+      const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        base64String = matches[2];
+      }
+    }
+    fileContent = Buffer.from(base64String, 'base64');
+    originalName = req.body.fileName || "uploaded_image_" + Date.now() + ".jpg";
+  } else {
+    return res.status(400).json({ error: "No file or base64 image uploaded" });
   }
 
   if (!process.env.IMAGEKIT_PRIVATE_KEY || !process.env.IMAGEKIT_PUBLIC_KEY || !process.env.IMAGEKIT_URL_ENDPOINT) {
     console.error("ImageKit credentials are not fully set in environment variables");
+    if (isTempFile) {
+      try { fs.unlinkSync(tempFilePath); } catch (e) {}
+    }
     return res.status(500).json({ error: "خدمة رفع الصور غير مهيأة (بيانات ImageKit مفقودة)" });
   }
 
   try {
-    const fileContent = fs.readFileSync(req.file.path);
-    
     const uploadResponse = await imagekit.upload({
       file: fileContent,
-      fileName: req.file.originalname,
+      fileName: originalName,
       folder: "/uploads",
     });
 
-    // Clean up the temporary file
-    try {
-      fs.unlinkSync(req.file.path);
-    } catch (err) {
-      console.error("Error deleting temp file:", err);
+    if (isTempFile) {
+      try {
+        fs.unlinkSync(tempFilePath);
+      } catch (err) {
+        console.error("Error deleting temp file:", err);
+      }
     }
 
     res.json({ 
@@ -192,8 +214,7 @@ app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
   } catch (error: any) {
     console.error("ImageKit upload error:", error);
     
-    // Clean up temp file on error too
-    if (req.file && fs.existsSync(req.file.path)) {
+    if (isTempFile && req.file && fs.existsSync(req.file.path)) {
       try {
         fs.unlinkSync(req.file.path);
       } catch (e) {}

@@ -62,13 +62,23 @@ export function ImageUpload({
       if (file.size > 10 * 1024 * 1024) continue;
 
       try {
-        const formData = new FormData();
-        formData.append("image", file);
+        const base64: string = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = error => reject(error);
+        });
 
-        // First attempt using fetch for better CORS handling in Android
+        // Use JSON base64 upload for better compatibility with Capacitor
         const response = await fetch(`${API_BASE}/api/upload/imagekit`, {
           method: "POST",
-          body: formData,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            imageBase64: base64,
+            fileName: file.name
+          }),
         });
 
         if (!response.ok) {
@@ -121,23 +131,30 @@ export function ImageUpload({
       ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
       : "";
 
-    const formData = new FormData();
-    formData.append("image", file);
-
-    // Using fetch for better CORS compatibility on Capacitor/Android
-    // Fallback pseudo-progress by setting it to 50% during fetch
-    setProgress(50);
+    setProgress(50); // Fallback pseudo-progress by setting it to 50% during fetch
     
-    fetch(`${API_BASE}/api/upload/imagekit`, {
-      method: "POST",
-      body: formData,
-    })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`فشل الرفع: كود الخطأ ${response.status}`);
-        }
-        return response.json();
+    // Read file as Base64 first to avoid FormData network bugs on Capacitor
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      
+      fetch(`${API_BASE}/api/upload/imagekit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageBase64: base64,
+          fileName: file.name
+        }),
       })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error(`فشل الرفع: كود الخطأ ${response.status}`);
+          }
+          return response.json();
+        })
       .then((res) => {
         setProgress(100);
         setTimeout(() => setProgress(null), 500); // Clear progress after a short delay
@@ -153,6 +170,11 @@ export function ImageUpload({
         setProgress(null);
         setError("حدث خطأ في الشبكة أثناء رفع الصورة");
       });
+    };
+    reader.onerror = () => {
+      setProgress(null);
+      setError("فشل في قراءة ملف الصورة");
+    };
   };
 
   const triggerSelect = () => {
