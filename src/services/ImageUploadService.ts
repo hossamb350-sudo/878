@@ -23,48 +23,17 @@ export class ImageUploadService {
       ? (import.meta.env.VITE_API_BASE_URL || "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
       : "";
 
-    // 1. Try reading file as Base64 to avoid Android WebView FormData empty file bug
-    let base64Data: string | null = null;
-    try {
-      base64Data = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          resolve(reader.result as string);
-        };
-        reader.onerror = () => {
-          reject(new Error("FileReader failed to read the file"));
-        };
-        reader.readAsDataURL(file);
-      });
-    } catch (e) {
-      console.warn("[ImageUploadService] Base64 conversion failed, falling back to direct FormData:", e);
-    }
-
-    const useBase64 = base64Data !== null;
-    const payload = useBase64
-      ? JSON.stringify({
-          imageBase64: base64Data,
-          fileName: fileName
-        })
-      : (() => {
-          const fd = new FormData();
-          fd.append("image", file, fileName);
-          return fd;
-        })();
-
     const uploadAttempt = (): Promise<UploadResponse> => {
       return new Promise((resolve, reject) => {
+        const formData = new FormData();
+        // Append the file using 'image' key, matching multer config in server.ts
+        formData.append("image", file, fileName);
+
         const xhr = new XMLHttpRequest();
         xhr.open("POST", `${API_BASE}/api/upload/imagekit`, true);
         
         // Accept JSON response
         xhr.setRequestHeader("Accept", "application/json");
-        
-        // ONLY set Content-Type if we are sending JSON.
-        // For FormData, let the browser/WebView set Content-Type and boundary automatically.
-        if (useBase64) {
-          xhr.setRequestHeader("Content-Type", "application/json");
-        }
 
         // Track progress
         xhr.upload.onprogress = (event) => {
@@ -117,9 +86,9 @@ export class ImageUploadService {
           reject(new Error("Upload timed out"));
         };
 
-        // Send the JSON payload
+        // Send the FormData payload
         try {
-          xhr.send(payload);
+          xhr.send(formData);
         } catch (e: any) {
           console.error("[Diagnostic Interceptor] XHR Send Error:", e);
           reject(new Error(`XHR Send Exception: ${e.message}`));
