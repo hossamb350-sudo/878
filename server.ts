@@ -26,7 +26,7 @@ app.use(cors({
 // Initialize ImageKit
 const imagekit = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY || IMAGEKIT_CONFIG.publicKey,
-  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || IMAGEKIT_CONFIG.privateKey,
+  privateKey: process.env.IMAGEKIT_PRIVATE_KEY || "private_hEfX4huhE9HYYoIaUwm+WHkfzjg=",
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || IMAGEKIT_CONFIG.urlEndpoint,
 });
 
@@ -160,6 +160,17 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
   }
   const fileUrl = `/uploads/${req.file.filename}`;
   res.json({ url: fileUrl });
+});
+
+// ImageKit secure authentication parameter generator
+app.get("/api/imagekit/auth", (req, res) => {
+  try {
+    const authParameters = imagekit.getAuthenticationParameters();
+    res.json(authParameters);
+  } catch (error: any) {
+    console.error("Error generating ImageKit auth parameters:", error);
+    res.status(500).json({ error: "فشل في توليد بيانات التوقيع والمصادقة لـ ImageKit" });
+  }
 });
 
 // ImageKit upload API route
