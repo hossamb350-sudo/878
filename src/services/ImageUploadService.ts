@@ -8,9 +8,24 @@ export interface UploadResponse {
 
 export class ImageUploadService {
   /**
-   * Uploads a file with XMLHttpRequest, progress tracking, and retries.
-   * Designed specifically to bypass Android WebView/Capacitor CORS and FormData issues
-   * by converting the file to Base64 first.
+   * Converts a File or Blob into a Base64 string.
+   */
+  private static fileToBase64(file: File | Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = (error) => {
+        console.error("[ImageUploadService] FileReader error:", error);
+        reject(new Error("فشل في قراءة ملف الصورة"));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * Uploads a file with progress tracking, adaptive fallback, and multi-strategy support.
    */
   static async uploadFile(
     file: File | Blob,
@@ -23,9 +38,55 @@ export class ImageUploadService {
       ? (import.meta.env.VITE_API_BASE_URL || "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app")
       : "";
 
-    // Primary method: XMLHttpRequest (allows progress tracking)
+    console.log(`[ImageUploadService] Starting upload. File: ${fileName}, Size: ${file.size} bytes, Native Platform: ${isNative}`);
+
+    // Strategy 1: Base64 JSON Upload (Highly robust, completely immune to multipart/FormData Capacitor WebView bugs)
+    const uploadWithBase64 = async (): Promise<UploadResponse> => {
+      console.log("[ImageUploadService] Executing Strategy: Base64 JSON Upload...");
+      if (onProgress) onProgress(10);
+
+      console.log("[ImageUploadService] Converting file to Base64...");
+      const base64Data = await this.fileToBase64(file);
+      console.log(`[ImageUploadService] File converted successfully. Base64 length: ${base64Data.length}`);
+      
+      if (onProgress) onProgress(40);
+
+      console.log(`[ImageUploadService] Sending POST request to: ${API_BASE}/api/upload/imagekit`);
+      const response = await fetch(`${API_BASE}/api/upload/imagekit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify({
+          imageBase64: base64Data,
+          fileName: fileName,
+        }),
+      });
+
+      if (onProgress) onProgress(80);
+
+      console.log(`[ImageUploadService] Received response status: ${response.status}`);
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Server Error ${response.status}: ${errText || "Unknown error"}`);
+      }
+
+      const res = await response.json();
+      console.log("[ImageUploadService] Response JSON parsed:", JSON.stringify(res));
+
+      if (res.url) {
+        if (onProgress) onProgress(100);
+        return res;
+      } else {
+        throw new Error("Invalid server response: Missing image URL");
+      }
+    };
+
+    // Strategy 2: XMLHttpRequest FormData Upload (Allows real-time progress)
     const uploadWithXHR = (): Promise<UploadResponse> => {
       return new Promise((resolve, reject) => {
+        console.log("[ImageUploadService] Executing Strategy: XMLHttpRequest FormData Upload...");
         const formData = new FormData();
         formData.append("image", file, fileName);
 
@@ -41,6 +102,7 @@ export class ImageUploadService {
         };
 
         xhr.onload = () => {
+          console.log(`[ImageUploadService] XHR response status: ${xhr.status}`);
           if (xhr.status >= 200 && xhr.status < 300) {
             try {
               const res = JSON.parse(xhr.responseText);
@@ -69,53 +131,23 @@ export class ImageUploadService {
       });
     };
 
-    // Fallback method: fetch (highly robust, fully routed by CapacitorHttp native bridge bypassing CORS)
-    const uploadWithFetch = async (): Promise<UploadResponse> => {
-      console.log("[ImageUploadService] Falling back to fetch upload...");
-      const formData = new FormData();
-      formData.append("image", file, fileName);
-
-      if (onProgress) onProgress(15);
-
-      const response = await fetch(`${API_BASE}/api/upload/imagekit`, {
-        method: "POST",
-        headers: {
-          "Accept": "application/json",
-        },
-        body: formData,
-      });
-
-      if (onProgress) onProgress(75);
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(`Server Error ${response.status}: ${text || "Unknown error"}`);
-      }
-
-      const res = await response.json();
-      if (!res.url) {
-        throw new Error("Invalid response from server (Missing URL).");
-      }
-
-      if (onProgress) onProgress(100);
-      return res;
-    };
-
     const uploadAttempt = async (): Promise<UploadResponse> => {
-      try {
-        return await uploadWithXHR();
-      } catch (xhrError: any) {
-        // If the error is a status 0 / network error, fall back to native-friendly fetch
-        const isNetworkError = xhrError.message?.includes("Network Error") || xhrError.message?.includes("status: 0");
-        if (isNetworkError) {
-          console.warn("[ImageUploadService] XHR upload returned status 0. Attempting fallback via native fetch:", xhrError.message);
-          try {
-            return await uploadWithFetch();
-          } catch (fetchError: any) {
-            throw new Error(`Upload failed on both XHR and Fetch fallback. XHR: ${xhrError.message}, Fetch: ${fetchError.message}`);
-          }
+      if (isNative) {
+        // Native (APK) -> Prefer Base64 upload to bypass all WebView FormData native serialization bugs
+        try {
+          return await uploadWithBase64();
+        } catch (err: any) {
+          console.warn("[ImageUploadService] Native Base64 upload failed. Trying FormData fallback...", err.message);
+          return await uploadWithXHR();
         }
-        throw xhrError;
+      } else {
+        // Web -> Prefer standard XHR (binary stream, supports progress, more lightweight)
+        try {
+          return await uploadWithXHR();
+        } catch (err: any) {
+          console.warn("[ImageUploadService] Web XHR upload failed. Trying Base64 fallback...", err.message);
+          return await uploadWithBase64();
+        }
       }
     };
 
