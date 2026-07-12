@@ -22,6 +22,8 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Info,
   CalendarDays,
   Timer,
@@ -41,11 +43,13 @@ export function Events() {
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<
     "cards" | "list" | "table" | "calendar" | "timeline"
-  >("cards");
+  >("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [syllabuses, setSyllabuses] = useState<any[]>([]);
+  const [isPastEventsOpen, setIsPastEventsOpen] = useState(false);
+  const [isUpcomingEventsOpen, setIsUpcomingEventsOpen] = useState(true);
   const navigate = useNavigate();
 
   const events = useMemo(() => {
@@ -115,6 +119,30 @@ export function Events() {
     });
   }, [events, searchQuery, selectedCategory]);
 
+  const partitions = useMemo(() => {
+    const current: EventItem[] = [];
+    const upcoming: EventItem[] = [];
+    const past: EventItem[] = [];
+
+    filteredEvents.forEach((e) => {
+      const eventDate = startOfDay(new Date(e.timestamp));
+      if (isSameDay(eventDate, today)) {
+        current.push(e);
+      } else if (isAfter(eventDate, today)) {
+        upcoming.push(e);
+      } else {
+        past.push(e);
+      }
+    });
+
+    // Sort upcoming ascending (nearest first)
+    upcoming.sort((a, b) => a.timestamp - b.timestamp);
+    // Sort past descending (most recent first)
+    past.sort((a, b) => b.timestamp - a.timestamp);
+
+    return { current, upcoming, past };
+  }, [filteredEvents, today]);
+
   const getEventStatus = (timestamp: number) => {
     const eventDate = startOfDay(new Date(timestamp));
     if (isSameDay(eventDate, today))
@@ -180,27 +208,6 @@ export function Events() {
             </div>
           </div>
         </div>
-
-        {/* Dynamic Counter Widgets */}
-        <div className="flex items-center gap-4 bg-surface-main px-5 py-3 rounded-2xl border border-border-light shadow-sm shrink-0 self-start md:self-center">
-          <div className="text-right px-3">
-            <div className="text-2xl font-black text-taiz-royal">
-              {events.length}
-            </div>
-            <div className="text-[10px] font-black text-text-muted uppercase">
-              إجمالي المناسبات
-            </div>
-          </div>
-          <div className="w-px h-8 bg-border-light"></div>
-          <div className="text-right px-3">
-            <div className="text-2xl font-black text-taiz-sky">
-              {upcomingEvents.length}
-            </div>
-            <div className="text-[10px] font-black text-text-muted uppercase">
-              مناسبات قادمة
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Modern Bento Highlights Banner Grid */}
@@ -251,7 +258,7 @@ export function Events() {
               <div className="py-6 text-center w-full font-sans">
                 <div className="text-base font-black text-taiz-sky flex items-center justify-center gap-2 mb-1.5">
                   <Info className="w-5 h-5 text-white" /> لا توجد مناسبات مسجلة
-                  لهذا اليوم التاريخي
+                  لهذا اليوم
                 </div>
                 <p className="text-white/60 text-xs font-bold">
                   تصفح التقويم وأقرب المناسبات من اللوحة المجاورة
@@ -355,7 +362,6 @@ export function Events() {
         {/* Multi-view Interactive Switcher */}
         <div className="bg-gray-50 p-1 rounded-xl flex items-center gap-1 shrink-0 w-full lg:w-auto justify-center">
           {[
-            { id: "cards", icon: LayoutGrid, label: "شبكي" },
             { id: "list", icon: List, label: "قائمة" },
             { id: "table", icon: SlidersHorizontal, label: "جدولي" },
             { id: "calendar", icon: CalendarDays, label: "تقويم" },
@@ -390,66 +396,394 @@ export function Events() {
         >
           {/* Grid Layout View */}
           {activeView === "cards" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredEvents.map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  status={getEventStatus(event.timestamp)}
-                  remaining={getRemainingDays(event.timestamp)}
-                  onView={() => setSelectedEventId(event.id)}
-                />
-              ))}
+            <div className="space-y-8">
+              {/* 1. Highlighted Current Event Card */}
+              <div className="space-y-3">
+                <h3 className="text-base font-black text-text-primary flex items-center gap-2 px-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-taiz-sky"></span>
+                  المناسبة البارزة
+                </h3>
+                {partitions.current.length > 0 ? (
+                  <div className="grid grid-cols-1 gap-6">
+                    {partitions.current.map((event) => (
+                      <HighlightedEventCard
+                        key={event.id}
+                        event={event}
+                        status={getEventStatus(event.timestamp)}
+                        remaining={getRemainingDays(event.timestamp)}
+                        onView={() => setSelectedEventId(event.id)}
+                        isActualToday={true}
+                      />
+                    ))}
+                  </div>
+                ) : nearestUpcoming ? (
+                  <HighlightedEventCard
+                    event={nearestUpcoming}
+                    status={getEventStatus(nearestUpcoming.timestamp)}
+                    remaining={getRemainingDays(nearestUpcoming.timestamp)}
+                    onView={() => setSelectedEventId(nearestUpcoming.id)}
+                    isActualToday={false}
+                  />
+                ) : (
+                  <div className="bg-surface-card rounded-2xl p-6 border border-border-light text-center text-text-muted font-bold text-xs">
+                    لا توجد مناسبات حالية أو قادمة متاحة حالياً.
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Collapsible Upcoming Events Section */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => setIsUpcomingEventsOpen(!isUpcomingEventsOpen)}
+                  className="w-full flex items-center justify-between p-4 bg-surface-card hover:bg-surface-hover rounded-2xl border border-border-light shadow-sm transition-all text-right cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-taiz-royal/10 text-taiz-royal flex items-center justify-center">
+                      <CalendarDays className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-black text-text-primary">
+                        المناسبات القادمة ({partitions.upcoming.length})
+                      </h3>
+                      <p className="text-[10px] text-text-secondary font-bold">
+                        تصفح واستعرض الذكريات والمناسبات القادمة المباركة
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-taiz-royal bg-taiz-royal/5 px-2.5 py-1 rounded-lg">
+                      {isUpcomingEventsOpen ? "إغلاق" : "عرض"}
+                    </span>
+                    {isUpcomingEventsOpen ? (
+                      <ChevronUp className="w-5 h-5 text-text-muted" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-text-muted" />
+                    )}
+                  </div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isUpcomingEventsOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {partitions.upcoming.map((event) => (
+                          <SmallEventCard
+                            key={event.id}
+                            event={event}
+                            status={getEventStatus(event.timestamp)}
+                            remaining={getRemainingDays(event.timestamp)}
+                            onView={() => setSelectedEventId(event.id)}
+                          />
+                        ))}
+                        {partitions.upcoming.length === 0 && (
+                          <div className="col-span-full py-10 text-center text-text-muted text-xs font-bold bg-surface-main rounded-xl border border-dashed border-border-light">
+                            لا توجد مناسبات قادمة مطابقة لبحثك.
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* 3. Collapsible Past Events Section */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => setIsPastEventsOpen(!isPastEventsOpen)}
+                  className="w-full flex items-center justify-between p-4 bg-surface-card hover:bg-surface-hover rounded-2xl border border-border-light shadow-sm transition-all text-right cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-taiz-soft/10 text-taiz-soft flex items-center justify-center">
+                      <Clock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-black text-text-primary">
+                        المناسبات المنتهية والمطوية ({partitions.past.length})
+                      </h3>
+                      <p className="text-[10px] text-text-secondary font-bold">
+                        الأرشيف التاريخي للمناسبات والذكريات المنصرمة
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-text-muted bg-surface-main px-2.5 py-1 rounded-lg">
+                      {isPastEventsOpen ? "إغلاق" : "عرض"}
+                    </span>
+                    {isPastEventsOpen ? (
+                      <ChevronUp className="w-5 h-5 text-text-muted" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-text-muted" />
+                    )}
+                  </div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isPastEventsOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {partitions.past.map((event) => (
+                          <SmallEventCard
+                            key={event.id}
+                            event={event}
+                            status={getEventStatus(event.timestamp)}
+                            remaining={getRemainingDays(event.timestamp)}
+                            onView={() => setSelectedEventId(event.id)}
+                          />
+                        ))}
+                        {partitions.past.length === 0 && (
+                          <div className="col-span-full py-10 text-center text-text-muted text-xs font-bold bg-surface-main rounded-xl border border-dashed border-border-light">
+                            لا توجد مناسبات منتهية مطابقة لبحثك.
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {filteredEvents.length === 0 && <NoResultsFound />}
             </div>
           )}
 
           {/* Compact List View */}
           {activeView === "list" && (
-            <div className="space-y-4 max-w-4xl mx-auto">
-              {filteredEvents.map((event) => {
-                const status = getEventStatus(event.timestamp);
-                return (
-                  <motion.div
-                    key={event.id}
-                    onClick={() => setSelectedEventId(event.id)}
-                    whileHover={{ x: -4 }}
-                    className="bg-surface-card p-4 rounded-2xl border border-border-light shadow-sm flex items-center gap-4 cursor-pointer hover:border-taiz-sky/30 transition-all group"
-                  >
-                    <div className="w-14 h-14 rounded-2xl bg-surface-main border border-border-light flex flex-col items-center justify-center shrink-0">
-                      <span className="text-xs font-black text-taiz-royal">
-                        {format(new Date(event.timestamp), "d")}
-                      </span>
-                      <span className="text-[8px] font-black text-text-muted uppercase">
-                        {format(new Date(event.timestamp), "MMMM", {
-                          locale: ar,
+            <div className="space-y-8 max-w-4xl mx-auto">
+              {/* 1. Highlighted Current Event Card */}
+              <div className="space-y-3">
+                <h3 className="text-base font-black text-text-primary flex items-center gap-2 px-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-taiz-sky animate-pulse"></span>
+                  المناسبة البارزة
+                </h3>
+                {partitions.current.length > 0 ? (
+                  <div className="space-y-4">
+                    {partitions.current.map((event) => (
+                      <HighlightedEventCard
+                        key={event.id}
+                        event={event}
+                        status={getEventStatus(event.timestamp)}
+                        remaining={getRemainingDays(event.timestamp)}
+                        onView={() => setSelectedEventId(event.id)}
+                        isActualToday={true}
+                      />
+                    ))}
+                  </div>
+                ) : nearestUpcoming ? (
+                  <HighlightedEventCard
+                    event={nearestUpcoming}
+                    status={getEventStatus(nearestUpcoming.timestamp)}
+                    remaining={getRemainingDays(nearestUpcoming.timestamp)}
+                    onView={() => setSelectedEventId(nearestUpcoming.id)}
+                    isActualToday={false}
+                  />
+                ) : (
+                  <div className="bg-surface-card rounded-2xl p-6 border border-border-light text-center text-text-muted font-bold text-xs">
+                    لا توجد مناسبات حالية أو قادمة متاحة حالياً.
+                  </div>
+                )}
+              </div>
+
+              {/* 2. Collapsible Upcoming Events Section */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => setIsUpcomingEventsOpen(!isUpcomingEventsOpen)}
+                  className="w-full flex items-center justify-between p-4 bg-surface-card hover:bg-surface-hover rounded-2xl border border-border-light shadow-sm transition-all text-right cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-taiz-royal/10 text-taiz-royal flex items-center justify-center">
+                      <CalendarDays className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm sm:text-base font-black text-text-primary">
+                        المناسبات القادمة ({partitions.upcoming.length})
+                      </h3>
+                      <p className="text-[10px] text-text-secondary font-bold">
+                        تصفح واستعرض الذكريات والمناسبات القادمة المباركة
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-taiz-royal bg-taiz-royal/5 px-2.5 py-1 rounded-lg">
+                      {isUpcomingEventsOpen ? "إغلاق" : "عرض"}
+                    </span>
+                    {isUpcomingEventsOpen ? (
+                      <ChevronUp className="w-5 h-5 text-text-muted" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-text-muted" />
+                    )}
+                  </div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isUpcomingEventsOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-2 space-y-3">
+                        {partitions.upcoming.map((event) => {
+                          const status = getEventStatus(event.timestamp);
+                          return (
+                            <motion.div
+                              key={event.id}
+                              onClick={() => setSelectedEventId(event.id)}
+                              whileHover={{ x: -4 }}
+                              className="bg-surface-card p-4 rounded-2xl border border-border-light shadow-sm flex items-center gap-4 cursor-pointer hover:border-taiz-sky/30 transition-all group"
+                            >
+                              <div className="w-14 h-14 rounded-2xl bg-surface-main border border-border-light flex flex-col items-center justify-center shrink-0">
+                                <span className="text-xs font-black text-taiz-royal">
+                                  {format(new Date(event.timestamp), "d")}
+                                </span>
+                                <span className="text-[8px] font-black text-text-muted uppercase">
+                                  {format(new Date(event.timestamp), "MMMM", {
+                                    locale: ar,
+                                  })}
+                                </span>
+                              </div>
+                              <div className="flex-1 text-right min-w-0">
+                                <h4 className="text-sm sm:text-base font-black text-text-primary group-hover:text-taiz-royal transition-colors truncate">
+                                  {event.title}
+                                </h4>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-[10px] font-black text-taiz-sky flex items-center gap-1">
+                                    <CalendarIcon className="w-3 h-3" /> {event.hijriDate}
+                                  </span>
+                                  <span className="text-[10px] font-black text-text-muted flex items-center gap-1">
+                                    <Clock className="w-3 h-3" /> {event.gregorianDate}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="shrink-0 flex items-center gap-2">
+                                <span
+                                  className={`text-[9px] font-black px-2 py-0.5 rounded-lg border hidden sm:inline-block ${status.text}`}
+                                >
+                                  {status.label}
+                                </span>
+                                <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-taiz-royal group-hover:-translate-x-1 transition-all" />
+                              </div>
+                            </motion.div>
+                          );
                         })}
-                      </span>
-                    </div>
-                    <div className="flex-1 text-right min-w-0">
-                      <h4 className="text-sm sm:text-base font-black text-text-primary group-hover:text-taiz-royal transition-colors truncate">
-                        {event.title}
-                      </h4>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[10px] font-black text-taiz-sky flex items-center gap-1">
-                          <CalendarIcon className="w-3 h-3" /> {event.hijriDate}
-                        </span>
-                        <span className="text-[10px] font-black text-text-muted flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {event.gregorianDate}
-                        </span>
+                        {partitions.upcoming.length === 0 && (
+                          <div className="py-10 text-center text-text-muted text-xs font-bold bg-surface-main rounded-xl border border-dashed border-border-light">
+                            لا توجد مناسبات قادمة مطابقة لبحثك.
+                          </div>
+                        )}
                       </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* 3. Collapsible Past Events Section */}
+              <div className="space-y-3">
+                <button
+                  onClick={() => setIsPastEventsOpen(!isPastEventsOpen)}
+                  className="w-full flex items-center justify-between p-4 bg-surface-card hover:bg-surface-hover rounded-2xl border border-border-light shadow-sm transition-all text-right cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-taiz-soft/10 text-taiz-soft flex items-center justify-center">
+                      <Clock className="w-5 h-5" />
                     </div>
-                    <div className="shrink-0 flex items-center gap-2">
-                      <span
-                        className={`text-[9px] font-black px-2 py-0.5 rounded-lg border hidden sm:inline-block ${status.text}`}
-                      >
-                        {status.label}
-                      </span>
-                      <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-taiz-royal group-hover:-translate-x-1 transition-all" />
+                    <div>
+                      <h3 className="text-sm sm:text-base font-black text-text-primary">
+                        المناسبات المنتهية والمطوية ({partitions.past.length})
+                      </h3>
+                      <p className="text-[10px] text-text-secondary font-bold">
+                        الأرشيف التاريخي للمناسبات والذكريات المنصرمة
+                      </p>
                     </div>
-                  </motion.div>
-                );
-              })}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black text-text-muted bg-surface-main px-2.5 py-1 rounded-lg">
+                      {isPastEventsOpen ? "إغلاق" : "عرض"}
+                    </span>
+                    {isPastEventsOpen ? (
+                      <ChevronUp className="w-5 h-5 text-text-muted" />
+                    ) : (
+                      <ChevronDown className="w-5 h-5 text-text-muted" />
+                    )}
+                  </div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isPastEventsOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-2 space-y-3">
+                        {partitions.past.map((event) => {
+                          const status = getEventStatus(event.timestamp);
+                          return (
+                            <motion.div
+                              key={event.id}
+                              onClick={() => setSelectedEventId(event.id)}
+                              whileHover={{ x: -4 }}
+                              className="bg-surface-card p-4 rounded-2xl border border-border-light shadow-sm flex items-center gap-4 cursor-pointer hover:border-taiz-sky/30 transition-all group"
+                            >
+                              <div className="w-14 h-14 rounded-2xl bg-surface-main border border-border-light flex flex-col items-center justify-center shrink-0">
+                                <span className="text-xs font-black text-taiz-royal">
+                                  {format(new Date(event.timestamp), "d")}
+                                </span>
+                                <span className="text-[8px] font-black text-text-muted uppercase">
+                                  {format(new Date(event.timestamp), "MMMM", {
+                                    locale: ar,
+                                  })}
+                                </span>
+                              </div>
+                              <div className="flex-1 text-right min-w-0">
+                                <h4 className="text-sm sm:text-base font-black text-text-primary group-hover:text-taiz-royal transition-colors truncate">
+                                  {event.title}
+                                </h4>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <span className="text-[10px] font-black text-taiz-sky flex items-center gap-1">
+                                    <CalendarIcon className="w-3 h-3" /> {event.hijriDate}
+                                  </span>
+                                  <span className="text-[10px] font-black text-text-muted flex items-center gap-1">
+                                    <Clock className="w-3 h-3" /> {event.gregorianDate}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="shrink-0 flex items-center gap-2">
+                                <span
+                                  className={`text-[9px] font-black px-2 py-0.5 rounded-lg border hidden sm:inline-block ${status.text}`}
+                                >
+                                  {status.label}
+                                </span>
+                                <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-taiz-royal group-hover:-translate-x-1 transition-all" />
+                              </div>
+                            </motion.div>
+                          );
+                        })}
+                        {partitions.past.length === 0 && (
+                          <div className="py-10 text-center text-text-muted text-xs font-bold bg-surface-main rounded-xl border border-dashed border-border-light">
+                            لا توجد مناسبات منتهية مطابقة لبحثك.
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
               {filteredEvents.length === 0 && <NoResultsFound />}
             </div>
           )}
@@ -754,6 +1088,136 @@ function EventCard({
             متبقي {remaining} يوم
           </span>
         )}
+      </div>
+    </motion.div>
+  );
+}
+
+function SmallEventCard({
+  event,
+  status,
+  remaining,
+  onView,
+}: {
+  event: EventItem;
+  status: any;
+  remaining: number;
+  onView: () => void;
+  key?: any;
+}) {
+  return (
+    <motion.div
+      onClick={onView}
+      whileHover={{ y: -2, scale: 1.01 }}
+      className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between"
+    >
+      <div
+        className={`absolute top-0 right-0 w-1 h-full ${status.color}`}
+      ></div>
+
+      <div className="text-right">
+        <div className="flex justify-between items-center mb-2">
+          <span className="bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-lg font-black text-taiz-royal text-[10px]">
+            {event.hijriDate}
+          </span>
+          <span
+            className={`text-[8px] font-black px-2 py-0.5 rounded-md border ${status.text}`}
+          >
+            {status.label}
+          </span>
+        </div>
+
+        <h3 className="text-xs sm:text-sm font-black text-taiz-navy leading-snug mb-1 group-hover:text-taiz-royal transition-colors line-clamp-1">
+          {event.title}
+        </h3>
+
+        <p className="text-taiz-soft text-[10px] line-clamp-1 leading-normal mb-2 font-bold">
+          {event.description || "تصفح التفاصيل لمعرفة المزيد عن هذه المناسبة الكريمة."}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
+        <span className="text-[10px] font-black text-taiz-royal group-hover:underline flex items-center gap-0.5">
+          التفاصيل <ChevronLeft className="w-3 h-3" />
+        </span>
+        {remaining > 0 && (
+          <span className="text-[8px] font-black text-taiz-sky flex items-center gap-0.5 bg-taiz-sky/5 px-1.5 py-0.5 rounded-md">
+            <Timer className="w-3 h-3" />
+            متبقي {remaining} يوم
+          </span>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+function HighlightedEventCard({
+  event,
+  status,
+  remaining,
+  onView,
+  isActualToday,
+}: {
+  event: EventItem;
+  status: any;
+  remaining: number;
+  onView: () => void;
+  isActualToday: boolean;
+  key?: any;
+}) {
+  return (
+    <motion.div
+      onClick={onView}
+      whileHover={{ scale: 1.005 }}
+      className="relative overflow-hidden bg-gradient-to-br from-taiz-navy via-taiz-navy to-taiz-royal rounded-[2rem] p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer group border-2 border-taiz-sky/40"
+    >
+      <div className="absolute top-0 left-0 w-48 h-48 bg-taiz-sky/25 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-taiz-royal/15 rounded-full blur-2xl pointer-events-none" />
+
+      <div className="relative z-10 space-y-4 flex-1 text-right">
+        <div className="flex flex-wrap items-center gap-2 justify-start">
+          <span className="bg-taiz-sky text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5">
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
+            {isActualToday ? "المناسبة الحالية اليوم" : "المناسبة القادمة المميزة"}
+          </span>
+          <span className="bg-white/15 border border-white/10 text-white px-3 py-1 rounded-full text-xs font-black">
+            {event.hijriDate}
+          </span>
+          {remaining > 0 && (
+            <span className="text-white/95 font-black text-xs flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-lg">
+              <Timer className="w-3.5 h-3.5" />
+              متبقي {remaining} يوم
+            </span>
+          )}
+        </div>
+
+        <h2 className="text-2xl sm:text-3xl font-black leading-tight text-white group-hover:text-taiz-sky transition-colors duration-300">
+          {event.title}
+        </h2>
+
+        <p className="text-gray-150 text-xs sm:text-sm leading-relaxed max-w-2xl line-clamp-3 font-bold">
+          {event.description ||
+            "لا يوجد وصف مدون حالياً لهذه المناسبة الإسلامية الكريمة، استكشف التفاصيل الكبرى لقراءة المزيد."}
+        </p>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onView();
+          }}
+          className="bg-white text-taiz-navy hover:bg-taiz-sky hover:text-white px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer self-start"
+        >
+          عرض التفاصيل الكبرى <ChevronLeft className="w-4 h-4" />
+        </button>
+      </div>
+
+      <div className="relative z-10 w-24 h-24 rounded-[1.5rem] bg-white/10 border border-white/20 flex flex-col items-center justify-center shrink-0 self-center hidden md:flex backdrop-blur-md shadow-inner">
+        <span className="text-2xl font-black text-white">
+          {format(new Date(event.timestamp), "d")}
+        </span>
+        <span className="text-[10px] font-black text-taiz-sky uppercase mt-0.5">
+          {format(new Date(event.timestamp), "MMMM", { locale: ar })}
+        </span>
       </div>
     </motion.div>
   );

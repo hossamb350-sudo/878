@@ -63,7 +63,7 @@ export function WatchItem() {
       const match = url.match(regExp);
       if (match && match[2].length === 11) {
         videoId = match[2];
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+        return `https://www.youtube.com/embed/${videoId}?rel=0`;
       }
     }
     

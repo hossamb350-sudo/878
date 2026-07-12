@@ -28,6 +28,7 @@ interface NewsItem {
   categories?: string[];
   isBreaking?: boolean;
   isPinned?: boolean;
+  isFeaturedLayout?: boolean;
   liveUpdates?: any[];
   views?: number;
   createdAt: number;
@@ -80,6 +81,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   const [customCatColor, setCustomCatColor] = useState("#049EDF");
   const [isBreaking, setIsBreaking] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [isFeaturedLayout, setIsFeaturedLayout] = useState(false);
   const [liveUpdatesText, setLiveUpdatesText] = useState("");
   const [views, setViews] = useState<number>(0);
 
@@ -238,6 +240,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     setCustomCat("");
     setIsBreaking(false);
     setIsPinned(false);
+    setIsFeaturedLayout(false);
     setLiveUpdatesText("");
     setViews(0);
     setEditingId(null);
@@ -279,6 +282,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     
     setIsBreaking(!!item.isBreaking);
     setIsPinned(!!item.isPinned);
+    setIsFeaturedLayout(!!item.isFeaturedLayout);
     
     if (item.liveUpdates && Array.isArray(item.liveUpdates)) {
       setLiveUpdatesText(item.liveUpdates.map(u => {
@@ -337,6 +341,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       categories: finalSelectedCats,
       isBreaking,
       isPinned,
+      isFeaturedLayout,
       liveUpdates: parsedUpdates || null,
       views: Number(views) || 0,
       updatedAt: Date.now(),
@@ -1050,6 +1055,17 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                             <div className="flex-1">
                               <span className="block text-sm font-black text-gray-900 dark:text-white text-right">تغطية مباشرة / خبر عاجل</span>
                               <span className="text-[10px] text-gray-500 font-bold text-right block">تفعيل شريط التحديثات المباشرة لهذا الخبر</span>
+                            </div>
+                          </label>
+
+                          <label className="flex items-center gap-3 p-4 bg-gray-50 dark:bg-gray-950 rounded-2xl border border-transparent hover:border-amber-500/30 transition-all cursor-pointer group">
+                            <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-colors ${isFeaturedLayout ? "bg-amber-600 border-amber-600" : "border-gray-300 dark:border-gray-700"}`}>
+                              {isFeaturedLayout && <Check className="w-4 h-4 text-white" />}
+                            </div>
+                            <input type="checkbox" className="hidden" checked={isFeaturedLayout} onChange={e=>setIsFeaturedLayout(e.target.checked)} />
+                            <div className="flex-1">
+                              <span className="block text-sm font-black text-gray-900 dark:text-white text-right">عرض كخبر رئيسي</span>
+                              <span className="text-[10px] text-gray-500 font-bold text-right block">يتم عرض هذا الخبر بتنسيق كبير (مثل الخبر الرئيسي) في قائمة الأخبار</span>
                             </div>
                           </label>
 

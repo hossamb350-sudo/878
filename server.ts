@@ -8,12 +8,25 @@ import axios from "axios";
 import FormData from "form-data";
 import ImageKit from "imagekit";
 import cors from "cors";
+import webPush from "web-push";
 import { IMAGEKIT_CONFIG } from "./src/config/imagekitConfig";
 
 dotenv.config();
 
 const app = express();
 const PORT = 3000;
+
+// Configure web-push details
+const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BI-ruJjPREZhD0Ca5xUI2s-C0YtIlmajVGs5S_w0YV_VllOfG3e-3PKOdL7mh6qG1OCb41tuo5ryo5DJ6jscBqQ";
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "r9edFBZ6cwoxAiFowbq4rXo9mWl6ZOEtDRokBB5yv_k";
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:hossamb350@gmail.com";
+
+try {
+  webPush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  console.log("Web-Push VAPID details configured successfully.");
+} catch (e) {
+  console.error("Failed to set VAPID details:", e);
+}
 
 // Enable CORS for all origins dynamically
 app.use(cors({
@@ -464,6 +477,139 @@ app.post("/api/content/:collection", async (req, res) => {
 
   // Return success response instantly
   res.json({ success: true, savedLocally: true });
+});
+
+// Cache file path for subscriptions
+const SUBSCRIPTIONS_FILE = path.join(CACHE_DIR, "push_subscriptions.json");
+
+// Helper to read subscriptions from local cache
+function getStoredSubscriptions(): any[] {
+  if (fs.existsSync(SUBSCRIPTIONS_FILE)) {
+    try {
+      const content = fs.readFileSync(SUBSCRIPTIONS_FILE, "utf8");
+      return JSON.parse(content) || [];
+    } catch (e) {
+      console.error("Error reading subscriptions cache:", e);
+    }
+  }
+  return [];
+}
+
+// Helper to save subscriptions to local cache
+function saveStoredSubscriptions(subs: any[]) {
+  try {
+    fs.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(subs, null, 2), "utf8");
+  } catch (e) {
+    console.error("Error saving subscriptions cache:", e);
+  }
+}
+
+// Subscribe route
+app.post("/api/push/subscribe", (req, res) => {
+  const subscription = req.body;
+  
+  if (!subscription || !subscription.endpoint) {
+    return res.status(400).json({ error: "Invalid subscription payload." });
+  }
+
+  let subs = getStoredSubscriptions();
+  // Avoid duplicate subscriptions
+  if (!subs.find((s: any) => s.endpoint === subscription.endpoint)) {
+    subs.push(subscription);
+    saveStoredSubscriptions(subs);
+    console.log(`New push subscription added. Total active local subscriptions: ${subs.length}`);
+  }
+
+  res.status(201).json({ success: true });
+});
+
+// Unsubscribe route
+app.post("/api/push/unsubscribe", (req, res) => {
+  const { endpoint } = req.body;
+  
+  if (!endpoint) {
+    return res.status(400).json({ error: "Endpoint required." });
+  }
+
+  let subs = getStoredSubscriptions();
+  const initialLength = subs.length;
+  subs = subs.filter((s: any) => s.endpoint !== endpoint);
+  
+  if (subs.length < initialLength) {
+    saveStoredSubscriptions(subs);
+    console.log(`Push subscription removed. Total active local subscriptions: ${subs.length}`);
+  }
+
+  res.json({ success: true });
+});
+
+// Trigger route to send push notification to all subscribers
+app.post("/api/push/send", async (req, res) => {
+  const { title, body, url, icon, image } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ error: "Notification title is required." });
+  }
+
+  const payload = JSON.stringify({
+    title,
+    body: body || "",
+    url: url || "/",
+    icon: icon || "/app-icon.png",
+    badge: "/app-icon.png",
+    image: image || undefined,
+  });
+
+  const subs = getStoredSubscriptions();
+  console.log(`Attempting to broadcast push notification to ${subs.length} local subscribers.`);
+
+  const notificationsPromises = subs.map((sub: any) => {
+    return webPush.sendNotification(sub, payload)
+      .catch((err) => {
+        console.error(`Error sending push notification to endpoint ${sub.endpoint}:`, err);
+        // If the endpoint is no longer active (404 or 410 Gone), remove it
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          return { error: true, endpoint: sub.endpoint };
+        }
+        return null;
+      });
+  });
+
+  try {
+    const results = await Promise.all(notificationsPromises);
+    
+    // Clean up expired subscriptions
+    const endpointsToRemove = results
+      .filter((r: any) => r && r.error)
+      .map((r: any) => r.endpoint);
+      
+    if (endpointsToRemove.length > 0) {
+      const activeSubs = subs.filter((s: any) => !endpointsToRemove.includes(s.endpoint));
+      saveStoredSubscriptions(activeSubs);
+      console.log(`Removed ${endpointsToRemove.length} expired subscriptions. Active remaining: ${activeSubs.length}`);
+    }
+
+    res.json({ success: true, sentCount: subs.length - endpointsToRemove.length });
+  } catch (err: any) {
+    console.error("Error broadcasting push notifications:", err);
+    res.status(500).json({ error: "Failed to broadcast some notifications.", message: err.message });
+  }
+});
+
+// Serve Service Worker explicitly to avoid MIME type issues
+app.get("/sw.js", (req, res) => {
+  const swPath = path.resolve(process.cwd(), "public", "sw.js");
+  if (fs.existsSync(swPath)) {
+    res.setHeader("Content-Type", "application/javascript");
+    return res.sendFile(swPath);
+  }
+  // Fallback for production build
+  const distSwPath = path.resolve(process.cwd(), "dist", "sw.js");
+  if (fs.existsSync(distSwPath)) {
+    res.setHeader("Content-Type", "application/javascript");
+    return res.sendFile(distSwPath);
+  }
+  res.status(404).send("Service worker not found");
 });
 
 // API 404 Handler - MUST be before Vite/Static middleware

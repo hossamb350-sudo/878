@@ -18,6 +18,7 @@ export interface NewsItem {
   categories?: string[];
   isBreaking: boolean;
   isPinned?: boolean;
+  isFeaturedLayout?: boolean;
   createdAt: number;
   updatedAt?: number;
   author?: string;
@@ -25,6 +26,7 @@ export interface NewsItem {
   liveUpdates?: LiveUpdate[];
   tags?: string[];
   videoUrl?: string;
+  isLeader?: boolean;
 }
 
 export interface UrgentNews {
@@ -44,6 +46,7 @@ export interface VideoItem {
   views: number;
   order?: number;
   createdAt: number;
+  isLeader?: boolean;
 }
 
 export interface LiveStream {

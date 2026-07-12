@@ -1,11 +1,12 @@
 import { Outlet, NavLink } from "react-router-dom";
-import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X } from "lucide-react";
+import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X, Bell, BellOff } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
 import { UrgentNews } from "../types";
 import { motion, AnimatePresence } from "motion/react";
+import { PushNotificationService } from "../services/PushNotificationService";
 
 function NotificationCenter() {
   return null;
@@ -224,6 +225,32 @@ function UrgentNewsBanner() {
 
 export function Layout() {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [pushSubscribed, setPushSubscribed] = useState(false);
+
+  useEffect(() => {
+    // Register Service Worker and check subscription state
+    PushNotificationService.registerServiceWorker().then((reg) => {
+      if (reg) {
+        PushNotificationService.isSubscribed().then((subscribed) => {
+          setPushSubscribed(subscribed);
+        });
+      }
+    });
+  }, []);
+
+  const handleTogglePush = async () => {
+    if (pushSubscribed) {
+      const success = await PushNotificationService.unsubscribeUser();
+      if (success) {
+        setPushSubscribed(false);
+      }
+    } else {
+      const success = await PushNotificationService.subscribeUser();
+      if (success) {
+        setPushSubscribed(true);
+      }
+    }
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -256,6 +283,29 @@ export function Layout() {
               <span className="font-black text-lg sm:text-xl text-taiz-navy leading-tight">منصة تعز الإعلامية</span>
               <span className="text-[10px] font-bold text-taiz-sky uppercase tracking-wider">إخبارية .. ثقافية | TAIZ MEDIA PLATFORM</span>
             </div>
+
+           {/* Web Push Toggle Button */}
+           <button
+             onClick={handleTogglePush}
+             className={`p-2 rounded-xl border transition-all duration-300 flex items-center justify-center gap-2 text-xs font-bold hover:scale-105 active:scale-95 cursor-pointer ${
+               pushSubscribed
+                 ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20"
+                 : "bg-surface-main hover:bg-surface-hover text-text-secondary border-border-light"
+             }`}
+             title={pushSubscribed ? "إشعارات الهاتف مفعلة" : "تفعيل إشعارات الهاتف"}
+           >
+             {pushSubscribed ? (
+               <>
+                 <Bell className="w-4 h-4 text-emerald-600 animate-pulse animate-bounce" />
+                 <span className="hidden sm:inline">الإشعارات مفعلة</span>
+               </>
+             ) : (
+               <>
+                 <BellOff className="w-4 h-4 text-text-muted" />
+                 <span className="hidden sm:inline">تفعيل الإشعارات</span>
+               </>
+             )}
+           </button>
         </div>
       </header>
 

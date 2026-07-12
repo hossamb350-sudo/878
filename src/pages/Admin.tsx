@@ -94,6 +94,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { SyncService, handleFirestoreError } from "../services/SyncService";
 import { GitHubClient } from "../services/githubClient";
 import { del as delIDB } from "idb-keyval";
+import { PushNotificationService } from "../services/PushNotificationService";
 
 import { FavoritesList } from "../components/FavoritesList";
 
@@ -1015,8 +1016,16 @@ function AdminUrgentNews() {
         createdAt: Date.now(),
         expiresAt: Date.now() + duration * 60000,
       });
+      
+      // Send push notification to all subscribers
+      await PushNotificationService.triggerPushNotification(
+        "خبر عاجل 🔴",
+        text,
+        "/"
+      );
+      
       alert(
-        `تم نشر الخبر العاجل بنجاح (سيختفي تلقائياً بعد ${duration} دقيقة)`
+        `تم نشر الخبر العاجل بنجاح (سيختفي تلقائياً بعد ${duration} دقيقة) وتم إرسال إشعار لهواتف المستخدمين`
       );
       setText("");
     } catch (e) {
@@ -1503,6 +1512,17 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
           createdAt: Date.now(),
         });
         savedId = docRef.id;
+
+        // Send push notification to all subscribers
+        try {
+          await PushNotificationService.triggerPushNotification(
+            "خبر جديد 📰",
+            payload.title || "تحديث جديد في الأخبار",
+            `/?newsId=${savedId}`
+          );
+        } catch (pushErr) {
+          console.error("Failed to send news push notification:", pushErr);
+        }
       }
 
       setLastSavedId(savedId);
@@ -2178,11 +2198,23 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
         await updateDoc(doc(db, "videos", editingId), payload);
         alert("تم تعديل الفيديو بنجاح");
       } else {
-        await addDoc(collection(db, "videos"), {
+        const docRef = await addDoc(collection(db, "videos"), {
           ...payload,
           createdAt: Date.now(),
         });
-        alert("تم إضافة الفيديو بنجاح");
+        
+        // Send push notification to all subscribers
+        try {
+          await PushNotificationService.triggerPushNotification(
+            "فيديو جديد 🎥",
+            title,
+            `/watch?videoId=${docRef.id}`
+          );
+        } catch (pushErr) {
+          console.error("Failed to send video push notification:", pushErr);
+        }
+        
+        alert("تم إضافة الفيديو بنجاح وتم إرسال إشعار للمستخدمين");
       }
       resetForm();
     } catch (e) {
@@ -2783,7 +2815,7 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
         });
         alert("تم التعديل بنجاح!");
       } else {
-        await addDoc(collection(db, "leader"), {
+        const docRef = await addDoc(collection(db, "leader"), {
           title,
           type,
           content,
@@ -2793,6 +2825,18 @@ function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
           views: Number(views) || 0,
           createdAt: Date.now(),
         });
+
+        if (notify) {
+          try {
+            await PushNotificationService.triggerPushNotification(
+              type === "video" ? "خطاب جديد للمناسبة 🎥" : "محتوى ثقافي جديد 📖",
+              title,
+              `/leader?leaderContentId=${docRef.id}`
+            );
+          } catch (pushErr) {
+            console.error("Failed to send leader push notification:", pushErr);
+          }
+        }
 
         alert("تمت الإضافة بنجاح!");
       }
@@ -4168,7 +4212,19 @@ function AdminEvents() {
           ...data,
           createdAt: Date.now(),
         });
-        alert("تمت الإضافة");
+        
+        // Send push notification to all subscribers
+        try {
+          await PushNotificationService.triggerPushNotification(
+            "مناسبة جديدة في التقويم 📅",
+            title,
+            "/events"
+          );
+        } catch (pushErr) {
+          console.error("Failed to send event push notification:", pushErr);
+        }
+        
+        alert("تمت الإضافة وتم إرسال إشعار للمستخدمين");
       }
       reset();
     } catch (e) {
@@ -4255,15 +4311,6 @@ function AdminEvents() {
         month: 8,
         dayNum: 25,
         cat: "religious",
-      },
-      {
-        title: "ذكرى مجزرة القاعة الكبرى",
-        day: "الثلاثاء",
-        hijri: "28 صفر",
-        greg: "11 سبتمبر",
-        month: 9,
-        dayNum: 11,
-        cat: "historical",
       },
       {
         title: "ثورة 21 سبتمبر",

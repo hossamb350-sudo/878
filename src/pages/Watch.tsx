@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { collection, query, orderBy, getDocs, onSnapshot, where, limit } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
@@ -16,16 +16,18 @@ import {
   SlidersHorizontal,
   FolderOpen,
   Calendar,
-  X
+  X,
+  Play
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../components/PullToRefresh";
 
 export function Watch() {
-  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
   const [channels, setChannels] = useState<LiveStream[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isPlayingLive, setIsPlayingLive] = useState(false);
   
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -39,6 +41,20 @@ export function Watch() {
 
   const activeVideoRef = useRef<HTMLDivElement>(null);
   const prevVideoIdsRef = useRef<string[]>([]);
+
+  // Videos sorted using custom order ranking & creation timestamp
+  const videos = useMemo(() => {
+    const sorted = [...rawVideos];
+    sorted.sort((a, b) => {
+      const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+      const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      }
+      return b.createdAt - a.createdAt;
+    });
+    return sorted;
+  }, [rawVideos]);
 
   useEffect(() => {
     let active = true;
@@ -66,16 +82,7 @@ export function Watch() {
 
     const unsubVideosPromise = SyncService.syncCollection<VideoItem>("videos", (videoData) => {
       if (!active) return;
-      const sorted = [...videoData];
-      sorted.sort((a, b) => {
-        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-        if (aOrder !== bOrder) {
-          return aOrder - bOrder;
-        }
-        return b.createdAt - a.createdAt;
-      });
-      setVideos(sorted);
+      setRawVideos(videoData);
       videosDone = true;
       checkLoading();
     }, { orderByField: "createdAt", orderDirection: "desc", limit: 50 });
@@ -116,7 +123,7 @@ export function Watch() {
   const activeChannel = channels.find(c => c.id === activeChannelId);
 
   // Parse embed URLs for any YouTube or Custom stream
-  const getEmbedUrl = (url: string) => {
+  const getEmbedUrl = (url: string, autoplay: boolean = false) => {
     if (!url) return "";
     let videoId = "";
     
@@ -126,13 +133,17 @@ export function Watch() {
       const match = url.match(regExp);
       if (match && match[2].length === 11) {
         videoId = match[2];
-        return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&rel=0`;
+        return `https://www.youtube.com/embed/${videoId}?autoplay=${autoplay ? 1 : 0}&mute=${autoplay ? 1 : 0}&rel=0`;
       }
     }
     
     // Almasirah or generic Peertube embed link conversion
     if (url.includes("/w/") || url.includes("/videos/watch/")) {
-      return url.replace("/w/", "/videos/embed/").replace("/videos/watch/", "/videos/embed/");
+      let embedUrl = url.replace("/w/", "/videos/embed/").replace("/videos/watch/", "/videos/embed/");
+      if (autoplay) {
+        embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
+      }
+      return embedUrl;
     }
     
     return url;
@@ -187,15 +198,7 @@ export function Watch() {
       });
 
       const freshVideos = await SyncService.refreshCollection<VideoItem>("videos", { orderByField: "createdAt", orderDirection: "desc", limit: 50 });
-      const sortedVideos = [...freshVideos].sort((a, b) => {
-        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-        if (aOrder !== bOrder) {
-          return aOrder - bOrder;
-        }
-        return (b.createdAt || 0) - (a.createdAt || 0);
-      });
-      setVideos(sortedVideos);
+      setRawVideos(freshVideos);
     } catch (e) {
       console.error(e);
       throw e;
@@ -234,14 +237,47 @@ export function Watch() {
              مباشر
           </div>
           
-          <div className="aspect-video w-full bg-zinc-900">
+          <div className="aspect-video w-full bg-zinc-950 relative overflow-hidden group">
              {activeChannel && activeChannel.url ? (
-                <iframe 
-                   src={getEmbedUrl(activeChannel.url)}
-                   className="w-full h-full border-0 select-text"
-                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                   allowFullScreen
-                ></iframe>
+                isPlayingLive ? (
+                   <iframe 
+                      src={getEmbedUrl(activeChannel.url, true)}
+                      className="w-full h-full border-0 select-text"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                   ></iframe>
+                ) : (
+                   <div 
+                      onClick={() => setIsPlayingLive(true)}
+                      className="absolute inset-0 w-full h-full flex flex-col items-center justify-center cursor-pointer transition-all duration-500 bg-gradient-to-t from-zinc-950/95 via-zinc-900/70 to-zinc-950/40 hover:from-zinc-950/90 hover:via-zinc-900/60"
+                   >
+                      {activeChannel.iconUrl && (
+                        <div className="absolute inset-0 opacity-10 blur-xl scale-110 pointer-events-none">
+                          <img src={activeChannel.iconUrl} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+                      
+                      {/* Glowing custom play button wrapper */}
+                      <div className="relative z-10 p-5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 transform group-hover:scale-110 shadow-lg">
+                        <Play className="w-10 h-10 text-white fill-white translate-x-[-1px]" />
+                      </div>
+                      
+                      <div className="z-10 mt-4 text-center px-4">
+                        <p className="text-white font-black text-base sm:text-lg tracking-wide">
+                          تشغيل البث المباشر: {activeChannel.name}
+                        </p>
+                        <p className="text-white/60 text-xs mt-1.5 font-bold">
+                          انقر للبدء في تشغيل البث المباشر للقناة
+                        </p>
+                      </div>
+
+                      {/* Live pulse badge indicator */}
+                      <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2 bg-red-600 text-white px-2.5 py-1.5 rounded-full text-[10px] font-black shadow-md">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+                        مباشر
+                      </div>
+                   </div>
+                )
              ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-white/40 gap-3 border-b border-white/5 py-20">
                    <Tv className="w-12 h-12 mb-2 text-white/20 animate-bounce" />
@@ -306,6 +342,7 @@ export function Watch() {
                     key={ch.id}
                     onClick={() => {
                       setActiveChannelId(ch.id!);
+                      setIsPlayingLive(true);
                       window.scrollTo({ top: activeVideoRef.current?.offsetTop || 0, behavior: 'smooth' });
                     }}
                     className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 gap-2 ${
@@ -521,7 +558,7 @@ export function Watch() {
                 >
                   <Link 
                     id={`watch-video-${vid.id}`}
-                    to={`/watch/${vid.id}`} 
+                    to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`} 
                     className="card card-hover group block p-0"
                   >
                     {/* Immersive Thumbnail card */}

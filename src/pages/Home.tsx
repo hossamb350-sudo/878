@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
-import { NewsItem, VideoItem } from "../types";
+import { NewsItem, VideoItem, LeaderContent } from "../types";
 import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -57,8 +57,9 @@ function formatPublishInfo(timestamp: number) {
 }
 
 export function Home() {
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [videos, setVideos] = useState<VideoItem[]>([]);
+  const [rawNews, setRawNews] = useState<NewsItem[]>([]);
+  const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
+  const [rawLeader, setRawLeader] = useState<LeaderContent[]>([]);
   const [loading, setLoading] = useState(true);
   const prevVideoIdsRef = useRef<string[]>([]);
   const [categories, setCategories] = useState<Record<string, string>>({
@@ -69,6 +70,56 @@ export function Home() {
     "مشاريع": "#10B981",
     "مقال": "#F59E0B"
   });
+
+  // Derived combined news items (regular news + leader lectures/lessons)
+  const news = useMemo(() => {
+    const mappedLeaderTexts: NewsItem[] = rawLeader
+      .filter(item => item.type === "text")
+      .map(item => ({
+        id: item.id,
+        title: item.title,
+        shortDescription: item.description || "",
+        content: item.content,
+        imageUrl: item.thumbnailUrl || "",
+        category: "السيد القائد",
+        isBreaking: false,
+        createdAt: item.createdAt,
+        views: item.views || 0,
+        isLeader: true,
+      }));
+    
+    const combined = [...rawNews, ...mappedLeaderTexts];
+    combined.sort((a, b) => b.createdAt - a.createdAt);
+    return combined.slice(0, 30);
+  }, [rawNews, rawLeader]);
+
+  // Derived combined videos (regular videos + leader videos)
+  const videos = useMemo(() => {
+    const mappedLeaderVideos: VideoItem[] = rawLeader
+      .filter(item => item.type === "video")
+      .map(item => ({
+        id: item.id,
+        title: item.title,
+        url: item.content,
+        thumbnailUrl: item.thumbnailUrl,
+        category: "السيد القائد",
+        views: item.views || 0,
+        createdAt: item.createdAt,
+        order: item.order,
+        isLeader: true,
+      }));
+
+    const combined = [...rawVideos, ...mappedLeaderVideos];
+    combined.sort((a, b) => {
+      const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
+      const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
+      if (aOrder !== bOrder) {
+        return aOrder - bOrder;
+      }
+      return b.createdAt - a.createdAt;
+    });
+    return combined.slice(0, 5);
+  }, [rawVideos, rawLeader]);
 
   useEffect(() => {
     const fetchCats = async () => {
@@ -102,6 +153,7 @@ export function Home() {
     // Load from cache first
     const cachedNews = localStorage.getItem("taiz_news_cache");
     const cachedVideos = localStorage.getItem("taiz_videos_cache");
+    const cachedLeader = localStorage.getItem("taiz_leader_cache");
 
     let hasCache = false;
 
@@ -109,7 +161,7 @@ export function Home() {
       try {
         const parsed = JSON.parse(cachedNews);
         if (parsed.length > 0) {
-          setNews(parsed);
+          setRawNews(parsed);
           hasCache = true;
         }
       } catch (e) {
@@ -120,11 +172,22 @@ export function Home() {
       try {
         const parsed = JSON.parse(cachedVideos);
         if (parsed.length > 0) {
-          setVideos(parsed);
+          setRawVideos(parsed);
           hasCache = true;
         }
       } catch (e) {
         console.warn("Error parsing videos cache", e);
+      }
+    }
+    if (cachedLeader) {
+      try {
+        const parsed = JSON.parse(cachedLeader);
+        if (parsed.length > 0) {
+          setRawLeader(parsed);
+          hasCache = true;
+        }
+      } catch (e) {
+        console.warn("Error parsing leader cache", e);
       }
     }
 
@@ -135,9 +198,10 @@ export function Home() {
     let active = true;
     let newsDone = false;
     let videosDone = false;
+    let leaderDone = false;
 
     const checkLoading = () => {
-      if (active && newsDone && videosDone) {
+      if (active && newsDone && videosDone && leaderDone) {
         setLoading(false);
       }
     };
@@ -145,7 +209,7 @@ export function Home() {
     const unsubNewsPromise = SyncService.syncCollection<NewsItem>("news", (newsData) => {
       if (!active) return;
       const sliced = newsData.slice(0, 30);
-      setNews(sliced);
+      setRawNews(sliced);
       localStorage.setItem("taiz_news_cache", JSON.stringify(sliced));
       newsDone = true;
       checkLoading();
@@ -163,9 +227,20 @@ export function Home() {
         return b.createdAt - a.createdAt;
       });
       const sliced = sorted.slice(0, 5);
-      setVideos(sliced);
+      setRawVideos(sliced);
       localStorage.setItem("taiz_videos_cache", JSON.stringify(sliced));
       videosDone = true;
+      checkLoading();
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
+
+    const unsubLeaderPromise = SyncService.syncCollection<LeaderContent>("leader", (leaderData) => {
+      if (!active) return;
+      const sorted = [...leaderData];
+      sorted.sort((a, b) => b.createdAt - a.createdAt);
+      const sliced = sorted.slice(0, 30);
+      setRawLeader(sliced);
+      localStorage.setItem("taiz_leader_cache", JSON.stringify(sliced));
+      leaderDone = true;
       checkLoading();
     }, { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
 
@@ -173,6 +248,7 @@ export function Home() {
       active = false;
       unsubNewsPromise.then(unsub => unsub());
       unsubVideosPromise.then(unsub => unsub());
+      unsubLeaderPromise.then(unsub => unsub());
     };
   }, []);
 
@@ -226,18 +302,13 @@ export function Home() {
   const handleRefresh = async () => {
     try {
       const freshNews = await SyncService.refreshCollection<NewsItem>("news", { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
-      setNews(freshNews);
+      setRawNews(freshNews);
       
       const freshVideos = await SyncService.refreshCollection<VideoItem>("videos", { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
-      const sortedVideos = [...freshVideos].sort((a, b) => {
-        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-        if (aOrder !== bOrder) {
-          return aOrder - bOrder;
-        }
-        return (b.createdAt || 0) - (a.createdAt || 0);
-      });
-      setVideos(sortedVideos.slice(0, 5));
+      setRawVideos(freshVideos);
+
+      const freshLeader = await SyncService.refreshCollection<LeaderContent>("leader", { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
+      setRawLeader(freshLeader);
     } catch (e) {
       console.error(e);
       throw e;
@@ -280,7 +351,7 @@ export function Home() {
             {heroItem && (
               <div className="block bg-surface-main pb-1.5 mb-4 font-sans">
                 {heroItem.imageUrl && (
-                  <Link to={`/news/${heroItem.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-surface-card mb-4 sm:rounded-3xl shadow-soft">
+                  <Link to={heroItem.isLeader ? `/leader/${heroItem.id}` : `/news/${heroItem.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-surface-card mb-4 sm:rounded-3xl shadow-soft">
                      <img 
                        src={heroItem.imageUrl} 
                        alt={heroItem.title} 
@@ -328,7 +399,7 @@ export function Home() {
                     </div>
                   </div>
 
-                  <Link to={`/news/${heroItem.id}`} className="block hover:text-taiz-sky transition-colors group">
+                  <Link to={heroItem.isLeader ? `/leader/${heroItem.id}` : `/news/${heroItem.id}`} className="block hover:text-taiz-sky transition-colors group">
                     <h2 className="font-black text-[17px] sm:text-[20px] text-text-primary leading-[1.4] mb-2.5 text-right tracking-tight group-hover:text-taiz-sky transition-colors">
                        {heroItem.title}
                     </h2>
@@ -348,56 +419,123 @@ export function Home() {
             <div className="flex flex-col font-sans">
               {listItems.map((item, index) => (
                 <div key={item.id} className="pt-2">
-                  <Link 
-                    to={`/news/${item.id}`} 
-                    className="flex gap-4 p-3.5 hover:bg-surface-hover transition-all bg-surface-card rounded-2xl shadow-soft mb-4 mx-4 sm:mx-0 group relative"
-                  >
-                    {/* Category Tags Attached to Center-Top (Outside) */}
-                    <CategoryBadges item={item} isHero={false} className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-
-                    {/* Right Side News Content */}
-                    <div className="flex-1 min-w-0 flex flex-col justify-between py-1 text-right pr-0.5">
-                       <div>
-                          <h3 className="font-bold text-[12px] sm:text-[13px] text-text-primary leading-[1.35] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-3 tracking-tight">
-                            {item.title}
-                          </h3>
-
-                          {/* Consistently aligned metadata line */}
-                          <div className="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] font-bold text-text-muted/80">
-                             {/* Date/Time/Author */}
-                             <div className="flex items-center gap-2.5 overflow-hidden">
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <Calendar className="w-2.5 h-2.5 text-taiz-sky/40" />
-                                  <span>{formatPublishInfo(item.createdAt).mDate}</span>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <Clock className="w-2.5 h-2.5 text-taiz-sky/40" />
-                                  <span>{formatPublishInfo(item.createdAt).mTime}</span>
-                                </div>
-                                {item.author && (
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <User className="w-2.5 h-2.5 text-taiz-sky/40" />
-                                    <span className="text-[9px] sm:text-[10px] opacity-90">{item.author}</span>
-                                  </div>
-                                )}
-                             </div>
-
-                             {/* Views */}
-                             <span className="flex items-center gap-1 text-taiz-royal shrink-0 bg-taiz-royal/5 px-1.5 py-0.5 rounded-md border border-taiz-royal/10">
-                               <Eye className="w-2.5 h-2.5"/> 
-                               {item.views || 0}
-                             </span>
+                  {item.isFeaturedLayout ? (
+                    <div className="block bg-surface-main pb-3 mb-6 font-sans mx-4 sm:mx-0">
+                      {item.imageUrl && (
+                        <Link to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-surface-card mb-4 rounded-3xl shadow-soft">
+                           <img 
+                             src={item.imageUrl} 
+                             alt={item.title} 
+                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                           />
+                           <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
+                           
+                           {/* Category Labels Attached to Center-Top (Outside) */}
+                           <CategoryBadges item={item} isHero={true} className="absolute top-2 left-1/2 -translate-x-1/2" />
+                        </Link>
+                      )}
+                      
+                      <div className="px-5 sm:px-2">
+                        {/* Info Row: News Meta (Above Title) */}
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2.5 text-[9px] sm:text-[10px] font-bold text-text-secondary/80">
+                          {item.isBreaking && (
+                            <div className="flex items-center gap-1.5 text-status-error font-extrabold select-none bg-status-error/5 px-2 py-0.5 rounded-full shrink-0">
+                              <span className="relative flex h-1.5 w-1.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
+                              </span>
+                              تغطية مباشرة
+                            </div>
+                          )}
+                          
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex items-center gap-1 shrink-0">
+                              <Calendar className="w-2.5 h-2.5 text-taiz-sky/50" />
+                              <span>{formatPublishInfo(item.createdAt).mDate}</span>
+                            </span>
+                            
+                            <span className="shrink-0 text-text-muted/60">{formatPublishInfo(item.createdAt).hDate}</span>
+                            
+                            <span className="flex items-center gap-1 shrink-0">
+                              <Clock className="w-2.5 h-2.5 text-taiz-sky/50" />
+                              <span>{formatPublishInfo(item.createdAt).mTime}</span>
+                            </span>
+                            
+                            {item.author && (
+                              <span className="flex items-center gap-1 text-text-muted shrink-0 max-w-[120px] truncate">
+                                <User className="w-2.5 h-2.5 text-taiz-sky/50"/> 
+                                {item.author}
+                              </span>
+                            )}
                           </div>
-                       </div>
-                    </div>
+                        </div>
 
-                    {/* Left Side Compact Image */}
-                    {item.imageUrl && (
-                      <div className="w-[110px] h-[110px] sm:w-[130px] sm:h-[130px] rounded-2xl overflow-hidden shrink-0 bg-surface-main shadow-soft">
-                         <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <Link to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} className="block hover:text-taiz-sky transition-colors group">
+                          <h2 className="font-black text-[15px] sm:text-[18px] text-text-primary leading-[1.4] mb-2.5 text-right tracking-tight group-hover:text-taiz-sky transition-colors">
+                             {item.title}
+                          </h2>
+                        </Link>
+                        
+                        <div className="flex items-center mt-2">
+                          <div className="mr-auto flex items-center gap-1 text-taiz-royal shrink-0 text-[10px] sm:text-[11px] font-black bg-taiz-royal/5 w-fit px-2 py-0.5 rounded-lg border border-taiz-royal/10">
+                            <Eye className="w-3 h-3"/> 
+                            <span>{item.views || 0} مشاهدة</span>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </Link>
+                    </div>
+                  ) : (
+                    <Link 
+                      to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
+                      className="flex gap-4 p-3.5 hover:bg-surface-hover transition-all bg-surface-card rounded-2xl shadow-soft mb-4 mx-4 sm:mx-0 group relative"
+                    >
+                      {/* Category Tags Attached to Center-Top (Outside) */}
+                      <CategoryBadges item={item} isHero={false} className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+
+                      {/* Right Side News Content */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-1 text-right pr-0.5">
+                         <div>
+                            <h3 className="font-bold text-[12px] sm:text-[13px] text-text-primary leading-[1.35] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-3 tracking-tight">
+                              {item.title}
+                            </h3>
+
+                            {/* Consistently aligned metadata line */}
+                            <div className="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] font-bold text-text-muted/80">
+                               {/* Date/Time/Author */}
+                               <div className="flex items-center gap-2.5 overflow-hidden">
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <Calendar className="w-2.5 h-2.5 text-taiz-sky/40" />
+                                    <span>{formatPublishInfo(item.createdAt).mDate}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <Clock className="w-2.5 h-2.5 text-taiz-sky/40" />
+                                    <span>{formatPublishInfo(item.createdAt).mTime}</span>
+                                  </div>
+                                  {item.author && (
+                                    <div className="flex items-center gap-1 shrink-0">
+                                      <User className="w-2.5 h-2.5 text-taiz-sky/40" />
+                                      <span className="text-[9px] sm:text-[10px] opacity-90">{item.author}</span>
+                                    </div>
+                                  )}
+                               </div>
+
+                               {/* Views */}
+                               <span className="flex items-center gap-1 text-taiz-royal shrink-0 bg-taiz-royal/5 px-1.5 py-0.5 rounded-md border border-taiz-royal/10">
+                                 <Eye className="w-2.5 h-2.5"/> 
+                                 {item.views || 0}
+                               </span>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* Left Side Compact Image */}
+                      {item.imageUrl && (
+                        <div className="w-[110px] h-[110px] sm:w-[130px] sm:h-[130px] rounded-2xl overflow-hidden shrink-0 bg-surface-main shadow-soft">
+                           <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        </div>
+                      )}
+                    </Link>
+                  )}
 
                   {/* Insert Video Slider Container */}
                   {index === 1 && videos.length > 0 && (
@@ -425,7 +563,7 @@ export function Home() {
                            <Link 
                              id={`home-video-${video.id}`}
                              key={video.id} 
-                             to={`/watch/${video.id}`} 
+                             to={video.isLeader ? `/leader/${video.id}` : `/watch/${video.id}`} 
                              className="snap-start shrink-0 w-[280px] sm:w-[320px] group block"
                            >
                               <div className="relative aspect-[16/9] rounded-3xl overflow-hidden bg-taiz-navy mb-4 shadow-medium group-hover:shadow-strong group-hover:border-taiz-sky/30 transition-all">
