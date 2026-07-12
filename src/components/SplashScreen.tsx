@@ -1,8 +1,16 @@
 import { useEffect, useState } from "react";
+import { SplashScreen as CapSplashScreen } from "@capacitor/splash-screen";
 
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [imageSrc, setImageSrc] = useState<string>("");
   const [isLoaded, setIsLoaded] = useState(false);
+
+  // Helper to hide native launch splash
+  const hideNativeSplash = () => {
+    CapSplashScreen.hide().catch((err) => {
+      console.log("Not running on a native device or Capacitor SplashScreen plugin error", err);
+    });
+  };
 
   useEffect(() => {
     // Check local storage to see if this is the first launch of the app
@@ -26,7 +34,15 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
       onComplete();
     }, duration);
 
-    return () => clearTimeout(timer);
+    // Fallback safety to ensure native splash screen is hidden eventually
+    const safetyTimer = setTimeout(() => {
+      hideNativeSplash();
+    }, 1000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(safetyTimer);
+    };
   }, [onComplete]);
 
   return (
@@ -38,9 +54,13 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           className={`w-full h-full object-cover transition-opacity duration-500 ease-in-out ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
-          onLoad={() => setIsLoaded(true)}
+          onLoad={() => {
+            setIsLoaded(true);
+            hideNativeSplash();
+          }}
           onError={(e) => {
-            // Fallback to /splash.png or /logo.png if the custom images are not yet uploaded
+            hideNativeSplash();
+            // Fallback to /splash.png or /logo.png if the custom images are not yet uploaded or fail to load
             const target = e.target as HTMLImageElement;
             if (target.src.includes("splash_first") || target.src.includes("splash_subsequent")) {
               target.src = "/splash.png";
