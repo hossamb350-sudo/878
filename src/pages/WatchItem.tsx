@@ -6,7 +6,7 @@ import { SyncService } from "../services/SyncService";
 import { VideoItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { ArrowRight, Eye, Calendar, Video as VideoIcon, Play, Share2, Award, Clock } from "lucide-react";
+import { ArrowRight, Eye, Calendar, Video as VideoIcon, Play, Share2, Award, Clock  , Bookmark } from "lucide-react";
 import { motion } from "motion/react";
 
 export function WatchItem() {
@@ -17,6 +17,40 @@ export function WatchItem() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    if (video) {
+      const saved = localStorage.getItem("favorite_items");
+      if (saved) {
+        try {
+          const favs = JSON.parse(saved);
+          setIsFavorited(favs.some((item: any) => item.id === video.id));
+        } catch(e) {}
+      }
+    }
+  }, [video]);
+
+  const toggleBookmark = () => {
+    if (!video) return;
+    const saved = localStorage.getItem("favorite_items");
+    let favs: any[] = saved ? JSON.parse(saved) : [];
+    
+    if (isFavorited) {
+      favs = favs.filter((item: any) => item.id !== video.id);
+      setIsFavorited(false);
+    } else {
+      favs.push({
+        id: video.id,
+        type: "watch",
+        title: video.title,
+        imageUrl: video.thumbnailUrl,
+        savedAt: Date.now()
+      });
+      setIsFavorited(true);
+    }
+    localStorage.setItem("favorite_items", JSON.stringify(favs));
+  };
 
   // Parse embed URL from standard watch strings (to ensure autoplay and correct iframe rendering)
   const getEmbedUrl = (url: string) => {
@@ -210,6 +244,10 @@ export function WatchItem() {
               </div>
 
               {/* Share button */}
+              <button onClick={toggleBookmark} className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm ${isFavorited ? "bg-taiz-sky/10 text-taiz-sky border-taiz-sky/20" : "bg-surface-main hover:bg-surface-hover border-border-light text-text-primary"}`} title="حفظ">
+                <Bookmark className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
+                <span>حفظ</span>
+              </button>
               <button
                 onClick={handleShare}
                 className={`px-5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-md ${shareSuccess ? "bg-taiz-sky text-white" : "btn-primary hover:scale-105"}`}

@@ -260,7 +260,7 @@ export function Layout() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto pb-32 min-w-0 w-full overflow-x-hidden">
+      <main className="flex-1 flex flex-col overflow-y-auto pb-20 min-w-0 w-full overflow-x-hidden">
         <Outlet />
       </main>
 

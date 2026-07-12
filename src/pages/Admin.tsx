@@ -95,6 +95,8 @@ import { SyncService, handleFirestoreError } from "../services/SyncService";
 import { GitHubClient } from "../services/githubClient";
 import { del as delIDB } from "idb-keyval";
 
+import { FavoritesList } from "../components/FavoritesList";
+
 import { AdminNewsWizard } from "../components/AdminNewsWizard";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES } from "../data/staticQuranData";
 import { AdminCategoryManager } from "../components/AdminCategoryManager";
@@ -379,7 +381,7 @@ export function Admin() {
     {
       id: "quran",
       icon: Settings,
-      label: "إعداد محتوى المنصة",
+      label: "إعداد مقررات هدي القرآن",
       access: isAdmin || isManager,
     },
     {
@@ -825,7 +827,7 @@ function AdminSummaryDashboard({
     },
     {
       id: "quran",
-      label: "إعداد محتوى المنصة",
+      label: "إعداد مقررات هدي القرآن",
       icon: BookOpen,
       color: "emerald",
       access: filteredTabs.some((t) => t.id === "quran"),
@@ -989,6 +991,7 @@ function UserProfileView({
             </div>
 
             <div className="mt-12">
+              <FavoritesList />
               <ContactUsSection />
             </div>
           </div>
@@ -3070,7 +3073,7 @@ import {
 } from "../types";
 
 function AdminQuran() {
-  const [subTab, setSubTab] = useState<"syllabuses" | "series" | "lessons" | "excerpts">("series");
+  const [subTab, setSubTab] = useState<"syllabuses" | "series" | "lessons" | "excerpts">("syllabuses");
   const [migrating, setMigrating] = useState(false);
 
   const migrateToFirestore = async () => {
@@ -3120,37 +3123,20 @@ function AdminQuran() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Settings className="w-6 h-6 text-emerald-600" />
-            <h2 className="text-xl font-bold">إعداد محتوى المنصة (هدي القرآن)</h2>
+            <h2 className="text-xl font-bold">إعداد هدي القران</h2>
           </div>
-          <button
-            onClick={migrateToFirestore}
-            disabled={migrating}
-            className="text-[10px] bg-orange-500 hover:bg-orange-600 text-white px-2 py-1 rounded-lg font-bold transition-all disabled:opacity-50"
-          >
-            {migrating ? "جاري المزامنة..." : "مزامنة الملفات إلى Firestore"}
-          </button>
         </div>
         
         <div className="flex bg-gray-100 dark:bg-gray-900 p-1 rounded-xl shrink-0" dir="rtl">
           <button
-            onClick={() => setSubTab("series")}
+            onClick={() => setSubTab("syllabuses")}
             className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
-              subTab === "series" 
+              subTab === "syllabuses" 
                 ? "bg-white dark:bg-gray-800 text-emerald-600 shadow-sm" 
                 : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
             }`}
           >
-            السلاسل
-          </button>
-          <button
-            onClick={() => setSubTab("lessons")}
-            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
-              subTab === "lessons" 
-                ? "bg-white dark:bg-gray-800 text-emerald-600 shadow-sm" 
-                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            }`}
-          >
-            الدروس
+            المقررات
           </button>
           <button
             onClick={() => setSubTab("excerpts")}
@@ -3161,16 +3147,6 @@ function AdminQuran() {
             }`}
           >
             المقتطفات
-          </button>
-          <button
-            onClick={() => setSubTab("syllabuses")}
-            className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
-              subTab === "syllabuses" 
-                ? "bg-white dark:bg-gray-800 text-emerald-600 shadow-sm" 
-                : "text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-            }`}
-          >
-            المقررات
           </button>
         </div>
       </div>

@@ -48,7 +48,7 @@ export function Leader() {
   }, [content, searchQuery, selectedType]);
 
   return (
-    <div className="max-w-4xl mx-auto w-full p-4 pb-12 animate-fade-in" dir="rtl">
+    <div className="max-w-4xl mx-auto w-full p-4 pb-2 animate-fade-in" dir="rtl">
       {/* Advanced Control & Filter Center */}
       <div className="bg-surface-card p-4 rounded-3xl border border-border-light shadow-soft flex flex-col md:flex-row items-center gap-4 mb-8">
         {/* Modern Unified Search Input */}

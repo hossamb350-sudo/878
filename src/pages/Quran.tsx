@@ -29,6 +29,7 @@ import {
   CheckCircle2,
   AlertTriangle,
   Trash2,
+  Shield,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { QuranReader } from "../components/QuranReader";
@@ -96,7 +97,8 @@ type QuranView =
   | "syllabus-detail"
   | "excerpts"
   | "excerpt-detail"
-  | "stats";
+  | "stats"
+  | "leader";
 
 // --- Sub-components moved outside to prevent re-mounting on every state update ---
 
@@ -560,6 +562,7 @@ const Header = ({
   setActiveView,
 }: any) => {
   let title = "الدروس";
+  if (activeView === "leader") title = "الشهيد القائد";
   if (activeView === "lessons" && selectedSeries) title = selectedSeries.title;
   if (activeView === "syllabuses") title = "مقرر الدروس";
   if (activeView === "syllabus-detail" && selectedSyllabus)
@@ -690,6 +693,16 @@ const Sidebar = ({
 
           <div className="flex-1 overflow-y-auto py-4 bg-surface-main">
             <SidebarItem
+              icon={<Shield className="w-5 h-5 text-taiz-royal" />}
+              label="الشهيد القائد"
+              description="من هو الشهيد القائد؟"
+              active={activeView === "leader"}
+              onClick={() => {
+                setActiveView("leader");
+                setIsSidebarOpen(false);
+              }}
+            />
+            <SidebarItem
               icon={<Library className="w-5 h-5 text-taiz-royal" />}
               label="دروس الهدى"
               description="قائمة السلاسل والدروس الكاملة"
@@ -744,6 +757,280 @@ const Sidebar = ({
       </>
     )}
   </AnimatePresence>
+);
+
+const LeaderView = ({ scrollRef }: any) => (
+  <div className="flex-1 overflow-y-auto px-4 py-8 md:py-12 relative custom-scrollbar" ref={scrollRef} dir="rtl">
+    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
+      <div className="bg-surface-card p-6 md:p-10 lg:p-12 rounded-3xl shadow-lg border border-border-light relative overflow-hidden">
+        {/* Decorative Background Elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-taiz-royal/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-taiz-sky/5 rounded-full blur-3xl -ml-20 -mb-20"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-b from-transparent via-surface-main/30 to-transparent pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col items-center mb-12">
+          <div className="w-20 h-20 bg-taiz-royal/10 text-taiz-royal rounded-full flex items-center justify-center mb-6 shadow-inner">
+            <Shield className="w-10 h-10" />
+          </div>
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-taiz-royal text-center leading-tight md:leading-snug max-w-3xl">
+            ماذا يعني الحديث عن السيد القائد الشهيد حسين بن بدر الدين الحوثي ؟
+          </h2>
+        </div>
+        
+        <div className="space-y-10 text-text-secondary leading-loose text-sm md:text-base text-justify font-medium relative z-10">
+          
+          <div className="bg-taiz-royal/5 border-r-4 border-taiz-royal p-6 md:p-8 rounded-l-2xl shadow-sm">
+            <p className="text-base md:text-lg font-bold text-text-primary leading-relaxed">
+              الحديث عن السيد حسين هو حديث عن الإنسان الذي جسد كل معاني الإنسانية في حياته, هو حديث عن الرجل الذي تجلت فيه أسمى آيات الرجولة, حديث عن الشجاعة التي أذهلت العالم بكله, حديث عن الإباء والعزة الإيمانية, حديث عن القيم العظيمة والمبادئ السامية, حديث عن السمو في أمثلته العليا, هو حديث عن قرين القرآن الكريم ببصائره وبيناته وهداه , هو حديث عن العظماء الذين قل أن يجود بهم الزمان.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              مكان وتاريخ ميلاد السيد حسين بدر الدين الحوثي :
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              ولد بتاريخ شهر شعبان 1379هـ بمدينة الرويس بني بحر بمحافظة صعدة. وكما فتح عينيه على الدنيا على نور الإيمان والتقوى فإنه نشــأ وترعرع في رحاب القرآن الكريم وعلـوم أهل بيت النبوة صلوات الله عليهم فنهل من هــذا المعين الصافي النقي وتعلم من أبيه العلم والعمل معــاً والشعور بالمسئوليـة العظيمة تجاه أمته ودينه, وكلما شب وكبر كبر معه هذا الشــعور حتى أصبح رجلاً متميزاً منحه الله من العلم والوعي والحكمة والبصيرة والكرم والأخــلاق العالية والتعقل والصبر وسعــة الصدر والشجاعة وغيرهــا من صفات الكمـال ما يبهر كل من عرفه وجالسه.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              كان السيد حسين محل إعجاب كل من عرفه
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              السيد حسين رضوان الله عليه كان محل إعجاب كل من عرفوه, فبعضهم أعجب به لكرمه وسخائه, والآخرون كان مصدر إعجابهم شجاعتــه التي كانت مضرب المثل في المناطق التي عرف فيها , والبعض الآخر سحرهم تواضعـه وكرم أخلاقه, وفريق آخر اندهش لعلمه ومعرفته فوجد نفسه أمــام بحر من العلم لا يدرك قعـره أمـا بعضهم فمدح فيه حكمته وبعد نظره, آخرون أحبوه لحبــه للناس واهتمامه بهم, والكثير الكثير دخل قلوبهم لمواقف الإحسان التي تميز واشتهر بها..
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              فمن هو أبوه؟
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              والده: هو السيد المجاهد فقيه القرآن/ بدر الدين بن أمير الدين بن الحسين ابن محمد الحوثي رحمه الله. فأبوه هو الذي عرف بين الجميع بعلمه وتقواه وخشيته من الله واستشعاره للمسؤولية, وشجاعته في قول الحق, وبأنه لا يخشى في الله لومة لائم وعرف بين الخــاصة والعــامة بالـورع والتقوى وممارسة الأعمـــال الصالحـة وكان كثير الاهتمام بإرشـاد الناس وإصلاحهم وتعليمهم أمور دينهم ودنيــاهم وحل جميع مشاكلـــهم, وكان يولي الفقراء والمحتــاجين اهتماماً خاصاً فكان بيتــه عـامراً بطلاب العلـم وأصحـاب الحاجات وحل المشــاكل وقضــاء الحوائـج وكان يستخــدم مـنبر الجمـعة والمنـاسبات الدينية لتربية الناس وتوعيتهم وتوجيههم. ويوضح السيد حسين كيف كان والده يدفع به وبإخوته إلى تحمل المسئولية الدينية مهما كانت التضحيات ففي محاضرة [توصيات لطلاب الدورة] تحدث بأن والده الذي يملك ثلاثة عشر ولدا هو أحدهم لم يسمع منه في يوم من الأيام بأنه كان يقول لأحد من أولاده أن يترك العمل الذي فيه لله رضا أو يطلب منه أن يحافظ على حياته وهو يتحرك ويعمل للحق. ويؤكد السيد حسين بأن ذلك لا يعني بأن والده لم يكن يهمه سلامة أولاده ولكنه يعرف بأن الأفضل لولده أن يدخل في أعمال وإن كان فيها تضحية بنفسه لا يمنعه من ذلك أو يدفعه إلى الابتعاد عن هذا العمل أو يربيه على الجبن والخوف أو التخلي عن المسئولية.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              الدور الإنساني والاجتماعي.
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              عرف السيد لدى القريب والبعيد والعدو والصديق بأدوار مهمة بما فيه خدمة المجتمع بجناحيه الرجل والمرأة فقد كان يعيش معاناة المجتمع ويتألم لواقعهم فعمل على تحقيق العديد من المشاريع الخدمية في العديد من المناطق التي تصل إليها يده.وأنشأ جمعية مران الاجتماعية الخيرية وقدم من خلالها العديد من المشاريــع المهمة وبالذات لمنطقة مران التي كانت تمثل محل إقامته الرئيسي رغم الصعوبــات التي كان يواجهها من بعض مسئولي الدولـــة في المحافظــة والذين لا يهمهم إلا تحقيق مصالحهم.فبنى العديد من المدارس الدينية والرسمية كما عمل على المتابعة لبناء مستوصف كبير في مران وجهزه بكادر من المنطقة وبعث بمجاميع من البنين والبنات للدورات في المجال الصحي في صنعاء وصعدة وعمل على فتح خطوط إلى المناطق التي لم يصل إليها الخط وتابع حتى حصل على العديد من البرك في عدد من المناطق وكذلك الكهرباء تابعها حتى توفرت شبكة كهرباء لمنطقة مران والمناطق المجاورة لها وقام ببناء مصلى للعيد في منطقة مران تتسع لكل أهالي المنطقة وعمل شخصيا في تلك المشاريع حيث كان دائما في مقدمة من يعمل بيديه. كما عرف بين أبناء المنطقة بأخلاقه العالية وبروحه التي تلامس مشاعر الناس وآمالهم وآلامهم فقد كان ملاذا للمظلومين والمحتاجين والفقراء والمساكين كما عرف برحمته وشفقته حتى بالحيوانات مما جعله محط إعجاب الناس .
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              السيد حسين في مجلس النواب
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              عندما دخل السيد حسين إلى مجلس النواب ممثلاً للدائرة (294) في محافظة صعــده عـام 1993م نائبا من نواب حزب الحق حرص السيد على أن يوسع علاقاته بالشخصيات الاجتماعية المخلصة. وكان له دور بارز ومهم في مجلس النواب من حيث صياغة القوانين ومحاربة الفساد المتفشي داخل هذه السلطة وعرف السيد بين الأعضاء برؤيته الحكيمة وقدرته الخطابية وبلاغته العالية وجرأته في مواجهة الباطل حتى أن السيد حسين لم يوقع خلال الفترة التي قضاها في مجلس النواب على أي قرض لعلمه بأن هذه القروض تصل إلى جيوب المتنفذين داخل النظام وأنها لا تعني الشعب لا من قريب ولا من بعيد.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              موقف السيد من الحرب على الجنوب.
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              كان للسيد دور بارز ومعروف فيما يتعلق بالأزمة التي تلت الوحدة اليمنية وأدت إلى حرب صيف 94م حيث كان دوره هو دور الحريص على مصلحة البلد والحفاظ على وحدته وسلامته فكان هو ضمن فريق المصالحة بين الطرفين المتصارعين وعمل بكل جد واهتمام على تجنيب اليمن حربا كانت قد أطلت برأسها وبعد عناء وتعب في محاولة رأب الصدع شعر السيد أن عشاق السلطة ذاهبون إلى الحرب فنأى السيد حسين بنفسه وبأتباعه أن يكونوا شركاء في سفك الدماء وهتك الأعراض ومصادرة الممتلكات بنفسه فقام بالخروج إلى محافظة صعدة رغم أن السلطة التابعة لبيت الأحمر كانت قد فرضت إقامة إجبارية لأعضاء مجلس النواب حتى يضفوا شرعية على الحرب الظالمة والتأثير على الرأي العام اليمني والعالمي,إلا أن السيد لم يعبأ بهذا القرار وخرج إلى محافظة صعدة وأعلن رفضه للحرب لأن الخاسر فيها هو هذا الشعب المظلوم ومن خلال المظاهرات التي قادها في صعدة أعلن عن موقفه وموقف أبناء هذه المحافظة مما يحصل من سفك للدماء اليمنية وهتك للحرمات من أجل السلطة والمال وظل على موقفه الرافض هذا حتى نهاية الحرب. ولم يخف على السلطة الظالمة هذا الموقف المعلن من السيد حسين وأنصاره في محافظة صعدة فعادوا من الجنوب وهم مهووسين بجنون العظمة ونشوة الانتصار الوهمي ليصبوا جام غضبهم على أنصار السيد حسين في مران وهمدان فنزلت الحملات العسكرية الكبيرة على أبناء مران وهمدان. ففي يوم السبت 16/6/1994م وصلت الأخبار إلى أسماع الناس بنزول حملة عسكرية كبيرة ظالمة، نزلت إلى مران، وعبثت بالبلاد، وضربت دور العلماء، واعتقلت أفضل أبناء المنطقة،وفي جبل مران أبدى الظالمون حقدهم بمحاولة تدمير بيت السيد العلامة بدر الدين الحوثي وبيت السيد حسين واقتادوا إلى السجن العشرات منهم ظلما وعدوانا أطفالا وشبابا وشيوخا وبقي البعض منهم في السجن لأكثر من عام دون محاكمة وهو ثمن دفعه السيد وأتباعه لمواقفهم الدينية والوطنية, ولم يكن ما حصل بالشيء الذي يمكن أن يوهن من عزيمة السيد حسين رضوان الله عليه عن المضي قدما في مواقفه المشرفة والقوية في مواجهة المفسدين والظالمين فعملوا على استهدافه شخصيا في صنعاء إلا أن رعاية الله كانت أكبر من مؤامراتهم.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              السيد يتسلم منحة دراسية إلى السودان
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              تسلم السيد حسين رضوان الله عليه منحة دراسية من جامعة صنعاء خلال عضويتـه لمجلس النواب ليكمـل دراستــه العليا في السودان وفي الجامعة كان للسيد حسين حضوره المهيب ومداخلاته العلمية التي كانت تثير إعجاب الدكاترة والطلاب فحظي بشعبية كبيرة بين أوساط المثقفين هناك وبعد عدة سنوات عــاد إلى البلاد ليقوم بتحضــير رسالة الماجستير في علوم القرآن الكريم .
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              السيد حسين في مرحلة التقييم لوضعية الأمة
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              تأمل السيد حسين كثيرا في واقع الأمة وبدأ يبحث ويدقق مستفيدا من تجارب الماضي من أين أتيت الأمة؟ ومن أين ضربت؟ وما الذي أوصلها إلى ما وصلت إليه؟ ومن خـلال غوصه في أعماق القرآن الكريم عرف الــداء الذي يفتك بجسم الأمة والذي طرحها أرضاً تئن تحت أقدام اليـهود والنصــارى إنها الثقافــات المغلوطة والعقائد الباطلة فقد كان يقول : [إذا تأمل الإنسـان في واقع الناس يجــد أننا ضحية عقائد باطلة وثقــافات مغــلوطة جاءتنــا من خارج الثقلين كتاب الله و عترة رسوله (صلوات الله عليه وعلى آله), ومن كلام له في لقائه مع مجموعه من طلاب العلم: يجب علينا أن نعتمد على القرآن الكريم اعتــماداً كبيراً وأن نتوب إلى الله ومما قال: (نحن إذا ما انطلقنا من الأساس وعنوان ثقافتنا أن نتثقف بالقرآن الكريم سنجد القرآن الكريم هو هكذا، عندما نتعلمه ونتبعه يزكينا يسمو بنا، يمنحنا الله به الحكمة، يمنحنا القوة، يمنحنا كل القيم، كل القيم التي لما ضاعت ,ضاعت الأمة بضياعها، كما هو حاصل الآن في وضع المسلمين، وفي وضع العرب بالذات. وشرف عظيم جداً لنا، ونتمنى أن نكون بمستوى أن نثقف الآخرين بالقرآن الكريم، وأن نتثقف بثقافة القرآن الكريم {'{'} ذَلِكَ فَضْلُ اللَّهِ يُؤْتِيهِ مَنْ يَشَاءُ وَاللَّهُ ذُو الْفَضْلِ الْعَظِيمِ {'}'} يؤتيه من يشاء فلنحاول أن نكون ممن يشاء الله أن يؤتوا هذا الفضل العظيم.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              ثقته القوية بالله وارتباطه به
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              لقد كان السيد حسين عظيم الثقة بالله تربطه بالله علاقة قوية يذكرك بالمتقين الذين وصفهم الإمام علي عليه السلام بقوله : (عظم الخالق في أنفسهم فصغر ما دونه في أعينهم) وكان يعرف أن من أكبر أزمات الأمة أن لا تثق بالله كما ينبغي مبينا أسباب أزمة الثقة هذه ومما يدل على ثقته العالية بالله سبحانه وتعالى أنه في الحرب الأولى وهو محاصر وصلت إليه رسالة من الكتلة البرلمانية للمؤتمر طلبوا منه فيها أن يبعث برسالة استغاثة إلى الطاغية علي عبدالله صالح يطالبه فيها بوقف الحرب باعتباره أحد مواطنيه وهم مستعدون أن يفعلوا هذه الاستغاثة في البرلمان وعندما وصلت هذه الرسالة إلى السيد حسين رمى بها وقال : (سنستغيث بالله القوي العزيز).
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              خطر دخول أمريكا اليمن
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              كان هذا هو عنوان محاضرة قدمها السيد قبل أكثر من عشر سنوات وهو يحذر أبناء الشعب اليمني من هذا الخطر وما سيترتب على ذلك من دمار وخزي وانتهاك للمحرمات وللأعراض ونهب للثروات على أيدي الأمريكيين إذا لم يتنبه الشعب اليمني ويتحمل مسئوليته في الاستعداد لمواجهة هذه المؤامرة بكل الوسائل الممكنة ولتكن الصرخة بداية المشروع وكذلك تثقيف المجتمع وتهيئته ثقافيا للمواجهة القادمة وكذلك المقاطعة الاقتصادية .
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              السيد يقدم الصرخة في وجه المستكبرين كسلاح وموقف
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              يوم الخميس 17 يناير 2002م هو اليوم الذي انطلقت فيه من حناجر السيد حسين صرخة الحق والعزة والكرامة صرخة [الله أكبر الموت لأمريكا الموت لإسرائيل اللعنة على اليهود النصر للإسلام] ليعلن بذلك ولادة فجر جديد لا مكان فيه للذل ولا للهوان ولا للخوف والاستكانة والخنوع, يوم فتح فيه السيد حسين باب العزة والحرية والمواقف المشرفة التي ستعيد للأمة مجدها وسيادتها وتخلصها من تحت أقدام أعدائها, وترفعها من المستنقع الذي قد انغمست فيه .
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              الحرب الإعلامية
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              لقد كان من أسوء ما ظلمت به هذه المسيرة القرآنية منذ انطلاقتها وبزوغ فجرها هو ما ووجهت به من حرب إعلامية لا تقل شراسة عن الحرب العسكرية فأنشئت وسائل إعلامية جديدة إضافة إلى ما هو موجود من أجل تشويه هذه المسيرة القرآنية من خلال الكذب والدجل والافتراء وقلب الحقائق وتقديم المعتدي الغاشم ضحية والضحية معتد ظالم. ثم العمل الجاد في التهميش والتقليل لما حققته المسيرة القرآنية من مواقف مشرفة ومن انتصارات في كل المستويات.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              السيد حسين انطلق بدافع استشعاره للمسئولية
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              وفي حوار مع شبكة الـ بي بي سي أثناء الحرب الظالمة في اتصال هاتفي كان منـه هذه الفقرة قال: (إن الله يقول: {'{'}إِنَّ الَّذِينَ يَكْتُمُونَ مَا أَنْزَلْنَا مِنَ الْبَيِّنَاتِ وَالْهُدَى مِنْ بَعْدِ مَا بَيَّنَّاهُ لِلنَّاسِ فِي الْكِتَابِ أُولَئِكَ يَلْعَنُهُمُ اللَّهُ وَيَلْعَنُهُمُ اللَّاعِنُونَ{'}'} نحن نعتقد أن لدينا معرفة بالبينات والهـدى فمن واجبنا أمام الله ـ ونحن يجب أن لا نخاف إلا الله ـ أن نبين للناس فنحن بينا للنـاس أن هذه المرحلة التي نحن فيها ونقول للجميــــع أن المسلمين اليوم في مرحله خطيرة حسب ما أعتقد مرحلة مؤاخذة إلهية ونحن ننطلق من هذه المســـئولية الإلهية في القرآن بتبليغ الناس هذا هو شيء أوجبه الله على من لديهم معرفة{'{'}وَإِذْ أَخَذَ اللَّهُ مِيثَاقَ الَّذِينَ أُوتُوا الْكِتَابَ لَتُبَيِّنُنَّهُ لِلنَّاسِ وَلا تَكْتُمُونَهُ{'}'} فهذا عملنا من البدايــة نذكِّر الناس بالقران الكريم ومن منطلق قول الله سبحانه لرسوله (صلوات الله عليه وعلى آله){'{'}فَذَكِّرْ إِنَّمَا أَنْتَ مُذَكِّرٌ{'}'} فنحن نذكـــر الناس بالقرآن فمن قبــل فلا بأس ومن لا يقبل لا نرغمه على ذلك ولا نفرض عليه أن يتوجه بتوجيهنا ولا نكفـره ولا نفسقه, والتذكير ليس مجرد أن نذكر أن هناك عدو بل يجب أن يكون هناك رؤية تقدم للناس رؤية عملية يتحركون فيها, على هذا الأساس كان أمامنا قضيتان:-
+              <br /><br />
+              <span className="block p-4 bg-taiz-royal/5 rounded-xl border border-taiz-royal/20 mb-2 font-bold text-taiz-royal">القضية الأولى: رفع شعار: [الله أكبر / الموت لأمريكا/ الموت لإسرائيل / اللعنة على اليهود/ النصر للإسلام]</span>
+              <span className="block p-4 bg-taiz-royal/5 rounded-xl border border-taiz-royal/20 font-bold text-taiz-royal">القضية الثانية: مقاطعة البضائع الأمريكية والإسرائيلية كواجب ديني.</span>
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              كان هذا العمل هو ما تتطلبه المرحلة
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              لقد كان هذا التحرك هو ما تتطلبه المرحلة وهو ما الأمة متعطشة إليه فهي تواقة إلى عمل تذوق من خلاله طعم العزة والحرية وخصوصا بعدما فقدت الأمل في الأحزاب بكل أنواعها دينية وقومية وعلمانية وسئمت حالة الذل والهوان ولذلك لقي قبولا وارتياحا ولو في القلوب وإن لم يترجم إلى عمل بسرعة نتيجة لحالة اليأس والإحباط التي كانت مسيطرة على واقع الأمة.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              ومن ولاية [جورجيا] إلى صعدة
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              في ولاية جورجيا الأمريكية يعقد اجتماع يضم الدول الثمان الصناعية وخلاف المعتاد يحضر هذا الاجتماع الرئيس اليمني دون أن يعرف أحد المغزى والهدف من هذا الحضور إلا الله وزعماء تلك الدول ومن يسير في فلكهم في المنطقة ولم تكن التسريبات التي تحدث عنها الإعلام واللقاءات المشبوهة من قبل المخابرات الأمريكية بكل أنواعها ومسئولي مكافحة الإرهاب حول السيد حسين والمسيرة القرآنية بالشكل الذي يكشف حقيقة هذا الحضور المشبوه للزعيم اليمني حيث عاد علي صالح بقرار الحرب الظالمة.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              دور التكفيريين في إعطاء غطاء شرعي للحرب.
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              وكما هي عادة التكفيريين علماء البلاط فقد أفتوا بكفر السيد حسين ووجوب قتاله والوقوف إلى جانب السلطة الظالمة .
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              رسائل التهديد والوعيد
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              بدأت رسائل التهديد والوعيد تتوالى على السيد حسين من جهة الطاغية علي عبدالله صالح وكلها كانت تتوعد السيد حسين بأنه لا بد أن يتخلى عن شعار [الموت لأمريكا الموت لإسرائيل] وما ترافق معه من التربية القرآنية أو سوف يسلط عليه من لا يرحم ويقصد بذلك المجرم الدموي علي محسن الأحمر المعروف بولائه لأمريكا وإدارة بعض حروبها الدموية إلا أن السيد حسين كان أكبر من تهديداتهم وثقته الكبيرة بالله جعلته قويا في مواجهة التحديات فلم تهزه التهديدات ولم يثنيه الوعيد بل ازداد إيمانا ويقينا وثباتا على مبدئه, ومع ذلك كان السيد حسين حريصا كل الحرص على أن يفهم الجميع صحة موقفه وأن هذا العمل هو العمل الوحيد الذي سينقذ البلد من مؤامرات الأمريكيين وكان يؤكد للرئيس أنه ليس في صالحه أن يقدم نفسه عبارة عن مدير قسم شرطة لدى الأمريكيين وأكد له بأنه إن فعل ذلك فلن يكون مصيره أقل من مصير شاه إيران وعرفات وصدام حسين وغيرهم من الزعماء الذين ضحوا بشعوبهم إرضاء لأمريكا فجازتهم بالتنكر لكل أعمالهم وتخلت عنهم وضربتهم في الوقت الذي قد كرهتهم شعوبهم.
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              السيد حسين أول من أشعل وقود الثورة ضد النظام الظالم .
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              السيد حسين رضوان الله عليه بثورته الفكرية الثقافية الشاملة قاد أعظم ثورة على الثقافات المغلوطة والعقائد الباطلة التي تؤسس وتشرع للطغيان والظلم ثار على الثقافات المنحرفة التي أوصلت المئات من الطواغيت إلى سدة الحكم وهيئت لهم الساحة ليحكموا الأمة بالقهر والغلبة, هذه الثورة هي الثورة الحقيقية الثورة الناجحة والمحصنة من أي اختراقات فلا أمريكا ولا غيرها قادرة أن تخترق مثل هذه الثورة, ثورة اتجهت إلى بناء أمة لا تقبل بالطواغيت ولا تنخدع بهم ثورة تجعل الأمة تعرف من يحكمها وفق معايير قرآنية, ثورة لا مكان فيها لتلك الأفكار المنحرفة التي أوصلت المجرمين إلى سدة الحكم ليتحكموا على رقاب الأمة الإسلامية عبر تاريخها الطويل مهدت الطريق أمامهم ليصعدوا على أكتافها ويسوموها سوء العذاب حتى وصل بهم الأمر في هذه المرحلة إلى أن يبيعوا كرامة وعزة وشرف وحرية وثروات شعوبهم من أعداء هذه الأمة أمريكا وإسرائيل وأن يتآمروا على شعوبهم وأن يسخروا أنفسهم ليكونوا أدوات قذرة لخدمة أعداء هذه الأمة في ضرب شعوبهم وإذلالها وقهرها .
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              كربلاء تعود من جديد
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              واصل الطواغيت والمجرمون زحفهم على جبل مران وبعد عناء شديد وتضحيات جسيمة قدمتها السلطة قربانا للمعبد الأمريكي وصل المجرمون إلى معقل السيد حسين بعد حرب دامت أكثر من ثمانين يوما دفعت فيها أثمانا باهظة فضاعت هيبتها وكسرت شوكتها وهيأت لسقوطها وزوالها ولو بعد حين. لقد تصور الظالمون بأنهم كسبوا المعركة بسيطرتهم على معقل السيد حسين في جبل مران وأنهم قد قضوا على المسيرة القرآنية بوحشيتهم التي أعادت إلى الأذهان كربلاء الطف مرة أخرى عندما حاولوا إحراق السيد حسين وأفراد عائلته ومجموعة من الجرحى بالنار وهم في جرف سلمان من خلال قنابل كبيرة جدا وضعوها في فتحة الجرف من الأعلى وصب البترول إلى الجرف وإشعاله في وحشية لم يسمع عنها أحد في تاريخنا الحديث .
+            </p>
+          </div>
+
+          <div className="pt-6">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+              <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
+              </span>
+              السيد حسين يودع الحياة بجسده
+            </h3>
+            <p className="bg-surface-main p-4 md:p-6 rounded-2xl border border-border-light/50 shadow-sm">
+              وهكذا ودع سيد المجاهدين قرين القرآن وسليل بيت النبوة القائد والمؤسس للمسيرة القرآنية السيد حسين بدر الدين الحوثي سلام الله عليه هذه الحياة وقد عمل ما عليه وأسس لبناء أمة القرآن أمة الإسلام وقلبه مليء بالثقة بنصر الله لهذه المسيرة الإلهية مهما كانت التضحيات, لقد كان يقسم بأنه واثق من نصر الله حتى لو وصل جنود السلطة الظالمة إلى باب الجرف الذي كان فيه , وهكذا ختم حياته الدنيا كما ذكر من كان معه وهو يردد هذا الدعاء : <span className="font-bold text-taiz-royal bg-taiz-royal/5 px-2 py-1 rounded">( اللهم ثبتني بالقول الثابت في الحياة الدنيا وفي الآخرة )</span>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 );
 
 const StatsView = ({
@@ -1401,6 +1688,7 @@ export function Quran() {
                     onResetDashboard={handleResetDashboard}
                   />
                 )}
+                {activeView === "leader" && <LeaderView scrollRef={scrollRef} />}
               </>
             )}
           </motion.div>

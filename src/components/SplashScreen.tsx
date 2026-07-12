@@ -1,153 +1,54 @@
-import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
-import { Newspaper, PlayCircle, BookOpen } from "lucide-react";
 
-const LOGO_SRC = "logo.png";
-
-const CARDS = [
-  { id: 0, title: "أخبار موثوقة", subtitle: "لحظة بلحظة", icon: Newspaper, color: "text-[#049edf]", bg: "bg-[#049edf]/10", border: "border-[#049edf]/50" },
-  { id: 1, title: "محتوى مرئي", subtitle: "متجدد", icon: PlayCircle, color: "text-[#049edf]", bg: "bg-[#049edf]/10", border: "border-[#049edf]/50" },
-  { id: 2, title: "دروس من", subtitle: "هدي القرآن", icon: BookOpen, color: "text-[#049edf]", bg: "bg-[#049edf]/10", border: "border-[#049edf]/50" },
-];
-
-export function SplashScreen({ 
-  onComplete, 
-  isFirstTime = true 
-}: { 
-  onComplete: () => void; 
-  isFirstTime?: boolean; 
-}) {
-  const [activeIndex, setActiveIndex] = useState(0);
+export function SplashScreen({ onComplete }: { onComplete: () => void }) {
+  const [imageSrc, setImageSrc] = useState<string>("");
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    if (!isFirstTime) {
-      // Subsequent opens: quick 2-second transition with just the logo and loading
-      const quickTimer = setTimeout(() => {
-        onComplete();
-      }, 2000);
-      return () => clearTimeout(quickTimer);
+    // Check local storage to see if this is the first launch of the app
+    const alreadyLaunched = localStorage.getItem("taiz_app_already_launched");
+    
+    let selectedImage = "/splash_subsequent.png";
+    let duration = 3000; // Subsequent launch duration: 3 seconds
+    if (alreadyLaunched !== "true") {
+      selectedImage = "/splash_first.png";
+      duration = 5000; // First launch duration: 5 seconds
     }
+    
+    setImageSrc(selectedImage);
 
-    // First open: full 10-second onboarding carousel
-    const timer = setInterval(() => {
-      setActiveIndex((prev) => prev + 1);
-    }, 3500);
-
-    const autoDismissTimer = setTimeout(() => {
-      localStorage.setItem("taiz_onboarding_completed", "true");
+    // Auto-transition to home after the selected duration
+    const timer = setTimeout(() => {
+      if (alreadyLaunched !== "true") {
+        // Record that the first launch has completed successfully
+        localStorage.setItem("taiz_app_already_launched", "true");
+      }
       onComplete();
-    }, 10000);
+    }, duration);
 
-    return () => {
-      clearInterval(timer);
-      clearTimeout(autoDismissTimer);
-    };
-  }, [onComplete, isFirstTime]);
+    return () => clearTimeout(timer);
+  }, [onComplete]);
 
   return (
-    <div 
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-between overflow-hidden bg-gradient-to-b from-[#0b172a] via-[#07101f] to-[#040914] font-cairo text-white px-6 py-12" 
-      style={{ direction: "rtl" }}
-    >
-      {/* AMBIENT GLOW */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[30%] left-1/2 -translate-x-1/2 w-[80%] h-[50%] bg-[#049edf]/10 blur-[130px] rounded-full" />
-      </div>
-
-      {/* HEADER: LOGO & TITLE */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className={`flex flex-col items-center z-10 ${isFirstTime ? "mt-8" : "my-auto"}`}
-      >
-        <motion.img 
-          initial={{ scale: 0.8 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 1, ease: "easeOut" }}
-          src={LOGO_SRC} 
-          alt="شعار منصة تعز الإعلامية" 
-          className={`${isFirstTime ? "w-64 h-64 md:w-80 md:h-80" : "w-72 h-72 md:w-96 md:h-96"} object-contain drop-shadow-2xl mb-4`} 
+    <div className="fixed inset-0 z-[9999] bg-[#0b172a] flex items-center justify-center select-none overflow-hidden pb-safe">
+      {imageSrc && (
+        <img
+          src={imageSrc}
+          alt="شاشة البداية"
+          className={`w-full h-full object-cover transition-opacity duration-500 ease-in-out ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => setIsLoaded(true)}
+          onError={(e) => {
+            // Fallback to /splash.png or /logo.png if the custom images are not yet uploaded
+            const target = e.target as HTMLImageElement;
+            if (target.src.includes("splash_first") || target.src.includes("splash_subsequent")) {
+              target.src = "/splash.png";
+            }
+          }}
+          referrerPolicy="no-referrer"
         />
-        {/* No text phrase "منصة تعز الإعلامية" as requested */}
-      </motion.div>
-
-      {/* CAROUSEL - Only if isFirstTime */}
-      {isFirstTime && (
-        <div className="relative w-full max-w-[130px] h-[140px] md:max-w-[150px] md:h-[160px] z-10 my-auto mx-auto flex items-center justify-center">
-          {CARDS.map((card, index) => {
-            // Calculate offset relative to active index
-            // 0 = Center, 1 = Right (Next), -1 = Left (Previous)
-            let offset = (index - (activeIndex % 3)) % 3;
-            if (offset > 1) offset -= 3;
-            if (offset < -1) offset += 3;
-
-            const isCenter = offset === 0;
-
-            return (
-              <motion.div
-                key={card.id}
-                className={`absolute inset-0 border-[1.5px] rounded-[1.5rem] shadow-lg flex flex-col items-center justify-center p-3 text-center transition-colors duration-500 ${
-                  isCenter 
-                    ? `bg-[#0c1933] ${card.border}`
-                    : "bg-[#081225] border-transparent"
-                }`}
-                initial={false}
-                animate={{
-                  x: `${offset * 115}%`,
-                  scale: isCenter ? 1.05 : 0.85,
-                  opacity: isCenter ? 1 : 0.35,
-                  zIndex: isCenter ? 20 : 10,
-                }}
-                transition={{ duration: 0.8, ease: "easeInOut" }}
-              >
-                <div className={`p-3 rounded-full mb-2 md:mb-3 shadow-inner transition-colors duration-500 ${isCenter ? card.bg : "bg-white/5"}`}>
-                  <card.icon className={`w-6 h-6 md:w-7 md:h-7 transition-colors duration-500 ${isCenter ? card.color : "text-gray-500"}`} />
-                </div>
-                <h3 className={`text-[12px] md:text-[14px] font-black leading-tight transition-colors duration-500 ${isCenter ? 'text-white' : 'text-gray-500'}`}>
-                  {card.title}
-                </h3>
-                <p className={`text-[10px] md:text-[11px] font-bold mt-1 transition-colors duration-500 ${isCenter ? 'text-gray-400' : 'text-gray-600'}`}>
-                  {card.subtitle}
-                </p>
-              </motion.div>
-            );
-          })}
-        </div>
       )}
-
-      {/* DOTS & LOADING BAR */}
-      <div className={`flex flex-col items-center z-10 mb-8 space-y-10 w-full ${!isFirstTime ? "mt-auto" : ""}`}>
-        {/* Dots Indicator - Only if isFirstTime */}
-        {isFirstTime && (
-          <div className="flex items-center gap-2">
-            {CARDS.map((_, index) => (
-              <motion.div
-                key={index}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  index === (activeIndex % 3) ? "w-6 bg-[#049edf]" : "w-1.5 bg-white/20"
-                }`}
-              />
-            ))}
-          </div>
-        )}
-        
-        {/* Loading Bar */}
-        <div className="flex flex-col items-center space-y-3 opacity-60 w-full max-w-[200px]">
-          <span className="text-[10px] tracking-widest text-gray-400 font-bold uppercase">
-            {isFirstTime ? "جاري الدخول للتطبيق..." : "جاري تحميل المنصة..."}
-          </span>
-          <div className="w-full h-[2px] bg-white/10 rounded-full overflow-hidden relative">
-            <motion.div
-              initial={{ left: "-100%" }}
-              animate={{ left: "100%" }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-0 bottom-0 w-1/2 bg-[#049edf] rounded-full"
-            />
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
-

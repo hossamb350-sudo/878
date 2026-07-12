@@ -16,7 +16,7 @@ import {
   Check, 
   PlayCircle,
   FileText,
-  Share2, 
+  Share2, Bookmark, 
   BookOpen, 
   Type
 } from "lucide-react";
@@ -91,6 +91,40 @@ export function LeaderItem() {
   });
 
   const [copied, setCopied] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    if (content) {
+      const saved = localStorage.getItem("favorite_items");
+      if (saved) {
+        try {
+          const favs = JSON.parse(saved);
+          setIsFavorited(favs.some((item: any) => item.id === content.id));
+        } catch(e) {}
+      }
+    }
+  }, [content]);
+
+  const toggleBookmark = () => {
+    if (!content) return;
+    const saved = localStorage.getItem("favorite_items");
+    let favs: any[] = saved ? JSON.parse(saved) : [];
+    
+    if (isFavorited) {
+      favs = favs.filter((item: any) => item.id !== content.id);
+      setIsFavorited(false);
+    } else {
+      favs.push({
+        id: content.id,
+        type: "leader",
+        title: content.title,
+        imageUrl: content.thumbnailUrl,
+        savedAt: Date.now()
+      });
+      setIsFavorited(true);
+    }
+    localStorage.setItem("favorite_items", JSON.stringify(favs));
+  };
   const [scrollProgress, setScrollProgress] = useState(0);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -399,6 +433,14 @@ export function LeaderItem() {
               >
                 {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                 <span>{copied ? "تم النسخ" : "نسخ الخطاب"}</span>
+              </button>
+              <button
+                onClick={toggleBookmark}
+                className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${isFavorited ? "bg-taiz-sky/10 text-taiz-sky border-taiz-sky/20" : "bg-surface-main hover:bg-surface-hover border-border-light text-text-primary"}`}
+                title="حفظ"
+              >
+                <Bookmark className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
+                <span>حفظ</span>
               </button>
               <button
                 onClick={shareText}

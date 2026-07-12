@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Layout } from "./components/Layout";
 import { Home } from "./pages/Home";
 import { NewsDetail } from "./pages/NewsDetail";
@@ -17,6 +17,7 @@ import { Admin } from "./pages/Admin";
 import { Search } from "./pages/Search";
 import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
+import { SplashScreen } from "./components/SplashScreen";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -41,45 +42,28 @@ function AnimatedRoutes() {
   );
 }
 
-import { SplashScreen } from "./components/SplashScreen";
-
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
-  const [isFirstTime, setIsFirstTime] = useState(true);
-
-  useEffect(() => {
-    // Check if onboarding was completed ever
-    const onboardingCompleted = localStorage.getItem("taiz_onboarding_completed");
-    if (onboardingCompleted === "true") {
-      setIsFirstTime(false);
-    } else {
-      setIsFirstTime(true);
-    }
-  }, []);
-
-  const handleEnter = () => {
-    localStorage.setItem("taiz_onboarding_completed", "true");
-    setShowSplash(false);
-  };
 
   return (
     <BrowserRouter>
       <NavigationController />
-      <AnimatePresence>
-        {showSplash && (
-          <motion.div 
-            initial={{ opacity: 1 }}
-            exit={{ 
-              opacity: 0,
-              transition: { duration: 0.3, ease: "easeInOut" }
-            }}
-            className="fixed inset-0 z-[100]"
-          >
-            <SplashScreen onComplete={handleEnter} isFirstTime={isFirstTime} />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <AnimatedRoutes />
+      <div className="relative min-h-screen">
+        <AnimatedRoutes />
+        <AnimatePresence>
+          {showSplash && (
+            <motion.div
+              key="splash-screen-container"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="fixed inset-0 z-[9999]"
+            >
+              <SplashScreen onComplete={() => setShowSplash(false)} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
     </BrowserRouter>
   );
 }

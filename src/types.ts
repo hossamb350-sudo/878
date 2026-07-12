@@ -179,3 +179,11 @@ export interface AppNotification {
   link?: string;
   createdAt: number;
 }
+
+export interface FavoriteItem {
+  id: string;
+  type: "news" | "leader" | "watch";
+  title: string;
+  imageUrl?: string;
+  savedAt: number;
+}

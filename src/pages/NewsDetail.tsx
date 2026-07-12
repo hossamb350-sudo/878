@@ -30,10 +30,10 @@ export function NewsDetail() {
   
   useEffect(() => {
     // Load saved bookmarks status
-    const saved = localStorage.getItem("saved_news");
+    const saved = localStorage.getItem("favorite_items");
     if (saved) {
       try {
-        setSavedArticles(JSON.parse(saved));
+        setSavedArticles(JSON.parse(saved).map((item: any) => typeof item === "string" ? item : item.id));
       } catch (e) {
         console.error(e);
       }
@@ -109,14 +109,29 @@ export function NewsDetail() {
 
   const toggleBookmark = () => {
     if (!news) return;
-    let updated = [...savedArticles];
-    if (updated.includes(news.id)) {
-      updated = updated.filter(item => item !== news.id);
+    
+    // Get existing favorites
+    const saved = localStorage.getItem("favorite_items");
+    let favs: any[] = saved ? JSON.parse(saved) : [];
+    
+    // Check if already favorited
+    const isFav = favs.some((item: any) => item.id === news.id);
+    
+    if (isFav) {
+      favs = favs.filter((item: any) => item.id !== news.id);
+      setSavedArticles(savedArticles.filter(id => id !== news.id));
     } else {
-      updated.push(news.id);
+      favs.push({
+        id: news.id,
+        type: "news",
+        title: news.title,
+        imageUrl: news.imageUrl,
+        savedAt: Date.now()
+      });
+      setSavedArticles([...savedArticles, news.id]);
     }
-    setSavedArticles(updated);
-    localStorage.setItem("saved_news", JSON.stringify(updated));
+    
+    localStorage.setItem("favorite_items", JSON.stringify(favs));
   };
 
   const handleShare = async () => {
