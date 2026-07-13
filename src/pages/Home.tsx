@@ -44,11 +44,12 @@ function formatPublishInfo(timestamp: number) {
   
   let hDate = "";
   try {
-    hDate = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+    const formatted = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
       day: 'numeric',
       month: 'long',
       year: 'numeric'
-    }).format(d) + "هـ";
+    }).format(d).trim();
+    hDate = formatted.endsWith("هـ") ? formatted : `${formatted} هـ`;
   } catch (e) {
     hDate = "";
   }
@@ -349,199 +350,204 @@ export function Home() {
             
             {/* HERO FEATURED POST */}
             {heroItem && (
-              <div className="block bg-surface-main pb-1.5 mb-4 font-sans">
-                {heroItem.imageUrl && (
-                  <Link to={heroItem.isLeader ? `/leader/${heroItem.id}` : `/news/${heroItem.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-surface-card mb-4 sm:rounded-3xl shadow-soft">
-                     <img 
-                       src={heroItem.imageUrl} 
-                       alt={heroItem.title} 
-                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                     />
-                     <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
-                     
-                     {/* Category Labels Attached to Center-Top (Outside) */}
-                     <CategoryBadges item={heroItem} isHero={true} className="absolute top-2 left-1/2 -translate-x-1/2" />
-                  </Link>
+              <Link 
+                to={heroItem.isLeader ? `/leader/${heroItem.id}` : `/news/${heroItem.id}`} 
+                className="block relative w-full overflow-hidden mb-2.5 group aspect-[4/3] sm:aspect-[16/10]"
+                style={{ direction: 'rtl', borderRadius: 0 }}
+              >
+                {/* Background Image */}
+                {heroItem.imageUrl ? (
+                  <img 
+                    src={heroItem.imageUrl} 
+                    alt={heroItem.title} 
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                  />
+                ) : (
+                  <div className="absolute inset-0 w-full h-full bg-gray-200"></div>
                 )}
                 
-                <div className="px-5 sm:px-2">
-                  {/* Info Row: News Meta (Above Title) */}
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2.5 text-[9px] sm:text-[10px] font-bold text-text-secondary/80">
-                    {heroItem.isBreaking && (
-                      <div className="flex items-center gap-1.5 text-status-error font-extrabold select-none bg-status-error/5 px-2 py-0.5 rounded-full shrink-0">
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
-                        </span>
-                        تغطية مباشرة
-                      </div>
-                    )}
-                    
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex items-center gap-1 shrink-0">
-                        <Calendar className="w-2.5 h-2.5 text-taiz-sky/50" />
-                        <span>{formatPublishInfo(heroItem.createdAt).mDate}</span>
-                      </span>
-                      
-                      <span className="shrink-0 text-text-muted/60">{formatPublishInfo(heroItem.createdAt).hDate}</span>
-                      
-                      <span className="flex items-center gap-1 shrink-0">
-                        <Clock className="w-2.5 h-2.5 text-taiz-sky/50" />
-                        <span>{formatPublishInfo(heroItem.createdAt).mTime}</span>
-                      </span>
-                      
-                      {heroItem.author && (
-                        <span className="flex items-center gap-1 text-text-muted shrink-0 max-w-[120px] truncate">
-                          <User className="w-2.5 h-2.5 text-taiz-sky/50"/> 
-                          {heroItem.author}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+                {/* Gradient Overlay for Text Readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/80 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
+                
+                {/* Content Container at the Bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 flex flex-col justify-end">
+                   {/* Meta Row: Chip & Details */}
+                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
+                     {/* Category Chip */}
+                     <div className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md shrink-0">
+                        {heroItem.category}
+                     </div>
 
-                  <Link to={heroItem.isLeader ? `/leader/${heroItem.id}` : `/news/${heroItem.id}`} className="block hover:text-taiz-sky transition-colors group">
-                    <h2 className="font-black text-[17px] sm:text-[20px] text-text-primary leading-[1.4] mb-2.5 text-right tracking-tight group-hover:text-taiz-sky transition-colors">
-                       {heroItem.title}
-                    </h2>
-                  </Link>
-                  
-                  <div className="flex items-center mt-2">
-                    <div className="mr-auto flex items-center gap-1 text-taiz-royal shrink-0 text-[10px] sm:text-[11px] font-black bg-taiz-royal/5 w-fit px-2 py-0.5 rounded-lg border border-taiz-royal/10">
-                      <Eye className="w-3 h-3"/> 
-                      <span>{heroItem.views || 0} مشاهدة</span>
+                     {/* Breaking News Indicator if applicable */}
+                     {heroItem.isBreaking && (
+                       <div className="flex items-center gap-1 text-status-error font-bold text-[10px] sm:text-[11px] bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm shrink-0">
+                          <span className="relative flex h-1.5 w-1.5">
+                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
+                          </span>
+                          تغطية مباشرة
+                       </div>
+                     )}
+
+                     {/* Meta Details */}
+                     <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-white/90">
+                        {heroItem.author && (
+                          <span className="font-bold">{heroItem.author}</span>
+                        )}
+                        {heroItem.author && <span className="opacity-50 text-[8px]">•</span>}
+                        <span>{formatPublishInfo(heroItem.createdAt).mTime}</span>
+                        <span className="opacity-50 text-[8px]">•</span>
+                        <span>{formatPublishInfo(heroItem.createdAt).mDate}</span>
+                        <span className="opacity-50 text-[8px]">•</span>
+                        <span className="text-white/70">{formatPublishInfo(heroItem.createdAt).hDate}</span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+
+                   {/* Title */}
+                   <h2 
+                     className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3"
+                     style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                      {heroItem.title}
+                    </h2>
+
+                    {/* Views below title - aligned to far left of the card */}
+                    <div className="flex justify-start mt-2" style={{ direction: 'ltr' }}>
+                      <div className="flex items-center gap-1 text-white/80 text-[10px] sm:text-[11px] font-medium">
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>{heroItem.views || 0}</span>
+                      </div>
+                    </div>
+                 </div>
+               </Link>
             )}
 
-            {/* LIST CHANNELS */}
-            <div className="flex flex-col font-sans">
+            {/* LIST OF OTHER POSTS */}
+            <div className="flex flex-col">
               {listItems.map((item, index) => (
-                <div key={item.id} className="pt-2">
+                <div key={item.id} className="relative">
                   {item.isFeaturedLayout ? (
-                    <div className="block bg-surface-main pb-3 mb-6 font-sans mx-4 sm:mx-0">
-                      {item.imageUrl && (
-                        <Link to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} className="block group w-full relative aspect-[16/10] sm:aspect-video overflow-hidden bg-surface-card mb-4 rounded-3xl shadow-soft">
-                           <img 
-                             src={item.imageUrl} 
-                             alt={item.title} 
-                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                           />
-                           <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
-                           
-                           {/* Category Labels Attached to Center-Top (Outside) */}
-                           <CategoryBadges item={item} isHero={true} className="absolute top-2 left-1/2 -translate-x-1/2" />
-                        </Link>
-                      )}
-                      
-                      <div className="px-5 sm:px-2">
-                        {/* Info Row: News Meta (Above Title) */}
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2.5 text-[9px] sm:text-[10px] font-bold text-text-secondary/80">
-                          {item.isBreaking && (
-                            <div className="flex items-center gap-1.5 text-status-error font-extrabold select-none bg-status-error/5 px-2 py-0.5 rounded-full shrink-0">
-                              <span className="relative flex h-1.5 w-1.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
-                              </span>
-                              تغطية مباشرة
-                            </div>
-                          )}
-                          
-                          <div className="flex items-center gap-2.5">
-                            <span className="flex items-center gap-1 shrink-0">
-                              <Calendar className="w-2.5 h-2.5 text-taiz-sky/50" />
-                              <span>{formatPublishInfo(item.createdAt).mDate}</span>
-                            </span>
-                            
-                            <span className="shrink-0 text-text-muted/60">{formatPublishInfo(item.createdAt).hDate}</span>
-                            
-                            <span className="flex items-center gap-1 shrink-0">
-                              <Clock className="w-2.5 h-2.5 text-taiz-sky/50" />
-                              <span>{formatPublishInfo(item.createdAt).mTime}</span>
-                            </span>
-                            
-                            {item.author && (
-                              <span className="flex items-center gap-1 text-text-muted shrink-0 max-w-[120px] truncate">
-                                <User className="w-2.5 h-2.5 text-taiz-sky/50"/> 
-                                {item.author}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <Link to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} className="block hover:text-taiz-sky transition-colors group">
-                          <h2 className="font-black text-[15px] sm:text-[18px] text-text-primary leading-[1.4] mb-2.5 text-right tracking-tight group-hover:text-taiz-sky transition-colors">
-                             {item.title}
-                          </h2>
-                        </Link>
-                        
-                        <div className="flex items-center mt-2">
-                          <div className="mr-auto flex items-center gap-1 text-taiz-royal shrink-0 text-[10px] sm:text-[11px] font-black bg-taiz-royal/5 w-fit px-2 py-0.5 rounded-lg border border-taiz-royal/10">
-                            <Eye className="w-3 h-3"/> 
-                            <span>{item.views || 0} مشاهدة</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
                     <Link 
                       to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
-                      className="flex gap-4 p-3.5 hover:bg-surface-hover transition-all bg-surface-card rounded-2xl shadow-soft mb-4 mx-4 sm:mx-0 group relative"
+                      className="block relative w-full overflow-hidden mb-2.5 group aspect-[16/10] sm:aspect-[21/9]"
+                      style={{ direction: 'rtl', borderRadius: 0 }}
                     >
-                      {/* Category Tags Attached to Center-Top (Outside) */}
-                      <CategoryBadges item={item} isHero={false} className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                      {item.imageUrl ? (
+                        <img 
+                          src={item.imageUrl} 
+                          alt={item.title} 
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                        />
+                      ) : (
+                        <div className="absolute inset-0 w-full h-full bg-gray-200"></div>
+                      )}
+                      
+                      {/* Gradient Overlay for Text Readability */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/80 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      
+                      {/* Content Container at the Bottom */}
+                      <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 flex flex-col justify-end">
+                         {/* Meta Row: Chip & Details */}
+                         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
+                           {/* Category Chip */}
+                           <div className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md shrink-0">
+                              {item.category}
+                           </div>
 
-                      {/* Right Side News Content */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between py-1 text-right pr-0.5">
+                           {/* Breaking News Indicator if applicable */}
+                           {item.isBreaking && (
+                             <div className="flex items-center gap-1 text-status-error font-bold text-[10px] sm:text-[11px] bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm shrink-0">
+                                <span className="relative flex h-1.5 w-1.5">
+                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
+                                </span>
+                                تغطية مباشرة
+                             </div>
+                           )}
+
+                           {/* Meta Details */}
+                           <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-white/90">
+                              {item.author && (
+                                <span className="font-bold">{item.author}</span>
+                              )}
+                              {item.author && <span className="opacity-50 text-[8px]">•</span>}
+                              <span>{formatPublishInfo(item.createdAt).mTime}</span>
+                              <span className="opacity-50 text-[8px]">•</span>
+                              <span>{formatPublishInfo(item.createdAt).mDate}</span>
+                              <span className="opacity-50 text-[8px]">•</span>
+                              <span className="text-white/70">{formatPublishInfo(item.createdAt).hDate}</span>
+                              
+                              {/* Views */}
+                              <div className="flex items-center gap-1 text-white/90 mr-auto pl-2">
+                                 <Eye className="w-3 h-3"/> 
+                                 <span>{item.views || 0}</span>
+                              </div>
+                           </div>
+                         </div>
+
+                         {/* Title */}
+                         <h2 
+                           className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3"
+                           style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                            {item.title}
+                          </h2>
+                       </div>
+                     </Link>
+                  ) : (
+                    <Link
+to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
+                      className="flex items-center bg-white rounded-none shadow-sm mb-2.5 group relative transition-all hover:shadow-md h-[110px] sm:h-[130px]"
+                      style={{ direction: 'rtl' }}
+                    >
+                      {/* Right Side Compact Image */}
+                      {item.imageUrl ? (
+                        <div className="relative w-[110px] sm:w-[130px] h-full shrink-0 bg-gray-100 overflow-hidden">
+                           <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
+                           <div className="absolute bottom-0 left-0 right-0 flex justify-center z-10 pointer-events-none pb-0">
+                             <CategoryBadges item={item} isSecondary={true} className="drop-shadow-md" />
+                           </div>
+                        </div>
+                      ) : (
+                        <div className="relative w-[110px] sm:w-[130px] h-full shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center">
+                           <div className="absolute bottom-0 left-0 right-0 flex justify-center z-10 pointer-events-none pb-0">
+                             <CategoryBadges item={item} isSecondary={true} className="drop-shadow-md" />
+                           </div>
+                        </div>
+                      )}
+
+                      {/* Left Side News Content */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-center py-2 px-3 text-right">
                          <div>
-                            <h3 className="font-bold text-[12px] sm:text-[13px] text-text-primary leading-[1.35] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-3 tracking-tight">
+                            <h3 className="font-bold text-[12px] sm:text-[13px] text-gray-900 leading-[1.5] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-2" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
                               {item.title}
                             </h3>
 
                             {/* Consistently aligned metadata line */}
-                            <div className="flex items-center justify-between gap-3 text-[9px] sm:text-[10px] font-bold text-text-muted/80">
-                               {/* Date/Time/Author */}
-                               <div className="flex items-center gap-2.5 overflow-hidden">
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <Calendar className="w-2.5 h-2.5 text-taiz-sky/40" />
-                                    <span>{formatPublishInfo(item.createdAt).mDate}</span>
-                                  </div>
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <Clock className="w-2.5 h-2.5 text-taiz-sky/40" />
-                                    <span>{formatPublishInfo(item.createdAt).mTime}</span>
-                                  </div>
-                                  {item.author && (
-                                    <div className="flex items-center gap-1 shrink-0">
-                                      <User className="w-2.5 h-2.5 text-taiz-sky/40" />
-                                      <span className="text-[9px] sm:text-[10px] opacity-90">{item.author}</span>
-                                    </div>
-                                  )}
-                               </div>
-
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-[11px] font-medium text-gray-500 mt-auto">
+                               {item.author && (
+                                 <span className="text-gray-700 font-bold truncate max-w-[80px]">{item.author}</span>
+                                )}
+                               
+                               <span className="shrink-0">{formatPublishInfo(item.createdAt).mDate}</span>
+                               <span className="shrink-0">{formatPublishInfo(item.createdAt).mTime}</span>
+                               <span className="shrink-0 text-gray-400">{formatPublishInfo(item.createdAt).hDate}</span>
+                               
                                {/* Views */}
-                               <span className="flex items-center gap-1 text-taiz-royal shrink-0 bg-taiz-royal/5 px-1.5 py-0.5 rounded-md border border-taiz-royal/10">
-                                 <Eye className="w-2.5 h-2.5"/> 
+                               <span className="flex items-center gap-1 shrink-0 text-taiz-royal mr-auto">
+                                 <Eye className="w-3 h-3"/> 
                                  {item.views || 0}
                                </span>
                             </div>
                          </div>
                       </div>
-
-                      {/* Left Side Compact Image */}
-                      {item.imageUrl && (
-                        <div className="w-[110px] h-[110px] sm:w-[130px] sm:h-[130px] rounded-2xl overflow-hidden shrink-0 bg-surface-main shadow-soft">
-                           <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        </div>
-                      )}
                     </Link>
                   )}
 
                   {/* Insert Video Slider Container */}
                   {index === 1 && videos.length > 0 && (
-                    <div className="my-2 py-4 bg-surface-main px-5 relative overflow-hidden">
+                    <div className="my-2.5 py-2 px-4 sm:px-0 bg-surface-main relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-taiz-sky/5 rounded-full blur-[40px] -mt-10 -mr-10"></div>
-                      <div className="flex items-center justify-between mb-4 text-right relative z-10" style={{ direction: "rtl" }}>
+                      <div className="flex items-center justify-between mb-3 text-right relative z-10" style={{ direction: "rtl" }}>
                         <Link to="/watch" className="flex items-center gap-3 group cursor-pointer inline-flex">
                            <div className="bg-gradient-to-br from-taiz-navy to-taiz-royal p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all">
                               <MonitorPlay className="w-5 h-5 text-white" />
@@ -549,7 +555,7 @@ export function Home() {
                            <h2 className="font-black text-[18px] sm:text-[20px] select-none text-text-primary group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
                         </Link>
 
-                        <Link
+                        <Link 
                           to="/watch"
                           className="flex items-center gap-1 text-xs font-bold text-taiz-sky hover:text-taiz-navy transition-colors py-1.5 px-3 bg-taiz-sky/10 hover:bg-taiz-sky/20 rounded-full"
                         >
@@ -558,34 +564,47 @@ export function Home() {
                         </Link>
                       </div>
                       
-                      <div className="flex overflow-x-auto gap-5 pb-4 snap-x hide-scrollbar relative z-10" style={{ scrollbarWidth: 'none' }}>
+                      <div className="flex overflow-x-auto gap-4 pb-4 snap-x hide-scrollbar relative z-10" style={{ scrollbarWidth: 'none' }}>
                         {videos.map(video => (
                            <Link 
                              id={`home-video-${video.id}`}
                              key={video.id} 
                              to={video.isLeader ? `/leader/${video.id}` : `/watch/${video.id}`} 
-                             className="snap-start shrink-0 w-[280px] sm:w-[320px] group block"
+                             className="snap-start shrink-0 w-[240px] sm:w-[280px] group block"
                            >
-                              <div className="relative aspect-[16/9] rounded-3xl overflow-hidden bg-taiz-navy mb-4 shadow-medium group-hover:shadow-strong group-hover:border-taiz-sky/30 transition-all">
+                              <div className="relative h-[135px] sm:h-[155px] rounded-lg overflow-hidden bg-gray-900 shadow-sm group-hover:shadow-md transition-all border border-gray-200/50">
                                  {video.thumbnailUrl ? (
-                                    <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-700" />
+                                    <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                                  ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-taiz-navy to-taiz-royal"></div>
+                                    <div className="w-full h-full bg-gray-800"></div>
                                  )}
-                                 <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/30 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
-                                 <div className="absolute top-3 right-3 z-30">
-                                    <div className="bg-white/90 backdrop-blur-md text-taiz-navy text-[10px] font-black px-2.5 py-1 rounded-lg shadow-sm border border-white/50">
+                                 <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+                                 
+                                 <div className="absolute top-2 right-2 z-30">
+                                    <div className="bg-white/95 text-gray-900 text-[10px] sm:text-[11px] font-bold px-3 py-1 rounded-full shadow-sm">
                                        {video.category || "فيديو"}
                                     </div>
                                  </div>
+                                 
                                  <div className="absolute inset-0 flex items-center justify-center z-20">
-                                    <div className="bg-white/20 backdrop-blur-md p-3.5 rounded-full shadow-strong group-hover:scale-110 transition-transform border border-white/30">
-                                       <PlayCircle className="w-8 h-8 text-white ml-0.5" />
+                                    <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full group-hover:scale-110 transition-transform border border-white/40">
+                                       <PlayCircle className="w-6 h-6 text-white ml-0.5" />
                                     </div>
                                  </div>
-                                 <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-                                    <h4 className="text-white text-[15px] font-bold leading-[1.4] line-clamp-2 text-right group-hover:text-taiz-sky transition-colors">{video.title}</h4>
+                                 
+                                 <div className="absolute bottom-0 left-0 right-0 p-3 z-10 text-right">
+                                    <h4 className="text-white text-[13px] sm:text-[14px] font-bold leading-[1.4] line-clamp-2 transition-colors" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                                      {video.title}
+                                    </h4>
                                  </div>
+                                 
+                                 {video.duration && (
+                                   <div className="absolute bottom-2 left-2 z-30">
+                                     <span className="bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
+                                        {video.duration}
+                                     </span>
+                                   </div>
+                                 )}
                               </div>
                            </Link>
                         ))}

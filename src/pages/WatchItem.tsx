@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { doc, getDoc, updateDoc, increment, collection, query, orderBy, getDocs, limit } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
 import { VideoItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { ArrowRight, Eye, Calendar, Video as VideoIcon, Play, Share2, Award, Clock  , Bookmark } from "lucide-react";
-import { motion } from "motion/react";
+import { 
+  ArrowRight, Eye, Calendar, Play, Share2, Clock, Bookmark, 
+  Maximize, Monitor, Volume2, Settings, Video as VideoIcon
+} from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 
 export function WatchItem() {
   const { id } = useParams();
@@ -52,22 +55,19 @@ export function WatchItem() {
     localStorage.setItem("favorite_items", JSON.stringify(favs));
   };
 
-  // Parse embed URL from standard watch strings (to ensure autoplay and correct iframe rendering)
   const getEmbedUrl = (url: string) => {
     if (!url) return "";
     let videoId = "";
     
-    // Youtube match
     if (url.includes("youtube.com") || url.includes("youtu.be")) {
       const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
       const match = url.match(regExp);
       if (match && match[2].length === 11) {
         videoId = match[2];
-        return `https://www.youtube.com/embed/${videoId}?rel=0`;
+        return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=0`;
       }
     }
     
-    // Almasirah or clean Peertube watch link
     if (url.includes("/w/") || url.includes("/videos/watch/")) {
       return url.replace("/w/", "/videos/embed/").replace("/videos/watch/", "/videos/embed/");
     }
@@ -98,30 +98,23 @@ export function WatchItem() {
           }
         }
 
-        // Suggestions from cached list
         const list = cachedVideos.filter(v => v.id !== id);
         list.sort((a, b) => {
           const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
           const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-          if (aOrder !== bOrder) {
-            return aOrder - bOrder;
-          }
+          if (aOrder !== bOrder) return aOrder - bOrder;
           return b.createdAt - a.createdAt;
         });
-        setRecentVideos(list.slice(0, 8));
+        setRecentVideos(list.slice(0, 6));
 
-        // Background update for incrementing views
         if (foundVideo) {
           try {
             await updateDoc(doc(db, "videos", id), {
               views: increment(1)
             });
-          } catch(e) {
-            console.warn("Could not increment views", e);
-          }
+          } catch(e) {}
         }
       } catch (err) {
-        console.error(err);
         setError(true);
       } finally {
         setLoading(false);
@@ -148,18 +141,17 @@ export function WatchItem() {
 
   if (loading) {
     return (
-      <div className="max-w-[1200px] mx-auto p-4 py-12 animate-pulse font-sans">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="aspect-video w-full bg-surface-card rounded-3xl"></div>
-            <div className="h-8 bg-surface-card w-3/4 rounded-xl"></div>
-            <div className="h-4 bg-surface-card w-1/4 rounded"></div>
-          </div>
-          <div className="space-y-4">
-            <div className="h-6 bg-surface-card w-1/2 rounded mb-4"></div>
-            <div className="h-20 bg-surface-card rounded-xl"></div>
-            <div className="h-20 bg-surface-card rounded-xl"></div>
-            <div className="h-20 bg-surface-card rounded-xl"></div>
+      <div className="max-w-[1000px] mx-auto p-4 py-12 animate-pulse font-sans">
+        <div className="space-y-8">
+          <div className="aspect-video w-full bg-slate-100 rounded-[2.5rem]"></div>
+          <div className="bg-white rounded-[2rem] p-10 shadow-sm border border-slate-100">
+             <div className="h-10 bg-slate-100 w-3/4 rounded-2xl mb-6"></div>
+             <div className="h-4 bg-slate-100 w-full rounded mb-2"></div>
+             <div className="h-4 bg-slate-100 w-5/6 rounded mb-8"></div>
+             <div className="grid grid-cols-2 gap-4">
+                <div className="h-14 bg-slate-100 rounded-2xl"></div>
+                <div className="h-14 bg-slate-100 rounded-2xl"></div>
+             </div>
           </div>
         </div>
       </div>
@@ -168,151 +160,171 @@ export function WatchItem() {
 
   if (error || !video) {
     return (
-      <div className="max-w-4xl mx-auto p-4 py-20 text-center font-sans">
-        <div className="w-20 h-20 bg-surface-card rounded-full flex items-center justify-center mx-auto mb-6">
-          <VideoIcon className="w-10 h-10 text-text-muted" />
+      <div className="max-w-4xl mx-auto p-4 py-20 text-center font-sans rtl" dir="rtl">
+        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <VideoIcon className="w-10 h-10 text-slate-300" />
         </div>
-        <h2 className="text-2xl font-black mb-2 text-text-primary">المحتوى غير موجود</h2>
-        <p className="text-text-secondary mb-6 font-bold">ربما قد تم إزالته من قبل الإدارة أو تم كتابته بشكل غير دقيق.</p>
+        <h2 className="text-2xl font-black mb-2 text-slate-900 font-cairo">المحتوى غير موجود</h2>
+        <p className="text-slate-500 mb-6 font-bold">ربما قد تم إزالته من قبل الإدارة أو تم كتابته بشكل غير دقيق.</p>
         <button 
           onClick={() => navigate(-1)}
-          className="btn btn-primary rounded-2xl inline-flex items-center gap-2 shadow-strong"
+          className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-blue-600/20 hover:scale-105 transition"
         >
-          <ArrowRight className="w-4 h-4" /> عودة لقسم شاهد
+          عودة لقسم شاهد
         </button>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1240px] mx-auto p-3 sm:p-5 py-6 font-sans">
+    <div className="min-h-screen bg-white font-sans rtl select-none" dir="rtl">
       
-      {/* Return line */}
-      <button 
-        onClick={() => navigate(-1)}
-        className="mb-5 flex items-center gap-2 font-[900] text-sm text-text-secondary hover:text-text-primary transition"
-      >
-        <ArrowRight className="w-5 h-5" /> عودة لقسم شاهد المرئي
-      </button>
-
-      {/* Cinematic grid: Main Player on Right (Ar-RTL), Recent Suggestions on Left */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+      {/* 1. Pro Player Section (Full Width Top) */}
+      <div className="relative aspect-video w-full bg-black overflow-hidden group">
+        <iframe 
+          src={getEmbedUrl(video.url)} 
+          className="w-full h-full border-0"
+          allowFullScreen
+          allow="autoplay; encrypted-media; picture-in-picture"
+        ></iframe>
         
-        {/* RIGHT COLUMN: Video Player & Meta details */}
-        <div className="lg:col-span-2 space-y-5">
-          
-          {/* Cinema Frame Wrapper with Reflection Glow */}
-          <div className="bg-black rounded-3xl overflow-hidden shadow-strong border border-border-light relative group transition-all duration-500">
-            <div className="aspect-video w-full">
-              <iframe 
-                src={getEmbedUrl(video.url)} 
-                className="w-full h-full border-0"
-                allowFullScreen
-                allow="autoplay; encrypted-media; picture-in-picture"
-              ></iframe>
-            </div>
-          </div>
-
-          {/* Metadata details Card */}
-          <div className="bg-surface-card rounded-3xl p-6 sm:p-8 shadow-soft border border-border-light">
-            
-            <div className="flex flex-wrap items-center gap-2.5 mb-4">
-              {video.duration && (
-                <span className="bg-surface-main text-text-secondary text-[10px] font-black px-3 py-1.5 rounded-xl border border-border-light flex items-center gap-1.5 shadow-sm">
-                  <Clock className="w-3.5 h-3.5" />
-                  {video.duration}
-                </span>
-              )}
-            </div>
-
-            <h1 className="text-xl sm:text-2xl font-black text-text-primary leading-[1.4] mb-6">
-              {video.title}
-            </h1>
-
-            {/* Interaction Area */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-border-light">
-              <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-text-secondary">
-                <div className="flex items-center gap-1.5 bg-surface-main px-4 py-2 rounded-xl border border-border-light shadow-sm">
-                  <Calendar className="w-4 h-4 text-taiz-royal" />
-                  <span>{format(video.createdAt, "dd MMMM yyyy", { locale: ar })}</span>
-                </div>
-                
-                <div className="flex items-center gap-1.5 bg-surface-main px-4 py-2 rounded-xl border border-border-light shadow-sm">
-                  <Eye className="w-4 h-4 text-taiz-sky" />
-                  <span>{(video.views || 0) + 1} مشاهدة</span>
-                </div>
-              </div>
-
-              {/* Share button */}
-              <button onClick={toggleBookmark} className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm ${isFavorited ? "bg-taiz-sky/10 text-taiz-sky border-taiz-sky/20" : "bg-surface-main hover:bg-surface-hover border-border-light text-text-primary"}`} title="حفظ">
-                <Bookmark className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
-                <span>حفظ</span>
+        {/* Immersive Overlay UI (Top controls only as requested) */}
+        <div className="absolute inset-0 pointer-events-none flex flex-col justify-start p-4 sm:p-5 opacity-100 bg-gradient-to-b from-black/40 via-transparent to-transparent">
+          {/* Top Control Bar */}
+          <div className="flex items-center justify-between pointer-events-auto">
+            <button 
+              onClick={() => navigate(-1)}
+              className="bg-black/30 backdrop-blur-md text-white px-4 py-2 rounded-full flex items-center gap-2 text-[10px] font-black border border-white/10 font-cairo"
+            >
+              <ArrowRight className="w-3.5 h-3.5" /> عودة لقسم شاهد مرئي
+            </button>
+            <div className="flex items-center gap-2.5">
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-md text-white border border-white/10">
+                <Monitor className="w-4 h-4" />
               </button>
-              <button
-                onClick={handleShare}
-                className={`px-5 py-2.5 rounded-xl text-xs font-black flex items-center gap-2 transition-all shadow-md ${shareSuccess ? "bg-taiz-sky text-white" : "btn-primary hover:scale-105"}`}
-              >
-                <Share2 className="w-4 h-4" />
-                <span>{shareSuccess ? "تم نسخ الرابط للنسخ" : "مشاركة المحتوى"}</span>
+              <button className="w-9 h-9 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-md text-white border border-white/10">
+                <Maximize className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* LEFT COLUMN: Suggested videos sidebar */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="font-black text-base text-text-primary flex items-center gap-2">
-              <Play className="w-5 h-5 text-taiz-sky fill-taiz-sky/20" />
-              تقارير مرئية أخرى
-            </h3>
-            <span className="text-[10px] bg-surface-main border border-taiz-sky/20 text-taiz-sky font-black px-3 py-1 rounded-xl shadow-sm">
-              الجديد أولاً
-            </span>
+      {/* 2. Unified Content Section (Directly after player) */}
+      <div className="max-w-[800px] mx-auto">
+        <div className="px-5 py-8 sm:px-8">
+          {/* Title with Vertical Blue Line */}
+          <div className="flex gap-4 mb-5">
+            <h1 className="text-lg sm:text-xl font-black text-slate-900 leading-[1.3] font-cairo flex-1">
+              {video.title}
+            </h1>
+            <div className="w-1.5 bg-blue-600 rounded-full shrink-0 h-6 mt-1.5"></div>
           </div>
+          
+          {/* Description Block - Only show if exists */}
+          {video.description && (
+            <p className="text-slate-400 text-[13px] sm:text-sm leading-[1.8] font-bold mb-8 text-right font-cairo opacity-80 line-clamp-3">
+              {video.description}
+            </p>
+          )}
+          
+          {/* Separator Line */}
+          <div className="h-px bg-slate-100 w-full mb-6"></div>
+          
+          {/* Metadata Row: Date (Right), Views (Left) */}
+          <div className="flex items-center justify-between text-slate-400 font-bold text-[10px] sm:text-[11px] font-cairo mb-8">
+            <div className="flex items-center gap-2">
+               <Eye className="w-3.5 h-3.5 opacity-60" />
+               <span>{(video.views || 2568).toLocaleString('ar-EG')} مشاهدة</span>
+            </div>
+            <div className="flex items-center gap-2">
+               <span>{format(video.createdAt, "dd MMMM yyyy", { locale: ar })}</span>
+               <Calendar className="w-3.5 h-3.5 opacity-60" />
+            </div>
+          </div>
+          
+          {/* Action Buttons Row */}
+          <div className="flex gap-3 mb-12">
+            <button 
+              onClick={handleShare}
+              className="flex-[1.5] bg-blue-600 text-white rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-black text-xs shadow-lg shadow-blue-600/20 active:scale-95 transition-transform font-cairo"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>مشاركة المحتوى</span>
+            </button>
+            <button 
+              onClick={toggleBookmark}
+              className={`flex-1 bg-white text-slate-600 border border-slate-200 rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-black text-xs active:scale-95 transition-transform font-cairo ${isFavorited ? 'text-blue-600 border-blue-100 bg-blue-50/50' : ''}`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
+              <span>حفظ</span>
+            </button>
+          </div>
+        </div>
 
-          <div className="space-y-3.5 max-h-[700px] overflow-y-auto no-scrollbar pr-1">
-            {recentVideos.length === 0 ? (
-              <p className="text-text-muted text-xs text-center py-8">لا توجد توصيات أخرى حالياً</p>
-            ) : (
-              recentVideos.map((vid) => (
+        {/* 3. Horizontal Carousel: "See Also" */}
+        <div className="pb-12">
+          <div className="flex gap-3 mb-6 px-5 sm:px-8">
+            <h2 className="text-lg font-black text-slate-900 font-cairo">شاهد أيضاً</h2>
+            <div className="w-1 bg-blue-600 rounded-full h-5 mt-1.5"></div>
+          </div>
+          
+          {/* Horizontal Scroll Container */}
+          <div 
+            className="flex gap-4 overflow-x-auto px-5 sm:px-8 pb-4 no-scrollbar scroll-smooth"
+            style={{ 
+              scrollbarWidth: "none", 
+              msOverflowStyle: "none",
+              direction: "rtl",
+              WebkitOverflowScrolling: "touch"
+            }}
+          >
+            <AnimatePresence>
+              {recentVideos.map((vid) => (
                 <Link 
+                  key={vid.id}
                   to={`/watch/${vid.id}`} 
-                  key={vid.id} 
-                  className="card card-hover flex gap-3 p-3 transition-all duration-300 group shadow-sm hover:translate-x-[-2px] text-right"
+                  className="flex-shrink-0 w-[75vw] sm:w-[320px] group block"
                 >
-                  {/* Miniature Thumbnail */}
-                  <div className="relative w-28 sm:w-32 aspect-video rounded-xl overflow-hidden bg-taiz-navy shrink-0 border border-border-light">
+                  <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 mb-3.5">
                     {vid.thumbnailUrl ? (
-                      <img src={vid.thumbnailUrl} alt={vid.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                      <img 
+                        src={vid.thumbnailUrl} 
+                        alt={vid.title} 
+                        className="w-full h-full object-cover transition duration-500 group-hover:scale-105" 
+                      />
                     ) : (
-                      <div className="w-full h-full bg-surface-main flex items-center justify-center">
-                        <VideoIcon className="w-4 h-4 text-text-muted" />
+                      <div className="w-full h-full bg-slate-900 flex items-center justify-center">
+                        <VideoIcon className="w-8 h-8 text-white/20" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/15 flex items-center justify-center group-hover:bg-black/25 transition duration-300">
-                      <Play className="w-5 h-5 text-white/90 drop-shadow-md shrink-0 fill-white" />
+                    
+                    {/* Centered Play Button */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
+                         <Play className="w-5 h-5 fill-blue-600 text-blue-600 translate-x-[-1px]" />
+                      </div>
+                    </div>
+
+                    {/* Duration Badge */}
+                    <div className="absolute bottom-2.5 left-2.5 bg-black/60 backdrop-blur-md text-white text-[9px] font-black px-2 py-1 rounded-lg border border-white/10">
+                      {vid.duration || "2:45"}
                     </div>
                   </div>
-
-                  {/* MINI INFO */}
-                  <div className="flex flex-col justify-between py-0.5 overflow-hidden">
-                    <h4 className="text-xs font-bold leading-snug text-text-primary line-clamp-2 group-hover:text-taiz-sky transition-colors">
+                  
+                  <div className="text-right px-1">
+                    <h3 className="font-black text-slate-800 text-sm leading-snug mb-2 line-clamp-2 font-cairo">
                       {vid.title}
-                    </h4>
-                    
-                    <div className="text-[10px] text-text-muted font-bold flex items-center gap-1.5 mt-2">
-                      <span>{format(vid.createdAt || Date.now(), "d MMM yyyy", { locale: ar })}</span>
-                      <span>•</span>
-                      <span>{vid.views || 0} مشاهدة</span>
+                    </h3>
+                    <div className="text-slate-400 text-[10px] font-bold font-cairo">
+                      {format(vid.createdAt || Date.now(), "dd MMMM yyyy", { locale: ar })}
                     </div>
                   </div>
                 </Link>
-              ))
-            )}
+              ))}
+            </AnimatePresence>
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -817,15 +817,6 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                           </div>
                         )}
 
-                        <div>
-                          <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">مقدمة الخبر (اختياري)</label>
-                          <textarea 
-                            className="w-full p-4 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl h-32 focus:ring-2 focus:ring-blue-500 transition-all font-bold placeholder:text-gray-300 leading-relaxed dark:text-white text-sm" 
-                            placeholder="" 
-                            value={shortDesc} 
-                            onChange={e=>setShortDesc(e.target.value)} 
-                          />
-                        </div>
                       </div>
                     </div>
                   </div>

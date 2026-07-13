@@ -6,10 +6,11 @@ import { doc, getDoc, onSnapshot } from "firebase/firestore";
 interface CategoryBadgesProps {
   item: NewsItem;
   isHero?: boolean;
+  isSecondary?: boolean;
   className?: string;
 }
 
-export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = false, className = "" }) => {
+export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = false, isSecondary = false, className = "" }) => {
   const [categories, setCategories] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -42,18 +43,34 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = f
         const color = categories[c] || "#049EDF";
         const isPrimary = i === 0;
         
+        if (isSecondary) {
+          return (
+            <span
+              key={c}
+              className="whitespace-nowrap font-black transition-all px-1.5 py-[1px] rounded-t-[4px] rounded-b-none text-[7px] sm:text-[7.5px] shadow-sm tracking-wide"
+              style={{
+                backgroundColor: color,
+                color: "white",
+                textShadow: "0 1px 1px rgba(0,0,0,0.4)"
+              }}
+            >
+              {c}
+            </span>
+          );
+        }
+
         return (
           <span 
             key={c}
-            className={`whitespace-nowrap font-black transition-all shadow-sm ${
+            className={`whitespace-nowrap font-black transition-all ${
               isPrimary 
-                ? (isHero ? "text-white px-4 py-1.5 rounded-xl text-[11px] shadow-md" : "bg-white dark:bg-gray-800 border px-3 py-0.5 rounded-full text-[9px]")
-                : (isHero ? "bg-white/90 dark:bg-gray-800/90 text-gray-700 dark:text-gray-300 px-2.5 py-1 rounded-lg text-[9px]" : "bg-gray-50/50 dark:bg-gray-900/50 border px-2 py-0.5 rounded-lg text-[8px] opacity-90")
+                ? (isHero ? "text-white px-4 py-1.5 rounded-xl text-[11px] shadow-md" : "bg-white border border-gray-200 px-3 py-1 rounded-full text-[10px] shadow-sm")
+                : (isHero ? "bg-white/90 text-gray-700 px-2.5 py-1 rounded-lg text-[9px]" : "bg-gray-50/50 border border-gray-100 px-2 py-0.5 rounded-lg text-[8px] opacity-90")
             }`}
             style={{ 
               backgroundColor: isPrimary && isHero ? color : undefined,
               color: isPrimary ? (isHero ? "white" : color) : (isHero ? undefined : color),
-              borderColor: isHero ? "transparent" : `${color}${isPrimary ? '4D' : '26'}`
+              borderColor: isPrimary && !isHero ? "#e5e7eb" : isHero ? "transparent" : `${color}26`
             }}
           >
             {c}

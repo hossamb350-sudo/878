@@ -1819,18 +1819,6 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
 
                 <div>
                   <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-3">
-                    مقدمة الخبر (إختياري)
-                  </label>
-                  <textarea
-                    className="w-full p-4 bg-gray-50 dark:bg-gray-900 border-none rounded-2xl h-24 focus:ring-2 focus:ring-blue-500 transition-all placeholder:text-gray-300 font-bold"
-                    placeholder="يمكنك هنا كتابة مقدمة الخبر ليظهر بشكل متميز"
-                    value={shortDesc}
-                    onChange={(e) => setShortDesc(e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-3">
                     نص الخبر الكامل
                   </label>
                   <div className="mb-3 flex flex-wrap gap-3">
@@ -2093,6 +2081,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
 
 function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [url, setUrl] = useState("");
   const [thumb, setThumb] = useState("");
   const [category, setCategory] = useState("");
@@ -2159,6 +2148,7 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
 
   const resetForm = () => {
     setTitle("");
+    setDescription("");
     setUrl("");
     setThumb("");
     setCategory("");
@@ -2187,6 +2177,7 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
 
       const payload = {
         title,
+        description: description.trim(),
         url,
         thumbnailUrl: thumb,
         category: trimmedCategory,
@@ -2239,6 +2230,7 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
 
   const handleEdit = (video: VideoItem) => {
     setTitle(video.title || "");
+    setDescription(video.description || "");
     setUrl(video.url || "");
     setThumb(video.thumbnailUrl || "");
     setCategory(video.category || "");
@@ -2284,6 +2276,18 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
             placeholder="ادخل عنواناً جذاباً وواضحاً للفيديو هنا..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+
+        <div className="space-y-1">
+          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+            وصف الفيديو:
+          </label>
+          <textarea
+            className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm h-24"
+            placeholder="ادخل وصفاً مختصرًا للفيديو هنا (اختياري)..."
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </div>
 

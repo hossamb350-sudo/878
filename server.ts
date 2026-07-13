@@ -9,16 +9,33 @@ import FormData from "form-data";
 import ImageKit from "imagekit";
 import cors from "cors";
 import webPush from "web-push";
+import { GoogleGenAI, Type } from "@google/genai";
+import { initializeApp, getApps, App } from "firebase-admin/app";
+import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { IMAGEKIT_CONFIG } from "./src/config/imagekitConfig";
 
 dotenv.config();
+
+// Load Firebase Config
+const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "firebase-applet-config.json"), "utf8"));
+
+// Initialize Firebase Admin
+let adminApp: App;
+if (getApps().length === 0) {
+  adminApp = initializeApp({
+    projectId: firebaseConfig.projectId,
+  });
+} else {
+  adminApp = getApps()[0];
+}
+const db = getFirestore(adminApp);
 
 const app = express();
 const PORT = 3000;
 
 // Configure web-push details
-const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BI-ruJjPREZhD0Ca5xUI2s-C0YtIlmajVGs5S_w0YV_VllOfG3e-3PKOdL7mh6qG1OCb41tuo5ryo5DJ6jscBqQ";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "r9edFBZ6cwoxAiFowbq4rXo9mWl6ZOEtDRokBB5yv_k";
+const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BAD_LAWZHGtCnTB1VARbKNd8FXtWmMdDersfNojTktkSWPicaZcwHdgdM5nQbmVl9GkujacJdrwJ9HYqWEYhDHM";
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "_BlmO5np9URh_YvXCCuY-FpLoAXZ4lHiiV1wapAfeFg";
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:hossamb350@gmail.com";
 
 try {
@@ -43,11 +60,37 @@ const imagekit = new ImageKit({
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || IMAGEKIT_CONFIG.urlEndpoint,
 });
 
+// Initialize Gemini
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  httpOptions: {
+    headers: {
+      'User-Agent': 'aistudio-build',
+    }
+  }
+});
+
 app.use(express.json({ limit: "50mb" }));
 
 // Health check route
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+// Quran Data API
+app.get("/api/quran-data", (req, res) => {
+  const filePath = path.join(process.cwd(), "public/quranData.json");
+  if (fs.existsSync(filePath)) {
+    try {
+      const content = fs.readFileSync(filePath, "utf8");
+      const data = JSON.parse(content);
+      return res.json(data);
+    } catch (e) {
+      console.error("Error parsing quranData.json:", e);
+      return res.status(500).json({ error: "Failed to parse Quran data" });
+    }
+  }
+  res.status(404).json({ error: "Quran data not found" });
 });
 
 // Request logging middleware
@@ -163,6 +206,129 @@ app.post("/api/quran-data", async (req, res) => {
   } catch (error) {
     console.error("Error saving Quran data:", error);
     res.status(500).json({ error: "فشل في حفظ بيانات هدي القرآن" });
+  }
+});
+
+// AI Generation route for Series Descriptions
+app.post("/api/admin/generate-series-descriptions", async (req, res) => {
+  console.log("Environment keys:", Object.keys(process.env));
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("GEMINI_API_KEY is missing from environment");
+    return res.status(500).json({ error: "مفتاح الذكاء الاصطناعي مفقود", keys: Object.keys(process.env) });
+  }
+
+  const filePath = path.join(process.cwd(), "public/quranData.json");
+  
+  try {
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: "ملف البيانات غير موجود" });
+    }
+
+    const content = fs.readFileSync(filePath, "utf8");
+    const data = JSON.parse(content);
+    const { series, lessons } = data;
+
+    if (!series || !Array.isArray(series)) {
+      return res.status(400).json({ error: "تنسيق البيانات غير صحيح" });
+    }
+
+    console.log(`Starting AI description generation for ${series.length} series...`);
+
+    const updatedSeries = await Promise.all(series.map(async (s: any) => {
+      console.log(`Processing series: ${s.title} (${s.id})`);
+      // Find related lessons
+      const relatedLessons = lessons.filter((l: any) => l.seriesId === s.id);
+      if (relatedLessons.length === 0) {
+        console.log(`No lessons found for series ${s.id}`);
+        return s;
+      }
+
+      const lessonTitles = relatedLessons.map((l: any) => l.title).join("، ");
+      const prompt = `أنت خبير في محتوى هدي القرآن الكريم. بناءً على عناوين الدروس التالية التابعة لسلسلة بعنوان "${s.title}":
+      
+      عناوين الدروس:
+      ${lessonTitles}
+      
+      اكتب وصفاً جذاباً ومختصراً جداً (بين 15 إلى 25 كلمة) لهذه السلسلة باللغة العربية. ركز على الفائدة الإيمانية والتربوية للمحتوى. لا تزد عن 25 كلمة.`;
+
+      try {
+        console.log(`Calling Gemini for series ${s.id}...`);
+        const response = await ai.models.generateContent({
+          model: "gemini-1.5-flash",
+          contents: prompt,
+        });
+
+        const description = response.text?.trim() || s.description;
+        console.log(`Generated description for ${s.id}: ${description?.substring(0, 50)}...`);
+        
+        // Update in Firestore
+        try {
+          console.log(`Updating Firestore for series ${s.id}...`);
+          await db.collection("quran_series").doc(s.id).update({
+            description: description,
+            updatedAt: FieldValue.serverTimestamp()
+          });
+          console.log(`Firestore updated for series ${s.id}`);
+        } catch (fsErr: any) {
+          console.error(`Firestore update failed for series ${s.id}:`, fsErr.message);
+        }
+
+        return { ...s, description };
+      } catch (err: any) {
+        console.error(`Error generating description for series ${s.id}:`, err.message);
+        return s;
+      }
+    }));
+
+    data.series = updatedSeries;
+    
+    // Save locally
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+    
+    // Sync with GitHub if configured
+    const { token, owner, repo, branch } = getGitHubConfig();
+    if (token && owner && repo) {
+      const base64Content = Buffer.from(JSON.stringify(data, null, 2), "utf8").toString("base64");
+      const url = `https://api.github.com/repos/${owner}/${repo}/contents/public/quranData.json`;
+      
+      try {
+        let sha: string | undefined;
+        const getRes = await fetch(`${url}?ref=${branch}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.v3+json",
+            "User-Agent": "Taiz-Platform-App",
+          },
+        });
+        if (getRes.ok) {
+          const getJson = await getRes.json();
+          sha = getJson.sha;
+        }
+
+        await fetch(url, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.v3+json",
+            "Content-Type": "application/json",
+            "User-Agent": "Taiz-Platform-App",
+          },
+          body: JSON.stringify({
+            message: "تحديث أوصاف السلاسل عبر الذكاء الاصطناعي",
+            content: base64Content,
+            sha,
+            branch,
+          }),
+        });
+      } catch (ghErr) {
+        console.error("GitHub sync error for AI descriptions:", ghErr);
+      }
+    }
+
+    res.json({ success: true, updatedCount: series.length });
+  } catch (error) {
+    console.error("Error in generate-series-descriptions:", error);
+    res.status(500).json({ error: "فشل في توليد الأوصاف عبر الذكاء الاصطناعي" });
   }
 });
 

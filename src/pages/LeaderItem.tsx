@@ -18,7 +18,12 @@ import {
   FileText,
   Share2, Bookmark, 
   BookOpen, 
-  Type
+  Type,
+  Sun,
+  Moon,
+  Plus,
+  Minus,
+  Clock
 } from "lucide-react";
 import { motion } from "motion/react";
 
@@ -27,7 +32,7 @@ const getEmbedUrl = (url: string) => {
   if (!url) return "";
   const cleanUrl = url.trim();
 
-  // Youtube match (including watch, shorts, share, embed, mobile, play lists)
+  // Youtube match
   if (cleanUrl.includes("youtube.com") || cleanUrl.includes("youtu.be")) {
     if (cleanUrl.includes("/embed/")) {
       return cleanUrl;
@@ -79,19 +84,19 @@ export function LeaderItem() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   
-  // Custom reading preferences (persistent via localStorage)
+  // Custom reading preferences
   const [fontSize, setFontSize] = useState<number>(() => {
     const saved = localStorage.getItem("leader_font_size");
     return saved ? parseInt(saved, 10) : 18;
   });
   
-  const [readingTheme, setReadingTheme] = useState<"default" | "sepia" | "night">(() => {
-    const saved = localStorage.getItem("leader_reading_theme");
-    return (saved as any) || "default";
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return document.documentElement.classList.contains("dark");
   });
 
   const [copied, setCopied] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
 
   useEffect(() => {
     if (content) {
@@ -104,6 +109,19 @@ export function LeaderItem() {
       }
     }
   }, [content]);
+
+  const toggleDarkMode = () => {
+    const current = document.documentElement.classList.contains("dark");
+    if (current) {
+      document.documentElement.classList.remove("dark");
+      setIsDarkMode(false);
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.classList.add("dark");
+      setIsDarkMode(true);
+      localStorage.setItem("theme", "dark");
+    }
+  };
 
   const toggleBookmark = () => {
     if (!content) return;
@@ -125,19 +143,11 @@ export function LeaderItem() {
     }
     localStorage.setItem("favorite_items", JSON.stringify(favs));
   };
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const cardRef = useRef<HTMLDivElement>(null);
 
-  // Save preferences to localStorage
   useEffect(() => {
     localStorage.setItem("leader_font_size", fontSize.toString());
   }, [fontSize]);
 
-  useEffect(() => {
-    localStorage.setItem("leader_reading_theme", readingTheme);
-  }, [readingTheme]);
-
-  // Fetch document & Views Incrementation
   useEffect(() => {
     if (!id) return;
     
@@ -150,7 +160,6 @@ export function LeaderItem() {
           const itemData = { id: docSnap.id, ...docSnap.data() } as LeaderContent;
           setContent(itemData);
           
-          // Increment views
           try {
             await updateDoc(docRef, {
               views: increment(1)
@@ -172,17 +181,14 @@ export function LeaderItem() {
     fetchLeaderContent();
   }, [id]);
 
-  // Track scrolling progress
   useEffect(() => {
     const handleScroll = () => {
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
       if (totalHeight > 0) {
-        const currentProgress = (window.scrollY / totalHeight) * 100;
-        setScrollProgress(currentProgress);
+        setScrollProgress((window.scrollY / totalHeight) * 100);
       }
     };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -207,21 +213,18 @@ export function LeaderItem() {
       }).catch(err => console.debug("Share failed", err));
     } else {
       handleCopyText();
-      alert("تم نسخ رابط وتفاصيل المادة لمشاركتها!");
     }
   };
 
   if (loading) {
     return (
-      <div className="max-w-[800px] mx-auto p-4 py-12 animate-pulse font-sans">
-        <div className="h-4 bg-surface-card w-16 rounded mb-8"></div>
-        <div className="h-10 bg-surface-card w-4/5 rounded-xl mb-6"></div>
-        <div className="h-6 bg-surface-card w-1/3 rounded mb-10"></div>
+      <div className="max-w-3xl mx-auto p-4 pt-10 space-y-6 animate-pulse">
+        <div className="h-4 bg-surface-card rounded-lg w-1/4"></div>
+        <div className="h-10 bg-surface-card rounded-xl w-full"></div>
+        <div className="h-64 sm:h-96 bg-surface-card rounded-3xl w-full shadow-soft"></div>
         <div className="space-y-4">
-          <div className="h-4 bg-surface-card w-full rounded"></div>
-          <div className="h-4 bg-surface-card w-11/12 rounded"></div>
-          <div className="h-4 bg-surface-card w-10/12 rounded"></div>
-          <div className="h-4 bg-surface-card w-full rounded"></div>
+           <div className="h-4 bg-surface-card rounded-lg w-full"></div>
+           <div className="h-4 bg-surface-card rounded-lg w-full"></div>
         </div>
       </div>
     );
@@ -229,36 +232,51 @@ export function LeaderItem() {
 
   if (error || !content) {
     return (
-      <div className="max-w-[800px] mx-auto p-4 py-20 text-center font-sans">
-        <div className="w-20 h-20 bg-surface-card rounded-full flex items-center justify-center mx-auto mb-6">
-          <Quote className="w-10 h-10 text-text-muted" />
+      <div className="max-w-3xl mx-auto p-4 py-20 text-center font-ibm rtl" dir="rtl">
+        <div className="w-20 h-20 bg-stone-100 dark:bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Quote className="w-10 h-10 text-stone-300" />
         </div>
-        <h2 className="text-2xl font-black mb-2 text-text-primary">المادة غير موجودة</h2>
-        <p className="text-text-secondary mb-6 font-bold">قد يكون تم سحبها أو أن الرابط غير دقيق.</p>
+        <h2 className="text-2xl font-bold mb-2 text-stone-900 dark:text-white font-cairo">المادة غير موجودة</h2>
         <button 
           onClick={() => navigate(-1)}
-          className="btn btn-primary rounded-2xl inline-flex items-center gap-2 shadow-strong"
+          className="bg-red-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition mt-4 font-cairo"
         >
-          <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
+          العودة لقسم السيد القائد
         </button>
       </div>
     );
   }
 
-  // Calculate stats
-  const wordCount = content.content.split(/\s+/).filter(Boolean).length;
-  const readingTime = Math.ceil(wordCount / 170); // Estimating 170 words per minute for Arabic
+  const formatPublishInfo = (timestamp: number) => {
+    const d = new Date(timestamp);
+    const mDate = format(d, "dd MMMM yyyy'م'", { locale: ar });
+    const mTime = format(d, "hh:mm a", { locale: ar });
+    
+    let hDate = "";
+    try {
+      const formatted = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      }).format(d).trim();
+      hDate = formatted.endsWith("هـ") ? formatted : `${formatted} هـ`;
+    } catch (e) {
+      hDate = "";
+    }
+    
+    return { mDate, mTime, hDate };
+  };
 
-  // Render paragraph function highlighting Quranic quotes ﴿﴾ with golden style
+  const { mDate, mTime, hDate } = formatPublishInfo(content.createdAt);
+
   const renderParagraph = (text: string, idx: number) => {
     if (!text.trim()) return null;
 
-    // Detect if statement is a block quote or section header
     const isSubHeader = text.startsWith("###") || text.startsWith("##") || text.split(" ").slice(0, 3).join(" ").includes("المحور") || text.startsWith("-");
     if (isSubHeader) {
       const cleanText = text.replace(/^[#-\s]+/, "");
       return (
-        <h3 key={idx} className="text-xl md:text-2xl font-black text-taiz-royal mt-8 mb-4 border-r-4 border-taiz-royal pr-3 leading-relaxed">
+        <h3 key={idx} className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mt-8 mb-4 border-r-4 border-red-600 pr-3 leading-relaxed font-cairo">
           {cleanText}
         </h3>
       );
@@ -277,7 +295,7 @@ export function LeaderItem() {
       parts.push(
         <span 
           key={`q-${idx}-${matchIndex}`} 
-          className="text-[#B8860B] dark:text-[#DAA520] font-serif font-black bg-[#DAA520]/[0.05] px-1.5 py-0.5 rounded border border-[#DAA520]/20 inline-block leading-loose text-center mx-1 shadow-sm"
+          className="text-[#B8860B] font-serif font-black bg-[#DAA520]/[0.05] px-1.5 py-0.5 rounded inline-block leading-loose text-center mx-1"
           style={{ fontSize: `${fontSize + 2}px` }}
         >
           ﴿ {match[1]} ﴾
@@ -293,7 +311,7 @@ export function LeaderItem() {
     return (
       <p 
         key={idx} 
-        className="leading-extra-relaxed md:leading-loose text-justify pb-5 tracking-wide antialiased"
+        className="mb-4 leading-relaxed text-justify font-ibm"
         style={{ fontSize: `${fontSize}px` }}
       >
         {parts.length > 0 ? parts : text}
@@ -301,209 +319,240 @@ export function LeaderItem() {
     );
   };
 
-  // Determine paper background color theme
-  const getThemeClass = () => {
-    switch (readingTheme) {
-      case "sepia":
-        return "bg-[#FAF5EB] text-[#2E251E] border-[#EADFCB] dark:bg-[#FAF5EB] dark:text-[#2E251E]";
-      case "night":
-        return "bg-[#0B0F19] text-[#CBD5E1] border-slate-900";
-      default:
-        return "bg-surface-main text-text-primary border-border-light";
-    }
-  };
-
   return (
-    <div className="max-w-[840px] mx-auto p-4 py-8 font-sans transition-colors relative">
-      
-      {/* Sticky Scroll Progress bar at the top */}
-      <div className="fixed top-0 left-0 right-0 h-1.5 bg-surface-main z-50">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="max-w-3xl mx-auto w-full bg-white dark:bg-stone-900 min-h-screen font-ibm transition-colors duration-300 relative"
+      dir="rtl"
+    >
+      {/* Reading Progress Indicator */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-100/10 dark:bg-stone-800/20 z-50">
         <div 
-          className="h-full bg-gradient-to-l from-taiz-navy to-taiz-sky transition-all duration-100" 
+          className="h-full bg-taiz-sky transition-all duration-75 shadow-sm" 
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
-      <button 
-        onClick={() => navigate(-1)}
-        className="mb-6 flex items-center gap-2 font-black text-sm text-text-secondary hover:text-text-primary transition"
-      >
-        <ArrowRight className="w-4 h-4" /> عودة لقسم السيد القائد
-      </button>
-
-      {/* Hero Showcase Article Card */}
-      <div className={`rounded-3xl border shadow-soft p-5 md:p-10 transition-colors duration-300 relative overflow-hidden ${getThemeClass()}`} ref={cardRef}>
-        
-        {/* Decorative Quote Mark in background */}
-        <div className="absolute left-6 top-6 opacity-5 pointer-events-none select-none">
-          <Quote className="w-32 h-32 rotate-180" />
-        </div>
-
-        {/* Article Header info */}
-        <div className="relative z-10 space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider bg-taiz-royal/10 text-taiz-royal px-3 py-1 rounded-full border border-taiz-royal/20">
-              {content.type === "video" ? <PlayCircle className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
-              {content.type === "video" ? "عرض مرئي" : "خطابات ودروس"}
-            </span>
+      <article className="w-full">
+        {/* Edge-to-Edge Header */}
+        {content.type === "video" ? (
+          <div className="w-full relative aspect-video bg-black overflow-hidden">
+            <iframe 
+              src={getEmbedUrl(content.content)} 
+              className="w-full h-full border-0"
+              allowFullScreen
+              allow="autoplay; encrypted-media; picture-in-picture"
+            ></iframe>
+            
+            <button 
+              onClick={() => navigate(-1)} 
+              className="absolute top-6 right-6 z-10 flex items-center justify-center bg-black/60 text-white rounded-full p-3 hover:bg-black/80 transition-all cursor-pointer border border-white/10 shadow-lg"
+            >
+              <ArrowRight className="w-5 h-5 text-white" />
+            </button>
           </div>
+        ) : (
+          <div className="w-full relative aspect-[4/3] sm:aspect-video md:aspect-[16/9] max-h-[500px] bg-stone-950 overflow-hidden">
+            {content.thumbnailUrl ? (
+              <img 
+                src={content.thumbnailUrl} 
+                alt={content.title} 
+                className="w-full h-full object-cover select-none" 
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-tr from-stone-950 via-slate-900 to-stone-900 flex items-center justify-center">
+                <Quote className="w-32 h-32 text-white/10" />
+              </div>
+            )}
+            
+            <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-0 pointer-events-none" />
+            
+            <button 
+              onClick={() => navigate(-1)} 
+              className="absolute top-6 right-6 z-10 flex items-center justify-center bg-black/60 text-white rounded-full p-3 hover:bg-black/80 transition-all cursor-pointer border border-white/10 shadow-lg"
+            >
+              <ArrowRight className="w-5 h-5 text-white" />
+            </button>
 
-          <h1 className="text-2xl md:text-3.5xl font-extrabold leading-snug tracking-tight drop-shadow-sm mt-2">
-            {content.title}
-          </h1>
-
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs font-bold text-text-secondary pb-5 border-b border-border-light">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="w-4 h-4 text-taiz-royal" />
-              <span>{format(content.createdAt, "dd MMMM yyyy", { locale: ar })}</span>
+            <div className="absolute top-6 left-6 z-10 flex items-center gap-3">
+              <button 
+                onClick={shareText} 
+                className="flex items-center justify-center bg-black/60 text-white rounded-full p-3 hover:bg-black/80 transition-all cursor-pointer border border-white/10 shadow-lg"
+              >
+                <Share2 className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={toggleBookmark} 
+                className={`flex items-center justify-center rounded-full p-3 transition-all cursor-pointer border shadow-lg ${isFavorited ? "text-[#00e5ff] bg-black/70 border-[#00e5ff]/30" : "text-white bg-black/60 hover:bg-black/80 border-white/10"}`}
+              >
+                <Bookmark className={`w-5 h-5 ${isFavorited ? "fill-[#00e5ff]" : ""}`} />
+              </button>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-taiz-sky" />
-              <span>{(content.views || 0) + 1} مشاهدة مستمرة</span>
-            </div>
-          </div>
-        </div>
 
-        {content.thumbnailUrl && (
-          <div className="w-full aspect-video md:max-h-[380px] rounded-3xl overflow-hidden bg-surface-card border border-border-light relative shadow-md my-6 z-10">
-            <img 
-              src={content.thumbnailUrl} 
-              alt={content.title} 
-              className="w-full h-full object-cover"
-              loading="eager"
-              referrerPolicy="no-referrer"
-            />
-          </div>
-        )}
-
-        {/* Elegant Reader Controller Box (Font Adjustment and Color Theme Selector) */}
-        {content.type !== "video" && (
-          <div className="bg-surface-card border border-border-light p-3.5 sm:p-4 rounded-2xl flex flex-wrap gap-4 items-center justify-between my-6 relative z-10 shadow-inner">
-            <div className="flex items-center gap-3.5">
-              <span className="text-[11px] font-black text-text-secondary flex items-center gap-1">
-                <Type className="w-3.5 h-3.5" />
-                حجم الخط:
+            <div className="absolute bottom-6 left-0 right-0 px-6 sm:px-8 z-10 flex flex-col items-start text-right pb-2">
+              <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 shadow-md font-cairo">
+                محاضرات ودروس
               </span>
-              <div className="flex items-center gap-1 bg-surface-main p-1.5 rounded-xl border border-border-light">
-                <button 
-                  onClick={() => setFontSize(prev => Math.max(14, prev - 2))}
-                  className="p-1 px-2.5 hover:bg-surface-hover rounded-lg text-xs font-bold transition-all disabled:opacity-40"
-                  disabled={fontSize <= 14}
-                  title="تصغير الخط"
-                >
-                  <ZoomOut className="w-3.5 h-3.5 inline" />
-                </button>
-                <span className="text-xs font-black min-w-[24px] text-center">{fontSize}</span>
-                <button 
-                  onClick={() => setFontSize(prev => Math.min(28, prev + 2))}
-                  className="p-1 px-2.5 hover:bg-surface-hover rounded-lg text-xs font-bold transition-all disabled:opacity-40"
-                  disabled={fontSize >= 28}
-                  title="تكبير الخط"
-                >
-                  <ZoomIn className="w-3.5 h-3.5 inline" />
-                </button>
+              
+              <h1 
+                className="font-bold text-white leading-normal drop-shadow mb-3 tracking-normal max-w-full font-cairo"
+                style={{ fontSize: `${fontSize}px` }}
+              >
+                {content.title}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-white/80 font-normal font-ibm">
+                <span>{mDate}</span>
+                <span className="text-white/30">|</span>
+                <span>{hDate}</span>
+                <span className="text-white/30">|</span>
+                <span>{mTime}</span>
+                <span className="text-white/30">|</span>
+                <span className="text-[#00e5ff] flex items-center gap-1 font-semibold animate-pulse">
+                  <Eye className="w-3 h-3 text-[#00e5ff] fill-none shrink-0" />
+                  <span>{(content.views || 0) + 1} مشاهدة</span>
+                </span>
               </div>
-            </div>
-
-            {/* Reading Background Themes */}
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => setReadingTheme("default")}
-                className={`w-6 h-6 rounded-full bg-white border border-border-light flex items-center justify-center transition ${readingTheme === "default" ? "ring-2 ring-taiz-royal ring-offset-1" : ""}`}
-                title="الوضع الافتراضي"
-              />
-              <button 
-                onClick={() => setReadingTheme("sepia")}
-                className={`w-6 h-6 rounded-full bg-[#FAF5EB] border border-[#EADFCB] flex items-center justify-center transition ${readingTheme === "sepia" ? "ring-2 ring-[#7F6E5D] ring-offset-1" : ""}`}
-                title="الوضع الصحفي الورقي"
-              />
-              <button 
-                onClick={() => setReadingTheme("night")}
-                className={`w-6 h-6 rounded-full bg-[#0B0F19] border border-black flex items-center justify-center transition ${readingTheme === "night" ? "ring-2 ring-taiz-royal ring-offset-1" : ""}`}
-                title="القراءة الليلية المريحة"
-              />
-            </div>
-
-            {/* Actions: Copy & Share */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleCopyText}
-                className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${copied ? "bg-status-success/10 text-status-success border-status-success/20" : "bg-surface-main hover:bg-surface-hover border-border-light text-text-primary"}`}
-                title="نسخ الخطاب"
-              >
-                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? "تم النسخ" : "نسخ الخطاب"}</span>
-              </button>
-              <button
-                onClick={toggleBookmark}
-                className={`p-2 rounded-xl border text-xs font-bold flex items-center gap-1 transition ${isFavorited ? "bg-taiz-sky/10 text-taiz-sky border-taiz-sky/20" : "bg-surface-main hover:bg-surface-hover border-border-light text-text-primary"}`}
-                title="حفظ"
-              >
-                <Bookmark className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
-                <span>حفظ</span>
-              </button>
-              <button
-                onClick={shareText}
-                className="btn btn-primary p-2 rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-sm"
-                title="مشاركة"
-              >
-                <Share2 className="w-4 h-4" />
-                <span>مشاركة</span>
-              </button>
             </div>
           </div>
         )}
 
-        {/* Content Presentation Body */}
-        <div className="relative z-10 font-serif leading-loose mt-8 select-text">
-          {content.type === "video" ? (
-            <div className="space-y-6">
-              {/* Theater Mode Video Frame Container */}
-              <div className="aspect-video w-full bg-black rounded-3xl overflow-hidden shadow-strong border-4 border-surface-main relative">
-                <iframe 
-                   src={getEmbedUrl(content.content)} 
-                   className="w-full h-full border-0 absolute inset-0" 
-                   allowFullScreen
-                   allow="autoplay; encrypted-media; picture-in-picture"
-                ></iframe>
+        {/* Title area for video items since they don't have it in the header */}
+        {content.type === "video" && (
+          <div className="px-6 sm:px-8 py-6 border-b border-stone-100 dark:border-stone-800">
+             <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
+                عرض مرئي
+             </span>
+             <h1 
+                className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo"
+                style={{ fontSize: `${fontSize}px` }}
+              >
+                {content.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
+                <span>{mDate}</span>
+                <span className="text-stone-200 dark:text-stone-700">|</span>
+                <span>{hDate}</span>
+                <span className="text-stone-200 dark:text-stone-700">|</span>
+                <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
+                  <Eye className="w-3 h-3 shrink-0" />
+                  <span>{(content.views || 0) + 1} مشاهدة</span>
+                </span>
               </div>
-              
-              {/* Secondary details on the video under player */}
-              <div className="bg-surface-card p-5 rounded-2xl border border-border-light space-y-3 font-sans">
-                <h4 className="text-sm font-black text-taiz-royal flex items-center gap-2">
-                  <span className="w-2 h-2 bg-taiz-royal rounded-full animate-pulse" />
-                  ملاحظات ومحاور المقطع المعروض:
-                </h4>
-                <p className="text-sm text-text-secondary leading-relaxed text-justify whitespace-pre-line">
-                  {content.description || `يمكنكم متابعة المحاضرة بالكامل من خلال المشغل أعلاه. هذا المقطع يركز على الدروس والعِبَر الروحية المستمدة من آيات الله والوقائع المعاصرة لبناء المجتمع القرآني المتمسك بهويته الدينية في مواجهة الطغيان.`}
-                </p>
-                <div className="pt-2 flex justify-end gap-2">
-                  <button 
-                    onClick={shareText}
-                    className="px-4 py-2 bg-surface-main hover:bg-surface-hover text-text-primary rounded-xl text-xs font-bold transition flex items-center gap-1 border border-border-light"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    مشاركة رابط المادة
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            // Formatted paragraph reading mode
-            <div className="space-y-1">
-              {content.content.split("\n").map((para, pIdx) => renderParagraph(para, pIdx))}
-            </div>
-          )}
+          </div>
+        )}
+
+        {/* Reading Options toolbar */}
+        <div className="flex items-center justify-between py-4 px-6 sm:px-8 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800/80 transition-colors duration-300">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={toggleDarkMode}
+              className="flex items-center gap-2 text-sm font-bold text-gray-600 dark:text-stone-300 hover:opacity-80 transition cursor-pointer select-none font-ibm"
+            >
+              <span>{isDarkMode ? "ليلي" : "نهاري"}</span>
+              {isDarkMode ? (
+                <Moon className="w-5 h-5 text-indigo-400 fill-indigo-400/20" />
+              ) : (
+                <Sun className="w-5 h-5 text-amber-500 fill-amber-500" />
+              )}
+            </button>
+          </div>
+
+          <div className="flex items-center border border-gray-200 dark:border-stone-800 rounded-lg px-3 py-1 bg-white dark:bg-stone-900 shadow-sm text-sm font-bold text-gray-700 dark:text-stone-300 select-none font-ibm">
+            <button 
+              onClick={() => setFontSize(prev => Math.min(prev + 1, 26))} 
+              className="p-1 text-gray-500 hover:text-gray-950 dark:hover:text-white transition cursor-pointer"
+            >
+              <Plus className="w-4 h-4" strokeWidth={3} />
+            </button>
+            <span className="mx-4 text-sm font-bold min-w-[36px] text-center">
+              {fontSize}px
+            </span>
+            <button 
+              onClick={() => setFontSize(prev => Math.max(prev - 1, 14))} 
+              className="p-1 text-gray-500 hover:text-gray-950 dark:hover:text-white transition cursor-pointer"
+            >
+              <Minus className="w-4 h-4" strokeWidth={3} />
+            </button>
+          </div>
         </div>
 
-        {/* Calligraphic/Slogan Footer block for the Speech */}
-        {content.type !== "video" && (
-          <div className="mt-12 pt-8 border-t border-border-light text-center font-sans">
-            <Quote className="w-8 h-8 mx-auto text-taiz-royal/30 mb-3" />
-            <p className="text-sm font-black text-taiz-royal">انتهى خطاب السيد القائد</p>
+        {/* Content Area */}
+        <div className="bg-white dark:bg-stone-900 transition-colors duration-300 pt-8 pb-16">
+          <div className="px-6 sm:px-8">
+            <div className="mb-12">
+              {content.type === "video" ? (
+                <div className="space-y-6">
+                  {content.description && (
+                    <div className="bg-stone-50 dark:bg-stone-800/30 p-6 rounded-2xl border border-stone-100 dark:border-stone-800/40">
+                      <p className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed font-bold font-ibm">
+                        {content.description}
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-3">
+                    <button 
+                      onClick={shareText}
+                      className="flex-[1.5] bg-red-600 text-white rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs shadow-lg shadow-red-600/20 font-cairo"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>مشاركة المحتوى</span>
+                    </button>
+                    <button 
+                      onClick={toggleBookmark}
+                      className={`flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs font-cairo ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
+                    >
+                      <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
+                      <span>حفظ</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                   <div 
+                    className="prose prose-stone dark:prose-invert max-w-none text-gray-800 dark:text-stone-100 text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-relaxed"
+                    style={{ 
+                      fontSize: `${fontSize}px`, 
+                      lineHeight: 1.8,
+                    }}
+                  >
+                    {content.content.split("\n").map((para, pIdx) => renderParagraph(para, pIdx))}
+                  </div>
+
+                  <div className="flex gap-3 pt-8 border-t border-stone-100 dark:border-stone-800 mt-12">
+                    <button 
+                      onClick={shareText}
+                      className="flex-[1.5] bg-red-600 text-white rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs font-cairo shadow-lg shadow-red-600/20"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>مشاركة النص</span>
+                    </button>
+                    <button 
+                      onClick={handleCopyText}
+                      className="flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs font-cairo"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copied ? "تم النسخ" : "نسخ النص"}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Slogan Footer */}
+            {content.type !== "video" && (
+              <div className="mt-16 pt-8 border-t border-stone-100 dark:border-stone-800 text-center">
+                <Quote className="w-8 h-8 mx-auto text-red-600/20 mb-3" />
+                <p className="text-sm font-bold text-red-600 font-cairo">انتهى خطاب السيد القائد</p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+        </div>
+      </article>
+    </motion.div>
   );
 }

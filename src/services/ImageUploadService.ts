@@ -14,7 +14,7 @@ export class ImageUploadService {
    * and falls back to robust XMLHttpRequest on web.
    */
   static async uploadFile(
-    file: File | Blob,
+    file: File | Blob | string,
     fileName: string,
     onProgress?: (progress: number) => void,
     retries: number = 3
@@ -27,50 +27,39 @@ export class ImageUploadService {
       ? (import.meta.env.VITE_API_BASE_URL || (isProd ? PROD_URL : DEV_URL))
       : "";
 
-    // Convert file to Base64 to bypass any binary or multipart/form-data CORS issues on Android WebView
-    const fileToBase64 = async (f: File | Blob): Promise<string> => {
-      try {
-        console.log("[ImageUploadService] Converting file via modern arrayBuffer...");
-        const buffer = await f.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        const chunks: string[] = [];
-        const chunkSize = 0xffff; // 64k chunks
-        for (let i = 0; i < bytes.length; i += chunkSize) {
-          chunks.push(String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize) as any));
-        }
-        const base64 = btoa(chunks.join(""));
-        return `data:${f.type || "image/jpeg"};base64,${base64}`;
-      } catch (arrayBufferErr: any) {
-        console.warn("[ImageUploadService] arrayBuffer conversion failed, trying FileReader fallback:", arrayBufferErr);
-        
-        return new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            if (typeof reader.result === "string") {
-              resolve(reader.result);
-            } else {
-              reject(new Error("محتوى الملف المقروء غير صالح (ليس سلسلة نصية)"));
-            }
-          };
-          reader.onerror = () => {
-            const domErr = reader.error;
-            const detailMsg = domErr 
-              ? `${domErr.name}: ${domErr.message}` 
-              : "فشل غير معروف أثناء استخدام FileReader";
-            console.error("[ImageUploadService] FileReader onerror triggered:", domErr);
-            reject(new Error(detailMsg));
-          };
-          reader.readAsDataURL(f);
-        });
-      }
+    const fileToBase64 = (f: File | Blob): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (typeof reader.result === "string") {
+            resolve(reader.result);
+          } else {
+            reject(new Error("محتوى الملف المقروء غير صالح"));
+          }
+        };
+        reader.onerror = () => {
+          const domErr = reader.error;
+          const detailMsg = domErr 
+            ? `${domErr.name}: ${domErr.message}` 
+            : "فشل في قراءة ملف الصورة (NotReadableError). يرجى محاولة اختيار الصورة مرة أخرى.";
+          console.error("[ImageUploadService] FileReader error:", domErr);
+          reject(new Error(detailMsg));
+        };
+        reader.readAsDataURL(f);
+      });
     };
 
     let base64Data: string;
-    try {
-      base64Data = await fileToBase64(file);
-    } catch (err: any) {
-      console.error("[ImageUploadService] fileToBase64 conversion exception:", err);
-      throw new Error(`فشل في معالجة ملف الصورة: ${err.message || err}`);
+    if (typeof file === "string" && (file.startsWith("data:") || !file.includes("/"))) {
+      // It's already base64 or a base64 string without data prefix (if it doesn't look like a path)
+      base64Data = file.startsWith("data:") ? file : `data:image/jpeg;base64,${file}`;
+    } else {
+      try {
+        base64Data = await fileToBase64(file as File | Blob);
+      } catch (err: any) {
+        console.error("[ImageUploadService] fileToBase64 conversion exception:", err);
+        throw new Error(`فشل في معالجة ملف الصورة: ${err.message || err}`);
+      }
     }
 
     // 1. Native Upload Implementation (Bypasses WebView Sandbox and CORS)

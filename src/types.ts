@@ -39,6 +39,7 @@ export interface UrgentNews {
 export interface VideoItem {
   id: string;
   title: string;
+  description?: string;
   url: string;
   thumbnailUrl?: string;
   duration?: string;
@@ -113,6 +114,8 @@ export interface QuranSeries {
   description?: string;
   imageUrl?: string;
   order: number;
+  verseCount?: number;
+  type?: string;
   createdAt: number;
 }
 
@@ -121,7 +124,9 @@ export interface QuranLesson {
   seriesId: string;
   title: string;
   content: string; // The text content of the lesson
+  imageUrl?: string; // Image for the lesson
   order: number;
+  duration?: number; // In seconds
   createdAt: number;
 }
 

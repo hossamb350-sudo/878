@@ -48,24 +48,33 @@ export function ImageUpload({
     }
   };
 
-  const uploadFiles = async (files: File[]) => {
+  const uploadFiles = async (files: (File | string)[]) => {
     setError(null);
     const uploadedUrls: string[] = [];
     
     // Initialize tracking for multiple files
-    setUploadingFiles(files.map(f => ({ name: f.name, progress: 0 })));
+    setUploadingFiles(files.map((f, idx) => ({ 
+      name: typeof f === 'string' ? `image_${idx + 1}.jpg` : f.name, 
+      progress: 0 
+    })));
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      // Basic validation
-      if (!file.type.startsWith("image/")) continue;
-      if (file.size > 10 * 1024 * 1024) continue;
+      // Basic validation for File objects
+      if (file instanceof File) {
+        if (!file.type.startsWith("image/")) continue;
+        if (file.size > 10 * 1024 * 1024) continue;
+      }
 
       try {
+        const fileName = file instanceof File 
+          ? file.name 
+          : `image_${Date.now()}_${i}.jpg`;
+
         const res = await ImageUploadService.uploadFile(
           file,
-          file.name,
+          fileName,
           (percent) => {
             setUploadingFiles(prev => {
               const next = [...prev];
@@ -99,25 +108,29 @@ export function ImageUpload({
     }
   };
 
-  const uploadFile = (file: File) => {
-    // Basic type validation
-    if (!file.type.startsWith("image/")) {
-      setError("يرجى اختيار ملف صورة صالح (PNG, JPG, JPEG, WEBP)");
-      return;
-    }
+  const uploadFile = (file: File | string, customName?: string) => {
+    // Basic validation for File objects
+    if (file instanceof File) {
+      if (!file.type.startsWith("image/")) {
+        setError("يرجى اختيار ملف صورة صالح (PNG, JPG, JPEG, WEBP)");
+        return;
+      }
 
-    // Max 10MB limit
-    if (file.size > 10 * 1024 * 1024) {
-      setError("حجم الصورة كبير جداً، الحد الأقصى المسموح به هو 10 ميجابايت");
-      return;
+      // Max 10MB limit
+      if (file.size > 10 * 1024 * 1024) {
+        setError("حجم الصورة كبير جداً، الحد الأقصى المسموح به هو 10 ميجابايت");
+        return;
+      }
     }
 
     setError(null);
     setProgress(0);
 
+    const fileName = customName || (file instanceof File ? file.name : `image_${Date.now()}.jpg`);
+
     ImageUploadService.uploadFile(
       file,
-      file.name,
+      fileName,
       (percent) => {
         setProgress(percent);
       }
@@ -168,30 +181,37 @@ export function ImageUpload({
         });
         
         if (result.photos && result.photos.length > 0) {
-          const filesToUpload: File[] = [];
+          const itemsToUpload: (File | string)[] = [];
           for (const photo of result.photos) {
             if (photo.webPath) {
-              const res = await fetch(photo.webPath);
-              const blob = await res.blob();
-              const fileName = `image_${Date.now()}_${Math.floor(Math.random() * 1000)}.${photo.format || 'jpg'}`;
-              const file = new File([blob], fileName, { type: blob.type });
-              filesToUpload.push(file);
+              try {
+                const res = await fetch(photo.webPath);
+                const blob = await res.blob();
+                const fileName = `image_${Date.now()}_${Math.floor(Math.random() * 1000)}.${photo.format || 'jpg'}`;
+                const file = new File([blob], fileName, { type: blob.type });
+                itemsToUpload.push(file);
+              } catch (fetchErr) {
+                console.warn("Could not fetch photo webPath, skipping:", fetchErr);
+              }
             }
           }
-          if (filesToUpload.length > 0) {
-            await uploadFiles(filesToUpload);
+          if (itemsToUpload.length > 0) {
+            await uploadFiles(itemsToUpload);
           }
         }
       } else {
         const photo = await Camera.getPhoto({
           quality: 90,
           allowEditing: false,
-          resultType: CameraResultType.Uri,
+          resultType: CameraResultType.Base64, // Using Base64 is more robust for native uploads
           source: source
         });
         
-        if (photo.webPath) {
-          setProgress(0);
+        if (photo.base64String) {
+          const fileName = `image_${Date.now()}.${photo.format || 'jpg'}`;
+          uploadFile(photo.base64String, fileName);
+        } else if (photo.webPath) {
+          // Fallback to webPath if base64 is missing for some reason
           const res = await fetch(photo.webPath);
           const blob = await res.blob();
           const fileName = `image_${Date.now()}.${photo.format || 'jpg'}`;

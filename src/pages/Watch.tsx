@@ -17,11 +17,49 @@ import {
   FolderOpen,
   Calendar,
   X,
-  Play
+  Play,
+  MoreVertical,
+  Flame,
+  ChevronLeft
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../components/PullToRefresh";
+
+const getRelativeTimeArabic = (timestamp: any) => {
+  if (!timestamp) return "منذ فترة";
+  const now = Date.now();
+  const diffMs = now - Number(timestamp);
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHr = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHr / 24);
+
+  if (diffSec < 60) return "الآن";
+  if (diffMin < 60) {
+    if (diffMin === 1) return "منذ دقيقة";
+    if (diffMin === 2) return "منذ دقيقتين";
+    if (diffMin >= 3 && diffMin <= 10) return `منذ ${diffMin} دقائق`;
+    return `منذ ${diffMin} دقيقة`;
+  }
+  if (diffHr < 24) {
+    if (diffHr === 1) return "منذ ساعة";
+    if (diffHr === 2) return "منذ ساعتين";
+    if (diffHr >= 3 && diffHr <= 10) return `منذ ${diffHr} ساعات`;
+    return `منذ ${diffHr} ساعة`;
+  }
+  if (diffDay < 30) {
+    if (diffDay === 1) return "منذ يوم";
+    if (diffDay === 2) return "منذ يومين";
+    if (diffDay >= 3 && diffDay <= 10) return `منذ ${diffDay} أيام`;
+    return `منذ ${diffDay} يوماً`;
+  }
+  try {
+    return format(timestamp, "d MMMM yyyy", { locale: ar });
+  } catch (e) {
+    return "منذ فترة";
+  }
+};
 
 export function Watch() {
   const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
@@ -34,6 +72,8 @@ export function Watch() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sortOption, setSortOption] = useState<"newest" | "oldest" | "popular">("newest");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [showAllMostViewed, setShowAllMostViewed] = useState(false);
+  const [showAllLatest, setShowAllLatest] = useState(false);
   
   // Temporary states for modal
   const [tempCategories, setTempCategories] = useState<string[]>([]);
@@ -168,6 +208,14 @@ export function Watch() {
       return 0;
     });
 
+  const mostViewedVideos = useMemo(() => {
+    return [...filteredVideos].sort((a, b) => (b.views || 0) - (a.views || 0));
+  }, [filteredVideos]);
+
+  const latestVideos = useMemo(() => {
+    return [...filteredVideos].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }, [filteredVideos]);
+
   const openFilterModal = () => {
     setTempCategories([...selectedCategories]);
     setTempSort(sortOption);
@@ -207,425 +255,576 @@ export function Watch() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <div className="max-w-7xl mx-auto w-full p-3 sm:p-5 pb-20 font-sans" ref={activeVideoRef}>
+    <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 pb-24 font-sans bg-[#f4f7fc]" ref={activeVideoRef}>
       
       {/* Immersive Header Block with Status Indicators */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-border-light pb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-taiz-sky opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-taiz-royal"></span>
+      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 rtl" style={{ direction: "rtl" }}>
+        <div className="flex items-center gap-3">
+          <div className="relative bg-blue-50/70 p-2 rounded-xl border border-blue-100/20">
+            <Tv className="w-7 h-7 text-blue-600 stroke-[2]" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Play className="w-2.5 h-2.5 text-blue-600 fill-blue-600 translate-x-[0.5px] translate-y-[-0.5px]" />
+            </div>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black text-text-primary select-none">البث المباشر</h1>
+          <div className="flex flex-col text-right">
+            <h1 className="text-lg sm:text-xl font-black text-slate-950 font-cairo leading-none">شاهد</h1>
+            <p className="text-[10px] text-slate-500 font-bold font-cairo mt-0.5">بث مباشر • محتوى مرئي متجدد</p>
+          </div>
         </div>
+      </div>
 
-        {channels.length > 0 && (
-          <div className="flex items-center gap-2 bg-taiz-royal/5 text-taiz-royal px-3 py-1 rounded-xl text-xs font-black border border-taiz-royal/10 shadow-sm">
-             <Radio className="w-3.5 h-3.5 animate-pulse" />
-             <span>{channels.length} قنوات</span>
-          </div>
-        )}
+      {/* 1. Live TV Section Header */}
+      <div className="flex items-center gap-1.5 mb-2 text-right rtl" style={{ direction: "rtl" }}>
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-600 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+        </span>
+        <h2 className="text-xs font-black text-slate-900 font-cairo">البث المباشر</h2>
       </div>
 
       {/* Hero Live Stream Visual Frame Panel */}
-      <div className="mb-12 w-full grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="mb-4 w-full bg-[#0a0f24] rounded-3xl p-3.5 sm:p-5 shadow-xl border border-slate-800/60 relative overflow-hidden rtl" style={{ direction: "rtl" }}>
         
-        {/* Main Player Area */}
-        <div className="lg:col-span-3 bg-taiz-navy rounded-3xl overflow-hidden shadow-strong border border-taiz-navy/10 relative h-fit">
-          <div className="absolute top-4 left-4 z-10 flex items-center gap-2 bg-taiz-sky/95 text-white px-3 py-1.5 rounded-full text-[11px] font-black shadow-md tracking-wider">
-             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-             مباشر
-          </div>
-          
-          <div className="aspect-video w-full bg-zinc-950 relative overflow-hidden group">
-             {activeChannel && activeChannel.url ? (
-                isPlayingLive ? (
-                   <iframe 
-                      src={getEmbedUrl(activeChannel.url, true)}
-                      className="w-full h-full border-0 select-text"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowFullScreen
-                   ></iframe>
+        {/* Background decorative elements */}
+        <div className="absolute -top-12 -left-12 w-48 h-48 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-purple-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div className="relative z-10 flex flex-col w-full h-full gap-3">
+          {/* Top Bar: Live Info Panel */}
+          <div className="flex items-center justify-between border-b border-white/5 pb-2.5 w-full">
+            {/* Right Side: Channel details */}
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-700/25 rounded-full border border-red-500/20 shadow-lg flex items-center justify-center overflow-hidden shrink-0">
+                {activeChannel?.iconUrl ? (
+                  <img src={activeChannel.iconUrl} alt={activeChannel.name} className="w-full h-full object-cover" />
                 ) : (
-                   <div 
-                      onClick={() => setIsPlayingLive(true)}
-                      className="absolute inset-0 w-full h-full flex flex-col items-center justify-center cursor-pointer transition-all duration-500 bg-gradient-to-t from-zinc-950/95 via-zinc-900/70 to-zinc-950/40 hover:from-zinc-950/90 hover:via-zinc-900/60"
-                   >
-                      {activeChannel.iconUrl && (
-                        <div className="absolute inset-0 opacity-10 blur-xl scale-110 pointer-events-none">
-                          <img src={activeChannel.iconUrl} alt="" className="w-full h-full object-cover" />
-                        </div>
-                      )}
-                      
-                      {/* Glowing custom play button wrapper */}
-                      <div className="relative z-10 p-5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 transition-all duration-300 transform group-hover:scale-110 shadow-lg">
-                        <Play className="w-10 h-10 text-white fill-white translate-x-[-1px]" />
-                      </div>
-                      
-                      <div className="z-10 mt-4 text-center px-4">
-                        <p className="text-white font-black text-base sm:text-lg tracking-wide">
-                          تشغيل البث المباشر: {activeChannel.name}
-                        </p>
-                        <p className="text-white/60 text-xs mt-1.5 font-bold">
-                          انقر للبدء في تشغيل البث المباشر للقناة
-                        </p>
-                      </div>
-
-                      {/* Live pulse badge indicator */}
-                      <div className="absolute bottom-4 right-4 z-10 flex items-center gap-2 bg-red-600 text-white px-2.5 py-1.5 rounded-full text-[10px] font-black shadow-md">
-                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                        مباشر
-                      </div>
-                   </div>
-                )
-             ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center text-white/40 gap-3 border-b border-white/5 py-20">
-                   <Tv className="w-12 h-12 mb-2 text-white/20 animate-bounce" />
-                   <p className="font-black text-white/60 text-sm">البث المباشر لهذه القناة غير متاح في الوقت الحالي</p>
-                   <p className="text-xs text-white/40">الرجاء اختيار قناة أخرى أو مراجعة الجدول لاحقاً</p>
+                  <span className="text-white font-black text-[10px] font-cairo">مباشر</span>
+                )}
+              </div>
+              <div className="text-right">
+                <h3 className="text-xs sm:text-sm font-black text-white font-cairo leading-tight">
+                  {activeChannel ? activeChannel.name : "قناة البث المباشر"}
+                </h3>
+                <div className="flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                  <span className="text-emerald-400 text-[9px] font-bold font-cairo">يعمل الآن</span>
                 </div>
-             )}
+              </div>
+            </div>
+
+            {/* Left Side: Live Badge */}
+            <div className="flex items-center gap-1 bg-red-600 text-white px-2.5 py-0.5 rounded-md text-[9px] sm:text-[10px] font-black shadow-lg shadow-red-600/30">
+              <span className="w-1 h-1 bg-white rounded-full animate-pulse"></span>
+              مباشر
+            </div>
           </div>
 
-          <div className="bg-surface-main p-5 sm:p-6 border-t border-border-light">
-             <h2 className="text-lg sm:text-xl font-black text-text-primary flex items-center gap-2">
-               {activeChannel?.iconUrl && (
-                  <img src={activeChannel.iconUrl} alt={activeChannel.name} className="w-8 h-8 rounded-full object-cover shadow-sm bg-surface-card border border-border-light" />
-               )}
-               {activeChannel ? `قناة البث: ${activeChannel.name}` : "اختر قناة للبث المباشر"}
-             </h2>
-             <p className="text-xs text-text-muted font-bold mt-1 flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-taiz-sky rounded-full animate-ping" />
-                يتم سحب التحديثات والبث التشاركي في الوقت الفعلي
-             </p>
+          {/* Player Area: Full Width Inside Card */}
+          <div className="w-full aspect-video rounded-xl sm:rounded-2xl overflow-hidden bg-slate-950 border border-slate-800/80 relative shadow-2xl group">
+            {activeChannel && activeChannel.url ? (
+              isPlayingLive ? (
+                <iframe 
+                  src={getEmbedUrl(activeChannel.url, true)}
+                  className="w-full h-full border-0 select-text"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div 
+                  onClick={() => setIsPlayingLive(true)}
+                  className="absolute inset-0 w-full h-full flex flex-col items-center justify-center cursor-pointer transition-all duration-500 bg-gradient-to-t from-black/80 via-slate-900/40 to-black/30 hover:from-black/90 hover:via-slate-900/30 relative"
+                >
+                  {/* Glowing custom play button wrapper */}
+                  <div className="relative z-10 p-4 rounded-full bg-white/15 hover:bg-white/25 border border-white/20 transition-all duration-300 transform group-hover:scale-110 shadow-lg">
+                    <Play className="w-6 h-6 text-white fill-white translate-x-[1px]" />
+                  </div>
+                  
+                  <p className="z-10 mt-2 text-white font-black text-xs tracking-wide font-cairo px-4">
+                    انقر لتشغيل البث الحي
+                  </p>
+                </div>
+              )
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-slate-500 gap-3 p-6">
+                <Tv className="w-8 h-8 mb-2 text-slate-600 animate-bounce" />
+                <p className="font-black text-slate-400 text-[10px] font-cairo">البث المباشر غير متاح حالياً</p>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Vertical Channel Selector Area */}
-        <div className="lg:col-span-1 bg-surface-main p-5 rounded-3xl border border-border-light shadow-soft h-fit">
-          <h3 className="font-black text-text-primary mb-4 text-right flex items-center justify-end gap-2 text-sm">
-             <span>قنوات البث المباشر</span>
-             <MonitorPlay className="w-4 h-4 text-taiz-sky" />
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            {(() => {
-              const order = ["المسيرة", "المسيرة مباشر", "اليمن", "عدن", "الساحات", "الميادين"];
-              const sortedChannels = [...channels].sort((a, b) => {
-                const nameA = a.name.trim();
-                const nameB = b.name.trim();
-                
-                // Prioritize Al-Masirah and Al-Masirah Mubasher
-                const isAAlMasirah = nameA === "المسيرة" || nameA === "المسيرة مباشر";
-                const isBAlMasirah = nameB === "المسيرة" || nameB === "المسيرة مباشر";
+      </div>
 
-                if (isAAlMasirah && !isBAlMasirah) return -1;
-                if (!isAAlMasirah && isBAlMasirah) return 1;
-                if (isAAlMasirah && isBAlMasirah) {
-                   if (nameA === "المسيرة") return -1;
-                   return 1;
-                }
+      {/* 2. Channels Section Header */}
+      <div className="flex items-center gap-1.5 mb-2 text-right rtl" style={{ direction: "rtl" }}>
+        <Tv className="w-3.5 h-3.5 text-slate-800 stroke-[2.5]" />
+        <h2 className="text-xs font-black text-slate-900 font-cairo">القنوات</h2>
+      </div>
 
-                const indexA = order.findIndex(o => nameA.includes(o));
-                const indexB = order.findIndex(o => nameB.includes(o));
-                
-                if (indexA === -1 && indexB === -1) return nameA.localeCompare(nameB);
-                if (indexA === -1) return 1;
-                if (indexB === -1) return -1;
-                return indexA - indexB;
-              });
+      {/* Horizontal Channels grid strip (displayed in 1 row) */}
+      <div className="mb-0 w-full">
+        <div 
+          className="grid grid-cols-6 gap-1.5 sm:gap-2.5 w-full rtl" 
+          style={{ direction: "rtl" }}
+        >
+          {(() => {
+            const order = ["المسيرة", "المسيرة مباشر", "اليمن", "عدن", "الساحات", "الميادين"];
+            const sortedChannels = [...channels].sort((a, b) => {
+              const nameA = a.name ? a.name.trim() : "";
+              const nameB = b.name ? b.name.trim() : "";
+              
+              const isAAlMasirah = nameA === "المسيرة" || nameA === "المسيرة مباشر";
+              const isBAlMasirah = nameB === "المسيرة" || nameB === "المسيرة مباشر";
 
-              return sortedChannels.map((ch) => {
-                const isSelected = activeChannelId === ch.id;
-                
-                return (
-                  <button
-                    key={ch.id}
-                    onClick={() => {
-                      setActiveChannelId(ch.id!);
-                      setIsPlayingLive(true);
-                      window.scrollTo({ top: activeVideoRef.current?.offsetTop || 0, behavior: 'smooth' });
-                    }}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border transition-all duration-300 gap-2 ${
-                      isSelected 
-                        ? 'bg-surface-hover text-taiz-navy border-taiz-sky/60 shadow-glow ring-1 ring-taiz-sky/30 scale-[1.02]' 
-                        : 'bg-surface-main hover:bg-surface-hover border-border-light text-text-secondary hover:shadow-sm'
-                    }`}
-                    dir="rtl"
-                  >
-                    <div className="relative">
-                      {ch.iconUrl ? (
-                        <img src={ch.iconUrl} alt={ch.name} className={`w-10 h-10 rounded-full object-cover shrink-0 bg-surface-card p-1 shadow-sm ${isSelected ? 'ring-2 ring-taiz-sky/50' : ''}`} />
-                      ) : (
-                        <Radio className="w-6 h-6 shrink-0" />
-                      )}
-                      {isSelected && (
-                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-taiz-sky rounded-full animate-pulse shadow-glow border-2 border-surface-main" />
-                      )}
-                    </div>
-                    <span className="text-[10px] font-black truncate max-w-full">
-                      {ch.name}
-                    </span>
-                  </button>
-                );
-              });
-            })()}
-          </div>
+              if (isAAlMasirah && !isBAlMasirah) return -1;
+              if (!isAAlMasirah && isBAlMasirah) return 1;
+              if (isAAlMasirah && isBAlMasirah) {
+                 if (nameA === "المسيرة") return -1;
+                 return 1;
+              }
+
+              const indexA = order.findIndex(o => nameA.includes(o));
+              const indexB = order.findIndex(o => nameB.includes(o));
+              
+              if (indexA === -1 && indexB === -1) return nameA.localeCompare(nameB);
+              if (indexA === -1) return 1;
+              if (indexB === -1) return -1;
+              return indexA - indexB;
+            });
+
+            return sortedChannels.map((ch) => {
+              const isSelected = activeChannelId === ch.id;
+              
+              return (
+                <button
+                  key={ch.id}
+                  onClick={() => {
+                    setActiveChannelId(ch.id!);
+                    setIsPlayingLive(true);
+                  }}
+                  className={`flex flex-col items-center justify-center py-2 px-1 sm:py-2.5 bg-white rounded-xl border transition-all duration-300 gap-1.5 w-full cursor-pointer ${
+                    isSelected 
+                      ? 'border-blue-500 shadow-[0_4px_12px_rgba(30,66,150,0.06)] scale-[1.02]' 
+                      : 'border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200'
+                  }`}
+                >
+                  <div className="relative shrink-0">
+                    {ch.iconUrl ? (
+                      <img src={ch.iconUrl} alt={ch.name} className="w-7 h-7 sm:w-10 sm:h-10 rounded-full object-cover p-0.5 bg-white border border-slate-100" />
+                    ) : (
+                      <div className="w-7 h-7 sm:w-10 sm:h-10 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100">
+                        <Radio className="w-4 h-4 text-slate-400" />
+                      </div>
+                    )}
+                    {/* Red live indicator dot on the bottom-right */}
+                    <div className="absolute bottom-0 right-0 w-2 h-2 bg-red-600 rounded-full border border-white shadow-md animate-pulse" />
+                  </div>
+                  <span className="text-[8px] sm:text-[10px] font-bold text-slate-800 font-cairo truncate max-w-full text-center">
+                    {ch.name}
+                  </span>
+                </button>
+              );
+            });
+          })()}
         </div>
       </div>
 
-      {/* ================= VIDEOS & COGNATE REPORTS SECTION ================= */}
-      <div className="space-y-6">
-        
-        {/* Top Control Panel Wrapper: Heading, category tabs, and real search */}
-        <div className="bg-surface-card p-4 sm:p-5 rounded-3xl border border-border-light shadow-soft space-y-5">
-          
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-2.5">
-              <div className="bg-gradient-to-br from-taiz-navy to-taiz-royal p-2 rounded-xl shadow-md">
-                 <MonitorPlay className="w-5 h-5 text-white shrink-0" />
-              </div>
-              <h2 className="font-black text-lg text-text-primary select-none">المحتوى المرئي</h2>
-              <span className="text-[10px] bg-taiz-sky text-white font-black px-2 py-0.5 rounded-full shadow-sm mr-2 animate-bounce">محدّث</span>
-            </div>
+      {/* 3. Media Content Header Banner Divider */}
+      <div className="relative flex items-center justify-center mt-2.5 mb-3.5">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-slate-200/60"></div>
+        </div>
+        <div className="relative flex items-center gap-1.5 bg-[#f4f7fc] px-3.5 py-0.5 rounded-full text-slate-800 font-black font-cairo text-[10px] sm:text-xs border border-slate-100 shadow-sm">
+          <MonitorPlay className="w-3.5 h-3.5 text-blue-600 stroke-[2.5]" />
+          <span>المحتوى المرئي</span>
+        </div>
+      </div>
 
-            {/* Innovative Search input inside Watch section */}
-            <div className="relative w-full md:max-w-xs">
-              <input 
-                type="text"
-                placeholder="ابحث عن تقرير، زامل، أو وثائقي..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-surface-main text-sm font-bold rounded-2xl border border-border-light focus:outline-taiz-sky/80 transition shadow-inner placeholder-text-muted"
-              />
-              <Search className="absolute left-3 top-3 w-4 h-4 text-text-muted" />
-            </div>
-          </div>
-
-          {/* Filtering Tabs (المصنفات السلسة) */}
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border-light pt-4">
-             <button
-                onClick={openFilterModal}
-                className="flex items-center gap-2 px-4 py-2 bg-surface-main hover:bg-surface-hover border border-border-light rounded-xl transition-all group"
-             >
-                <SlidersHorizontal className="w-4 h-4 text-taiz-sky group-hover:rotate-180 transition-transform duration-500" />
-                <span className="text-xs font-black text-text-primary">تصنيف المواد</span>
-                {selectedCategories.length > 0 && (
-                  <span className="bg-taiz-sky text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full">
-                    {selectedCategories.length}
-                  </span>
-                )}
-             </button>
-
-             {selectedCategories.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                   {selectedCategories.map(cat => (
-                     <span key={cat} className="bg-taiz-sky/10 text-taiz-sky text-[10px] font-black px-2 py-1 rounded-lg border border-taiz-sky/20">
-                        {cat}
-                     </span>
-                   ))}
-                   <button 
-                    onClick={() => setSelectedCategories([])}
-                    className="text-[10px] font-black text-text-muted hover:text-status-error underline underline-offset-2"
-                   >
-                    مسح الكل
-                   </button>
-                </div>
-             )}
-          </div>
+      {/* 4. Controls Block: Search & Filter */}
+      <div className="flex items-center gap-3 w-full mb-5 rtl" style={{ direction: "rtl" }}>
+        {/* Search Bar (appears on the right in RTL) */}
+        <div className="relative flex-1">
+          <input 
+            type="text"
+            placeholder="ابحث عن فيديو..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-4 pr-11 py-3.5 bg-white text-slate-800 text-xs sm:text-sm font-bold rounded-full border border-slate-200/80 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition shadow-inner placeholder-slate-400 text-right font-cairo"
+          />
+          <Search className="absolute right-4 top-4.5 w-4 h-4 text-slate-400" />
         </div>
 
-        {/* Filter Modal */}
-        <AnimatePresence>
-          {isFilterModalOpen && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" dir="rtl">
-               <motion.div 
-                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                 className="relative w-full max-w-md bg-surface-card rounded-[2rem] shadow-2xl border border-border-light overflow-hidden flex flex-col p-6"
-               >
-                  <div className="flex items-center justify-between mb-6">
-                     <h3 className="text-lg font-black text-text-primary flex items-center gap-2">
-                        <SlidersHorizontal className="w-5 h-5 text-taiz-sky" />
-                        تصفية وتصنيف المواد
-                     </h3>
-                     <button onClick={() => setIsFilterModalOpen(false)} className="p-2 hover:bg-surface-main rounded-xl transition text-text-muted">
-                        <X className="w-5 h-5" />
-                     </button>
-                  </div>
+        {/* Filter Button (appears on the left in RTL) */}
+        <button 
+          onClick={openFilterModal}
+          className="flex items-center gap-2 px-6 py-3.5 bg-[#f0f4fa] hover:bg-blue-100/50 text-[#1a56db] rounded-full transition-all text-xs sm:text-sm font-black border border-blue-50/50 cursor-pointer shrink-0 font-cairo"
+        >
+          <SlidersHorizontal className="w-4 h-4 stroke-[2.5]" />
+          <span>فلترة</span>
+          {selectedCategories.length > 0 && (
+            <span className="bg-[#e62222] text-white text-[9px] w-4.5 h-4.5 flex items-center justify-center rounded-full font-bold">
+              {selectedCategories.length}
+            </span>
+          )}
+        </button>
+      </div>
 
-                  <div className="space-y-6 overflow-y-auto max-h-[60vh] pr-1">
-                     {/* Sorting */}
-                     <div>
-                        <span className="text-xs font-black text-text-secondary block mb-3">ترتيب حسب:</span>
-                        <div className="grid grid-cols-3 gap-2">
-                           {[
-                             { id: "newest", label: "الأحدث" },
-                             { id: "oldest", label: "الأقدم" },
-                             { id: "popular", label: "الرائج" }
-                           ].map(opt => (
-                             <button
-                               key={opt.id}
-                               onClick={() => setTempSort(opt.id as any)}
-                               className={`py-2.5 rounded-xl text-xs font-bold border transition-all ${
-                                 tempSort === opt.id 
-                                   ? 'bg-taiz-navy text-white border-taiz-navy shadow-md' 
-                                   : 'bg-surface-main text-text-secondary border-border-light hover:bg-surface-hover'
-                               }`}
-                             >
-                               {opt.label}
-                             </button>
-                           ))}
-                        </div>
-                     </div>
+      {/* 5. Removed redundant category filter pills */}
+      
+      {/* 6. Video Grid List */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-24 gap-3">
+          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-bold text-slate-400">جاري تحميل المكتبة المرئية...</p>
+        </div>
+      ) : filteredVideos.length === 0 ? (
+        <div className="text-center py-20 text-slate-400 bg-white rounded-3xl border border-dashed border-slate-200 p-8 rtl" style={{ direction: "rtl" }}>
+          <FolderOpen className="w-12 h-12 mx-auto text-slate-300 mb-3 animate-pulse" />
+          <p className="font-black text-sm text-slate-700 mb-1 font-cairo">لا توجد وسائط ومواد إعلامية تطابق خياراتك</p>
+          <p className="text-xs text-slate-400 font-bold font-cairo">يرجى تجربة كلمة بحث مغايرة أو تصفية تصنيفات أخرى</p>
+        </div>
+      ) : (
+        <div className="space-y-12">
+          {/* A. Most Viewed Section */}
+          {mostViewedVideos.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-5 mt-2 rtl" style={{ direction: "rtl" }}>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 bg-red-50 rounded-xl text-red-500 flex items-center justify-center">
+                    <Flame className="w-5 h-5 fill-red-500 text-red-500 stroke-[2]" />
+                  </span>
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 font-cairo">الأكثر مشاهدة</h2>
+                </div>
+                <button 
+                  onClick={() => setShowAllMostViewed(!showAllMostViewed)}
+                  className="flex items-center gap-1 text-xs sm:text-sm font-black text-blue-600 hover:text-blue-700 font-cairo cursor-pointer"
+                >
+                  <span>عرض المزيد</span>
+                  <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${showAllMostViewed ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
 
-                     {/* Categories */}
-                     <div>
-                        <span className="text-xs font-black text-text-secondary block mb-3">التصنيفات:</span>
-                        <div className="flex flex-wrap gap-2">
-                           <button
-                             onClick={() => setTempCategories([])}
-                             className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                               tempCategories.length === 0 
-                                 ? 'bg-taiz-navy text-white border-taiz-navy shadow-md' 
-                                 : 'bg-surface-main text-text-secondary border-border-light hover:bg-surface-hover'
-                             }`}
-                           >
-                             الكل
-                           </button>
-                           {uniqueCategories.map(cat => (
-                             <button
-                               key={cat}
-                               onClick={() => toggleTempCategory(cat)}
-                               className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
-                                 tempCategories.includes(cat) 
-                                   ? 'bg-taiz-sky text-white border-taiz-sky shadow-md' 
-                                   : 'bg-surface-main text-text-secondary border-border-light hover:bg-surface-hover'
-                               }`}
-                             >
-                               {cat}
-                             </button>
-                           ))}
-                        </div>
-                     </div>
-                  </div>
+              <motion.div 
+                layout
+                className="grid grid-cols-2 gap-3 sm:gap-4 rtl"
+                style={{ direction: "rtl" }}
+              >
+                <AnimatePresence mode="popLayout">
+                  {(showAllMostViewed ? mostViewedVideos : mostViewedVideos.slice(0, 4)).map(vid => {
+                    const formatArabicViews = (views: number) => {
+                       const v = views || 0;
+                       if (v >= 1000000) {
+                         return `${(v / 1000000).toFixed(1).replace(".0", "")} مليون`;
+                       }
+                       if (v >= 1000) {
+                         return `${(v / 1000).toFixed(1).replace(".0", "")} ألف`;
+                       }
+                       return `${v}`;
+                    };
+                    const formattedViews = formatArabicViews(vid.views);
+                    const relativeTime = getRelativeTimeArabic(vid.createdAt);
 
-                  <div className="mt-8 flex gap-3">
-                     <button 
-                       onClick={applyFilters}
-                       className="flex-1 bg-taiz-navy hover:bg-taiz-royal text-white py-3.5 rounded-2xl text-sm font-black shadow-lg transition duration-200"
-                     >
-                        تطبيق
-                     </button>
-                     <button 
-                       onClick={() => setIsFilterModalOpen(false)}
-                       className="px-6 bg-surface-main hover:bg-surface-hover text-text-secondary py-3.5 rounded-2xl text-sm font-black border border-border-light transition"
-                     >
-                        إلغاء
-                     </button>
-                  </div>
-               </motion.div>
+                    return (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        transition={{ duration: 0.2 }}
+                        key={`mv-${vid.id}`}
+                      >
+                        <Link 
+                          id={`watch-video-mv-${vid.id}`}
+                          to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`} 
+                          className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-slate-200/80 transition-all duration-300 group block overflow-hidden flex flex-col cursor-pointer"
+                        >
+                          {/* Immersive Thumbnail */}
+                          <div className="relative aspect-[3/4] bg-slate-50 overflow-hidden rounded-t-xl">
+                            {vid.thumbnailUrl ? (
+                              <img 
+                                src={vid.thumbnailUrl} 
+                                alt={vid.title} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out" 
+                                loading="lazy" 
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                                <Radio className="w-6 h-6 text-white/20" />
+                              </div>
+                            )}
+
+                            {/* Translucent overlay for play action */}
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                            
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 border border-white/20">
+                                <Play className="w-3.5 h-3.5 fill-white text-white translate-x-[1px]" />
+                              </div>
+                            </div>
+
+                            {/* Category Pill tag (top-right) - RESTORED */}
+                            {vid.category && (
+                              <div className="absolute top-1.5 right-1.5 flex">
+                                <span className="bg-slate-950/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded border border-white/5 font-cairo">
+                                  {vid.category}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Video Duration (bottom-left) */}
+                            {vid.duration && (
+                              <div className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-white/10 shadow-sm">
+                                <Clock className="w-2.5 h-2.5 text-blue-400" />
+                                <span>{vid.duration}</span>
+                              </div>
+                            )}
+
+                            {/* Video Views (bottom-right) */}
+                            <div className="absolute bottom-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-white/10 shadow-sm font-cairo">
+                              <Eye className="w-2.5 h-2.5 text-blue-400" />
+                              <span>{formattedViews}</span>
+                              <span className="hidden xs:inline">&nbsp;مشاهدة</span>
+                            </div>
+                          </div>
+
+                          {/* Meta Info */}
+                          <div className="p-2 sm:p-2.5 flex-1 flex flex-col gap-1 text-right justify-start">
+                            <h4 className="text-slate-900 font-bold leading-tight line-clamp-3 text-[10px] sm:text-xs lg:text-[13px] group-hover:text-blue-600 transition-colors font-cairo overflow-hidden">
+                              {vid.title}
+                            </h4>
+                            
+                            <div className="flex items-center gap-1 text-[8px] sm:text-[9.5px] text-slate-400 font-medium font-cairo mt-0.5">
+                              <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                              <span className="truncate">{relativeTime}</span>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </motion.div>
             </div>
           )}
-        </AnimatePresence>
 
-        {/* VIDEOS LIST GRID */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-3">
-            <div className="w-10 h-10 border-4 border-taiz-royal border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm font-bold text-text-muted">جاري إرساء المكتبة الإعلامية...</p>
-          </div>
-        ) : filteredVideos.length === 0 ? (
-          <div className="text-center py-20 text-text-muted bg-surface-main rounded-3xl border border-dashed border-border-light p-8">
-            <FolderOpen className="w-12 h-12 mx-auto text-border-subtle mb-3 animate-pulse" />
-            <p className="font-black text-sm mb-1">لا توجد وسائط ومواد إعلامية تطابق بحثك</p>
-            <p className="text-xs text-text-muted font-bold">يرجى تجربة البحث بكلمات أخرى أو الانتقال لتصاميم الكل</p>
-          </div>
-        ) : (
-          <motion.div 
-            layout
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6"
-          >
-            <AnimatePresence mode="popLayout">
-              {filteredVideos.map(vid => (
-                <motion.div
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.25 }}
-                  key={vid.id}
+          {/* B. Latest Videos Section */}
+          {latestVideos.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-5 mt-6 rtl" style={{ direction: "rtl" }}>
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 bg-blue-50 rounded-xl text-blue-600 flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-blue-600 stroke-[2.5]" />
+                  </span>
+                  <h2 className="text-base sm:text-lg font-black text-slate-900 font-cairo">أحدث الفيديوهات</h2>
+                </div>
+                <button 
+                  onClick={() => setShowAllLatest(!showAllLatest)}
+                  className="flex items-center gap-1 text-xs sm:text-sm font-black text-blue-600 hover:text-blue-700 font-cairo cursor-pointer"
                 >
-                  <Link 
-                    id={`watch-video-${vid.id}`}
-                    to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`} 
-                    className="card card-hover group block p-0"
-                  >
-                    {/* Immersive Thumbnail card */}
-                    <div className="relative aspect-video bg-surface-main overflow-hidden rounded-t-2xl">
-                      {vid.thumbnailUrl ? (
-                        <img 
-                          src={vid.thumbnailUrl} 
-                          alt={vid.title} 
-                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition duration-700 ease-out" 
-                          loading="lazy" 
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-taiz-navy to-taiz-royal shrink-0 flex items-center justify-center">
-                          <Radio className="w-8 h-8 text-white/20" />
-                        </div>
-                      )}
+                  <span>عرض المزيد</span>
+                  <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${showAllLatest ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
 
-                      {/* Floating Overlays */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/40 to-transparent opacity-95 group-hover:opacity-100 transition-opacity duration-500"></div>
-                      
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center shadow-strong transition transform group-hover:scale-110 border border-white/20">
-                          <PlayCircle className="w-8 h-8" />
-                        </div>
+              <motion.div 
+                layout
+                className="grid grid-cols-2 gap-3 sm:gap-4 rtl"
+                style={{ direction: "rtl" }}
+              >
+                <AnimatePresence mode="popLayout">
+                  {(showAllLatest ? latestVideos : latestVideos.slice(0, 4)).map(vid => {
+                    const formatArabicViews = (views: number) => {
+                      const v = views || 0;
+                      if (v >= 1000000) {
+                        return `${(v / 1000000).toFixed(1).replace(".0", "")} مليون`;
+                      }
+                      if (v >= 1000) {
+                        return `${(v / 1000).toFixed(1).replace(".0", "")} ألف`;
+                      }
+                      return `${v}`;
+                    };
+                    const formattedViews = formatArabicViews(vid.views);
+                    const relativeTime = getRelativeTimeArabic(vid.createdAt);
+
+                    return (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.96 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.96 }}
+                        transition={{ duration: 0.2 }}
+                        key={`lt-${vid.id}`}
+                      >
+                        <Link 
+                          id={`watch-video-lt-${vid.id}`}
+                          to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`} 
+                          className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-slate-200/80 transition-all duration-300 group block overflow-hidden flex flex-col cursor-pointer"
+                        >
+                          {/* Immersive Thumbnail */}
+                          <div className="relative aspect-[3/4] bg-slate-50 overflow-hidden rounded-t-xl">
+                            {vid.thumbnailUrl ? (
+                              <img 
+                                src={vid.thumbnailUrl} 
+                                alt={vid.title} 
+                                className="w-full h-full object-cover group-hover:scale-105 transition duration-700 ease-out" 
+                                loading="lazy" 
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+                                <Radio className="w-6 h-6 text-white/20" />
+                              </div>
+                            )}
+
+                            {/* Translucent overlay for play action */}
+                            <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-300" />
+                            
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 border border-white/20">
+                                <Play className="w-3.5 h-3.5 fill-white text-white translate-x-[1px]" />
+                              </div>
+                            </div>
+
+                            {/* Category Pill tag (top-right) - RESTORED */}
+                            {vid.category && (
+                              <div className="absolute top-1.5 right-1.5 flex">
+                                <span className="bg-slate-950/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded border border-white/5 font-cairo">
+                                  {vid.category}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Video Duration (bottom-left) */}
+                            {vid.duration && (
+                              <div className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-white/10 shadow-sm">
+                                <Clock className="w-2.5 h-2.5 text-blue-400" />
+                                <span>{vid.duration}</span>
+                              </div>
+                            )}
+
+                            {/* Video Views (bottom-right) */}
+                            <div className="absolute bottom-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-white/10 shadow-sm font-cairo font-black">
+                              <Eye className="w-2.5 h-2.5 text-blue-400" />
+                              <span>{formattedViews}</span>
+                              <span className="hidden xs:inline">&nbsp;مشاهدة</span>
+                            </div>
+                          </div>
+
+                          {/* Meta Info */}
+                          <div className="p-2 sm:p-2.5 flex-1 flex flex-col gap-1 text-right justify-start">
+                            <h4 className="text-slate-900 font-bold leading-tight line-clamp-3 text-[10px] sm:text-xs lg:text-[13px] group-hover:text-blue-600 transition-colors font-cairo overflow-hidden">
+                              {vid.title}
+                            </h4>
+                            
+                            <div className="flex items-center gap-1 text-[8px] sm:text-[9.5px] text-slate-400 font-medium font-cairo mt-0.5">
+                              <Clock className="w-2.5 h-2.5 text-slate-400 shrink-0" />
+                              <span className="truncate">{relativeTime}</span>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              </motion.div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 7. Beautiful Filter Modal */}
+      <AnimatePresence>
+        {isFilterModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/55 backdrop-blur-sm" dir="rtl">
+             <motion.div 
+               initial={{ opacity: 0, scale: 0.9, y: 20 }}
+               animate={{ opacity: 1, scale: 1, y: 0 }}
+               exit={{ opacity: 0, scale: 0.9, y: 20 }}
+               className="relative w-full max-w-md bg-white rounded-[2rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col p-6 text-right"
+             >
+                <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                   <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2 font-cairo">
+                      <SlidersHorizontal className="w-5 h-5 text-blue-600 stroke-[2.5]" />
+                      تصفية وتصنيف المواد
+                   </h3>
+                   <button onClick={() => setIsFilterModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-xl transition text-slate-400 hover:text-slate-600 cursor-pointer">
+                      <X className="w-5 h-5" />
+                   </button>
+                </div>
+
+                <div className="space-y-6 overflow-y-auto max-h-[50vh] pr-1">
+                   {/* Sorting options */}
+                   <div>
+                      <span className="text-xs font-black text-slate-800 block mb-3 font-cairo">ترتيب حسب:</span>
+                      <div className="grid grid-cols-3 gap-2">
+                         {[
+                           { id: "newest", label: "الأحدث" },
+                           { id: "oldest", label: "الأقدم" },
+                           { id: "popular", label: "الرائج" }
+                         ].map(opt => (
+                           <button
+                             key={opt.id}
+                             onClick={() => setTempSort(opt.id as any)}
+                             className={`py-2.5 rounded-2xl text-xs font-bold border transition-all cursor-pointer font-cairo ${
+                               tempSort === opt.id 
+                                 ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' 
+                                 : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
+                             }`}
+                           >
+                             {opt.label}
+                           </button>
+                         ))}
                       </div>
+                   </div>
 
-                      {/* Category Pill Tag Overlay */}
-                      <div className="absolute top-3 left-3 flex gap-1.5">
-                        <span className="bg-taiz-navy/80 backdrop-blur-md text-white text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow-md border border-white/10">
-                          {vid.category || "شاهد"}
-                        </span>
+                   {/* Categories selection */}
+                   <div>
+                      <span className="text-xs font-black text-slate-800 block mb-3 font-cairo">التصنيفات:</span>
+                      <div className="flex flex-wrap gap-2">
+                         <button
+                           onClick={() => setTempCategories([])}
+                           className={`px-4 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer font-cairo ${
+                             tempCategories.length === 0 
+                               ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' 
+                               : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
+                           }`}
+                         >
+                           الكل
+                         </button>
+                         {uniqueCategories.map(cat => (
+                           <button
+                             key={cat}
+                             onClick={() => toggleTempCategory(cat)}
+                             className={`px-4 py-2 rounded-2xl text-xs font-bold border transition-all cursor-pointer font-cairo ${
+                               tempCategories.includes(cat) 
+                                 ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' 
+                                 : 'bg-slate-50 text-slate-600 border-slate-100 hover:bg-slate-100'
+                             }`}
+                           >
+                             {cat}
+                           </button>
+                         ))}
                       </div>
+                   </div>
+                </div>
 
-                      {/* Video Duration tag overlay */}
-                      {vid.duration && (
-                        <div className="absolute bottom-3 right-3 bg-taiz-navy/80 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 border border-white/10 shadow-md">
-                          <Clock className="w-3.5 h-3.5 text-taiz-sky" />
-                          <span>{vid.duration}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Meta info below image */}
-                    <div className="p-5 space-y-3">
-                      <h4 className="text-text-primary font-black leading-[1.45] line-clamp-2 text-right text-[12px] sm:text-[13px] group-hover:text-taiz-royal transition-colors h-10 overflow-hidden">
-                        {vid.title}
-                      </h4>
-                      
-                      <div className="flex items-center justify-between text-[11px] text-text-muted pt-3 border-t border-border-light">
-                        <span className="font-bold flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-text-muted" />
-                          {format(vid.createdAt || Date.now(), "d MMMM yyyy", { locale: ar })}
-                        </span>
-                        
-                        <span className="font-black flex items-center gap-1.5 bg-surface-main px-2.5 py-1 rounded-full text-taiz-royal">
-                          <Eye className="w-3.5 h-3.5" />
-                          {vid.views || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </motion.div>
+                <div className="mt-8 flex gap-3">
+                   <button 
+                     onClick={applyFilters}
+                     className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-sm font-black shadow-lg shadow-blue-500/25 transition duration-200 cursor-pointer font-cairo"
+                   >
+                      تطبيق التصفية
+                   </button>
+                   <button 
+                     onClick={() => setIsFilterModalOpen(false)}
+                     className="px-6 bg-slate-50 hover:bg-slate-100 text-slate-600 py-3.5 rounded-2xl text-sm font-black border border-slate-100 transition cursor-pointer font-cairo"
+                   >
+                      إلغاء
+                   </button>
+                </div>
+             </motion.div>
+          </div>
         )}
-      </div>
+      </AnimatePresence>
 
     </div>
     </PullToRefresh>

@@ -7,12 +7,12 @@ export function processQuranData(importedData: any) {
   const rawSyllabuses: QuranSyllabus[] = (importedData?.syllabuses || []) as QuranSyllabus[];
 
   // Reorganize series to combine IDs "4", "5", "6", "7" into a single series "4"
-  // named "السلسلة الثالثة - معرفة الله"
+  // named "معرفة الله"
   const processedSeries: QuranSeries[] = rawSeries.reduce<QuranSeries[]>((acc, s) => {
     if (s.id === "4") {
       acc.push({
         ...s,
-        title: "السلسلة الثالثة - معرفة الله",
+        title: "معرفة الله",
       });
     } else if (s.id === "5" || s.id === "6" || s.id === "7") {
       // Skip these sub-series

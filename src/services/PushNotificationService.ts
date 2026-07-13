@@ -1,7 +1,7 @@
 import { collection, addDoc, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
-const VAPID_PUBLIC_KEY = "BI-ruJjPREZhD0Ca5xUI2s-C0YtIlmajVGs5S_w0YV_VllOfG3e-3PKOdL7mh6qG1OCb41tuo5ryo5DJ6jscBqQ";
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BAD_LAWZHGtCnTB1VARbKNd8FXtWmMdDersfNojTktkSWPicaZcwHdgdM5nQbmVl9GkujacJdrwJ9HYqWEYhDHM";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -53,7 +53,18 @@ export class PushNotificationService {
 
   static async subscribeUser(): Promise<boolean> {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-      alert("متصفحك لا يدعم إشعارات الويب.");
+      let reason = "متصفحك لا يدعم إشعارات الويب.";
+      
+      // Check for common reasons
+      if (window.location.protocol !== "https:" && window.location.hostname !== "localhost") {
+        reason = "الإشعارات تتطلب اتصالاً آمناً (HTTPS). يرجى التأكد من أنك تستخدم HTTPS.";
+      } else if (window.isSecureContext === false) {
+        reason = "المتصفح في وضع غير آمن يمنع الإشعارات.";
+      } else {
+        reason = "متصفحك لا يدعم إشعارات الويب أو أنك تشغل التطبيق داخل نافذة معاينة مقيدة. يرجى فتح التطبيق في علامة تبويب جديدة (New Tab) أو متصفح خارجي مثل Chrome.";
+      }
+      
+      alert(reason);
       return false;
     }
 

@@ -50,13 +50,22 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
     setLoading(true);
     try {
       if (Capacitor.isNativePlatform()) {
+        // Ensure initialized for Android fallback
+        try {
+          await GoogleAuth.initialize({
+            clientId: '565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com',
+          });
+        } catch (e) {
+          console.log("GoogleAuth already initialized or skip:", e);
+        }
+
         const googleUser = await (GoogleAuth.signIn as any)();
-        if (googleUser.authentication.idToken) {
+        if (googleUser && googleUser.authentication && googleUser.authentication.idToken) {
           const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
           const userCredential = await signInWithCredential(auth, credential);
           await syncUserProfile(userCredential.user);
         } else {
-          throw new Error("No ID Token found");
+          throw new Error("No ID Token found from Google Sign-In");
         }
       } else {
         const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());

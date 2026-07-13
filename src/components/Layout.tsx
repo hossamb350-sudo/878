@@ -228,6 +228,13 @@ export function Layout() {
   const [pushSubscribed, setPushSubscribed] = useState(false);
 
   useEffect(() => {
+    // Avoid registering service worker in restricted environments like AI Studio preview
+    const isIframe = window.self !== window.top;
+    if (isIframe) {
+      console.log("Service worker registration skipped in iframe/preview environment.");
+      return;
+    }
+
     // Register Service Worker and check subscription state
     PushNotificationService.registerServiceWorker().then((reg) => {
       if (reg) {
@@ -315,8 +322,8 @@ export function Layout() {
       </main>
 
       {/* Navigation for All Devices */}
-      <nav className={`fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-border-light px-2 flex justify-center items-center z-40 pb-safe transition-transform duration-300 ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
-        <div className="grid grid-cols-6 w-full max-w-2xl mx-auto">
+      <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.04)] border-t border-slate-100/80 px-2 flex justify-center items-center z-40 pb-safe transition-transform duration-300 h-[72px] sm:h-[76px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+        <div className="grid grid-cols-6 w-full max-w-2xl mx-auto px-1">
           {[
             { to: "/", icon: Newspaper, label: "الأخبار" },
             { to: "/watch", icon: Tv, label: "شاهد" },
@@ -328,24 +335,23 @@ export function Layout() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) =>
-                `flex flex-col items-center justify-start pt-2 pb-2 w-full transition-all relative min-h-[4.25rem] sm:min-h-[4.5rem] group ${
-                  isActive
-                    ? "text-taiz-sky"
-                    : "text-text-muted hover:text-taiz-navy"
-                }`
-              }
+              className="flex flex-col items-center justify-center w-full relative"
             >
               {({ isActive }) => (
-                <>
-                  {isActive && <motion.div layoutId="nav-active" className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-gradient-to-r from-taiz-sky to-taiz-royal rounded-b-full shadow-glow"></motion.div>}
-                  <div className="h-6 w-full flex items-center justify-center mb-1 shrink-0 mt-1">
-                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isActive ? 'fill-taiz-sky/10 scale-110 text-taiz-sky' : 'group-hover:scale-110'}`} />
+                <div 
+                  className={`flex flex-col items-center justify-center w-[90%] py-1.5 rounded-2xl transition-all duration-300 ${
+                    isActive 
+                      ? "bg-[#f0f4fa] text-blue-600 font-bold" 
+                      : "text-slate-500 hover:text-slate-800"
+                  }`}
+                >
+                  <div className="h-6 w-full flex items-center justify-center mb-0.5 shrink-0">
+                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isActive ? 'stroke-[2.5] text-blue-600' : 'stroke-[2]'}`} />
                   </div>
-                  <span className="text-[9px] min-[380px]:text-[10px] sm:text-xs font-bold text-center leading-tight line-clamp-2 px-0.5 tracking-tight w-full">
+                  <span className={`text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-bold text-center leading-tight tracking-tight px-0.5 w-full font-cairo`}>
                     {item.label}
                   </span>
-                </>
+                </div>
               )}
             </NavLink>
           ))}

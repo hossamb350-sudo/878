@@ -24,31 +24,37 @@ export async function loadQuranData() {
   let localCache: any = null;
   let cacheTimestamp: number = 0;
 
-  // 1. Check IndexedDB for cached data (Hydrate UI immediately if offline or fresh)
+  // 1. Fetch from local API (Source of Truth for local files/images)
+  try {
+    console.log('[SyncService] Loading Quran data from local API...');
+    const res = await fetch(`${API_BASE}/api/quran-data`);
+    if (res.ok) {
+      cachedData = await res.json();
+      // Save to IndexedDB (Persistent local cache)
+      await setIDB(CACHE_KEY, cachedData);
+      await setIDB(TIMESTAMP_KEY, Date.now());
+      return cachedData;
+    }
+  } catch (e) {
+    console.warn('[SyncService] Local API failed, trying Firestore/Cache...', e);
+  }
+
+  // 2. Check IndexedDB for cached data (Hydrate UI if API failed)
   try {
     localCache = await getIDB(CACHE_KEY);
     const ts = await getIDB(TIMESTAMP_KEY);
     if (ts) cacheTimestamp = Number(ts);
     
-    if (localCache && cacheTimestamp) {
-      const now = Date.now();
-      const isOffline = !navigator.onLine;
-      
-      // If offline, OR cache is fresh, return local data instantly
-      if (isOffline || (now - cacheTimestamp < CACHE_EXPIRATION)) {
-        console.log(`[SyncService] Hydrating Quran data from IndexedDB cache. Offline: ${isOffline}`);
-        cachedData = localCache;
-        
-        // If we are online but just returning fresh cache, we could optionally 
-        // trigger background sync here. But for now, returning cache is sufficient.
-        return cachedData;
-      }
+    if (localCache) {
+      console.log(`[SyncService] Hydrating Quran data from IndexedDB cache.`);
+      cachedData = localCache;
+      return cachedData;
     }
   } catch (e) {
     console.warn('[SyncService] Error reading from IndexedDB:', e);
   }
 
-  // 2. Fetch from Firestore (Network)
+  // 3. Fetch from Firestore (Network) as last resort
   try {
     console.log('[SyncService] Loading Quran data from Firestore...');
     

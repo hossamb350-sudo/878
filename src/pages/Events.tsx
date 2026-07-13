@@ -190,26 +190,6 @@ export function Events() {
       className="max-w-7xl mx-auto w-full p-4 pb-20 space-y-8 font-sans"
       dir="rtl"
     >
-      {/* Exquisite Top Header Section */}
-      <div className="relative overflow-hidden bg-surface-card rounded-3xl p-6 sm:p-8 border border-border-light shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
-        {/* Abstract Background Accents */}
-        <div className="absolute top-0 left-0 w-32 h-32 bg-taiz-sky/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-24 h-24 bg-taiz-royal/10 rounded-full blur-xl pointer-events-none" />
-
-        <div className="space-y-3 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-surface-main border border-border-light flex items-center justify-center text-taiz-royal shadow-sm">
-              <CalendarIcon className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2.5xl sm:text-3.5xl font-black text-text-primary mt-1">
-                تقويم المناسبات
-              </h1>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Modern Bento Highlights Banner Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Bento Cell 1: Event of the Day Card */}
