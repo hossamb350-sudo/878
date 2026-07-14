@@ -1,7 +1,22 @@
 import { collection, addDoc, query, where, getDocs, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase";
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BAD_LAWZHGtCnTB1VARbKNd8FXtWmMdDersfNojTktkSWPicaZcwHdgdM5nQbmVl9GkujacJdrwJ9HYqWEYhDHM";
+const DEFAULT_VAPID_PUBLIC_KEY = "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
+
+function isValidVapidKey(key: string | undefined): boolean {
+  if (!key || typeof key !== "string" || key.startsWith("BAD_")) return false;
+  try {
+    const padding = "=".repeat((4 - (key.length % 4)) % 4);
+    const base64 = (key + padding).replace(/\-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    return rawData.length === 65;
+  } catch (e) {
+    return false;
+  }
+}
+
+const envKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+const VAPID_PUBLIC_KEY = isValidVapidKey(envKey) ? envKey! : DEFAULT_VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import {
   BookOpen,
+  BookOpenCheck,
+  BookText,
   Clock,
   Calendar,
   Bookmark,
@@ -154,7 +156,7 @@ export function QuranStats({
               </span>
             </div>
             <div className="p-3 bg-taiz-royal/10 rounded-xl text-taiz-royal shrink-0">
-              <BookOpen className="w-6 h-6" />
+              <BookOpenCheck className="w-6 h-6" />
             </div>
           </div>
 
@@ -236,7 +238,7 @@ export function QuranStats({
             <div className="space-y-4">
               {activeLessons.length === 0 ? (
                 <div className="bg-surface-card p-8 rounded-2xl border border-border-light text-center text-text-muted animate-fade-in">
-                  <BookOpen className="w-12 h-12 text-border-light mx-auto mb-3 animate-bounce" />
+                  <BookText className="w-12 h-12 text-border-light mx-auto mb-3 animate-pulse" />
                   <p className="font-bold text-text-primary">لوحة المتابعة بالدروس فارغة.</p>
                   <p className="text-xs text-text-secondary mt-1">
                     عندما تبدأ قراءة الدروس، أو تحفظ إشارات، أو تكتب مذكرات شخصية، ستظهر مرتبة هنا حسب الدروس.
@@ -384,7 +386,7 @@ export function QuranStats({
             <div className="space-y-3">
               {startedLessons.length === 0 ? (
                 <div className="bg-surface-card p-8 rounded-2xl border border-border-light text-center text-text-muted">
-                  <BookOpen className="w-12 h-12 text-border-light mx-auto mb-3" />
+                  <BookOpenCheck className="w-12 h-12 text-border-light mx-auto mb-3 animate-pulse" />
                   <p className="font-bold text-text-primary">لم تقرأ أي درس حتى الآن.</p>
                   <p className="text-xs text-text-secondary mt-1">
                     ابدأ بقراءة الدروس من القائمة الرئيسية لحفظ تقدمك تفاعلياً.

@@ -368,7 +368,7 @@ export function LeaderItem() {
               </div>
             )}
             
-            <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-0 pointer-events-none" />
+            <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-taiz-navy/90 via-taiz-navy/40 to-transparent z-0 pointer-events-none" />
             
             <button 
               onClick={() => navigate(-1)} 

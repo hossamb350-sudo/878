@@ -367,7 +367,7 @@ export function Home() {
                 )}
                 
                 {/* Gradient Overlay for Text Readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/80 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-taiz-navy/90 via-taiz-navy/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0"></div>
                 
                 {/* Content Container at the Bottom */}
                 <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 flex flex-col justify-end">
@@ -442,7 +442,7 @@ export function Home() {
                       )}
                       
                       {/* Gradient Overlay for Text Readability */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/80 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500"></div>
+                      <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-taiz-navy/90 via-taiz-navy/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0"></div>
                       
                       {/* Content Container at the Bottom */}
                       <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 flex flex-col justify-end">

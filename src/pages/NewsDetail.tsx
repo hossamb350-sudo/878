@@ -20,7 +20,7 @@ export function NewsDetail() {
   // Customization states
   const [fontSize, setFontSize] = useState<number>(() => {
     const saved = localStorage.getItem("news_font_size");
-    return saved ? parseInt(saved, 10) : 18;
+    return saved ? parseInt(saved, 10) : 15;
   });
   
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -301,7 +301,7 @@ export function NewsDetail() {
             />
             
             {/* Gradient Overlay for supreme text readability */}
-            <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-0 pointer-events-none" />
+            <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-taiz-navy/90 via-taiz-navy/40 to-transparent z-0 pointer-events-none" />
             
             {/* Floating Back Button (Right Side) */}
             <button 

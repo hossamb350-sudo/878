@@ -34,8 +34,33 @@ const app = express();
 const PORT = 3000;
 
 // Configure web-push details
-const VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BAD_LAWZHGtCnTB1VARbKNd8FXtWmMdDersfNojTktkSWPicaZcwHdgdM5nQbmVl9GkujacJdrwJ9HYqWEYhDHM";
-const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "_BlmO5np9URh_YvXCCuY-FpLoAXZ4lHiiV1wapAfeFg";
+const DEFAULT_VAPID_PUBLIC_KEY = "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
+const DEFAULT_VAPID_PRIVATE_KEY = "btEWHmdPbPg_jgywYnb6z4NujfcN5TeJQDY8JbDTAOQ";
+
+function isValidVapidKey(publicKey: string): boolean {
+  if (!publicKey || typeof publicKey !== "string") return false;
+  try {
+    const normalized = publicKey.replace(/-/g, "+").replace(/_/g, "/");
+    const buf = Buffer.from(normalized, "base64");
+    return buf.length === 65;
+  } catch (e) {
+    return false;
+  }
+}
+
+function getVapidKeys() {
+  const envPub = process.env.VITE_VAPID_PUBLIC_KEY;
+  const envPriv = process.env.VAPID_PRIVATE_KEY;
+
+  if (envPub && envPriv && isValidVapidKey(envPub)) {
+    return { publicKey: envPub, privateKey: envPriv };
+  } else {
+    console.warn("Using fallback/default stable VAPID keypair since the environment configured keys are invalid or not 65 bytes when decoded.");
+    return { publicKey: DEFAULT_VAPID_PUBLIC_KEY, privateKey: DEFAULT_VAPID_PRIVATE_KEY };
+  }
+}
+
+const { publicKey: VAPID_PUBLIC_KEY, privateKey: VAPID_PRIVATE_KEY } = getVapidKeys();
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:hossamb350@gmail.com";
 
 try {

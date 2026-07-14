@@ -50,8 +50,16 @@ export class ImageUploadService {
     };
 
     let base64Data: string;
-    if (typeof file === "string" && (file.startsWith("data:") || !file.includes("/"))) {
-      // It's already base64 or a base64 string without data prefix (if it doesn't look like a path)
+    if (typeof file === "string") {
+      if (file.startsWith("http://") || file.startsWith("https://")) {
+        // If it's already an online URL, return it directly
+        return {
+          url: file,
+          thumbnail: file,
+          fileId: ""
+        };
+      }
+      // It's a base64 string
       base64Data = file.startsWith("data:") ? file : `data:image/jpeg;base64,${file}`;
     } else {
       try {

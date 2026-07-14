@@ -20,7 +20,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const isFirstLaunch = imageSrc === "/splash_first.png";
+  const isFirstLaunch = imageSrc === "/splash_first.webp" || imageSrc === "/splash_first.png";
 
   const cards = [
     {
@@ -54,12 +54,17 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
     // Check local storage to see if this is the first launch of the application
     const alreadyLaunched = localStorage.getItem("taiz_app_already_launched");
     
-    let selectedImage = "/splash_subsequent.png";
+    let selectedImage = "/splash_subsequent.webp";
     if (alreadyLaunched !== "true") {
-      selectedImage = "/splash_first.png";
+      selectedImage = "/splash_first.webp";
     }
     
     setImageSrc(selectedImage);
+
+    // Fallback safety: if image loading gets stuck or fails silently (e.g. in sandboxed iframe), force loaded state
+    const loadFallbackTimer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 5000);
 
     // Fallback safety to ensure native splash screen is hidden eventually
     const safetyTimer = setTimeout(() => {
@@ -67,6 +72,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
     }, 1000);
 
     return () => {
+      clearTimeout(loadFallbackTimer);
       clearTimeout(safetyTimer);
     };
   }, []);
@@ -175,10 +181,12 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           }}
           onError={(e) => {
             hideNativeSplash();
-            // Fallback to /splash.png or /logo.png if the custom images are not yet uploaded or fail to load
+            // Fallback to /splash.png if the custom images are not yet uploaded or fail to load
             const target = e.target as HTMLImageElement;
             if (target.src.includes("splash_first") || target.src.includes("splash_subsequent")) {
               target.src = "/splash.png";
+            } else {
+              setIsLoaded(true);
             }
           }}
           referrerPolicy="no-referrer"

@@ -14,6 +14,7 @@ import {
   Calendar,
   Clock,
   BookOpen,
+  BookText,
   Share2,
   CornerDownLeft,
   X,
@@ -1289,7 +1290,7 @@ export function QuranReader({
           </div>
 
           <div className="flex items-center gap-2">
-            <BookOpen className="w-4 h-4 text-blue-400" />
+            <BookText className="w-4 h-4 text-blue-400" />
             <span className="font-bold">
               متبقي:{" "}
               <span className="text-blue-400 font-black">

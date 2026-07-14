@@ -26,6 +26,11 @@ import {
   ChevronLeft,
   ChevronRight,
   BookOpen,
+  BookOpenCheck,
+  BookText,
+  Scroll,
+  Compass,
+  Sparkles,
   CheckCircle2,
   AlertTriangle,
   Trash2,
@@ -247,7 +252,7 @@ const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }:
                       <div className="w-full flex items-center gap-2 md:gap-4 mt-auto pt-1.5 md:pt-4 border-t border-stone-50 dark:border-stone-800">
                         {/* Lessons Count */}
                         <div className="flex items-center gap-1 md:gap-2 px-1 md:px-3 py-0.5 md:py-1 bg-[#F1FDF6] dark:bg-emerald-950/20 rounded-full">
-                          <BookOpen className="w-2.5 md:w-4 h-2.5 md:h-4 text-[#10B981]" />
+                          <BookText className="w-2.5 md:w-4 h-2.5 md:h-4 text-[#10B981]" />
                           <span className="text-[8px] md:text-xs font-bold text-[#10B981] font-cairo">
                             {formatLessonCount(count)}
                           </span>
@@ -258,14 +263,14 @@ const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }:
                           <>
                             <div className="w-px h-2.5 md:h-4 bg-stone-200 dark:bg-stone-800" />
                             <div className="flex items-center gap-1 md:gap-2">
-                              <BookOpen className="w-2.5 md:w-4 h-2.5 md:h-4 text-stone-400" />
+                              <Scroll className="w-2.5 md:w-4 h-2.5 md:h-4 text-stone-400" />
                               <span className="text-[8px] md:text-xs font-bold text-taiz-navy dark:text-stone-300 font-cairo">
                                 {series.title?.includes("آل عمران") ? "200" : "120"} آية
                               </span>
                             </div>
                             <div className="w-px h-2.5 md:h-4 bg-stone-200 dark:bg-stone-800" />
                             <div className="flex items-center gap-1 md:gap-2">
-                              <Library className="w-2.5 md:w-4 h-2.5 md:h-4 text-stone-400" />
+                              <Compass className="w-2.5 md:w-4 h-2.5 md:h-4 text-stone-400" />
                               <span className="text-[8px] md:text-xs font-bold text-taiz-navy dark:text-stone-300 font-cairo">
                                 مدنية
                               </span>
@@ -275,24 +280,9 @@ const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }:
                       </div>
                     </div>
 
-                    {/* Right Side: Image with Number Badge */}
-                    <div className="shrink-0 relative w-16 h-16 md:w-40 md:h-40 rounded-xl md:rounded-3xl overflow-hidden shadow-lg">
-                      {series.imageUrl ? (
-                        <img 
-                          src={series.imageUrl} 
-                          alt={series.title} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-taiz-navy to-taiz-royal flex items-center justify-center">
-                          <Library className="w-8 h-8 md:w-12 md:h-12 text-white/20" />
-                        </div>
-                      )}
-                      
-                      {/* Number Badge */}
-                      <div className="absolute top-1 right-1 bg-taiz-navy/90 text-white px-1.5 py-0.5 rounded-md text-[10px] md:text-sm font-black min-w-[24px] text-center backdrop-blur-sm shadow-lg font-mono">
-                        {seriesIndex}
-                      </div>
+                    {/* Right Side: Circular Number Badge */}
+                    <div className="shrink-0 flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-taiz-navy text-white text-sm md:text-lg font-black shadow-md font-mono">
+                      {seriesIndex}
                     </div>
                   </button>
                 </motion.div>
@@ -330,22 +320,6 @@ const LessonsView = ({
             <Library className="w-10 h-10 text-taiz-royal/20" />
           </div>
 
-          {/* Surah Image on Right */}
-          <div className="shrink-0 w-32 h-32 md:w-56 md:h-56 rounded-[24px] overflow-hidden shadow-xl order-first md:order-last relative group">
-            {selectedSeries?.imageUrl ? (
-              <img 
-                src={selectedSeries.imageUrl} 
-                alt={selectedSeries.title}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-taiz-navy to-taiz-royal flex items-center justify-center">
-                <Library className="w-16 h-16 text-white/20" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-          </div>
-
           {/* Surah Title & Metadata */}
           <div className="flex-1 text-center md:text-right space-y-4 md:space-y-6">
             <h1 className="text-2xl md:text-4xl font-black text-taiz-navy dark:text-white font-cairo tracking-tight">
@@ -359,7 +333,7 @@ const LessonsView = ({
                   {/* Verses Count */}
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-taiz-royal/5 flex items-center justify-center">
-                      <BookOpen className="w-3 md:w-4 h-3 md:h-4 text-taiz-royal" />
+                      <Scroll className="w-3 md:w-4 h-3 md:h-4 text-taiz-royal" />
                     </div>
                     <span className="text-xs md:text-sm font-bold text-stone-500 dark:text-stone-400 font-ibm">
                       {selectedSeries?.title?.includes("آل عمران") ? "200" : "120"} آية
@@ -371,7 +345,7 @@ const LessonsView = ({
                   {/* Type */}
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-taiz-royal/5 flex items-center justify-center">
-                      <Library className="w-3 md:w-4 h-3 md:h-4 text-taiz-royal" />
+                      <Compass className="w-3 md:w-4 h-3 md:h-4 text-taiz-royal" />
                     </div>
                     <span className="text-xs md:text-sm font-bold text-stone-500 dark:text-stone-400 font-ibm">
                       مدنية
@@ -413,7 +387,7 @@ const LessonsView = ({
 
                     {/* Middle: Content */}
                     <div className="flex-1 flex flex-col min-w-0 pr-1">
-                      <h3 className="text-[14px] md:text-lg font-black text-taiz-navy dark:text-white mb-0.5 line-clamp-1 group-hover:text-taiz-royal transition-colors font-cairo">
+                      <h3 className="text-[14px] font-black text-taiz-navy dark:text-white mb-0.5 line-clamp-1 group-hover:text-taiz-royal transition-colors font-cairo">
                         {lesson.title}
                       </h3>
                       <div className="flex items-center gap-1.5 mb-1 md:mb-1.5">
@@ -443,24 +417,9 @@ const LessonsView = ({
                       )}
                     </div>
 
-                    {/* Right Side: Image with Number Badge */}
-                    <div className="shrink-0 relative w-14 h-14 md:w-20 md:h-20 rounded-2xl overflow-hidden shadow-md border border-stone-100 dark:border-stone-800/50">
-                      {lesson.imageUrl ? (
-                        <img 
-                          src={lesson.imageUrl} 
-                          alt={lesson.title} 
-                          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-[#F7F8FC] dark:bg-stone-800 flex items-center justify-center group-hover:bg-taiz-royal/5 transition-colors">
-                          <BookOpen className="w-6 h-6 md:w-7 md:h-7 text-taiz-royal" />
-                        </div>
-                      )}
-                      
-                      {/* Number Badge */}
-                      <div className="absolute -top-1 -right-1 bg-taiz-navy text-white px-1.5 py-0.5 rounded-md text-[10px] font-black min-w-[22px] text-center shadow-lg font-mono z-10">
-                        {lessonNumber}
-                      </div>
+                    {/* Right Side: Circular Number Badge */}
+                    <div className="shrink-0 flex items-center justify-center w-10 h-10 md:w-14 md:h-14 rounded-full bg-taiz-navy text-white text-xs md:text-base font-black shadow-md font-mono">
+                      {lessonNumber}
                     </div>
                   </button>
                 </motion.div>
@@ -603,7 +562,7 @@ const ExcerptDetailView = ({
             onClick={() => onGoToLesson(lesson)}
             className="inline-flex items-center gap-1 text-sm font-bold text-taiz-sky bg-taiz-sky/10 px-3 py-1 rounded-full hover:bg-taiz-sky/20 transition-colors mb-6"
           >
-            <BookOpen className="w-4 h-4" />
+            <BookOpenCheck className="w-4 h-4" />
             الذهاب للدرس: {lesson.title}
           </button>
         )}
