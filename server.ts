@@ -155,8 +155,9 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
-// Serve uploads statically
+// Serve uploads and public statically
 app.use("/uploads", express.static(UPLOADS_DIR));
+app.use(express.static(path.join(process.cwd(), "public")));
 
 // API for Quran data (Hady Al-Quran)
 app.get("/api/quran-data", (req, res) => {

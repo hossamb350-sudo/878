@@ -46,6 +46,7 @@ interface QuranReaderProps {
   jumpToParagraphIndex: number | null;
   jumpToExactId?: string | null;
   onClearJump: () => void;
+  isLoading?: boolean;
 }
 
 export function QuranReader({
@@ -64,6 +65,7 @@ export function QuranReader({
   jumpToParagraphIndex,
   jumpToExactId,
   onClearJump,
+  isLoading = false,
 }: QuranReaderProps) {
   // Reading Prefs (saved in local storage)
   const [readerTheme, setReaderTheme] = useState<"day" | "night" | "sepia">(
@@ -1008,7 +1010,12 @@ export function QuranReader({
           </div>
 
           {/* Paragraph list loop */}
-          {paragraphs.length === 0 ? (
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 space-y-4">
+              <div className="w-12 h-12 border-4 border-taiz-royal/20 border-t-taiz-royal rounded-full animate-spin"></div>
+              <p className="text-taiz-royal font-bold animate-pulse">جاري تحميل محتوى الدرس...</p>
+            </div>
+          ) : paragraphs.length === 0 ? (
             <p className="text-center text-text-muted py-10 font-sans">
               لم يتم تزويد الدرس بمحتوى بعد.
             </p>

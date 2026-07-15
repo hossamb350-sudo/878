@@ -123,10 +123,10 @@ export interface QuranLesson {
   id: string;
   seriesId: string;
   title: string;
-  content: string; // The text content of the lesson
-  imageUrl?: string; // Image for the lesson
+  content?: string; // Content is now optional for on-demand loading
+  imageUrl?: string;
   order: number;
-  duration?: number; // In seconds
+  duration?: number;
   createdAt: number;
 }
 

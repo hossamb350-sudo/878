@@ -41,7 +41,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { QuranReader } from "../components/QuranReader";
 import { QuranStats } from "../components/QuranStats";
 import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData } from "../data/staticQuranData";
-import { loadQuranData } from "../data/importedQuranData";
+import { loadQuranMetadata, loadLessonContent } from "../data/importedQuranData";
 
 enum OperationType {
   CREATE = "create",
@@ -129,13 +129,13 @@ const QuranSearchView = ({
     ...lessonsList
       .filter(
         (l: any) =>
-          l.title.includes(searchQuery) || l.content.includes(searchQuery)
+          l.title.includes(searchQuery) || (l.content && l.content.includes(searchQuery))
       )
       .map((l: any) => ({ ...l, type: "lesson" as const })),
     ...excerptsList
       .filter(
         (e: any) =>
-          e.title.includes(searchQuery) || e.content.includes(searchQuery)
+          e.title.includes(searchQuery) || (e.content && e.content.includes(searchQuery))
       )
       .map((e: any) => ({ ...e, type: "excerpt" as const })),
   ];
@@ -592,6 +592,7 @@ const LessonDetailView = ({
   highlights,
   jumpToParagraphIndex,
   jumpToExactId,
+  isLoading,
   onBack,
   onToggleBookmark,
   onSaveNote,
@@ -619,6 +620,7 @@ const LessonDetailView = ({
       jumpToParagraphIndex={jumpToParagraphIndex}
       jumpToExactId={jumpToExactId}
       onClearJump={onClearJump}
+      isLoading={isLoading}
     />
   );
 };
@@ -1180,6 +1182,7 @@ const StatsView = ({
 
 export function Quran() {
   const [loading, setLoading] = useState(true);
+  const [isFetchingLesson, setIsFetchingLesson] = useState(false);
   const [activeView, setActiveView] = useState<QuranView>("series");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -1294,7 +1297,7 @@ export function Quran() {
     // 3. Load data asynchronously from JSON file
     let active = true;
 
-    loadQuranData().then((data) => {
+    loadQuranMetadata().then((data) => {
       if (!active) return;
       
       const processed = processQuranData(data);
@@ -1318,23 +1321,41 @@ export function Quran() {
     };
   }, []);
 
-  const navigateToLesson = (lesson: QuranLesson, series: QuranSeries) => {
+  const navigateToLesson = async (lesson: QuranLesson, series: QuranSeries) => {
     setSelectedSeries(series);
-    setSelectedLesson(lesson);
-    setJumpToParagraphIndex(null);
-    setActiveView("lesson-detail");
+    
+    // Check if lesson content needs to be loaded
+    if (!lesson.content) {
+      setIsFetchingLesson(true);
+      setActiveView("lesson-detail"); // Move to view immediately (will show loading)
+      setSelectedLesson(lesson);
+      
+      try {
+        const fullLesson = await loadLessonContent(lesson.id);
+        if (fullLesson && fullLesson.content) {
+          // Update lesson in list so it's cached in memory
+          setLessonsList(prev => prev.map(l => l.id === lesson.id ? { ...l, content: fullLesson.content } : l));
+          setSelectedLesson({ ...lesson, content: fullLesson.content });
+        }
+      } catch (error) {
+        console.error("Error loading lesson content:", error);
+      } finally {
+        setIsFetchingLesson(false);
+      }
+    } else {
+      setSelectedLesson(lesson);
+      setJumpToParagraphIndex(null);
+      setActiveView("lesson-detail");
+    }
   };
 
-  const handleLastReadClick = () => {
+  const handleLastReadClick = async () => {
     setIsSidebarOpen(false);
     if (lastRead) {
       const lesson = lessonsList.find((l) => l.id === lastRead.lessonId);
       const series = seriesList.find((s) => s.id === lastRead.seriesId);
       if (lesson && series) {
-        setSelectedSeries(series);
-        setSelectedLesson(lesson);
-        setJumpToParagraphIndex(null);
-        setActiveView("lesson-detail");
+        await navigateToLesson(lesson, series);
       } else {
         alert("لم يتم العثور على الدرس المحفوظ");
       }
@@ -1736,6 +1757,7 @@ export function Quran() {
                     onProgressUpdate={handleProgressUpdate}
                     jumpToParagraphIndex={jumpToParagraphIndex}
                     jumpToExactId={jumpToExactId}
+                    isLoading={isFetchingLesson}
                     onClearJump={() => {
                       setJumpToParagraphIndex(null);
                       setJumpToExactId(null);
