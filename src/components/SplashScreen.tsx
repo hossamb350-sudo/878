@@ -14,13 +14,12 @@ import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 import { UserProfile } from "../types";
 
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
-  const [imageSrc, setImageSrc] = useState<string>("");
+  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
+  const [imageSrc, setImageSrc] = useState<string>("/splash.png");
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-
-  const isFirstLaunch = imageSrc === "/splash_first.webp" || imageSrc === "/splash_first.png";
 
   const cards = [
     {
@@ -51,16 +50,18 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   };
 
   useEffect(() => {
-    // Check local storage to see if this is the first launch of the application
     const alreadyLaunched = localStorage.getItem("taiz_app_already_launched");
+    setIsFirstLaunch(alreadyLaunched !== "true");
     
-    let selectedImage = "/splash_subsequent.webp";
+    const isNative = Capacitor.isNativePlatform();
+    const ext = isNative ? ".png" : ".webp";
+    
+    let selectedImage = `/splash_subsequent${ext}`;
     if (alreadyLaunched !== "true") {
-      selectedImage = "/splash_first.webp";
+      selectedImage = `/splash_first${ext}`;
     }
-    
     setImageSrc(selectedImage);
-
+    
     // Fallback safety: if image loading gets stuck or fails silently (e.g. in sandboxed iframe), force loaded state
     const loadFallbackTimer = setTimeout(() => {
       setIsLoaded(true);

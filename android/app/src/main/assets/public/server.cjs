@@ -154,7 +154,6 @@ var upload = (0, import_multer.default)({
 });
 app.use("/uploads", import_express.default.static(UPLOADS_DIR));
 app.use(import_express.default.static(import_path.default.join(process.cwd(), "public")));
-app.use(import_express.default.static(import_path.default.join(process.cwd(), "Resources")));
 app.get("/api/quran-data", (req, res) => {
   const filePath = import_path.default.join(process.cwd(), "public/quranData.json");
   try {
