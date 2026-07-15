@@ -56,9 +56,9 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
     const isNative = Capacitor.isNativePlatform();
     const ext = isNative ? ".png" : ".webp";
     
-    let selectedImage = `/splash_subsequent${ext}`;
+    let selectedImage = `splash_subsequent${ext}`;
     if (alreadyLaunched !== "true") {
-      selectedImage = `/splash_first${ext}`;
+      selectedImage = `splash_first${ext}`;
     }
     setImageSrc(selectedImage);
     
