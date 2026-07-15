@@ -14,8 +14,20 @@ import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 import { UserProfile } from "../types";
 
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
-  const [isFirstLaunch, setIsFirstLaunch] = useState(false);
-  const [imageSrc, setImageSrc] = useState<string>("/splash.png");
+  const [isFirstLaunch, setIsFirstLaunch] = useState(() => {
+    const alreadyLaunched = localStorage.getItem("taiz_app_already_launched");
+    return alreadyLaunched !== "true";
+  });
+
+  const [imageSrc, setImageSrc] = useState<string>(() => {
+    const alreadyLaunched = localStorage.getItem("taiz_app_already_launched");
+    const isFirst = alreadyLaunched !== "true";
+    const isNative = Capacitor.isNativePlatform();
+    // Use absolute paths with leading slash '/' to guarantee correct resolution on all routes
+    const ext = isNative ? ".png" : ".webp";
+    return isFirst ? `/splash_first${ext}` : `/splash_subsequent${ext}`;
+  });
+
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
@@ -50,19 +62,6 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   };
 
   useEffect(() => {
-    const alreadyLaunched = localStorage.getItem("taiz_app_already_launched");
-    setIsFirstLaunch(alreadyLaunched !== "true");
-    
-    const isNative = Capacitor.isNativePlatform();
-    const ext = isNative ? "" : ".webp"; // Images are already .png, don't double extension
-    
-    // Prefix is not needed if we convert the path with convertFileSrc
-    let selectedImage = `splash_subsequent${isNative ? ".png" : ext}`;
-    if (alreadyLaunched !== "true") {
-      selectedImage = `splash_first${isNative ? ".png" : ext}`;
-    }
-    setImageSrc(selectedImage);
-    
     // Fallback safety: if image loading gets stuck or fails silently (e.g. in sandboxed iframe), force loaded state
     const loadFallbackTimer = setTimeout(() => {
       setIsLoaded(true);
