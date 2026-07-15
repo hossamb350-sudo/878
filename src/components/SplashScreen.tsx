@@ -54,13 +54,12 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
     setIsFirstLaunch(alreadyLaunched !== "true");
     
     const isNative = Capacitor.isNativePlatform();
-    const ext = isNative ? ".png" : ".webp";
+    const ext = isNative ? "" : ".webp"; // Images are already .png, don't double extension
     
-    const prefix = isNative ? "" : "/";
-    
-    let selectedImage = `${prefix}splash_subsequent${ext}`;
+    // Prefix is not needed if we convert the path with convertFileSrc
+    let selectedImage = `splash_subsequent${isNative ? ".png" : ext}`;
     if (alreadyLaunched !== "true") {
-      selectedImage = `${prefix}splash_first${ext}`;
+      selectedImage = `splash_first${isNative ? ".png" : ext}`;
     }
     setImageSrc(selectedImage);
     
@@ -173,7 +172,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
     <div className="fixed inset-0 z-[9999] bg-[#0b172a] flex items-center justify-center select-none overflow-hidden pb-safe">
       {imageSrc && (
         <img
-          src={imageSrc}
+          src={Capacitor.isNativePlatform() ? Capacitor.convertFileSrc(imageSrc) : imageSrc}
           alt="شاشة البداية"
           className={`w-full h-full object-cover transition-opacity duration-500 ease-in-out ${
             isLoaded ? "opacity-100" : "opacity-0"
@@ -184,16 +183,14 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           }}
           onError={(e) => {
             hideNativeSplash();
-            // Fallback to /splash.png (with correct prefix) if the custom images are not yet uploaded or fail to load
+            // Fallback to splash.png if the custom images are not yet uploaded or fail to load
             const target = e.target as HTMLImageElement;
             if (target.src.includes("splash_first") || target.src.includes("splash_subsequent")) {
-              const isNative = Capacitor.isNativePlatform();
-              target.src = isNative ? "splash.png" : "/splash.png";
+              target.src = Capacitor.isNativePlatform() ? Capacitor.convertFileSrc("splash.png") : "/splash.png";
             } else {
               setIsLoaded(true);
             }
           }}
-          referrerPolicy="no-referrer"
         />
       )}
 
