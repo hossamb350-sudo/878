@@ -30,6 +30,10 @@ var import_dotenv = __toESM(require("dotenv"), 1);
 var import_multer = __toESM(require("multer"), 1);
 var import_imagekit = __toESM(require("imagekit"), 1);
 var import_cors = __toESM(require("cors"), 1);
+var import_web_push = __toESM(require("web-push"), 1);
+var import_genai = require("@google/genai");
+var import_app = require("firebase-admin/app");
+var import_firestore = require("firebase-admin/firestore");
 
 // src/config/imagekitConfig.ts
 var IMAGEKIT_CONFIG = {
@@ -40,8 +44,48 @@ var IMAGEKIT_CONFIG = {
 
 // server.ts
 import_dotenv.default.config();
+var firebaseConfig = JSON.parse(import_fs.default.readFileSync(import_path.default.join(process.cwd(), "firebase-applet-config.json"), "utf8"));
+var adminApp;
+if ((0, import_app.getApps)().length === 0) {
+  adminApp = (0, import_app.initializeApp)({
+    projectId: firebaseConfig.projectId
+  });
+} else {
+  adminApp = (0, import_app.getApps)()[0];
+}
+var db = (0, import_firestore.getFirestore)(adminApp);
 var app = (0, import_express.default)();
 var PORT = 3e3;
+var DEFAULT_VAPID_PUBLIC_KEY = "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
+var DEFAULT_VAPID_PRIVATE_KEY = "btEWHmdPbPg_jgywYnb6z4NujfcN5TeJQDY8JbDTAOQ";
+function isValidVapidKey(publicKey) {
+  if (!publicKey || typeof publicKey !== "string") return false;
+  try {
+    const normalized = publicKey.replace(/-/g, "+").replace(/_/g, "/");
+    const buf = Buffer.from(normalized, "base64");
+    return buf.length === 65;
+  } catch (e) {
+    return false;
+  }
+}
+function getVapidKeys() {
+  const envPub = process.env.VITE_VAPID_PUBLIC_KEY;
+  const envPriv = process.env.VAPID_PRIVATE_KEY;
+  if (envPub && envPriv && isValidVapidKey(envPub)) {
+    return { publicKey: envPub, privateKey: envPriv };
+  } else {
+    console.warn("Using fallback/default stable VAPID keypair since the environment configured keys are invalid or not 65 bytes when decoded.");
+    return { publicKey: DEFAULT_VAPID_PUBLIC_KEY, privateKey: DEFAULT_VAPID_PRIVATE_KEY };
+  }
+}
+var { publicKey: VAPID_PUBLIC_KEY, privateKey: VAPID_PRIVATE_KEY } = getVapidKeys();
+var VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:hossamb350@gmail.com";
+try {
+  import_web_push.default.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  console.log("Web-Push VAPID details configured successfully.");
+} catch (e) {
+  console.error("Failed to set VAPID details:", e);
+}
 app.use((0, import_cors.default)({
   origin: true,
   credentials: true,
@@ -53,9 +97,31 @@ var imagekit = new import_imagekit.default({
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY || IMAGEKIT_CONFIG.privateKey,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || IMAGEKIT_CONFIG.urlEndpoint
 });
+var ai = new import_genai.GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  httpOptions: {
+    headers: {
+      "User-Agent": "aistudio-build"
+    }
+  }
+});
 app.use(import_express.default.json({ limit: "50mb" }));
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
+});
+app.get("/api/quran-data", (req, res) => {
+  const filePath = import_path.default.join(process.cwd(), "public/quranData.json");
+  if (import_fs.default.existsSync(filePath)) {
+    try {
+      const content = import_fs.default.readFileSync(filePath, "utf8");
+      const data = JSON.parse(content);
+      return res.json(data);
+    } catch (e) {
+      console.error("Error parsing quranData.json:", e);
+      return res.status(500).json({ error: "Failed to parse Quran data" });
+    }
+  }
+  res.status(404).json({ error: "Quran data not found" });
 });
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
@@ -87,6 +153,8 @@ var upload = (0, import_multer.default)({
   // 10MB limit
 });
 app.use("/uploads", import_express.default.static(UPLOADS_DIR));
+app.use(import_express.default.static(import_path.default.join(process.cwd(), "public")));
+app.use(import_express.default.static(import_path.default.join(process.cwd(), "Resources")));
 app.get("/api/quran-data", (req, res) => {
   const filePath = import_path.default.join(process.cwd(), "public/quranData.json");
   try {
@@ -151,6 +219,106 @@ app.post("/api/quran-data", async (req, res) => {
   } catch (error) {
     console.error("Error saving Quran data:", error);
     res.status(500).json({ error: "\u0641\u0634\u0644 \u0641\u064A \u062D\u0641\u0638 \u0628\u064A\u0627\u0646\u0627\u062A \u0647\u062F\u064A \u0627\u0644\u0642\u0631\u0622\u0646" });
+  }
+});
+app.post("/api/admin/generate-series-descriptions", async (req, res) => {
+  console.log("Environment keys:", Object.keys(process.env));
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("GEMINI_API_KEY is missing from environment");
+    return res.status(500).json({ error: "\u0645\u0641\u062A\u0627\u062D \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0645\u0641\u0642\u0648\u062F", keys: Object.keys(process.env) });
+  }
+  const filePath = import_path.default.join(process.cwd(), "public/quranData.json");
+  try {
+    if (!import_fs.default.existsSync(filePath)) {
+      return res.status(404).json({ error: "\u0645\u0644\u0641 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u063A\u064A\u0631 \u0645\u0648\u062C\u0648\u062F" });
+    }
+    const content = import_fs.default.readFileSync(filePath, "utf8");
+    const data = JSON.parse(content);
+    const { series, lessons } = data;
+    if (!series || !Array.isArray(series)) {
+      return res.status(400).json({ error: "\u062A\u0646\u0633\u064A\u0642 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A \u063A\u064A\u0631 \u0635\u062D\u064A\u062D" });
+    }
+    console.log(`Starting AI description generation for ${series.length} series...`);
+    const updatedSeries = await Promise.all(series.map(async (s) => {
+      console.log(`Processing series: ${s.title} (${s.id})`);
+      const relatedLessons = lessons.filter((l) => l.seriesId === s.id);
+      if (relatedLessons.length === 0) {
+        console.log(`No lessons found for series ${s.id}`);
+        return s;
+      }
+      const lessonTitles = relatedLessons.map((l) => l.title).join("\u060C ");
+      const prompt = `\u0623\u0646\u062A \u062E\u0628\u064A\u0631 \u0641\u064A \u0645\u062D\u062A\u0648\u0649 \u0647\u062F\u064A \u0627\u0644\u0642\u0631\u0622\u0646 \u0627\u0644\u0643\u0631\u064A\u0645. \u0628\u0646\u0627\u0621\u064B \u0639\u0644\u0649 \u0639\u0646\u0627\u0648\u064A\u0646 \u0627\u0644\u062F\u0631\u0648\u0633 \u0627\u0644\u062A\u0627\u0644\u064A\u0629 \u0627\u0644\u062A\u0627\u0628\u0639\u0629 \u0644\u0633\u0644\u0633\u0644\u0629 \u0628\u0639\u0646\u0648\u0627\u0646 "${s.title}":
+      
+      \u0639\u0646\u0627\u0648\u064A\u0646 \u0627\u0644\u062F\u0631\u0648\u0633:
+      ${lessonTitles}
+      
+      \u0627\u0643\u062A\u0628 \u0648\u0635\u0641\u0627\u064B \u062C\u0630\u0627\u0628\u0627\u064B \u0648\u0645\u062E\u062A\u0635\u0631\u0627\u064B \u062C\u062F\u0627\u064B (\u0628\u064A\u0646 15 \u0625\u0644\u0649 25 \u0643\u0644\u0645\u0629) \u0644\u0647\u0630\u0647 \u0627\u0644\u0633\u0644\u0633\u0644\u0629 \u0628\u0627\u0644\u0644\u063A\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629. \u0631\u0643\u0632 \u0639\u0644\u0649 \u0627\u0644\u0641\u0627\u0626\u062F\u0629 \u0627\u0644\u0625\u064A\u0645\u0627\u0646\u064A\u0629 \u0648\u0627\u0644\u062A\u0631\u0628\u0648\u064A\u0629 \u0644\u0644\u0645\u062D\u062A\u0648\u0649. \u0644\u0627 \u062A\u0632\u062F \u0639\u0646 25 \u0643\u0644\u0645\u0629.`;
+      try {
+        console.log(`Calling Gemini for series ${s.id}...`);
+        const response = await ai.models.generateContent({
+          model: "gemini-1.5-flash",
+          contents: prompt
+        });
+        const description = response.text?.trim() || s.description;
+        console.log(`Generated description for ${s.id}: ${description?.substring(0, 50)}...`);
+        try {
+          console.log(`Updating Firestore for series ${s.id}...`);
+          await db.collection("quran_series").doc(s.id).update({
+            description,
+            updatedAt: import_firestore.FieldValue.serverTimestamp()
+          });
+          console.log(`Firestore updated for series ${s.id}`);
+        } catch (fsErr) {
+          console.error(`Firestore update failed for series ${s.id}:`, fsErr.message);
+        }
+        return { ...s, description };
+      } catch (err) {
+        console.error(`Error generating description for series ${s.id}:`, err.message);
+        return s;
+      }
+    }));
+    data.series = updatedSeries;
+    import_fs.default.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+    const { token, owner, repo, branch } = getGitHubConfig();
+    if (token && owner && repo) {
+      const base64Content = Buffer.from(JSON.stringify(data, null, 2), "utf8").toString("base64");
+      const url = `https://api.github.com/repos/${owner}/${repo}/contents/public/quranData.json`;
+      try {
+        let sha;
+        const getRes = await fetch(`${url}?ref=${branch}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.v3+json",
+            "User-Agent": "Taiz-Platform-App"
+          }
+        });
+        if (getRes.ok) {
+          const getJson = await getRes.json();
+          sha = getJson.sha;
+        }
+        await fetch(url, {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/vnd.github.v3+json",
+            "Content-Type": "application/json",
+            "User-Agent": "Taiz-Platform-App"
+          },
+          body: JSON.stringify({
+            message: "\u062A\u062D\u062F\u064A\u062B \u0623\u0648\u0635\u0627\u0641 \u0627\u0644\u0633\u0644\u0627\u0633\u0644 \u0639\u0628\u0631 \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A",
+            content: base64Content,
+            sha,
+            branch
+          })
+        });
+      } catch (ghErr) {
+        console.error("GitHub sync error for AI descriptions:", ghErr);
+      }
+    }
+    res.json({ success: true, updatedCount: series.length });
+  } catch (error) {
+    console.error("Error in generate-series-descriptions:", error);
+    res.status(500).json({ error: "\u0641\u0634\u0644 \u0641\u064A \u062A\u0648\u0644\u064A\u062F \u0627\u0644\u0623\u0648\u0635\u0627\u0641 \u0639\u0628\u0631 \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A" });
   }
 });
 app.post("/api/upload", upload.single("image"), (req, res) => {
@@ -401,6 +569,103 @@ app.post("/api/content/:collection", async (req, res) => {
     console.error(`Async GitHub write failed for ${collection}:`, err);
   });
   res.json({ success: true, savedLocally: true });
+});
+var SUBSCRIPTIONS_FILE = import_path.default.join(CACHE_DIR, "push_subscriptions.json");
+function getStoredSubscriptions() {
+  if (import_fs.default.existsSync(SUBSCRIPTIONS_FILE)) {
+    try {
+      const content = import_fs.default.readFileSync(SUBSCRIPTIONS_FILE, "utf8");
+      return JSON.parse(content) || [];
+    } catch (e) {
+      console.error("Error reading subscriptions cache:", e);
+    }
+  }
+  return [];
+}
+function saveStoredSubscriptions(subs) {
+  try {
+    import_fs.default.writeFileSync(SUBSCRIPTIONS_FILE, JSON.stringify(subs, null, 2), "utf8");
+  } catch (e) {
+    console.error("Error saving subscriptions cache:", e);
+  }
+}
+app.post("/api/push/subscribe", (req, res) => {
+  const subscription = req.body;
+  if (!subscription || !subscription.endpoint) {
+    return res.status(400).json({ error: "Invalid subscription payload." });
+  }
+  let subs = getStoredSubscriptions();
+  if (!subs.find((s) => s.endpoint === subscription.endpoint)) {
+    subs.push(subscription);
+    saveStoredSubscriptions(subs);
+    console.log(`New push subscription added. Total active local subscriptions: ${subs.length}`);
+  }
+  res.status(201).json({ success: true });
+});
+app.post("/api/push/unsubscribe", (req, res) => {
+  const { endpoint } = req.body;
+  if (!endpoint) {
+    return res.status(400).json({ error: "Endpoint required." });
+  }
+  let subs = getStoredSubscriptions();
+  const initialLength = subs.length;
+  subs = subs.filter((s) => s.endpoint !== endpoint);
+  if (subs.length < initialLength) {
+    saveStoredSubscriptions(subs);
+    console.log(`Push subscription removed. Total active local subscriptions: ${subs.length}`);
+  }
+  res.json({ success: true });
+});
+app.post("/api/push/send", async (req, res) => {
+  const { title, body, url, icon, image } = req.body;
+  if (!title) {
+    return res.status(400).json({ error: "Notification title is required." });
+  }
+  const payload = JSON.stringify({
+    title,
+    body: body || "",
+    url: url || "/",
+    icon: icon || "/app-icon.png",
+    badge: "/app-icon.png",
+    image: image || void 0
+  });
+  const subs = getStoredSubscriptions();
+  console.log(`Attempting to broadcast push notification to ${subs.length} local subscribers.`);
+  const notificationsPromises = subs.map((sub) => {
+    return import_web_push.default.sendNotification(sub, payload).catch((err) => {
+      console.error(`Error sending push notification to endpoint ${sub.endpoint}:`, err);
+      if (err.statusCode === 410 || err.statusCode === 404) {
+        return { error: true, endpoint: sub.endpoint };
+      }
+      return null;
+    });
+  });
+  try {
+    const results = await Promise.all(notificationsPromises);
+    const endpointsToRemove = results.filter((r) => r && r.error).map((r) => r.endpoint);
+    if (endpointsToRemove.length > 0) {
+      const activeSubs = subs.filter((s) => !endpointsToRemove.includes(s.endpoint));
+      saveStoredSubscriptions(activeSubs);
+      console.log(`Removed ${endpointsToRemove.length} expired subscriptions. Active remaining: ${activeSubs.length}`);
+    }
+    res.json({ success: true, sentCount: subs.length - endpointsToRemove.length });
+  } catch (err) {
+    console.error("Error broadcasting push notifications:", err);
+    res.status(500).json({ error: "Failed to broadcast some notifications.", message: err.message });
+  }
+});
+app.get("/sw.js", (req, res) => {
+  const swPath = import_path.default.resolve(process.cwd(), "public", "sw.js");
+  if (import_fs.default.existsSync(swPath)) {
+    res.setHeader("Content-Type", "application/javascript");
+    return res.sendFile(swPath);
+  }
+  const distSwPath = import_path.default.resolve(process.cwd(), "dist", "sw.js");
+  if (import_fs.default.existsSync(distSwPath)) {
+    res.setHeader("Content-Type", "application/javascript");
+    return res.sendFile(distSwPath);
+  }
+  res.status(404).send("Service worker not found");
 });
 app.use("/api/*", (req, res) => {
   res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });

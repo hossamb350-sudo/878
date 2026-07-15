@@ -1,0 +1,722 @@
+{
+  "series": [
+    {
+      "id": "fcTiRCObV7uV7YxjTqEy",
+      "description": "",
+      "order": 1,
+      "title": " آيات من سورة آل عمران",
+      "createdAt": 1782086389567
+    },
+    {
+      "id": "CYFULsyd0ySdCBN8MI5S",
+      "createdAt": 1782097515692,
+      "description": "",
+      "order": 2,
+      "title": "آيات من سورة المائدة"
+    },
+    {
+      "id": "v30ltiU4ckFsqI3EbGD4",
+      "createdAt": 1782101098181,
+      "description": "",
+      "title": "معرفة الله - الثقه بالله",
+      "order": 3
+    },
+    {
+      "id": "CAkDxE4FR9Nouw7thCFv",
+      "title": "متفرقات",
+      "description": "",
+      "order": 4,
+      "createdAt": 1782194923367
+    },
+    {
+      "id": "0W4MBeaQnBdhGj6UVB2d",
+      "createdAt": 1782363631704,
+      "title": "محاضرات المدرسة",
+      "order": 5,
+      "description": ""
+    },
+    {
+      "id": "mI4uNdzYqrn9GQZbN1sz",
+      "createdAt": 1782363902036,
+      "title": "مديح القران",
+      "description": "",
+      "order": 6
+    },
+    {
+      "id": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782364871659,
+      "title": "دروس رمضان المبارك",
+      "description": "",
+      "order": 7
+    }
+  ],
+  "excerpts": [],
+  "syllabuses": [
+    {
+      "id": "1783786467331",
+      "seriesTitle": "معرفة الله - الثقه بالله",
+      "lessonId": "JOAoGfRSKVslmKBoDzfG",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "durationType": "weeks",
+      "durationVal": 1,
+      "eventId": null,
+      "expiresAt": 1784391267331,
+      "createdAt": 1783786467331,
+      "lessonTitle": "وعده ووعيده - الدرس الثالث عشر"
+    }
+  ],
+  "lastUpdated": "2026-07-14T18:01:16.331Z",
+  "lessons": [
+    {
+      "id": "07crgBZmkGzOgSrgwrIX",
+      "createdAt": 1782363718035,
+      "seriesId": "0W4MBeaQnBdhGj6UVB2d",
+      "order": 0,
+      "title": "الصرخة في وجه المستكبرين"
+    },
+    {
+      "id": "3CzlA3WhvKtMsm3oOGks",
+      "createdAt": 1782362711201,
+      "order": 0,
+      "title": "محياي ومماتي لله",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv"
+    },
+    {
+      "id": "5umLNJ3PFIQ8Wgb5QWkR",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "order": 0,
+      "title": "من نحن ومن هم",
+      "createdAt": 1782363408127
+    },
+    {
+      "id": "64DtLjV87TQshL5YhtjO",
+      "order": 0,
+      "title": "الهوية الإيمانية",
+      "seriesId": "0W4MBeaQnBdhGj6UVB2d",
+      "createdAt": 1782363786323
+    },
+    {
+      "id": "6vxm5qC96ovDlhR0DgZh",
+      "title": "وإذ صرفنا إليك نفراً من الجن",
+      "order": 0,
+      "seriesId": "vCwpyApFzhKafq3YbBoP",
+      "createdAt": 1782171845386
+    },
+    {
+      "id": "9nIrTm48elN48nwOkYlG",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "order": 0,
+      "title": "آيات من سورة الكهف",
+      "createdAt": 1782363321450
+    },
+    {
+      "id": "CEVD2ki0F7aD0M2NbnKj",
+      "title": "ولن ترضى عنك اليهود ولا النصارى",
+      "order": 0,
+      "seriesId": "vCwpyApFzhKafq3YbBoP",
+      "createdAt": 1782171875790
+    },
+    {
+      "id": "CxHSx1gsLIjX54dUAPZp",
+      "order": 0,
+      "title": "الموالاة والمعاداة",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "createdAt": 1782363380872
+    },
+    {
+      "id": "EdlmyIWhZBxloyRGVUV5",
+      "createdAt": 1782363350413,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "وَاقِمِ الصَّلَاةَ لِذِكْرِي",
+      "order": 0
+    },
+    {
+      "id": "FJVLvwU5oRhRNylmKLj3",
+      "createdAt": 1782363269836,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "الإسلام وثقافة الإتباع",
+      "order": 0
+    },
+    {
+      "id": "H2ynRcATFkim458sfOaG",
+      "createdAt": 1782363442549,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "فَإِمَا يَأْتِينَكُمْ مِني هُدَى",
+      "order": 0
+    },
+    {
+      "id": "HoyOKph9cIwVYQOWn2Ut",
+      "createdAt": 1782363090675,
+      "title": "أمر الولاية",
+      "order": 0,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv"
+    },
+    {
+      "id": "KZQnzzAAobDrHLfRSINg",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "الوحدة الإيمانية",
+      "order": 0,
+      "createdAt": 1782363475937
+    },
+    {
+      "id": "L1uLI4GignRcyIJtraOT",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "order": 0,
+      "title": "ذكرى استشهاد الإمام علي - ع",
+      "createdAt": 1782363003745
+    },
+    {
+      "id": "Pg6bllFcHisjd77SpZKF",
+      "createdAt": 1782363060442,
+      "title": "حديث الولاية - عيد الغدير",
+      "order": 0,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv"
+    },
+    {
+      "id": "QyLxk7K5A1vnpAiGziJf",
+      "createdAt": 1782363504052,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "وسَارِعُوا إِلَى مَغْفِرَةِ مَن رَبِّكُمْ",
+      "order": 0
+    },
+    {
+      "id": "TUTE09XwtvDbUjWyRUkX",
+      "title": "معنى الصلاة على محمد و آله",
+      "order": 0,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "createdAt": 1782362468033
+    },
+    {
+      "id": "TguUjmfgoVA4zKBvo4TH",
+      "createdAt": 1782363293700,
+      "order": 0,
+      "title": "آيات من سورة الواقعة",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv"
+    },
+    {
+      "id": "WpSHA4JWUeK1EuzjLlKm",
+      "title": "إِنَّ الَّذِينَ قَالُوا رَبْنَا اللَّهُ ثُمَّ أَسْتَقَامُوا",
+      "order": 0,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "createdAt": 1782363142899
+    },
+    {
+      "id": "YxMHPjLVnoRE6uU5FILd",
+      "order": 0,
+      "title": "معنى التسبيح",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "createdAt": 1782362489458
+    },
+    {
+      "id": "aHRSuYiFdWqLazpUAp59",
+      "title": "دروس من وحي عاشوراء",
+      "order": 0,
+      "seriesId": "0W4MBeaQnBdhGj6UVB2d",
+      "createdAt": 1782363845569
+    },
+    {
+      "id": "axW0cMZYsvGHQAYDvSGx",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "لا عذر للجميع أمام الله",
+      "order": 0,
+      "createdAt": 1782362680939
+    },
+    {
+      "id": "fqG4hpfVpaBt82ZcPJfR",
+      "createdAt": 1782363113822,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "وأنفقوا في سبيل الله",
+      "order": 0
+    },
+    {
+      "id": "klWAoyjSRSRfTGVCntAG",
+      "order": 0,
+      "title": "خطورة المرحلة",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "createdAt": 1782363177896
+    },
+    {
+      "id": "mihFX5pWREeBL13moXna",
+      "createdAt": 1782362617014,
+      "title": "مسؤولية طلاب العلوم الدينية",
+      "order": 0,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv"
+    },
+    {
+      "id": "p7UHsWPWojark8WipnmU",
+      "seriesId": "0W4MBeaQnBdhGj6UVB2d",
+      "title": "اشتروا بآيات الله ثمنا قليلا",
+      "order": 0,
+      "createdAt": 1782363751859
+    },
+    {
+      "id": "pzVA6fS66kI6enYKXeR2",
+      "title": "خطر دخول أمريكا اليمن",
+      "order": 0,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "createdAt": 1782362543078
+    },
+    {
+      "id": "q6rDBVmo5IswT3Vl0TBo",
+      "createdAt": 1782363532861,
+      "title": "الشعار سلاح وموقف",
+      "order": 0,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv"
+    },
+    {
+      "id": "rlDWRRBv6Ad1rX5w6sgA",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "order": 0,
+      "title": "ولن ترضى عنك اليهود ولا النصارى",
+      "createdAt": 1782362443910
+    },
+    {
+      "id": "sLIQqwhrwGAeYjOyM1Cw",
+      "createdAt": 1782362636698,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "الثقافة القرآنية",
+      "order": 0
+    },
+    {
+      "id": "urWEwmqBVd8L9I6Qa3V4",
+      "createdAt": 1782363203128,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "دروس من غزوة أحد",
+      "order": 0
+    },
+    {
+      "id": "yYFWzxvpaoTaJ15PEgZk",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "الارهاب والسلام",
+      "order": 0,
+      "createdAt": 1782362515830
+    },
+    {
+      "id": "yit6tPN8gd9gLccWepgN",
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "title": "وإذ صرفنا إليك نفراً من الجن",
+      "order": 0,
+      "createdAt": 1782362413384
+    },
+    {
+      "id": "zNsvAIQb4vZ5f4H17ss2",
+      "createdAt": 1782362593824,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv",
+      "order": 0,
+      "title": "مسؤولية أهل البيت عليهم السلام"
+    },
+    {
+      "id": "zPvGWwXKutFkGWn7bSiq",
+      "createdAt": 1782363818506,
+      "seriesId": "0W4MBeaQnBdhGj6UVB2d",
+      "order": 0,
+      "title": "لتحذون حذو بني إسرائيل"
+    },
+    {
+      "id": "Q5FxnyplkJFj09E6pGO8",
+      "createdAt": 1782362738953,
+      "title": "في ظلال دعاء مكارم الأخلاق - الدرس 1",
+      "order": 1,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv"
+    },
+    {
+      "id": "RoIM0VxzT1FCTAwUbAP8",
+      "createdAt": 1782363941072,
+      "seriesId": "mI4uNdzYqrn9GQZbN1sz",
+      "order": 1,
+      "title": "مديح القرآن - الدرس الأول"
+    },
+    {
+      "id": "YFjYYjJkJhwLAcLtJdeY",
+      "createdAt": 1782364904256,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "order": 1,
+      "title": "الدرس ٣ - سورة البقرة"
+    },
+    {
+      "id": "cJZjxpjnTa8BAzS9xHUN",
+      "createdAt": 1782097547809,
+      "seriesId": "CYFULsyd0ySdCBN8MI5S",
+      "title": "سورة المائدة - الدرس الاول",
+      "order": 1
+    },
+    {
+      "id": "eVD9RK1dH0FyF8jnFHup",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "title": "الثقة بالله - الدرس الأول",
+      "order": 1,
+      "createdAt": 1782101144840
+    },
+    {
+      "id": "ptdxcKQmEgnk4RbbmI9u",
+      "seriesId": "fcTiRCObV7uV7YxjTqEy",
+      "title": "سورة آل عمران الدرس الأول ",
+      "order": 1,
+      "createdAt": 1782086429564
+    },
+    {
+      "id": "uDcJ9i4xlL0ugsN58ruM",
+      "seriesId": "0W4MBeaQnBdhGj6UVB2d",
+      "title": "يوم القدس العالمي",
+      "order": 1,
+      "createdAt": 1782363681256
+    },
+    {
+      "id": "53UE6C733zfVqLbIScLx",
+      "createdAt": 1782364949552,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "title": "الدرس ٤ - سورة البقرة",
+      "order": 2
+    },
+    {
+      "id": "BwxI5CR7L2CtWc0MdrGn",
+      "createdAt": 1782363974273,
+      "seriesId": "mI4uNdzYqrn9GQZbN1sz",
+      "order": 2,
+      "title": "مديح القرآن - الدرس الثاني"
+    },
+    {
+      "id": "Z45y74dwcTDbw1mFR9Uq",
+      "createdAt": 1782362785069,
+      "title": "في ظلال دعاء مكارم الأخلاق - الدرس 2",
+      "order": 2,
+      "seriesId": "CAkDxE4FR9Nouw7thCFv"
+    },
+    {
+      "id": "paLewVU9IC7kTgikzodp",
+      "createdAt": 1782099716481,
+      "seriesId": "CYFULsyd0ySdCBN8MI5S",
+      "order": 2,
+      "title": "سورة المائدة - الدرس الثاني "
+    },
+    {
+      "id": "w1G7nipxBHsuw3BtkkiU",
+      "createdAt": 1782095286022,
+      "title": "سورة آل عمران - الدرس الثاني",
+      "order": 2,
+      "seriesId": "fcTiRCObV7uV7YxjTqEy"
+    },
+    {
+      "id": "w2yP4tcUkoRjyAgQkXAK",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "title": "نعم الله - الدرس الثاني",
+      "order": 2,
+      "createdAt": 1782171287184
+    },
+    {
+      "id": "7mgAu9vt2pdsyZVsFx2Y",
+      "createdAt": 1782095366994,
+      "title": "سورة آل عمران - الدرس الثالث",
+      "order": 3,
+      "seriesId": "fcTiRCObV7uV7YxjTqEy"
+    },
+    {
+      "id": "PMcd5qgVFdSFrSLMvvM6",
+      "order": 3,
+      "title": "مديح القرآن - الدرس الثالث",
+      "seriesId": "mI4uNdzYqrn9GQZbN1sz",
+      "createdAt": 1782364005404
+    },
+    {
+      "id": "UlSYZYTHrEkNAYsHCH98",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "title": "نعم الله - الدرس الثالث",
+      "order": 3,
+      "createdAt": 1782171333200
+    },
+    {
+      "id": "ZlYw2ohWyiAFRgnHGiu6",
+      "createdAt": 1782100915535,
+      "seriesId": "CYFULsyd0ySdCBN8MI5S",
+      "order": 3,
+      "title": "سورة المائدة - الدرس الثالث"
+    },
+    {
+      "id": "QTUH52zGjWOEpuXvKOvZ",
+      "createdAt": 1782101012872,
+      "seriesId": "CYFULsyd0ySdCBN8MI5S",
+      "title": "سورة المائدة - الدرس الرابع",
+      "order": 4
+    },
+    {
+      "id": "YMG39V7X2gCFeXPAzDR7",
+      "createdAt": 1782171357033,
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "order": 4,
+      "title": "نعم الله - الدرس الرابع"
+    },
+    {
+      "id": "f6ijjdyyrdLhkHrf5J4r",
+      "title": "مديح القرآن - الدرس الرابع",
+      "order": 4,
+      "seriesId": "mI4uNdzYqrn9GQZbN1sz",
+      "createdAt": 1782364041457
+    },
+    {
+      "id": "nmd8LZdqPZHIjVbV4Cv0",
+      "createdAt": 1782095497700,
+      "seriesId": "fcTiRCObV7uV7YxjTqEy",
+      "title": "سورة آل عمران - الدرس الرابع",
+      "order": 4
+    },
+    {
+      "id": "IV3k5wrj91PWlLF3SNos",
+      "createdAt": 1782364996893,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "title": "الدرس ٥ - سورة البقرة",
+      "order": 5
+    },
+    {
+      "id": "L6jjYLUNEnM7mCPYE10d",
+      "createdAt": 1782364084836,
+      "order": 5,
+      "title": "مديح القرآن - الدرس الخامس",
+      "seriesId": "mI4uNdzYqrn9GQZbN1sz"
+    },
+    {
+      "id": "xblHYGStiactbnRwNRvn",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "title": "نعم الله - الدرس الخامس",
+      "order": 5,
+      "createdAt": 1782171401285
+    },
+    {
+      "id": "EgoirzFprX6jVrGdZJHZ",
+      "seriesId": "mI4uNdzYqrn9GQZbN1sz",
+      "title": "مديح القرآن - الدرس السادس",
+      "order": 6,
+      "createdAt": 1782364128841
+    },
+    {
+      "id": "pf4siYTo6hnspfGetoD9",
+      "createdAt": 1782171441695,
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "title": "عظمة الله - الدرس السادس",
+      "order": 6
+    },
+    {
+      "id": "u2o1xaXG0EuQGw5Iou72",
+      "order": 6,
+      "title": "الدرس ٦ - سورة البقرة",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782365044753
+    },
+    {
+      "id": "F6k9hHBgWVnZtF2mfsAj",
+      "order": 7,
+      "title": "عظمة الله - الدرس السابع",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "createdAt": 1782171472807
+    },
+    {
+      "id": "f5lQLg1gJOBnSeiT0MAn",
+      "createdAt": 1782364164147,
+      "seriesId": "mI4uNdzYqrn9GQZbN1sz",
+      "order": 7,
+      "title": "مديح القران - الدرس السابع"
+    },
+    {
+      "id": "n6ml1Bm9DJUhcWR9psVr",
+      "createdAt": 1782365099695,
+      "order": 7,
+      "title": "الدرس ٧ - سورة البقرة",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj"
+    },
+    {
+      "id": "XaNRkrXOF7NKM3CRjoOz",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "title": "عظمة الله - الدرس الثامن",
+      "order": 8,
+      "createdAt": 1782171495832
+    },
+    {
+      "id": "v3kTUrq4TYImX7JMoPOL",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "title": "الدرس ٨ سورة البقرة",
+      "order": 8,
+      "createdAt": 1782365160864
+    },
+    {
+      "id": "owWRIWxcclHmnN0wOPff",
+      "createdAt": 1782365205546,
+      "order": 9,
+      "title": "الدرس ٩ - سورة البقرة",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj"
+    },
+    {
+      "id": "zY8WDMD8Qz4kf7Cqn4b2",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "order": 9,
+      "title": "وعده ووعيده - الدرس التاسع",
+      "createdAt": 1782171533047
+    },
+    {
+      "id": "O24dZocvcCycprzTUWDg",
+      "title": "وعده ووعيده - الدرس العاشر",
+      "order": 10,
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "createdAt": 1782171561402
+    },
+    {
+      "id": "yei70mFJyNJ9LYJh7H2j",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "order": 10,
+      "title": "الدرس ١٠ - سورة البقرة",
+      "createdAt": 1782365258042
+    },
+    {
+      "id": "7M6FaKslmZXnGC1OOdJ4",
+      "createdAt": 1782365306696,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "title": "الدرس ١١ - سورة البقرة",
+      "order": 11
+    },
+    {
+      "id": "OJIYNjjjUgw2nvfuBPCI",
+      "title": "وعده ووعيده - الدرس الحادي عشر",
+      "order": 11,
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "createdAt": 1782171588160
+    },
+    {
+      "id": "J7yE2bSIVZpnLOAKDhlA",
+      "createdAt": 1782365368110,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "title": "الدرس ١٢ - آخر البقرة اول آل عمران",
+      "order": 12
+    },
+    {
+      "id": "aypVReG5EeHs1tObKeOT",
+      "createdAt": 1782171619002,
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "title": "وعده و وعيده - الدرس الثاني عشر",
+      "order": 12
+    },
+    {
+      "id": "IvLclgJJbZmSPkosncV5",
+      "createdAt": 1782365420265,
+      "order": 13,
+      "title": "الدرس ١٣ - سورة آل عمران",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj"
+    },
+    {
+      "id": "JOAoGfRSKVslmKBoDzfG",
+      "createdAt": 1782171646180,
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "order": 13,
+      "title": "وعده ووعيده - الدرس الثالث عشر"
+    },
+    {
+      "id": "5cOUp2mP74MYqf30VjVZ",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "order": 14,
+      "title": "وعده ووعيده - الدرس الرابع عشر",
+      "createdAt": 1782171680354
+    },
+    {
+      "id": "K9mzRT8KuIARaBQv1kZK",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "order": 14,
+      "title": "الدرس  ١٤ - سورة آل عمران",
+      "createdAt": 1782365460765
+    },
+    {
+      "id": "Is06iwZDiPHeYMYdg44J",
+      "seriesId": "v30ltiU4ckFsqI3EbGD4",
+      "title": "وعده ووعيده - الدرس الخامس عشر",
+      "order": 15,
+      "createdAt": 1782171716466
+    },
+    {
+      "id": "mIwjAoOi7Xv1DRfX5PBv",
+      "order": 16,
+      "title": "الدرس ١٦  - سورة آل عمران",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782365550423
+    },
+    {
+      "id": "fe2Rla8NnbyoMIpE0YiT",
+      "createdAt": 1782365627780,
+      "order": 17,
+      "title": "الدرس ١٧ - سورة النساء",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj"
+    },
+    {
+      "id": "hNPBxHREs123DdjRrHy0",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "title": "الدرس ١٨ - سورة النساء",
+      "order": 18,
+      "createdAt": 1782365668638
+    },
+    {
+      "id": "VKpJOGwywEyr4CkM7C0Q",
+      "title": "الدرس ٢٠ - سورة النساء",
+      "order": 20,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782365704921
+    },
+    {
+      "id": "aMaW111cBscZUXwoEmg7",
+      "title": "الدرس ٢١ - سورة المائدة",
+      "order": 21,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782365823025
+    },
+    {
+      "id": "kPgL1xqfXE4sk2p9uXm8",
+      "createdAt": 1782365865207,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "title": "الدرس ٢٢ - سورة المائدة",
+      "order": 22
+    },
+    {
+      "id": "QvwMOUKUttxX4f7h1jsy",
+      "order": 23,
+      "title": "الدرس ٣٣ - سورة المائدة",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782365904968
+    },
+    {
+      "id": "47SjF60CKT9zfoWcwDZY",
+      "title": "الدرس ٢٤ - سورة الأنعام",
+      "order": 24,
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782365949493
+    },
+    {
+      "id": "fMLuLVDharwgpffcaK62",
+      "createdAt": 1782366004443,
+      "order": 25,
+      "title": "الدرس ٢٥ - سورة الأنعام",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj"
+    },
+    {
+      "id": "KTv9Y5waaickJ0Wa4C4n",
+      "order": 26,
+      "title": "الدرس ٢٦ سورة الأنعام",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782366045340
+    },
+    {
+      "id": "q5nKEw75rDz4RVzg1jTp",
+      "order": 27,
+      "title": "الدرس ٢٧ - سورة الأعراف",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782366083056
+    },
+    {
+      "id": "r0kyhaua6rLaZrr2YqFs",
+      "order": 28,
+      "title": "الدرس ٢٨ - سورة الأعراف",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "createdAt": 1782366130482
+    },
+    {
+      "id": "oZx2pYS5v1cSzS8xHGdj",
+      "seriesId": "YWAGy1tY8UgSCJ5vXGNj",
+      "title": "الدرس ٢٩ - سورة الأعراف",
+      "order": 29,
+      "createdAt": 1782366180903
+    }
+  ]
+}

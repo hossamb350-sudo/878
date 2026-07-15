@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const INPUT_FILE = 'public/quranData.json';
-const OUTPUT_DIR = 'public/quran';
+const OUTPUT_DIR = 'Resources/quran';
 const LESSONS_DIR = path.join(OUTPUT_DIR, 'lessons');
 
 async function splitData() {

@@ -1,6 +1,6 @@
 export async function loadQuranMetadata() {
   try {
-    const response = await fetch("quran/metadata.json");
+    const response = await fetch("/quran/metadata.json");
     if (!response.ok) {
       throw new Error(`Failed to load metadata.json: ${response.statusText}`);
     }
@@ -18,7 +18,7 @@ export async function loadQuranMetadata() {
 
 export async function loadLessonContent(lessonId: string) {
   try {
-    const response = await fetch(`quran/lessons/${lessonId}.json`);
+    const response = await fetch(`/quran/lessons/${lessonId}.json`);
     if (!response.ok) {
       throw new Error(`Failed to load lesson ${lessonId}: ${response.statusText}`);
     }
