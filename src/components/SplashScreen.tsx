@@ -56,9 +56,11 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
     const isNative = Capacitor.isNativePlatform();
     const ext = isNative ? ".png" : ".webp";
     
-    let selectedImage = `splash_subsequent${ext}`;
+    const prefix = isNative ? "" : "/";
+    
+    let selectedImage = `${prefix}splash_subsequent${ext}`;
     if (alreadyLaunched !== "true") {
-      selectedImage = `splash_first${ext}`;
+      selectedImage = `${prefix}splash_first${ext}`;
     }
     setImageSrc(selectedImage);
     
@@ -182,10 +184,11 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           }}
           onError={(e) => {
             hideNativeSplash();
-            // Fallback to /splash.png if the custom images are not yet uploaded or fail to load
+            // Fallback to /splash.png (with correct prefix) if the custom images are not yet uploaded or fail to load
             const target = e.target as HTMLImageElement;
             if (target.src.includes("splash_first") || target.src.includes("splash_subsequent")) {
-              target.src = "/splash.png";
+              const isNative = Capacitor.isNativePlatform();
+              target.src = isNative ? "splash.png" : "/splash.png";
             } else {
               setIsLoaded(true);
             }
