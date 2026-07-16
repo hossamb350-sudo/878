@@ -40,6 +40,8 @@ import { BASE_EVENTS } from "../data/staticEvents";
 
 export function Events() {
   const [dbEvents, setDbEvents] = useState<EventItem[]>([]);
+  const [activities, setActivities] = useState<any[]>([]);
+  const [activeMainTab, setActiveMainTab] = useState<"calendar" | "activities">("calendar");
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<
     "cards" | "list" | "table" | "calendar" | "timeline"
@@ -60,11 +62,29 @@ export function Events() {
         merged.push({ id: `static-${i}`, ...be } as EventItem);
       }
     });
+    activities.forEach(act => {
+      const date = new Date(act.startDate);
+      merged.push({
+        id: `activity-${act.id}`,
+        title: act.type || act.title,
+        description: act.description,
+        dayName: act.dayName || format(date, "EEEE", { locale: ar }),
+        hijriDate: act.hijriDate || new Intl.DateTimeFormat("ar-SA-u-ca-islamic", { day: "numeric", month: "long", year: "numeric" }).format(date) + " هـ",
+        gregorianDate: act.gregorianDate || format(date, "d MMMM yyyy", { locale: ar }),
+        timestamp: act.startDate,
+        category: "all",
+        type: "فعالية",
+      } as EventItem);
+    });
     return merged.sort((a, b) => a.timestamp - b.timestamp);
-  }, [dbEvents]);
+  }, [dbEvents, activities]);
 
   useEffect(() => {
     let active = true;
+    const unsubPromise3 = SyncService.syncCollection<any>("activities", (data) => {
+      if (!active) return;
+      setActivities(data);
+    });
     const unsubPromise2 = SyncService.syncCollection<any>(
       "quran_syllabuses",
       (data) => {
@@ -87,6 +107,7 @@ export function Events() {
       active = false;
       unsubPromise.then((unsub) => unsub());
       unsubPromise2.then((unsub) => unsub());
+      unsubPromise3.then((unsub) => unsub());
     };
   }, []);
 
@@ -186,10 +207,45 @@ export function Events() {
   const relatedSyllabus = syllabuses.find((s) => s.eventId === selectedEventId);
 
   return (
-    <div
-      className="max-w-7xl mx-auto w-full p-4 pb-20 space-y-8 font-sans"
-      dir="rtl"
-    >
+    <div className="max-w-7xl mx-auto w-full p-4 pb-20 space-y-8 font-sans" dir="rtl">
+      <div className="relative bg-surface-card p-1.5 rounded-2xl flex border border-border-light shadow-sm w-full max-w-sm mx-auto mb-6">
+        {["calendar", "activities"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveMainTab(tab as any)}
+            className={`relative flex-1 py-3 text-sm font-black transition-colors z-10 ${
+              activeMainTab === tab ? "text-white" : "text-text-muted hover:text-text-primary"
+            }`}
+          >
+            {activeMainTab === tab && (
+              <motion.div
+                layoutId="activeMainTabIndicator"
+                className="absolute inset-0 bg-taiz-navy rounded-xl -z-10"
+                transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              />
+            )}
+            {tab === "calendar" ? "التقويم" : "الفعاليات"}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait" initial={false}>
+        {activeMainTab === "calendar" && (
+          <motion.div
+            key="calendar"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.2 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            onDragEnd={(e, { offset }) => {
+              if (offset.x < -50 || offset.x > 50) {
+                setActiveMainTab("activities");
+              }
+            }}
+            className="space-y-8"
+          >
       {/* Modern Bento Highlights Banner Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Bento Cell 1: Event of the Day Card */}
@@ -203,8 +259,10 @@ export function Events() {
                 <span className="w-2 h-2 bg-taiz-sky rounded-full animate-pulse"></span>
                 المناسبة الحالية اليوم
               </div>
-              <div className="text-taiz-soft font-black text-xs">
-                {format(today, "EEEE, d MMMM yyyy", { locale: ar })}
+              <div className="text-taiz-soft font-black text-xs flex items-center gap-2">
+                <span>{format(today, "EEEE, d MMMM yyyy", { locale: ar })}</span>
+                <span className="opacity-40">|</span>
+                <span>{new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' }).format(today)} هـ</span>
               </div>
             </div>
 
@@ -377,40 +435,6 @@ export function Events() {
           {/* Grid Layout View */}
           {activeView === "cards" && (
             <div className="space-y-8">
-              {/* 1. Highlighted Current Event Card */}
-              <div className="space-y-3">
-                <h3 className="text-base font-black text-text-primary flex items-center gap-2 px-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-taiz-sky"></span>
-                  المناسبة البارزة
-                </h3>
-                {partitions.current.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-6">
-                    {partitions.current.map((event) => (
-                      <HighlightedEventCard
-                        key={event.id}
-                        event={event}
-                        status={getEventStatus(event.timestamp)}
-                        remaining={getRemainingDays(event.timestamp)}
-                        onView={() => setSelectedEventId(event.id)}
-                        isActualToday={true}
-                      />
-                    ))}
-                  </div>
-                ) : nearestUpcoming ? (
-                  <HighlightedEventCard
-                    event={nearestUpcoming}
-                    status={getEventStatus(nearestUpcoming.timestamp)}
-                    remaining={getRemainingDays(nearestUpcoming.timestamp)}
-                    onView={() => setSelectedEventId(nearestUpcoming.id)}
-                    isActualToday={false}
-                  />
-                ) : (
-                  <div className="bg-surface-card rounded-2xl p-6 border border-border-light text-center text-text-muted font-bold text-xs">
-                    لا توجد مناسبات حالية أو قادمة متاحة حالياً.
-                  </div>
-                )}
-              </div>
-
               {/* 2. Collapsible Upcoming Events Section */}
               <div className="space-y-3">
                 <button
@@ -426,7 +450,7 @@ export function Events() {
                         المناسبات القادمة ({partitions.upcoming.length})
                       </h3>
                       <p className="text-[10px] text-text-secondary font-bold">
-                        تصفح واستعرض الذكريات والمناسبات القادمة المباركة
+                        تصفح واستعرض المناسبات القادمة
                       </p>
                     </div>
                   </div>
@@ -540,40 +564,6 @@ export function Events() {
           {/* Compact List View */}
           {activeView === "list" && (
             <div className="space-y-8 max-w-4xl mx-auto">
-              {/* 1. Highlighted Current Event Card */}
-              <div className="space-y-3">
-                <h3 className="text-base font-black text-text-primary flex items-center gap-2 px-1">
-                  <span className="w-2.5 h-2.5 rounded-full bg-taiz-sky animate-pulse"></span>
-                  المناسبة البارزة
-                </h3>
-                {partitions.current.length > 0 ? (
-                  <div className="space-y-4">
-                    {partitions.current.map((event) => (
-                      <HighlightedEventCard
-                        key={event.id}
-                        event={event}
-                        status={getEventStatus(event.timestamp)}
-                        remaining={getRemainingDays(event.timestamp)}
-                        onView={() => setSelectedEventId(event.id)}
-                        isActualToday={true}
-                      />
-                    ))}
-                  </div>
-                ) : nearestUpcoming ? (
-                  <HighlightedEventCard
-                    event={nearestUpcoming}
-                    status={getEventStatus(nearestUpcoming.timestamp)}
-                    remaining={getRemainingDays(nearestUpcoming.timestamp)}
-                    onView={() => setSelectedEventId(nearestUpcoming.id)}
-                    isActualToday={false}
-                  />
-                ) : (
-                  <div className="bg-surface-card rounded-2xl p-6 border border-border-light text-center text-text-muted font-bold text-xs">
-                    لا توجد مناسبات حالية أو قادمة متاحة حالياً.
-                  </div>
-                )}
-              </div>
-
               {/* 2. Collapsible Upcoming Events Section */}
               <div className="space-y-3">
                 <button
@@ -589,7 +579,7 @@ export function Events() {
                         المناسبات القادمة ({partitions.upcoming.length})
                       </h3>
                       <p className="text-[10px] text-text-secondary font-bold">
-                        تصفح واستعرض الذكريات والمناسبات القادمة المباركة
+                        تصفح واستعرض المناسبات القادمة
                       </p>
                     </div>
                   </div>
@@ -1000,6 +990,54 @@ export function Events() {
             </div>
           )}
         </motion.div>
+      </AnimatePresence>
+      </motion.div>
+    )}
+
+        {activeMainTab === "activities" && (
+          <motion.div
+            key="activities"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            onDragEnd={(e, { offset }) => {
+              if (offset.x < -50 || offset.x > 50) {
+                setActiveMainTab("calendar");
+              }
+            }}
+            className="space-y-8 bg-surface-card rounded-2xl p-6 border border-border-light min-h-[60vh] flex flex-col items-center justify-center"
+          >
+            <h3 className="text-xl font-black text-text-primary mb-2">الفعاليات</h3>
+            <p className="text-sm font-bold text-text-secondary mb-6 text-center">
+              إدارة وعرض الفعاليات الخاصة بك
+            </p>
+            <div className="w-full max-w-4xl space-y-4">
+              {activities.length === 0 ? (
+                <div className="text-text-muted text-sm font-bold text-center">لا توجد فعاليات مضافة حالياً.</div>
+              ) : (
+                activities.map(act => (
+                  <div key={act.id} className="bg-surface-main p-4 rounded-xl border border-border-light flex flex-col md:flex-row gap-4 items-start md:items-center text-right shadow-sm w-full">
+                    {act.imageUrl && (
+                      <img src={act.imageUrl} alt={act.type || act.title} className="w-full md:w-32 h-32 md:h-24 object-cover rounded-lg" />
+                    )}
+                    <div className="flex-1 space-y-2 w-full text-right">
+                      <h4 className="text-base font-black text-text-primary">{act.type || act.title}</h4>
+                      <p className="text-xs font-bold text-text-secondary whitespace-pre-wrap">{act.description}</p>
+                      <div className="flex flex-wrap gap-4 text-[10px] text-text-muted font-black mt-2">
+                        <span className="bg-white/50 px-2 py-1 rounded">{act.dayName} {act.gregorianDate}</span>
+                        {act.hijriDate && <span className="bg-white/50 px-2 py-1 rounded">{act.hijriDate}</span>}
+                        {act.startTime && <span className="bg-white/50 px-2 py-1 rounded">يبدأ: {act.startTime}</span>}{act.endTime && <span className="bg-white/50 px-2 py-1 rounded">ينتهي: {act.endTime}</span>}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       {/* Event Details Modal */}

@@ -1,0 +1,1 @@
+sed -i 's/    const unsubPromise2 = SyncService.syncCollection<any>(/    const unsubPromise3 = SyncService.syncCollection<any>("activities", (data) => {\n      if (!active) return;\n      setActivities(data);\n    });\n    const unsubPromise2 = SyncService.syncCollection<any>(/' src/pages/Events.tsx

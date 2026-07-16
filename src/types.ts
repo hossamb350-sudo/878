@@ -89,6 +89,23 @@ export interface EventItem {
   type: string; // Additional type label
 }
 
+export interface ActivityItem {
+  id: string;
+  title?: string;
+  type: string;
+  dayName: string;
+  hijriDate: string;
+  gregorianDate: string;
+  startTime?: string;
+  endTime?: string;
+  description: string;
+  imageUrl?: string;
+  startDate: number;
+  endDate?: number;
+  location?: string;
+  createdAt: number;
+}
+
 export interface NotificationItem {
   id: string;
   title: string;
