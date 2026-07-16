@@ -22,10 +22,8 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [imageSrc, setImageSrc] = useState<string>(() => {
     const alreadyLaunched = localStorage.getItem("taiz_app_already_launched");
     const isFirst = alreadyLaunched !== "true";
-    const isNative = Capacitor.isNativePlatform();
-    // Use absolute paths with leading slash '/' to guarantee correct resolution on all routes
-    const ext = isNative ? ".png" : ".webp";
-    return isFirst ? `/splash_first${ext}` : `/splash_subsequent${ext}`;
+    // Prefer .webp for high performance (10x smaller), falls back to .png if unsupported
+    return isFirst ? "/splash_first.webp" : "/splash_subsequent.webp";
   });
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -182,13 +180,22 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
           }}
           onError={(e) => {
             hideNativeSplash();
-            // Fallback to splash.png if the custom images are not yet uploaded or fail to load
             const target = e.target as HTMLImageElement;
+            
+            // If the webp version failed to load, try the png version of the same splash screen
+            if (target.src.endsWith(".webp")) {
+              target.src = target.src.replace(".webp", ".png");
+              return;
+            }
+            
+            // If the png custom splash failed, fall back to the general splash.png
             if (target.src.includes("splash_first") || target.src.includes("splash_subsequent")) {
               target.src = "/splash.png";
-            } else {
-              setIsLoaded(true);
+              return;
             }
+            
+            // If even the fallback splash.png fails, show the app content
+            setIsLoaded(true);
           }}
         />
       )}
