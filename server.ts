@@ -369,17 +369,21 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
 
 // ImageKit upload API route
 app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
+  console.log(`[Server] ImageKit upload request received. req.file: ${!!req.file}, req.body.imageBase64: ${!!req.body?.imageBase64}`);
+  
   let fileContent;
   let originalName = "uploaded_image.jpg";
   let isTempFile = false;
   let tempFilePath = "";
 
   if (req.file) {
+    console.log(`[Server] Received file via Multer: ${req.file.originalname}, size: ${req.file.size}`);
     fileContent = fs.readFileSync(req.file.path);
     originalName = req.file.originalname;
     isTempFile = true;
     tempFilePath = req.file.path;
   } else if (req.body && req.body.imageBase64) {
+    console.log(`[Server] Received base64 image string, length: ${req.body.imageBase64.length}`);
     let base64String = req.body.imageBase64;
     if (base64String.startsWith('data:image')) {
       const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -390,11 +394,16 @@ app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
     fileContent = Buffer.from(base64String, 'base64');
     originalName = req.body.fileName || "uploaded_image_" + Date.now() + ".jpg";
   } else {
+    console.warn("[Server] No file or base64 data in request body:", req.body);
     return res.status(400).json({ error: "No file or base64 image uploaded" });
   }
 
   if (!imagekit.options.publicKey || !imagekit.options.privateKey || !imagekit.options.urlEndpoint) {
-    console.error("ImageKit credentials are not fully set");
+    console.error("[Server] ImageKit credentials missing. Config:", {
+      publicKey: !!imagekit.options.publicKey,
+      privateKey: !!imagekit.options.privateKey,
+      urlEndpoint: !!imagekit.options.urlEndpoint
+    });
     if (isTempFile) {
       try { fs.unlinkSync(tempFilePath); } catch (e) {}
     }
@@ -402,17 +411,20 @@ app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
   }
 
   try {
+    console.log(`[Server] Sending to ImageKit: fileName=${originalName}, size=${fileContent.length}`);
     const uploadResponse = await imagekit.upload({
       file: fileContent,
       fileName: originalName,
       folder: "/uploads",
     });
 
+    console.log("[Server] ImageKit upload success:", uploadResponse.url);
+
     if (isTempFile) {
       try {
         fs.unlinkSync(tempFilePath);
       } catch (err) {
-        console.error("Error deleting temp file:", err);
+        console.error("[Server] Error deleting temp file:", err);
       }
     }
 
@@ -423,7 +435,7 @@ app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
       fileId: uploadResponse.fileId
     });
   } catch (error: any) {
-    console.error("ImageKit upload error:", error);
+    console.error("[Server] ImageKit upload error details:", error);
     
     if (isTempFile && req.file && fs.existsSync(req.file.path)) {
       try {

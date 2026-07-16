@@ -13,7 +13,10 @@ import { LeaderItem } from "./pages/LeaderItem";
 import { WatchItem } from "./pages/WatchItem";
 import { Quran } from "./pages/Quran";
 import { Events } from "./pages/Events";
+import { Articles } from "./pages/Articles";
+import { ArticleDetail } from "./pages/ArticleDetail";
 import { Admin } from "./pages/Admin";
+import { ActivityDetail } from "./pages/ActivityDetail";
 import { Search } from "./pages/Search";
 import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
@@ -29,12 +32,15 @@ function AnimatedRoutes() {
           <Route index element={<Home />} />
           <Route path="search" element={<Search />} />
           <Route path="news/:id" element={<NewsDetail />} />
+          <Route path="articles" element={<Articles />} />
+          <Route path="articles/:id" element={<ArticleDetail />} />
           <Route path="watch" element={<Watch />} />
           <Route path="watch/:id" element={<WatchItem />} />
           <Route path="leader" element={<Leader />} />
           <Route path="leader/:id" element={<LeaderItem />} />
           <Route path="quran" element={<Quran />} />
           <Route path="events" element={<Events />} />
+          <Route path="events/activity/:id" element={<ActivityDetail />} />
           <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>

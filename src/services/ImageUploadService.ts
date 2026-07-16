@@ -27,26 +27,55 @@ export class ImageUploadService {
       ? (import.meta.env.VITE_API_BASE_URL || (isProd ? PROD_URL : DEV_URL))
       : "";
 
-    const fileToBase64 = (f: File | Blob): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          if (typeof reader.result === "string") {
-            resolve(reader.result);
-          } else {
-            reject(new Error("محتوى الملف المقروء غير صالح"));
+    const fileToBase64 = async (f: File | Blob, retries = 2): Promise<string> => {
+      const readWithFileReader = (file: File | Blob): Promise<string> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (typeof reader.result === "string") {
+              resolve(reader.result);
+            } else {
+              reject(new Error("محتوى الملف المقروء غير صالح"));
+            }
+          };
+          reader.onerror = () => {
+            const domErr = reader.error;
+            const detailMsg = domErr 
+              ? `${domErr.name}: ${domErr.message}` 
+              : "فشل في قراءة ملف الصورة (NotReadableError). يرجى محاولة اختيار الصورة مرة أخرى.";
+            console.error("[ImageUploadService] FileReader error:", domErr);
+            reject(new Error(detailMsg));
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+
+      // Try arrayBuffer if available (modern browsers, more robust)
+      try {
+        if (typeof f.arrayBuffer === 'function') {
+          const buffer = await f.arrayBuffer();
+          // Still use FileReader to convert to DataURL because it's efficient for large files
+          // and usually works fine with an in-memory buffer
+          const blob = new Blob([buffer], { type: f.type });
+          return await readWithFileReader(blob);
+        }
+      } catch (e) {
+        console.warn("[ImageUploadService] arrayBuffer read failed, trying standard FileReader", e);
+      }
+
+      // Standard fallback with retry
+      let lastErr: any;
+      for (let i = 0; i < retries; i++) {
+        try {
+          return await readWithFileReader(f);
+        } catch (err) {
+          lastErr = err;
+          if (i < retries - 1) {
+            await new Promise(r => setTimeout(r, 200 * (i + 1)));
           }
-        };
-        reader.onerror = () => {
-          const domErr = reader.error;
-          const detailMsg = domErr 
-            ? `${domErr.name}: ${domErr.message}` 
-            : "فشل في قراءة ملف الصورة (NotReadableError). يرجى محاولة اختيار الصورة مرة أخرى.";
-          console.error("[ImageUploadService] FileReader error:", domErr);
-          reject(new Error(detailMsg));
-        };
-        reader.readAsDataURL(f);
-      });
+        }
+      }
+      throw lastErr;
     };
 
     let base64Data: string;

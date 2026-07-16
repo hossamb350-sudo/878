@@ -95,12 +95,14 @@ import { SyncService, handleFirestoreError } from "../services/SyncService";
 import { GitHubClient } from "../services/githubClient";
 import { del as delIDB } from "idb-keyval";
 import { PushNotificationService } from "../services/PushNotificationService";
+import { AuthModals } from "../components/AuthModals";
 
 import { FavoritesList } from "../components/FavoritesList";
 
 import { AdminNewsWizard } from "../components/AdminNewsWizard";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES } from "../data/staticQuranData";
 import { AdminCategoryManager } from "../components/AdminCategoryManager";
+import { AdminArticles } from "../components/AdminArticles";
 
 const ContactUsSection = () => {
   const [links, setLinks] = useState<SocialLink[]>([]);
@@ -345,6 +347,7 @@ export function Admin() {
     return savedProfile ? false : true;
   });
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Admin/Manager View Logic (Moved to top to follow Rules of Hooks)
   const isManager = profile?.role === "manager";
@@ -384,6 +387,12 @@ export function Admin() {
       icon: Settings,
       label: "إعداد مقررات هدي القرآن",
       access: isAdmin || isManager,
+    },
+    {
+      id: "articles",
+      icon: BookOpen,
+      label: "إدارة المقالات",
+      access: isAdmin || isManager || (isEditor && hasPermission("articles")),
     },
     {
       id: "events",
@@ -578,20 +587,23 @@ export function Admin() {
           مرحباً بك في منصة تعز الإعلامية
         </h1>
         <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm">
-          سجل دخولك عبر حساب جوجل للوصول إلى تفضيلاتك وإدارة حسابك الشخصي.
+          سجل دخولك للوصول إلى تفضيلاتك وإدارة حسابك الشخصي والوصول إلى كافة المميزات.
         </p>
 
         <button
-          onClick={login}
-          className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-white px-8 py-4 rounded-2xl font-bold hover:shadow-lg transition-all flex items-center gap-3 active:scale-95 mb-16"
+          onClick={() => setIsAuthModalOpen(true)}
+          className="bg-gradient-to-r from-[#d49a37] to-[#b37f2c] hover:from-[#e3ab4a] hover:to-[#c48f33] text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-amber-600/10 hover:shadow-xl transition-all flex items-center gap-3 active:scale-95 mb-16 cursor-pointer"
         >
-          <img
-            src="https://www.google.com/favicon.ico"
-            className="w-5 h-5"
-            alt=""
-          />
-          تسجيل الدخول عبر جوجل
+          <User className="w-5 h-5 text-white" />
+          <span>تسجيل الدخول / إنشاء حساب</span>
         </button>
+
+        <AuthModals
+          isOpen={isAuthModalOpen}
+          onClose={() => setIsAuthModalOpen(false)}
+          initialTab="login"
+          onSuccess={() => setIsAuthModalOpen(false)}
+        />
 
         <div className="w-full max-w-2xl text-right">
           <ContactUsSection />
@@ -715,6 +727,7 @@ export function Admin() {
             {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
             {activeTab === "live" && isAdmin && <AdminLive />}
             {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
+            {activeTab === "articles" && <AdminArticles isAdmin={isAdmin} />}
             {activeTab === "quran" && (isAdmin || isManager) && <AdminQuran />}
             {activeTab === "events" && isAdmin && <AdminEvents />}
             {activeTab === "social" && (isAdmin || isManager) && (
@@ -745,6 +758,7 @@ function AdminSummaryDashboard({
     news: 0,
     videos: 0,
     leader: 0,
+    articles: 0,
   });
 
   useEffect(() => {
@@ -754,11 +768,13 @@ function AdminSummaryDashboard({
         const newsCache = await SyncService.getCache("news");
         const videosCache = await SyncService.getCache("videos");
         const leaderCache = await SyncService.getCache("leader");
+        const articlesCache = await SyncService.getCache("articles");
 
         setStats({
           news: newsCache.length || 0,
           videos: videosCache.length || 0,
           leader: leaderCache.length || 0,
+          articles: articlesCache.length || 0,
         });
       } catch (e) {
         console.warn("Could not load cached stats:", e);
@@ -767,7 +783,12 @@ function AdminSummaryDashboard({
     loadCachedStats();
 
     // 2. Set up real-time listener, but handle errors gracefully
-    const collectionsMap = { news: "news", videos: "videos", leader: "leader" };
+    const collectionsMap = { 
+      news: "news", 
+      videos: "videos", 
+      leader: "leader",
+      articles: "articles"
+    };
     const unsubs = Object.entries(collectionsMap).map(([key, col]) => {
       try {
         return onSnapshot(
@@ -827,9 +848,16 @@ function AdminSummaryDashboard({
       access: filteredTabs.some((t) => t.id === "leader"),
     },
     {
+      id: "articles",
+      label: "إدارة المقالات",
+      icon: BookOpen,
+      color: "amber",
+      access: filteredTabs.some((t) => t.id === "articles"),
+    },
+    {
       id: "quran",
       label: "إعداد مقررات هدي القرآن",
-      icon: BookOpen,
+      icon: Settings,
       color: "emerald",
       access: filteredTabs.some((t) => t.id === "quran"),
     },
@@ -919,6 +947,12 @@ function AdminSummaryDashboard({
             color: "blue",
           },
           {
+            label: "المقالات",
+            value: stats.articles,
+            icon: BookOpen,
+            color: "amber",
+          },
+          {
             label: "الفيديوهات",
             value: stats.videos,
             icon: Video,
@@ -930,7 +964,6 @@ function AdminSummaryDashboard({
             icon: Shield,
             color: "indigo",
           },
-          { label: "دروس القرآن", value: 6, icon: BookOpen, color: "emerald" },
         ].map((s, i) => (
           <div
             key={i}
@@ -1017,15 +1050,8 @@ function AdminUrgentNews() {
         expiresAt: Date.now() + duration * 60000,
       });
       
-      // Send push notification to all subscribers
-      await PushNotificationService.triggerPushNotification(
-        "خبر عاجل 🔴",
-        text,
-        "/"
-      );
-      
       alert(
-        `تم نشر الخبر العاجل بنجاح (سيختفي تلقائياً بعد ${duration} دقيقة) وتم إرسال إشعار لهواتف المستخدمين`
+        `تم نشر الخبر العاجل بنجاح (سيختفي تلقائياً بعد ${duration} دقيقة)`
       );
       setText("");
     } catch (e) {
@@ -1051,7 +1077,7 @@ function AdminUrgentNews() {
           <li>سيظهر هذا الخبر بشكل فوري وتلقائي في جميع أقسام المنصة.</li>
           <li>مدة بقاء الخبر العاجل يتم تحديدها مسبقاً.</li>
           <li>نشر خبر جديد سيستبدل على الفور أي خبر عاجل سابق.</li>
-          <li>سيتم إرسال إشعار للمتصفحين وإصدار تنبيه صوتي.</li>
+          <li>سيتم إصدار تنبيه صوتي عند النشر.</li>
         </ul>
       </div>
 
@@ -2205,7 +2231,7 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
           console.error("Failed to send video push notification:", pushErr);
         }
         
-        alert("تم إضافة الفيديو بنجاح وتم إرسال إشعار للمستخدمين");
+        alert("تم إضافة الفيديو بنجاح");
       }
       resetForm();
     } catch (e) {
@@ -4229,7 +4255,7 @@ function AdminEventsContent() {
           console.error("Failed to send event push notification:", pushErr);
         }
         
-        alert("تمت الإضافة وتم إرسال إشعار للمستخدمين");
+        alert("تمت الإضافة بنجاح");
       }
       reset();
     } catch (e) {

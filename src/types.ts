@@ -207,8 +207,33 @@ export interface AppNotification {
 
 export interface FavoriteItem {
   id: string;
-  type: "news" | "leader" | "watch";
+  type: "news" | "leader" | "watch" | "article";
   title: string;
   imageUrl?: string;
   savedAt: number;
+}
+
+export interface Article {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  imageUrl?: string;
+  authorName: string;
+  authorPhoto?: string;
+  authorId?: string;
+  isFeatured: boolean;
+  createdAt: number;
+  hijriDate: string;
+  gregorianDate: string;
+  updatedAt?: number;
+  views: number;
+}
+
+export interface Author {
+  id: string;
+  name: string;
+  photoURL?: string;
+  bio?: string;
+  createdAt: number;
 }

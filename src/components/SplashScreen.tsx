@@ -2,16 +2,11 @@ import { useEffect, useState } from "react";
 import { SplashScreen as CapSplashScreen } from "@capacitor/splash-screen";
 import { Newspaper, BookOpen, Play } from "lucide-react";
 import { motion } from "motion/react";
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signInWithCredential
-} from "firebase/auth";
 import { auth, db } from "../firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
 import { Capacitor } from "@capacitor/core";
-import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 import { UserProfile } from "../types";
+import { AuthModals } from "./AuthModals";
 
 export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [isFirstLaunch, setIsFirstLaunch] = useState(() => {
@@ -30,6 +25,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
   const [activeCardIndex, setActiveCardIndex] = useState(0);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const cards = [
     {
@@ -106,59 +102,6 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
 
     return () => clearInterval(interval);
   }, [isFirstLaunch, isLoaded]);
-
-  const handleGoogleLogin = async () => {
-    setAuthError(null);
-    setIsAuthenticating(true);
-    try {
-      if (Capacitor.isNativePlatform()) {
-        const googleUser = await (GoogleAuth.signIn as any)();
-        if (googleUser.authentication.idToken) {
-          const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
-          const userCredential = await signInWithCredential(auth, credential);
-          await syncUserProfile(userCredential.user);
-        } else {
-          throw new Error("No ID Token found");
-        }
-      } else {
-        const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());
-        await syncUserProfile(userCredential.user);
-      }
-      localStorage.setItem("taiz_app_already_launched", "true");
-      onComplete();
-    } catch (err: any) {
-      console.error("Google Auth error in Splash:", err);
-      if (err.code === "auth/operation-not-allowed") {
-        setAuthError("تسجيل الدخول عبر جوجل غير مفعل حالياً. يرجى التواصل مع الإدارة.");
-      } else {
-        setAuthError("حدث خطأ أثناء الاتصال بجوجل: " + (err.message || err));
-      }
-      setIsAuthenticating(false);
-    }
-  };
-
-  const syncUserProfile = async (firebaseUser: any) => {
-    try {
-      const userRef = doc(db, "users", firebaseUser.uid);
-      const userSnap = await getDoc(userRef);
-      if (!userSnap.exists()) {
-        const newProfile: UserProfile = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || "",
-          displayName: firebaseUser.displayName || "مستخدم جديد",
-          photoURL: firebaseUser.photoURL || undefined,
-          role: "user",
-          createdAt: Date.now(),
-          lastLogin: Date.now()
-        };
-        await setDoc(userRef, newProfile);
-      } else {
-        await setDoc(userRef, { lastLogin: Date.now() }, { merge: true });
-      }
-    } catch (e) {
-      console.warn("Could not sync Firestore user profile:", e);
-    }
-  };
 
   const handleSkip = () => {
     localStorage.setItem("taiz_app_already_launched", "true");
@@ -292,27 +235,29 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
             className="mt-6 flex flex-col items-center gap-2.5 w-full max-w-[240px] relative z-30"
           >
             <button
-              onClick={handleGoogleLogin}
-              disabled={isAuthenticating}
-              className="w-full bg-white border border-stone-200/80 hover:bg-stone-50 active:scale-[0.98] text-stone-700 py-2.5 px-4 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all text-xs cursor-pointer shadow-md disabled:opacity-50"
+              onClick={() => setIsAuthModalOpen(true)}
+              className="w-full bg-gradient-to-r from-[#d49a37] to-[#b37f2c] hover:from-[#e3ab4a] hover:to-[#c48f33] text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all text-xs cursor-pointer shadow-md active:scale-95 duration-200"
             >
-              <img src="https://www.google.com/favicon.ico" className="w-4 h-4 shrink-0" alt="Google" />
-              <span>{isAuthenticating ? "جاري التحقق..." : "الدخول عبر حساب جوجل"}</span>
+              <span>تسجيل الدخول / إنشاء حساب</span>
             </button>
 
             <button
               onClick={handleSkip}
-              disabled={isAuthenticating}
               className="text-[11px] font-black text-taiz-royal hover:text-taiz-navy active:scale-95 transition-all cursor-pointer underline underline-offset-4 decoration-2"
             >
               تخطي تسجيل الدخول
             </button>
 
-            {authError && (
-              <p className="text-[10px] font-bold text-red-500 text-center mt-1 leading-tight max-w-[220px]">
-                {authError}
-              </p>
-            )}
+            <AuthModals
+              isOpen={isAuthModalOpen}
+              onClose={() => setIsAuthModalOpen(false)}
+              initialTab="login"
+              onSuccess={() => {
+                setIsAuthModalOpen(false);
+                localStorage.setItem("taiz_app_already_launched", "true");
+                onComplete();
+              }}
+            />
           </motion.div>
         </div>
       )}

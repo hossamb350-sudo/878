@@ -3,12 +3,12 @@ import { Link } from "react-router-dom";
 import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
-import { NewsItem, VideoItem, LeaderContent } from "../types";
+import { NewsItem, VideoItem, LeaderContent, Article } from "../types";
 import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar } from "lucide-react";
-import { motion } from "motion/react";
+import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../components/PullToRefresh";
 
 function getRelativeArabicTime(timestamp: number): string {
@@ -61,7 +61,9 @@ export function Home() {
   const [rawNews, setRawNews] = useState<NewsItem[]>([]);
   const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
   const [rawLeader, setRawLeader] = useState<LeaderContent[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeSubTab, setActiveSubTab] = useState<"news" | "articles">("news");
   const prevVideoIdsRef = useRef<string[]>([]);
   const [categories, setCategories] = useState<Record<string, string>>({
     "محلية": "#049EDF",
@@ -245,11 +247,19 @@ export function Home() {
       checkLoading();
     }, { orderByField: "createdAt", orderDirection: "desc", limit: 30 });
 
+    const unsubArticlesPromise = SyncService.syncCollection<Article>("articles", (articleData) => {
+      if (!active) return;
+      const sliced = articleData.slice(0, 10);
+      setArticles(sliced);
+      localStorage.setItem("taiz_articles_cache", JSON.stringify(sliced));
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 10 });
+
     return () => {
       active = false;
       unsubNewsPromise.then(unsub => unsub());
       unsubVideosPromise.then(unsub => unsub());
       unsubLeaderPromise.then(unsub => unsub());
+      unsubArticlesPromise.then(unsub => unsub());
     };
   }, []);
 
@@ -325,8 +335,48 @@ export function Home() {
       transition={{ duration: 0.3 }}
       className="max-w-[760px] mx-auto w-full pb-16 bg-surface-main text-text-primary transition-colors"
     >
+      {/* Sub-Tabs (Segmented Control) */}
+      <div className="pt-4 pb-2 px-4 bg-surface-main sticky top-0 z-50">
+        <div className="bg-gray-100 dark:bg-gray-800/50 p-1.5 rounded-2xl flex items-center w-full max-w-sm mx-auto relative shadow-sm border border-border-light">
+          <motion.div 
+            layoutId="activeTabIndicator"
+            className="absolute h-[calc(100%-12px)] bg-taiz-navy dark:bg-taiz-sky rounded-xl z-0"
+            style={{ 
+              width: 'calc(50% - 6px)',
+              right: activeSubTab === "news" ? '6px' : 'calc(50%)'
+            }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          />
+          <button 
+            onClick={() => setActiveSubTab("news")}
+            className={`flex-1 py-2.5 text-sm font-black relative z-10 transition-colors duration-300 ${activeSubTab === "news" ? "text-white" : "text-text-muted hover:text-text-primary"}`}
+          >
+            الأخبار
+          </button>
+          <button 
+            onClick={() => setActiveSubTab("articles")}
+            className={`flex-1 py-2.5 text-sm font-black relative z-10 transition-colors duration-300 ${activeSubTab === "articles" ? "text-white" : "text-text-muted hover:text-text-primary"}`}
+          >
+            المقالات
+          </button>
+        </div>
+      </div>
       
       <div className="p-0 sm:p-4">
+        <AnimatePresence mode="wait">
+          {activeSubTab === "news" ? (
+            <motion.div
+              key="news-tab"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.2 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              onDragEnd={(e, info) => {
+                if (info.offset.x < -100) setActiveSubTab("articles");
+              }}
+            >
         {loading ? (
            <div className="space-y-6 pt-4 px-4 sm:px-0">
               <div className="animate-pulse bg-surface-card h-64 sm:h-80 w-full mb-6 rounded-3xl shadow-soft"></div>
@@ -613,10 +663,111 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                   )}
                 </div>
               ))}
+              {/* End of news items list */}
             </div>
-
           </div>
         )}
+      </motion.div>
+      ) : (
+        <motion.div
+          key="articles-tab"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: 20 }}
+          transition={{ duration: 0.2 }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          onDragEnd={(e, info) => {
+            if (info.offset.x > 100) setActiveSubTab("news");
+          }}
+          className="px-4 space-y-6 pt-4 min-h-[60vh]"
+        >
+          {/* Featured Article in Tab */}
+          {articles.length > 0 && (
+            <Link to={`/articles/${articles[0].id}`} className="block group">
+              <div className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-xl border border-border-light">
+                {articles[0].imageUrl ? (
+                  <img src={articles[0].imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+                    <BookOpen className="w-12 h-12 text-white/20" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute top-4 right-4">
+                  <span className="bg-status-error text-white text-[10px] font-black px-3 py-1.5 rounded-lg shadow-lg flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                    مقال مميز
+                  </span>
+                </div>
+                <div className="absolute bottom-6 right-6 left-6 text-right">
+                  <h3 className="text-white text-xl font-black mb-4 leading-relaxed line-clamp-2">{articles[0].title}</h3>
+                  <div className="flex items-center gap-3">
+                    {articles[0].authorPhoto ? (
+                      <img src={articles[0].authorPhoto} className="w-8 h-8 rounded-full border border-white/20" alt="" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-taiz-navy flex items-center justify-center border border-white/20">
+                        <User className="w-4 h-4 text-white" />
+                      </div>
+                    )}
+                    <div className="text-right">
+                      <div className="text-white text-xs font-black">{articles[0].authorName}</div>
+                      <div className="text-white/60 text-[10px] font-bold mt-0.5">{articles[0].hijriDate} هـ</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          )}
+
+          {/* Latest Articles in Tab */}
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-lg font-black flex items-center gap-2">
+              <div className="w-1.5 h-6 bg-taiz-sky rounded-full"></div>
+              أحدث المقالات
+            </h3>
+            <Link to="/articles" className="text-taiz-sky text-sm font-black flex items-center gap-1">
+              عرض الكل
+              <ChevronLeft className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            {articles.slice(1).map((article, idx) => (
+              <Link 
+                key={article.id} 
+                to={`/articles/${article.id}`} 
+                className="flex items-center gap-4 p-3 bg-surface-card rounded-[2rem] border border-border-light hover:bg-surface-hover transition-all"
+              >
+                <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 shrink-0">
+                  {article.imageUrl ? (
+                    <img src={article.imageUrl} className="w-full h-full object-cover" alt="" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <BookOpen className="w-6 h-6 text-gray-400" />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 text-right">
+                  <h4 className="font-black text-sm leading-relaxed mb-2 line-clamp-2">{article.title}</h4>
+                  <div className="flex items-center justify-end gap-2 text-[10px] text-text-muted font-bold">
+                    <span>{article.authorName}</span>
+                    <span className="opacity-30">•</span>
+                    <span>{article.hijriDate} هـ</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {articles.length === 0 && (
+            <div className="text-center py-20 text-text-muted font-bold bg-surface-card rounded-[2.5rem] border border-border-light border-dashed">
+              لا توجد مقالات متاحة حالياً
+            </div>
+          )}
+        </motion.div>
+      )}
+      </AnimatePresence>
       </div>
     </motion.div>
     </PullToRefresh>

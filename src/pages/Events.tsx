@@ -32,16 +32,19 @@ import {
   MapPin,
   Share2,
   BookOpen,
+  History as HistoryIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { BASE_EVENTS } from "../data/staticEvents";
+import { ModernEventCard } from "../components/ModernEventCard";
+import { PullToRefresh } from "../components/PullToRefresh";
 
 export function Events() {
   const [dbEvents, setDbEvents] = useState<EventItem[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
-  const [activeMainTab, setActiveMainTab] = useState<"calendar" | "activities">("calendar");
+  const [isPastActivitiesOpen, setIsPastActivitiesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<
     "cards" | "list" | "table" | "calendar" | "timeline"
@@ -51,7 +54,7 @@ export function Events() {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [syllabuses, setSyllabuses] = useState<any[]>([]);
   const [isPastEventsOpen, setIsPastEventsOpen] = useState(false);
-  const [isUpcomingEventsOpen, setIsUpcomingEventsOpen] = useState(true);
+  const [isUpcomingEventsOpen, setIsUpcomingEventsOpen] = useState(false);
   const navigate = useNavigate();
 
   const events = useMemo(() => {
@@ -62,34 +65,82 @@ export function Events() {
         merged.push({ id: `static-${i}`, ...be } as EventItem);
       }
     });
-    activities.forEach(act => {
-      const date = new Date(act.startDate);
-      merged.push({
-        id: `activity-${act.id}`,
-        title: act.type || act.title,
-        description: act.description,
-        dayName: act.dayName || format(date, "EEEE", { locale: ar }),
-        hijriDate: act.hijriDate || new Intl.DateTimeFormat("ar-SA-u-ca-islamic", { day: "numeric", month: "long", year: "numeric" }).format(date) + " هـ",
-        gregorianDate: act.gregorianDate || format(date, "d MMMM yyyy", { locale: ar }),
-        timestamp: act.startDate,
-        category: "all",
-        type: "فعالية",
-      } as EventItem);
-    });
     return merged.sort((a, b) => a.timestamp - b.timestamp);
-  }, [dbEvents, activities]);
+  }, [dbEvents]);
 
   useEffect(() => {
+    // Load from cache first
+    const cachedActivities = localStorage.getItem("taiz_activities_cache");
+    const cachedSyllabuses = localStorage.getItem("taiz_syllabuses_cache");
+    const cachedDbEvents = localStorage.getItem("taiz_events_cache");
+
+    let hasCache = false;
+
+    if (cachedActivities) {
+      try {
+        const parsed = JSON.parse(cachedActivities);
+        if (parsed.length > 0) {
+          setActivities(parsed);
+          hasCache = true;
+        }
+      } catch (e) {
+        console.warn("Error parsing activities cache", e);
+      }
+    }
+    if (cachedSyllabuses) {
+      try {
+        const parsed = JSON.parse(cachedSyllabuses);
+        if (parsed.length > 0) {
+          setSyllabuses(parsed);
+          hasCache = true;
+        }
+      } catch (e) {
+        console.warn("Error parsing syllabuses cache", e);
+      }
+    }
+    if (cachedDbEvents) {
+      try {
+        const parsed = JSON.parse(cachedDbEvents);
+        if (parsed.length > 0) {
+          setDbEvents(parsed);
+          hasCache = true;
+        }
+      } catch (e) {
+        console.warn("Error parsing events cache", e);
+      }
+    }
+
+    if (hasCache) {
+      setLoading(false);
+    }
+
     let active = true;
+    let activitiesDone = false;
+    let syllabusesDone = false;
+    let eventsDone = false;
+
+    const checkLoading = () => {
+      if (active && activitiesDone && syllabusesDone && eventsDone) {
+        setLoading(false);
+      }
+    };
+
     const unsubPromise3 = SyncService.syncCollection<any>("activities", (data) => {
       if (!active) return;
       setActivities(data);
+      localStorage.setItem("taiz_activities_cache", JSON.stringify(data));
+      activitiesDone = true;
+      checkLoading();
     });
+
     const unsubPromise2 = SyncService.syncCollection<any>(
       "quran_syllabuses",
       (data) => {
         if (!active) return;
         setSyllabuses(data);
+        localStorage.setItem("taiz_syllabuses_cache", JSON.stringify(data));
+        syllabusesDone = true;
+        checkLoading();
       }
     );
 
@@ -98,7 +149,9 @@ export function Events() {
       (data) => {
         if (!active) return;
         setDbEvents(data);
-        setLoading(false);
+        localStorage.setItem("taiz_events_cache", JSON.stringify(data));
+        eventsDone = true;
+        checkLoading();
       },
       { orderByField: "timestamp", orderDirection: "asc" }
     );
@@ -111,7 +164,51 @@ export function Events() {
     };
   }, []);
 
+  const handleRefresh = async () => {
+    try {
+      const freshActivities = await SyncService.refreshCollection<any>("activities");
+      setActivities(freshActivities);
+      localStorage.setItem("taiz_activities_cache", JSON.stringify(freshActivities));
+
+      const freshSyllabuses = await SyncService.refreshCollection<any>("quran_syllabuses");
+      setSyllabuses(freshSyllabuses);
+      localStorage.setItem("taiz_syllabuses_cache", JSON.stringify(freshSyllabuses));
+
+      const freshEvents = await SyncService.refreshCollection<EventItem>("events", { orderByField: "timestamp", orderDirection: "asc" });
+      setDbEvents(freshEvents);
+      localStorage.setItem("taiz_events_cache", JSON.stringify(freshEvents));
+    } catch (e) {
+      console.error("Error refreshing events data", e);
+      throw e;
+    }
+  };
+
   const today = startOfDay(new Date());
+
+  const partitionedActivities = useMemo(() => {
+    const todayActivities: any[] = [];
+    const upcomingActivities: any[] = [];
+    const pastActivities: any[] = [];
+
+    activities.forEach((act) => {
+      if (!act.startDate) return;
+      const actDate = startOfDay(new Date(act.startDate));
+      if (isSameDay(actDate, today)) {
+        todayActivities.push(act);
+      } else if (isAfter(actDate, today)) {
+        upcomingActivities.push(act);
+      } else {
+        pastActivities.push(act);
+      }
+    });
+
+    // Sort upcoming ascending (nearest first)
+    upcomingActivities.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    // Sort past descending (most recent first)
+    pastActivities.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+
+    return { todayActivities, upcomingActivities, pastActivities };
+  }, [activities, today]);
 
   const eventOfTheDay = useMemo(() => {
     return events.find((e) =>
@@ -207,59 +304,120 @@ export function Events() {
   const relatedSyllabus = syllabuses.find((s) => s.eventId === selectedEventId);
 
   return (
-    <div className="max-w-7xl mx-auto w-full p-4 pb-20 space-y-8 font-sans" dir="rtl">
-      <div className="relative bg-surface-card p-1.5 rounded-2xl flex border border-border-light shadow-sm w-full max-w-sm mx-auto mb-6">
-        {["calendar", "activities"].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveMainTab(tab as any)}
-            className={`relative flex-1 py-3 text-sm font-black transition-colors z-10 ${
-              activeMainTab === tab ? "text-white" : "text-text-muted hover:text-text-primary"
-            }`}
-          >
-            {activeMainTab === tab && (
-              <motion.div
-                layoutId="activeMainTabIndicator"
-                className="absolute inset-0 bg-taiz-navy rounded-xl -z-10"
-                transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              />
-            )}
-            {tab === "calendar" ? "التقويم" : "الفعاليات"}
-          </button>
-        ))}
-      </div>
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="max-w-7xl mx-auto w-full p-4 pb-20 space-y-12 font-sans" dir="rtl">
+        
+        {/* ==================== 1. ACTIVITIES SECTION ==================== */}
+        <section className="space-y-6">
+          <div className="border-b border-gray-100 pb-4">
+            <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'Cairo, Tajawal, sans-serif' }}>
+              الأنشطة
+            </h2>
+            <p className="text-xs font-bold text-gray-500 mt-1">
+              متابعة الأنشطة اليومية والمقبلة والسابقة بالمنصة
+            </p>
+          </div>
 
-      <AnimatePresence mode="wait" initial={false}>
-        {activeMainTab === "calendar" && (
-          <motion.div
-            key="calendar"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-            transition={{ duration: 0.2 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            onDragEnd={(e, { offset }) => {
-              if (offset.x < -50 || offset.x > 50) {
-                setActiveMainTab("activities");
-              }
-            }}
-            className="space-y-8"
-          >
+          {/* Today's Activities */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-black text-[#0a8f5c] flex items-center gap-2">
+              <span className="w-2.5 h-2.5 bg-[#0a8f5c] rounded-full animate-pulse"></span>
+              <span>أنشطة اليوم</span>
+            </h3>
+            {partitionedActivities.todayActivities.length === 0 ? (
+              <div className="bg-white border border-gray-100 shadow-sm p-8 text-center flex flex-col items-center justify-center rounded-[2rem] min-h-[160px]">
+                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 mb-3">
+                  <CalendarIcon className="w-6 h-6" />
+                </div>
+                <p className="text-gray-500 font-bold text-sm">
+                  لا توجد فعاليات لهذا اليوم
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-8 w-full max-w-3xl mx-auto">
+                {partitionedActivities.todayActivities.map((act) => (
+                  <ModernEventCard
+                    key={act.id}
+                    activity={act}
+                    statusOverride="حالية"
+                    onClick={() => navigate(`/events/activity/${act.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Upcoming Activities */}
+          {partitionedActivities.upcomingActivities.length > 0 && (
+            <div className="space-y-4 pt-4">
+              <h3 className="text-sm font-black text-taiz-royal flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-taiz-royal rounded-full"></span>
+                <span>الأنشطة القادمة</span>
+              </h3>
+              <div className="grid grid-cols-1 gap-8 w-full max-w-3xl mx-auto">
+                {partitionedActivities.upcomingActivities.map((act) => (
+                  <ModernEventCard
+                    key={act.id}
+                    activity={act}
+                    statusOverride="قادمة"
+                    onClick={() => navigate(`/events/activity/${act.id}`)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Past Activities (Collapsible) */}
+          {partitionedActivities.pastActivities.length > 0 && (
+            <div className="border-t border-gray-100 pt-6">
+              <button
+                type="button"
+                onClick={() => setIsPastActivitiesOpen(!isPastActivitiesOpen)}
+                className="w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 p-4 rounded-xl text-gray-700 font-bold text-sm transition-all cursor-pointer select-none"
+              >
+                  <span className="flex items-center gap-2">
+                    <HistoryIcon className="w-4 h-4 text-gray-500" />
+                    <span>الأنشطة السابقة ({partitionedActivities.pastActivities.length})</span>
+                  </span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${isPastActivitiesOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isPastActivitiesOpen && (
+                <div className="grid grid-cols-1 gap-8 mt-6 w-full max-w-3xl mx-auto animate-in fade-in duration-200">
+                  {partitionedActivities.pastActivities.map((act) => (
+                    <ModernEventCard
+                      key={act.id}
+                      activity={act}
+                      statusOverride="سابقة"
+                      onClick={() => navigate(`/events/activity/${act.id}`)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* ==================== 2. CALENDAR / OCCASIONS SECTION ==================== */}
+        <section className="space-y-6 pt-8 border-t border-gray-100">
+          <div className="pb-4">
+            <h2 className="text-xl font-bold text-gray-900" style={{ fontFamily: 'Cairo, Tajawal, sans-serif' }}>
+              تقويم المناسبات
+            </h2>
+          </div>
       {/* Modern Bento Highlights Banner Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Bento Cell 1: Event of the Day Card */}
-        <div className="lg:col-span-7 relative overflow-hidden bg-gradient-to-br from-taiz-navy to-taiz-royal rounded-[2rem] p-6 sm:p-8 text-white shadow-xl flex items-center min-h-[240px] group">
+        <div className="lg:col-span-7 relative overflow-hidden bg-gradient-to-br from-taiz-navy to-taiz-royal rounded-[2rem] p-5 sm:p-6 text-white shadow-xl flex items-center min-h-[200px] group">
           {/* Geometric Islamic Line Motif */}
           <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px] z-0 z-10" />
 
-          <div className="relative z-10 w-full flex flex-col justify-between h-full space-y-6">
+          <div className="relative z-10 w-full flex flex-col justify-between h-full space-y-4">
             <div className="flex items-center justify-between">
-              <div className="bg-white/10 backdrop-blur-lg border border-white/20 px-3 py-1.5 rounded-full text-xs font-black flex items-center gap-2 text-taiz-sky">
-                <span className="w-2 h-2 bg-taiz-sky rounded-full animate-pulse"></span>
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 px-2.5 py-1 rounded-full text-[10px] font-black flex items-center gap-1.5 text-taiz-sky">
+                <span className="w-1.5 h-1.5 bg-taiz-sky rounded-full animate-pulse"></span>
                 المناسبة الحالية اليوم
               </div>
-              <div className="text-taiz-soft font-black text-xs flex items-center gap-2">
+              <div className="text-taiz-soft font-black text-[10px] flex items-center gap-1.5">
                 <span>{format(today, "EEEE, d MMMM yyyy", { locale: ar })}</span>
                 <span className="opacity-40">|</span>
                 <span>{new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' }).format(today)} هـ</span>
@@ -267,21 +425,21 @@ export function Events() {
             </div>
 
             {eventOfTheDay ? (
-              <div className="space-y-4 font-sans text-right">
-                <h2 className="text-2.5xl sm:text-3xl font-black leading-tight text-white group-hover:text-taiz-sky transition-colors duration-300">
+              <div className="space-y-2.5 font-sans text-right">
+                <h2 className="text-md sm:text-lg font-black leading-tight text-white group-hover:text-taiz-sky transition-colors duration-300">
                   {eventOfTheDay.title}
                 </h2>
-                <div className="flex flex-wrap gap-4 text-taiz-soft font-black text-xs">
-                  <span className="bg-white/10 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                    <CalendarIcon className="w-3.5 h-3.5 opacity-80" />{" "}
+                <div className="flex flex-wrap gap-2.5 text-taiz-soft font-black text-[10px]">
+                  <span className="bg-white/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <CalendarIcon className="w-3 h-3 opacity-80" />{" "}
                     {eventOfTheDay.hijriDate}
                   </span>
-                  <span className="bg-white/10 px-2.5 py-1 rounded-lg flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 opacity-80" />{" "}
+                  <span className="bg-white/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Clock className="w-3 h-3 opacity-80" />{" "}
                     {eventOfTheDay.gregorianDate}
                   </span>
                 </div>
-                <p className="text-gray-100 text-xs sm:text-sm leading-relaxed max-w-xl line-clamp-2 font-bold">
+                <p className="text-gray-100 text-[11px] sm:text-xs leading-relaxed max-w-xl line-clamp-2 font-bold">
                   {eventOfTheDay.description ||
                     "لا يوجد وصف مدون حالياً لهذه المناسبة الإسلامية الكريمة."}
                 </p>
@@ -991,63 +1149,17 @@ export function Events() {
           )}
         </motion.div>
       </AnimatePresence>
-      </motion.div>
-    )}
+    </section>
 
-        {activeMainTab === "activities" && (
-          <motion.div
-            key="activities"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.2 }}
-            drag="x"
-            dragConstraints={{ left: 0, right: 0 }}
-            onDragEnd={(e, { offset }) => {
-              if (offset.x < -50 || offset.x > 50) {
-                setActiveMainTab("calendar");
-              }
-            }}
-            className="space-y-8 bg-surface-card rounded-2xl p-6 border border-border-light min-h-[60vh] flex flex-col items-center justify-center"
-          >
-            <h3 className="text-xl font-black text-text-primary mb-2">الفعاليات</h3>
-            <p className="text-sm font-bold text-text-secondary mb-6 text-center">
-              إدارة وعرض الفعاليات الخاصة بك
-            </p>
-            <div className="w-full max-w-4xl space-y-4">
-              {activities.length === 0 ? (
-                <div className="text-text-muted text-sm font-bold text-center">لا توجد فعاليات مضافة حالياً.</div>
-              ) : (
-                activities.map(act => (
-                  <div key={act.id} className="bg-surface-main p-4 rounded-xl border border-border-light flex flex-col md:flex-row gap-4 items-start md:items-center text-right shadow-sm w-full">
-                    {act.imageUrl && (
-                      <img src={act.imageUrl} alt={act.type || act.title} className="w-full md:w-32 h-32 md:h-24 object-cover rounded-lg" />
-                    )}
-                    <div className="flex-1 space-y-2 w-full text-right">
-                      <h4 className="text-base font-black text-text-primary">{act.type || act.title}</h4>
-                      <p className="text-xs font-bold text-text-secondary whitespace-pre-wrap">{act.description}</p>
-                      <div className="flex flex-wrap gap-4 text-[10px] text-text-muted font-black mt-2">
-                        <span className="bg-white/50 px-2 py-1 rounded">{act.dayName} {act.gregorianDate}</span>
-                        {act.hijriDate && <span className="bg-white/50 px-2 py-1 rounded">{act.hijriDate}</span>}
-                        {act.startTime && <span className="bg-white/50 px-2 py-1 rounded">يبدأ: {act.startTime}</span>}{act.endTime && <span className="bg-white/50 px-2 py-1 rounded">ينتهي: {act.endTime}</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Event Details Modal */}
-      <EventDetailsModal
-        event={selectedEvent}
-        events={events}
-        onClose={() => setSelectedEventId(null)}
-        onNavigateToSyllabus={() => {}}
-      />
-    </div>
+    {/* Event Details Modal */}
+    <EventDetailsModal
+      event={selectedEvent}
+      events={events}
+      onClose={() => setSelectedEventId(null)}
+      onNavigateToSyllabus={() => {}}
+    />
+  </div>
+</PullToRefresh>
   );
 }
 

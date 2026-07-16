@@ -37,33 +37,33 @@ export function ImageUpload({
   const [showSettingsExplanation, setShowSettingsExplanation] = useState(false);
   const [showSourceSelector, setShowSourceSelector] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       if (multiple) {
-        uploadFiles(Array.from(files));
+        await uploadFiles(Array.from(files));
       } else {
-        uploadFile(files[0]);
+        await uploadFile(files[0]);
       }
     }
   };
 
-  const uploadFiles = async (files: (File | string)[]) => {
+  const uploadFiles = async (files: (File | Blob | string)[]) => {
     setError(null);
     const uploadedUrls: string[] = [];
     
     // Initialize tracking for multiple files
     setUploadingFiles(files.map((f, idx) => ({ 
-      name: typeof f === 'string' ? `image_${idx + 1}.jpg` : f.name, 
+      name: f instanceof File ? f.name : `image_${idx + 1}.jpg`, 
       progress: 0 
     })));
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      // Basic validation for File objects
-      if (file instanceof File) {
-        if (!file.type.startsWith("image/")) continue;
+      // Basic validation for File/Blob objects
+      if (file instanceof Blob) {
+        if (file.type && !file.type.startsWith("image/")) continue;
         if (file.size > 10 * 1024 * 1024) continue;
       }
 
@@ -108,7 +108,7 @@ export function ImageUpload({
     }
   };
 
-  const uploadFile = (file: File | string, customName?: string) => {
+  const uploadFile = async (file: File | Blob | string, customName?: string) => {
     // Basic validation for File objects
     if (file instanceof File) {
       if (!file.type.startsWith("image/")) {
@@ -128,28 +128,28 @@ export function ImageUpload({
 
     const fileName = customName || (file instanceof File ? file.name : `image_${Date.now()}.jpg`);
 
-    ImageUploadService.uploadFile(
-      file,
-      fileName,
-      (percent) => {
-        setProgress(percent);
-      }
-    )
-      .then((res) => {
-        setProgress(100);
-        setTimeout(() => setProgress(null), 500); // Clear progress after a short delay
-        
-        if (res.url && onChange) {
-          onChange(res.url);
-        } else {
-          setError("لم يتم استلام رابط الصورة بشكل صحيح");
+    try {
+      const res = await ImageUploadService.uploadFile(
+        file,
+        fileName,
+        (percent) => {
+          setProgress(percent);
         }
-      })
-      .catch((err) => {
-        console.error("Upload error:", err);
-        setProgress(null);
-        setError(`خطأ أثناء رفع الصورة: ${err.message || "فشل الاتصال بالشبكة"}`);
-      });
+      );
+
+      setProgress(100);
+      setTimeout(() => setProgress(null), 500); // Clear progress after a short delay
+      
+      if (res.url && onChange) {
+        onChange(res.url);
+      } else {
+        setError("لم يتم استلام رابط الصورة بشكل صحيح");
+      }
+    } catch (err: any) {
+      console.error("Upload error:", err);
+      setProgress(null);
+      setError(`خطأ أثناء رفع الصورة: ${err.message || "فشل الاتصال بالشبكة"}`);
+    }
   };
 
   const requestNativePermissions = async () => {
@@ -181,15 +181,14 @@ export function ImageUpload({
         });
         
         if (result.photos && result.photos.length > 0) {
-          const itemsToUpload: (File | string)[] = [];
+          const itemsToUpload: (File | Blob | string)[] = [];
           for (const photo of result.photos) {
             if (photo.webPath) {
               try {
                 const res = await fetch(photo.webPath);
                 const blob = await res.blob();
-                const fileName = `image_${Date.now()}_${Math.floor(Math.random() * 1000)}.${photo.format || 'jpg'}`;
-                const file = new File([blob], fileName, { type: blob.type });
-                itemsToUpload.push(file);
+                // Blobs are more robust than manually created File objects in some mobile webview contexts
+                itemsToUpload.push(blob);
               } catch (fetchErr) {
                 console.warn("Could not fetch photo webPath, skipping:", fetchErr);
               }
@@ -209,14 +208,12 @@ export function ImageUpload({
         
         if (photo.base64String) {
           const fileName = `image_${Date.now()}.${photo.format || 'jpg'}`;
-          uploadFile(photo.base64String, fileName);
+          await uploadFile(photo.base64String, fileName);
         } else if (photo.webPath) {
           // Fallback to webPath if base64 is missing for some reason
           const res = await fetch(photo.webPath);
           const blob = await res.blob();
-          const fileName = `image_${Date.now()}.${photo.format || 'jpg'}`;
-          const file = new File([blob], fileName, { type: blob.type });
-          uploadFile(file);
+          await uploadFile(blob);
         }
       }
     } catch (err: any) {

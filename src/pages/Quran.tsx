@@ -108,7 +108,7 @@ type QuranView =
 
 // --- Sub-components moved outside to prevent re-mounting on every state update ---
 
-const SyllabusDetailView = () => <div className="p-4 text-center">تفاصيل المنهج (قيد التطوير)</div>;
+const SyllabusDetailView = (props: any) => <div className="p-4 text-center">تفاصيل المنهج (قيد التطوير)</div>;
 
 const ProgressBar = ({ percentage }: { percentage: number }) => (
   <div className="w-full bg-surface-main h-1 rounded-full mt-3 overflow-hidden">
