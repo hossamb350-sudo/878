@@ -658,10 +658,10 @@ export function Watch() {
                         <Link 
                           id={`watch-video-lt-${vid.id}`}
                           to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`} 
-                          className="bg-white rounded-xl border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-slate-200/80 transition-all duration-300 group block overflow-hidden flex flex-col cursor-pointer"
+                          className="bg-white rounded-none border border-slate-100 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-slate-200/80 transition-all duration-300 group block overflow-hidden flex flex-col cursor-pointer"
                         >
                           {/* Immersive Thumbnail */}
-                          <div className="relative aspect-[3/4] bg-slate-50 overflow-hidden rounded-t-xl">
+                          <div className="relative aspect-[3/4] bg-slate-50 overflow-hidden rounded-none">
                             {vid.thumbnailUrl ? (
                               <img 
                                 src={vid.thumbnailUrl} 

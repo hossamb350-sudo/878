@@ -572,7 +572,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                              to={video.isLeader ? `/leader/${video.id}` : `/watch/${video.id}`} 
                              className="snap-start shrink-0 w-[240px] sm:w-[280px] group block"
                            >
-                              <div className="relative h-[135px] sm:h-[155px] rounded-lg overflow-hidden bg-gray-900 shadow-sm group-hover:shadow-md transition-all border border-gray-200/50">
+                              <div className="relative h-[135px] sm:h-[155px] rounded-none overflow-hidden bg-gray-900 shadow-sm group-hover:shadow-md transition-all border border-gray-200/50">
                                  {video.thumbnailUrl ? (
                                     <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                                  ) : (
