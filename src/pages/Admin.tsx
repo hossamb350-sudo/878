@@ -626,7 +626,7 @@ export function Admin() {
           <div className="flex items-center gap-4 mb-5 relative z-10 text-right">
             <div className="relative shrink-0">
               <img
-                src={user.photoURL || ""}
+                src={user.photoURL || undefined}
                 className="w-14 h-14 md:w-16 md:h-16 rounded-2xl border-2 border-blue-500 shadow-lg object-cover"
                 alt=""
               />
@@ -998,7 +998,7 @@ function UserProfileView({
         <div className="px-6 pb-10">
           <div className="relative -mt-16 mb-6 flex justify-between items-end">
             <img
-              src={user.photoURL || ""}
+              src={user.photoURL || undefined}
               className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover bg-gray-100"
               alt=""
             />

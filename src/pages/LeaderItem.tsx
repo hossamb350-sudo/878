@@ -29,7 +29,7 @@ import { motion } from "motion/react";
 
 // Helper function to translate standard video links into embeddable URLs
 const getEmbedUrl = (url: string) => {
-  if (!url) return "";
+  if (!url) return undefined;
   const cleanUrl = url.trim();
 
   // Youtube match

@@ -164,7 +164,7 @@ export function Watch() {
 
   // Parse embed URLs for any YouTube or Custom stream
   const getEmbedUrl = (url: string, autoplay: boolean = false) => {
-    if (!url) return "";
+    if (!url) return undefined;
     let videoId = "";
     
     // Youtube match (support live streams, normal watch, watch URL strings)

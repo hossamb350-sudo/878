@@ -18,7 +18,8 @@ import {
   Twitter,
   Facebook,
   MessageCircle,
-  Copy
+  Copy,
+  Star
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -28,7 +29,17 @@ export function ArticleDetail() {
   const [article, setArticle] = useState<Article | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fontSize, setFontSize] = useState(18);
+  
+  // Starting with the default font size matching news detail page
+  const [fontSize, setFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem("article_font_size");
+    return saved ? parseInt(saved, 10) : 16;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("article_font_size", fontSize.toString());
+  }, [fontSize]);
+
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -97,32 +108,32 @@ export function ArticleDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0c1933] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-taiz-sky"></div>
+      <div className="min-h-screen bg-gradient-to-b from-[#0E1622] to-[#090D14] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D32027]"></div>
       </div>
     );
   }
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-[#0c1933] text-white flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-b from-[#0E1622] to-[#090D14] text-white flex flex-col items-center justify-center p-6">
         <h2 className="text-2xl font-black mb-4">المقال غير موجود</h2>
-        <button onClick={() => navigate("/articles")} className="bg-taiz-royal px-6 py-2 rounded-xl">العودة للمقالات</button>
+        <button onClick={() => navigate("/articles")} className="bg-[#D32027] px-6 py-2 rounded-xl">العودة للمقالات</button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0c1933] text-white pb-32 font-sans" dir="rtl">
-      {/* Top Nav */}
-      <div className="fixed top-0 inset-x-0 z-50 bg-[#0c1933]/80 backdrop-blur-md border-b border-white/5 px-4 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-b from-[#0E1622] to-[#090D14] text-white pb-32 font-sans" dir="rtl">
+      {/* Top Nav with matching gradient background */}
+      <div className="fixed top-0 inset-x-0 z-50 bg-[#0E1622]/80 backdrop-blur-md border-b border-white/5 px-4 h-16 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
           <ArrowRight className="w-6 h-6" />
         </button>
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsBookmarked(!isBookmarked)}
-            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-taiz-sky bg-taiz-sky/10" : "hover:bg-white/10"}`}
+            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-[#D32027] bg-[#D32027]/10" : "hover:bg-white/10"}`}
           >
             <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
           </button>
@@ -132,107 +143,109 @@ export function ArticleDetail() {
         </div>
       </div>
 
-      <div className="pt-20">
-        {/* Cover Image */}
-        <div className="w-full aspect-[16/9] md:aspect-[21/9] relative">
+      <div className="max-w-[390px] mx-auto w-full px-4 pt-20">
+        {/* Featured Article Card Header - Matching the Landing Page's Featured Card EXACTLY */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative w-full h-[376px] rounded-[24px] overflow-hidden border border-white/5 shadow-lg mb-6 select-none"
+        >
           {article.imageUrl ? (
-            <img src={article.imageUrl} alt={article.title} className="w-full h-full object-cover" />
+            <img 
+              src={article.imageUrl} 
+              alt={article.title} 
+              className="w-full h-full object-cover" 
+            />
           ) : (
-            <div className="w-full h-full bg-gray-800"></div>
+            <div className="w-full h-full bg-[#141B26] flex items-center justify-center">
+              <img 
+                src={article.authorPhoto || "https://i.pravatar.cc/150"} 
+                className="w-full h-full object-cover opacity-80" 
+                alt={article.authorName} 
+              />
+            </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0c1933] to-transparent"></div>
-        </div>
-
-        <div className="max-w-[800px] mx-auto px-6 -mt-20 relative z-10">
-          {/* Badge */}
-          <div className="flex mb-6">
-            <span className="bg-[#055198] text-white text-xs font-black px-4 py-1.5 rounded-full shadow-lg">
-              {article.category}
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.85)] via-[rgba(0,0,0,0.4)] to-transparent"></div>
+          
+          <div className="absolute top-[16px] left-0">
+            <span className="bg-[#D32027] text-white text-[13px] font-bold font-ibm w-[100px] h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5">
+              <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
+              مقال مميز
             </span>
           </div>
 
-          <h1 className="text-2xl md:text-4xl font-black mb-8 leading-relaxed">
-            {article.title}
-          </h1>
-
-          {/* Author Info Card */}
-          <div className="bg-white/5 border border-white/5 rounded-[2rem] p-6 mb-12 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                {article.authorPhoto ? (
-                  <img src={article.authorPhoto} className="w-14 h-14 rounded-full border-2 border-taiz-sky/50 object-cover" alt={article.authorName} />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-taiz-royal flex items-center justify-center border-2 border-taiz-sky/50">
-                    <User className="w-7 h-7 text-white" />
-                  </div>
+          <div className="absolute bottom-0 left-0 right-0 p-[20px] pb-[16px] flex flex-col justify-end text-right">
+            <h2 className="text-[18px] font-bold font-ibm leading-[28px] w-full text-white mb-[12px]">
+              {article.title}
+            </h2>
+            
+            <div className="flex items-center justify-between w-full h-[46px]">
+              <div className="flex items-center gap-[8px]">
+                <img 
+                  src={article.authorPhoto || "https://i.pravatar.cc/150"} 
+                  className="w-[44px] h-[44px] rounded-full object-cover shrink-0" 
+                  alt={article.authorName} 
+                />
+                <span className="text-[14px] font-medium font-ibm text-white">{article.authorName}</span>
+              </div>
+              <div className="flex flex-col text-[12px] text-[#A8A8A8] font-normal font-ibm text-left">
+                <span>{article.hijriDate || "ذو الحجة 1446 هـ"}</span>
+                {article.gregorianDate && (
+                  <span className="text-[10px] text-[#8F98A7] mt-[2px]">{article.gregorianDate}</span>
                 )}
               </div>
-              <div className="text-right">
-                <div className="font-black text-lg text-white">{article.authorName}</div>
-                <div className="flex items-center gap-3 text-xs text-gray-400 font-bold mt-1">
-                   <div className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>{article.hijriDate} هـ</span>
-                   </div>
-                   <span className="opacity-30">|</span>
-                   <span>{article.gregorianDate} م</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="hidden sm:flex flex-col items-end gap-1">
-               <div className="flex items-center gap-1.5 text-taiz-sky font-black text-sm">
-                  <Eye className="w-4 h-4" />
-                  <span>{article.views} مشاهدة</span>
-               </div>
             </div>
           </div>
+        </motion.div>
 
-          {/* Content Controls */}
-          <div className="sticky top-20 z-40 mb-8 flex justify-center">
-             <div className="bg-[#1a2b4d] border border-white/10 rounded-2xl px-4 py-2 flex items-center gap-6 shadow-2xl backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                   <button onClick={() => setFontSize(f => Math.min(f + 2, 32))} className="p-1.5 hover:bg-white/10 rounded-lg"><Plus className="w-4 h-4" /></button>
-                   <Type className="w-5 h-5 text-taiz-sky" />
-                   <button onClick={() => setFontSize(f => Math.max(f - 2, 14))} className="p-1.5 hover:bg-white/10 rounded-lg"><Minus className="w-4 h-4" /></button>
-                </div>
-                <div className="w-px h-6 bg-white/10"></div>
-                <div className="flex items-center gap-4">
-                   <button onClick={() => handleShare("whatsapp")} className="text-gray-400 hover:text-green-500 transition-colors"><MessageCircle className="w-5 h-5" /></button>
-                   <button onClick={() => handleShare("twitter")} className="text-gray-400 hover:text-sky-400 transition-colors"><Twitter className="w-5 h-5" /></button>
-                   <button onClick={() => handleShare("facebook")} className="text-gray-400 hover:text-blue-500 transition-colors"><Facebook className="w-5 h-5" /></button>
-                </div>
+        {/* Content Controls */}
+        <div className="sticky top-20 z-40 mb-6 flex justify-center">
+           <div className="bg-[#1A2230]/95 border border-white/10 rounded-2xl px-4 py-2 flex items-center gap-6 shadow-2xl backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                 <button onClick={() => setFontSize(f => Math.min(f + 1, 30))} className="p-1.5 hover:bg-white/10 rounded-lg text-white"><Plus className="w-4 h-4" /></button>
+                 <span className="text-sm font-bold min-w-[36px] text-center font-ibm text-white">{fontSize}px</span>
+                 <button onClick={() => setFontSize(f => Math.max(f - 1, 12))} className="p-1.5 hover:bg-white/10 rounded-lg text-white"><Minus className="w-4 h-4" /></button>
+              </div>
+              <div className="w-px h-6 bg-white/10"></div>
+              <div className="flex items-center gap-4">
+                 <button onClick={() => handleShare("whatsapp")} className="text-gray-400 hover:text-green-500 transition-colors"><MessageCircle className="w-5 h-5" /></button>
+                 <button onClick={() => handleShare("twitter")} className="text-gray-400 hover:text-sky-400 transition-colors"><Twitter className="w-5 h-5" /></button>
+                 <button onClick={() => handleShare("facebook")} className="text-gray-400 hover:text-blue-500 transition-colors"><Facebook className="w-5 h-5" /></button>
+              </div>
+           </div>
+        </div>
+
+        {/* Body content styled to match NewsDetail exactly */}
+        <div 
+          className="prose prose-stone dark:prose-invert max-w-none text-[#F1F5F9] text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-[1.8] [&_p]:text-justify mb-12 px-[4px]"
+          style={{ 
+            fontSize: `${fontSize}px`, 
+            lineHeight: 1.8,
+          }}
+        >
+          <ReactMarkdown>{article.content}</ReactMarkdown>
+        </div>
+
+        {/* Related Articles */}
+        {relatedArticles.length > 0 && (
+          <div className="border-t border-white/5 pt-8 mt-8">
+             <h3 className="text-lg font-bold font-ibm mb-6 flex items-center gap-2 text-white">
+                <div className="w-[4px] h-[18px] bg-[#D32027] rounded-[2px]"></div>
+                مقالات ذات صلة
+             </h3>
+             <div className="grid grid-cols-2 gap-4">
+                {relatedArticles.map(a => (
+                  <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-[#141B26] rounded-2xl p-3 border border-white/5 hover:bg-[#1B2431] transition-colors">
+                     <div className="aspect-video rounded-xl overflow-hidden mb-3">
+                        <img src={a.imageUrl} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                     </div>
+                     <h4 className="font-bold font-ibm text-xs text-white line-clamp-2 leading-relaxed text-right">{a.title}</h4>
+                  </Link>
+                ))}
              </div>
           </div>
-
-          {/* Body */}
-          <div 
-            className="prose prose-invert max-w-none mb-16 text-right leading-[1.8]"
-            style={{ fontSize: `${fontSize}px`, fontFamily: 'Tajawal, sans-serif' }}
-          >
-            <ReactMarkdown>{article.content}</ReactMarkdown>
-          </div>
-
-          {/* Related Articles */}
-          {relatedArticles.length > 0 && (
-            <div className="border-t border-white/5 pt-12">
-               <h3 className="text-xl font-black mb-8 flex items-center gap-3">
-                  <div className="w-1.5 h-6 bg-amber-500 rounded-full"></div>
-                  مقالات ذات صلة
-               </h3>
-               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {relatedArticles.map(a => (
-                    <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-white/5 rounded-2xl p-4 border border-white/5 hover:bg-white/[0.08] transition-all">
-                       <div className="aspect-video rounded-xl overflow-hidden mb-4">
-                          <img src={a.imageUrl} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                       </div>
-                       <h4 className="font-black text-sm line-clamp-2 leading-relaxed">{a.title}</h4>
-                    </Link>
-                  ))}
-               </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

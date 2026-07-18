@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from "react-router-dom";
+import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
@@ -216,6 +216,8 @@ function UrgentNewsBanner() {
 
 export function Layout() {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const location = useLocation();
+  const isArticlesPage = location.pathname.startsWith("/articles");
 
   useEffect(() => {
     const handleResize = () => {
@@ -238,18 +240,20 @@ export function Layout() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-main text-text-primary transition-colors" dir="rtl">
+    <div className={`flex flex-col min-h-screen ${isArticlesPage ? 'bg-[#0B1018]' : 'bg-surface-main'} text-text-primary transition-colors`} dir="rtl">
       <UrgentNewsBanner />
 
-      {/* Main Header - Reverted to previous state */}
-      <header className="bg-surface-main sticky top-0 z-[55] border-b border-border-light shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
-           <div className="flex flex-col text-right">
-              <span className="font-black text-lg sm:text-xl text-taiz-navy leading-tight">منصة تعز الإعلامية</span>
-              <span className="text-[10px] font-bold text-taiz-sky uppercase tracking-wider">إخبارية .. ثقافية | TAIZ MEDIA PLATFORM</span>
-            </div>
-        </div>
-      </header>
+      {/* Main Header - Reverted to previous state, hidden on Articles page */}
+      {!isArticlesPage && (
+        <header className="bg-surface-main sticky top-0 z-[55] border-b border-border-light shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
+             <div className="flex flex-col text-right">
+                <span className="font-black text-lg sm:text-xl text-taiz-navy leading-tight">منصة تعز الإعلامية</span>
+                <span className="text-[10px] font-bold text-taiz-sky uppercase tracking-wider">إخبارية .. ثقافية | TAIZ MEDIA PLATFORM</span>
+              </div>
+          </div>
+        </header>
+      )}
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto pb-20 min-w-0 w-full overflow-x-hidden">
@@ -266,30 +270,34 @@ export function Layout() {
             { to: "/quran", icon: BookOpen, label: "هدي القرآن" },
             { to: "/events", icon: CalendarIcon, label: "تقويم المناسبات" },
             { to: "/admin", icon: User, label: "حسابي" }
-          ].map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className="flex flex-col items-center justify-center w-full relative"
-            >
-              {({ isActive }) => (
+          ].map((item) => {
+            const isItemActive = item.to === "/"
+              ? (location.pathname === "/" || location.pathname.startsWith("/articles"))
+              : location.pathname === item.to;
+
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className="flex flex-col items-center justify-center w-full relative"
+              >
                 <div 
                   className={`flex flex-col items-center justify-center w-[90%] py-1.5 rounded-2xl transition-all duration-300 ${
-                    isActive 
+                    isItemActive 
                       ? "bg-[#f0f4fa] text-blue-600 font-bold" 
                       : "text-slate-500 hover:text-slate-800"
                   }`}
                 >
                   <div className="h-6 w-full flex items-center justify-center mb-0.5 shrink-0">
-                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isActive ? 'stroke-[2.5] text-blue-600' : 'stroke-[2]'}`} />
+                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isItemActive ? 'stroke-[2.5] text-blue-600' : 'stroke-[2]'}`} />
                   </div>
                   <span className={`text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-bold text-center leading-tight tracking-tight px-0.5 w-full font-cairo`}>
                     {item.label}
                   </span>
                 </div>
-              )}
-            </NavLink>
-          ))}
+              </NavLink>
+            );
+          })}
         </div>
       </nav>
     </div>

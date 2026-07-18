@@ -56,7 +56,7 @@ export function WatchItem() {
   };
 
   const getEmbedUrl = (url: string) => {
-    if (!url) return "";
+    if (!url) return undefined;
     let videoId = "";
     
     if (url.includes("youtube.com") || url.includes("youtu.be")) {

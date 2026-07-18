@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
@@ -58,12 +58,20 @@ function formatPublishInfo(timestamp: number) {
 }
 
 export function Home() {
+  const navigate = useNavigate();
   const [rawNews, setRawNews] = useState<NewsItem[]>([]);
   const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
   const [rawLeader, setRawLeader] = useState<LeaderContent[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSubTab, setActiveSubTab] = useState<"news" | "articles">("news");
+
+  useEffect(() => {
+    if (activeSubTab === "articles") {
+      navigate("/articles");
+      setActiveSubTab("news");
+    }
+  }, [activeSubTab, navigate]);
   const prevVideoIdsRef = useRef<string[]>([]);
   const [categories, setCategories] = useState<Record<string, string>>({
     "محلية": "#049EDF",
@@ -343,22 +351,24 @@ export function Home() {
             className="absolute h-[calc(100%-12px)] bg-taiz-navy dark:bg-taiz-sky rounded-xl z-0"
             style={{ 
               width: 'calc(50% - 6px)',
-              right: activeSubTab === "news" ? '6px' : 'calc(50%)'
+              right: '6px'
             }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           />
           <button 
             onClick={() => setActiveSubTab("news")}
-            className={`flex-1 py-2.5 text-sm font-black relative z-10 transition-colors duration-300 ${activeSubTab === "news" ? "text-white" : "text-text-muted hover:text-text-primary"}`}
+            className="flex-1 py-2.5 text-sm font-black relative z-10 text-white flex items-center justify-center gap-2 transition-colors duration-300"
           >
-            الأخبار
+            <Newspaper className="w-4 h-4 text-white" />
+            <span>الأخبار</span>
           </button>
-          <button 
-            onClick={() => setActiveSubTab("articles")}
-            className={`flex-1 py-2.5 text-sm font-black relative z-10 transition-colors duration-300 ${activeSubTab === "articles" ? "text-white" : "text-text-muted hover:text-text-primary"}`}
+          <Link 
+            to="/articles"
+            className="flex-1 py-2.5 text-sm font-black relative z-10 text-text-muted hover:text-text-primary flex items-center justify-center gap-2 transition-colors duration-300"
           >
-            المقالات
-          </button>
+            <BookOpen className="w-4 h-4" />
+            <span>المقالات</span>
+          </Link>
         </div>
       </div>
       
