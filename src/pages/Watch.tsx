@@ -255,7 +255,7 @@ export function Watch() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-    <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 pb-24 font-sans bg-[#f4f7fc]" ref={activeVideoRef}>
+    <div className="max-w-7xl mx-auto w-full px-4 pt-1 sm:px-6 pb-24 font-sans bg-surface-main" ref={activeVideoRef}>
       
       {/* Immersive Header Block with Status Indicators */}
       <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 rtl" style={{ direction: "rtl" }}>
@@ -434,7 +434,7 @@ export function Watch() {
         <div className="absolute inset-0 flex items-center">
           <div className="w-full border-t border-slate-200/60"></div>
         </div>
-        <div className="relative flex items-center gap-1.5 bg-[#f4f7fc] px-3.5 py-0.5 rounded-full text-slate-800 font-black font-cairo text-[10px] sm:text-xs border border-slate-100 shadow-sm">
+        <div className="relative flex items-center gap-1.5 bg-surface-main px-3.5 py-0.5 rounded-full text-slate-800 font-black font-cairo text-[10px] sm:text-xs border border-slate-100 shadow-sm">
           <MonitorPlay className="w-3.5 h-3.5 text-red-600 stroke-[2.5]" />
           <span>المحتوى المرئي</span>
         </div>
@@ -457,12 +457,12 @@ export function Watch() {
         {/* Filter Button (appears on the left in RTL) */}
         <button 
           onClick={openFilterModal}
-          className="flex items-center gap-2 px-6 py-3.5 bg-[#f0f4fa] hover:bg-blue-100/50 text-[#1a56db] rounded-full transition-all text-xs sm:text-sm font-black border border-blue-50/50 cursor-pointer shrink-0 font-cairo"
+          className="flex items-center gap-2 px-6 py-3.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-full transition-all text-xs sm:text-sm font-black border border-red-100 cursor-pointer shrink-0 font-ibm"
         >
-          <SlidersHorizontal className="w-4 h-4 stroke-[2.5]" />
+          <SlidersHorizontal className="w-4 h-4 text-red-600 stroke-[2.5]" />
           <span>فلترة</span>
           {selectedCategories.length > 0 && (
-            <span className="bg-[#e62222] text-white text-[9px] w-4.5 h-4.5 flex items-center justify-center rounded-full font-bold">
+            <span className="bg-red-600 text-white text-[9px] w-4.5 h-4.5 flex items-center justify-center rounded-full font-bold">
               {selectedCategories.length}
             </span>
           )}
@@ -497,7 +497,7 @@ export function Watch() {
                 </div>
                 <button 
                   onClick={() => setShowAllMostViewed(!showAllMostViewed)}
-                  className="flex items-center gap-1 text-xs sm:text-sm font-black text-blue-600 hover:text-blue-700 font-cairo cursor-pointer"
+                  className="flex items-center gap-1 text-xs sm:text-sm font-black text-red-600 hover:text-red-700 font-ibm cursor-pointer"
                 >
                   <span>عرض المزيد</span>
                   <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${showAllMostViewed ? 'rotate-90' : ''}`} />
@@ -619,7 +619,7 @@ export function Watch() {
                 </div>
                 <button 
                   onClick={() => setShowAllLatest(!showAllLatest)}
-                  className="flex items-center gap-1 text-xs sm:text-sm font-black text-blue-600 hover:text-blue-700 font-cairo cursor-pointer"
+                  className="flex items-center gap-1 text-xs sm:text-sm font-black text-red-600 hover:text-red-700 font-ibm cursor-pointer"
                 >
                   <span>عرض المزيد</span>
                   <ChevronLeft className={`w-4 h-4 transition-transform duration-300 ${showAllLatest ? 'rotate-90' : ''}`} />

@@ -347,12 +347,24 @@ export function LeaderItem() {
               allow="autoplay; encrypted-media; picture-in-picture"
             ></iframe>
             
-            <button 
-              onClick={() => navigate(-1)} 
-              className="absolute top-6 right-6 z-10 flex items-center justify-center bg-black/60 text-white rounded-full p-3 hover:bg-black/80 transition-all cursor-pointer border border-white/10 shadow-lg"
-            >
-              <ArrowRight className="w-5 h-5 text-white" />
-            </button>
+            <div className="absolute inset-0 pointer-events-none p-4 sm:p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-end gap-2 pointer-events-auto">
+                <button 
+                  onClick={shareText}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/10 hover:bg-red-600 transition-all active:scale-90"
+                  title="مشاركة"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={toggleBookmark}
+                  className={`w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/10 transition-all active:scale-90 ${isFavorited ? 'text-red-500 bg-white/20' : 'text-white hover:text-red-400'}`}
+                  title="حفظ"
+                >
+                  <Bookmark className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="w-full relative aspect-[4/3] sm:aspect-video md:aspect-[16/9] max-h-[500px] bg-stone-950 overflow-hidden">
@@ -368,63 +380,70 @@ export function LeaderItem() {
               </div>
             )}
             
-            <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-taiz-navy/90 via-taiz-navy/40 to-transparent z-0 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-0 pointer-events-none" />
             
-            <button 
-              onClick={() => navigate(-1)} 
-              className="absolute top-6 right-6 z-10 flex items-center justify-center bg-black/60 text-white rounded-full p-3 hover:bg-black/80 transition-all cursor-pointer border border-white/10 shadow-lg"
-            >
-              <ArrowRight className="w-5 h-5 text-white" />
-            </button>
-
-            <div className="absolute top-6 left-6 z-10 flex items-center gap-3">
-              <button 
-                onClick={shareText} 
-                className="flex items-center justify-center bg-black/60 text-white rounded-full p-3 hover:bg-black/80 transition-all cursor-pointer border border-white/10 shadow-lg"
-              >
-                <Share2 className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={toggleBookmark} 
-                className={`flex items-center justify-center rounded-full p-3 transition-all cursor-pointer border shadow-lg ${isFavorited ? "text-red-600 bg-black/70 border-red-600/30" : "text-white bg-black/60 hover:bg-black/80 border-white/10"}`}
-              >
-                <Bookmark className={`w-5 h-5 ${isFavorited ? "fill-[#00e5ff]" : ""}`} />
-              </button>
-            </div>
-
-            <div className="absolute bottom-6 left-0 right-0 px-6 sm:px-8 z-10 flex flex-col items-start text-right pb-2">
-              <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 shadow-md font-cairo">
-                محاضرات ودروس
-              </span>
-              
-              <h1 
-                className="font-bold text-white leading-normal drop-shadow mb-3 tracking-normal max-w-full font-cairo"
-                style={{ fontSize: `${fontSize}px` }}
-              >
-                {content.title}
-              </h1>
-              
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-white/80 font-normal font-ibm">
-                <span>{mDate}</span>
-                <span className="text-white/30">|</span>
-                <span>{hDate}</span>
-                <span className="text-white/30">|</span>
-                <span>{mTime}</span>
-                <span className="text-white/30">|</span>
-                <span className="text-red-600 flex items-center gap-1 font-semibold animate-pulse">
-                  <Eye className="w-3 h-3 text-red-600 fill-none shrink-0" />
-                  <span>{(content.views || 0) + 1} مشاهدة</span>
-                </span>
+            <div className="absolute inset-0 pointer-events-none p-4 sm:p-5 flex flex-col justify-between">
+              <div className="flex items-center justify-end gap-2 pointer-events-auto">
+                <button 
+                  onClick={shareText}
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/10 hover:bg-red-600 transition-all active:scale-90"
+                  title="مشاركة"
+                >
+                  <Share2 className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={toggleBookmark}
+                  className={`w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/10 transition-all active:scale-90 ${isFavorited ? 'text-red-500 bg-white/20' : 'text-white hover:text-red-400'}`}
+                  title="حفظ"
+                >
+                  <Bookmark className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+                </button>
               </div>
             </div>
           </div>
         )}
 
+        {/* Content Section */}
+        <div className="px-6 sm:px-8 pt-6">
+          {/* Back Button Above Title */}
+          <button 
+            onClick={() => navigate(-1)}
+            className="mb-6 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-ibm"
+          >
+            <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
+          </button>
+        </div>
+
         {/* Title area for video items since they don't have it in the header */}
         {content.type === "video" && (
-          <div className="px-6 sm:px-8 py-6 border-b border-stone-100 dark:border-stone-800">
+          <div className="px-6 sm:px-8 pb-6 border-b border-stone-100 dark:border-stone-800">
              <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
                 عرض مرئي
+             </span>
+             <h1 
+                className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo"
+                style={{ fontSize: `${fontSize}px` }}
+              >
+                {content.title}
+              </h1>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
+                <span>{mDate}</span>
+                <span className="text-stone-200 dark:text-stone-700">|</span>
+                <span>{hDate}</span>
+                <span className="text-stone-200 dark:text-stone-700">|</span>
+                <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
+                  <Eye className="w-3 h-3 text-red-600 shrink-0" />
+                  <span>{(content.views || 0) + 1} مشاهدة</span>
+                </span>
+              </div>
+          </div>
+        )}
+
+        {/* For text content, title is usually at the bottom of header, let's adjust it */}
+        {content.type !== "video" && (
+          <div className="px-6 sm:px-8 pb-6 border-b border-stone-100 dark:border-stone-800">
+             <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
+                محاضرات ودروس
              </span>
              <h1 
                 className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo"
@@ -497,14 +516,14 @@ export function LeaderItem() {
                   <div className="flex gap-3">
                     <button 
                       onClick={shareText}
-                      className="flex-[1.5] bg-red-600 text-white rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs shadow-lg shadow-red-600/20 font-cairo"
+                      className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs shadow-lg shadow-red-600/20 font-ibm"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       <span>مشاركة المحتوى</span>
                     </button>
                     <button 
                       onClick={toggleBookmark}
-                      className={`flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs font-cairo ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
+                      className={`flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-ibm ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
                     >
                       <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
                       <span>حفظ</span>
@@ -526,14 +545,14 @@ export function LeaderItem() {
                   <div className="flex gap-3 pt-8 border-t border-stone-100 dark:border-stone-800 mt-12">
                     <button 
                       onClick={shareText}
-                      className="flex-[1.5] bg-red-600 text-white rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs font-cairo shadow-lg shadow-red-600/20"
+                      className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-cairo shadow-lg shadow-red-600/20"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       <span>مشاركة النص</span>
                     </button>
                     <button 
                       onClick={handleCopyText}
-                      className="flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs font-cairo"
+                      className="flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-cairo"
                     >
                       {copied ? <Check className="w-3.5 h-3.5 text-red-600" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copied ? "تم النسخ" : "نسخ النص"}</span>
@@ -547,7 +566,7 @@ export function LeaderItem() {
             {content.type !== "video" && (
               <div className="mt-16 pt-8 border-t border-stone-100 dark:border-stone-800 text-center">
                 <Quote className="w-8 h-8 mx-auto text-red-600/20 mb-3" />
-                <p className="text-sm font-bold text-red-600 font-cairo">انتهى خطاب السيد القائد</p>
+                <p className="text-sm font-bold text-red-600 font-ibm">انتهى خطاب السيد القائد</p>
               </div>
             )}
           </div>

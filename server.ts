@@ -9,7 +9,7 @@ import FormData from "form-data";
 import ImageKit from "imagekit";
 import cors from "cors";
 import webPush from "web-push";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps, App } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { IMAGEKIT_CONFIG } from "./src/config/imagekitConfig";
@@ -855,4 +855,7 @@ async function startServer() {
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error("Critical failure during server startup:", err);
+  process.exit(1);
+});

@@ -48,7 +48,7 @@ export function Leader() {
   }, [content, searchQuery, selectedType]);
 
   return (
-    <div className="max-w-4xl mx-auto w-full p-4 pb-2 animate-fade-in" dir="rtl">
+    <div className="max-w-4xl mx-auto w-full p-4 pb-2 animate-fade-in font-ibm" dir="rtl">
       {/* Advanced Control & Filter Center */}
       <div className="bg-surface-card p-4 rounded-3xl border border-border-light shadow-soft flex flex-col md:flex-row items-center gap-4 mb-8">
         {/* Modern Unified Search Input */}
@@ -99,50 +99,51 @@ export function Leader() {
             <Link 
               to={`/leader/${item.id}`} 
               key={item.id} 
-              className="card card-hover group flex flex-col justify-between animate-fade-in"
+              className="group relative aspect-video rounded-3xl overflow-hidden shadow-md border border-border-light animate-fade-in"
             >
-               <div>
-                 {item.thumbnailUrl && (
-                   <div className="w-full aspect-video rounded-xl overflow-hidden mb-4 bg-surface-main border border-border-light relative shadow-inner">
-                     <img 
-                       src={item.thumbnailUrl} 
-                       alt={item.title} 
-                       className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                       loading="lazy"
-                       referrerPolicy="no-referrer"
-                     />
-                   </div>
-                 )}
-                 <div className="flex items-center gap-2 mb-4">
-                    {item.type === 'video' ? (
-                       <span className="flex items-center gap-1.5 bg-taiz-royal/5 text-taiz-royal text-xs font-bold px-2.5 py-1 rounded-md">
-                        <PlayCircle className="w-3.5 h-3.5" /> فيديو
-                      </span>
-                    ) : (
-                       <span className="flex items-center gap-1.5 bg-taiz-sky/5 text-taiz-sky text-xs font-bold px-2.5 py-1 rounded-md">
-                        <FileText className="w-3.5 h-3.5" /> محاضرات ودروس
-                      </span>
-                    )}
-                 </div>
-                 <h2 className="text-base sm:text-lg font-black mb-3 text-text-primary leading-snug group-hover:text-taiz-royal transition-colors line-clamp-3">{item.title}</h2>
-               </div>
-               
-               <div className="flex items-center justify-between mt-6 pt-4 border-t border-border-light">
-                 <div className="flex items-center gap-3">
-                   <span className="text-xs text-text-secondary font-bold">
-                     {format(item.createdAt, "dd MMMM yyyy", { locale: ar })}
-                   </span>
-                   {item.views !== undefined && (
-                     <span className="flex items-center gap-1 text-xs text-text-secondary font-bold bg-surface-main px-2 py-0.5 rounded-full">
-                        <Eye className="w-3 h-3 text-red-600" /> {item.views}
-                     </span>
-                   )}
-                 </div>
-                 
-                 <div className="w-8 h-8 rounded-full bg-surface-main text-text-secondary flex items-center justify-center group-hover:bg-taiz-navy group-hover:text-white transition-all transform group-hover:-translate-x-1">
-                    <ArrowLeft className="w-4 h-4" />
-                 </div>
-               </div>
+              {item.thumbnailUrl ? (
+                <img 
+                  src={item.thumbnailUrl} 
+                  alt={item.title} 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-taiz-navy to-taiz-royal flex items-center justify-center">
+                  {item.type === 'video' ? <PlayCircle className="w-12 h-12 text-white/20" /> : <FileText className="w-12 h-12 text-white/20" />}
+                </div>
+              )}
+              
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+              
+              <div className="absolute top-3 right-3">
+                {item.type === 'video' ? (
+                   <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-md flex items-center gap-1.5 shadow-lg">
+                    <PlayCircle className="w-3 h-3" /> فيديو
+                  </span>
+                ) : (
+                   <span className="bg-taiz-sky text-white text-[10px] font-black px-2 py-1 rounded-md flex items-center gap-1.5 shadow-lg">
+                    <FileText className="w-3 h-3" /> محاضرة
+                  </span>
+                )}
+              </div>
+
+              <div className="absolute bottom-4 right-4 left-4 text-right">
+                <h2 className="text-white text-sm sm:text-base font-black leading-snug line-clamp-2 group-hover:text-red-400 transition-colors">
+                  {item.title}
+                </h2>
+                <div className="flex items-center justify-between mt-2 opacity-80">
+                  <span className="text-[10px] text-white/80 font-bold">
+                    {format(item.createdAt, "dd MMMM yyyy", { locale: ar })}
+                  </span>
+                  {item.views !== undefined && (
+                    <span className="flex items-center gap-1 text-[10px] text-white/80 font-bold bg-white/10 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                       <Eye className="w-2.5 h-2.5 text-red-500" /> {item.views}
+                    </span>
+                  )}
+                </div>
+              </div>
             </Link>
           ))}
         </div>

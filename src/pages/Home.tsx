@@ -531,7 +531,7 @@ export function Home() {
       className="max-w-[760px] mx-auto w-full pb-16 bg-surface-main text-text-primary transition-colors"
     >
       {/* Sub-Tabs (Segmented Control) */}
-      <div className="pt-4 pb-2 px-4 bg-transparent sticky top-0 z-50">
+      <div className="pt-1 pb-2 px-4 bg-transparent sticky top-0 z-50">
         <div className="flex items-center justify-center gap-12 w-full max-w-xs mx-auto relative border-b border-slate-200/60 pb-1">
           <button 
             onClick={() => setActiveSubTab("news")}
@@ -739,15 +739,15 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                       <div className="absolute top-0 right-0 w-32 h-32 bg-taiz-sky/5 rounded-full blur-[40px] -mt-10 -mr-10"></div>
                       <div className="flex items-center justify-between mb-3 text-right relative z-10" style={{ direction: "rtl" }}>
                         <Link to="/watch" className="flex items-center gap-3 group cursor-pointer inline-flex">
-                           <div className="bg-gradient-to-br from-taiz-navy to-taiz-royal p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all">
+                           <div className="bg-red-600 p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all">
                               <MonitorPlay className="w-5 h-5 text-white" />
                            </div>
-                           <h2 className="font-black text-[18px] sm:text-[20px] select-none text-text-primary group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
+                           <h2 className="font-black text-[18px] sm:text-[20px] select-none text-text-primary group-hover:text-red-600 transition-colors">أحدث الفيديوهات</h2>
                         </Link>
 
                         <Link 
                           to="/watch"
-                          className="flex items-center gap-1 text-xs font-bold text-taiz-sky hover:text-taiz-navy transition-colors py-1.5 px-3 bg-taiz-sky/10 hover:bg-taiz-sky/20 rounded-full"
+                          className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 transition-colors py-1.5 px-3 bg-red-600/10 hover:bg-red-600/20 rounded-full"
                         >
                           <span>عرض الكل</span>
                           <ChevronLeft className="w-4 h-4" />

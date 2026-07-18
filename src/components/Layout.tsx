@@ -1,4 +1,5 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { HeaderWidgets } from "./HeaderWidgets";
 import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
@@ -243,15 +244,10 @@ export function Layout() {
     <div className="flex flex-col min-h-screen bg-surface-main text-text-primary transition-colors" dir="rtl">
       <UrgentNewsBanner />
 
-      {/* Main Header */}
-      <header className="bg-surface-main border-b border-border-light shadow-sm z-[55]">
-          <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
-             <div className="flex flex-col text-right">
-                <span className="font-black text-lg sm:text-xl text-taiz-navy leading-tight">منصة تعز الإعلامية</span>
-                <span className="text-[10px] font-bold text-taiz-sky uppercase tracking-wider">إخبارية .. ثقافية | TAIZ MEDIA PLATFORM</span>
-              </div>
-          </div>
-        </header>
+      {/* Platform Logo & Widgets Area */}
+      <div className="w-full bg-surface-main">
+          <HeaderWidgets />
+      </div>
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto pb-20 min-w-0 w-full overflow-x-hidden">
