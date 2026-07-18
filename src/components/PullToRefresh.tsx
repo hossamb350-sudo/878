@@ -110,7 +110,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
             transition={isRefreshing ? { rotate: { repeat: Infinity, duration: 1, ease: 'linear' }, y: { type: 'spring', stiffness: 300, damping: 20 } } : { type: 'tween', duration: 0.1 }}
             className="bg-white dark:bg-zinc-800 shadow-lg rounded-full p-2 border border-gray-100 dark:border-zinc-700 mt-2"
          >
-            <RefreshCw className="w-6 h-6 text-blue-600 dark:text-blue-500" />
+            <RefreshCw className="w-6 h-6 text-blue-600 dark:text-red-600" />
          </motion.div>
       </div>
 

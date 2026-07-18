@@ -134,7 +134,7 @@ export function Leader() {
                    </span>
                    {item.views !== undefined && (
                      <span className="flex items-center gap-1 text-xs text-text-secondary font-bold bg-surface-main px-2 py-0.5 rounded-full">
-                        <Eye className="w-3 h-3" /> {item.views}
+                        <Eye className="w-3 h-3 text-red-600" /> {item.views}
                      </span>
                    )}
                  </div>

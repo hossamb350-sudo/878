@@ -6,11 +6,11 @@
 export const DESIGN_TOKENS = {
   colors: {
     brand: {
-      navy: '#032F69',
-      royal: '#055198',
-      sky: '#049EDF',
-      cyan: '#00E5FF',
-      soft: '#90BAD6',
+      navy: '#07152B',
+      royal: '#10264A',
+      sky: '#1E4275',
+      cyan: '#34619B',
+      soft: '#6D8BAF',
     },
     surface: {
       main: '#eef1f5', // Platform background matching splash/logo background
@@ -64,9 +64,9 @@ export const DESIGN_TOKENS = {
     full: '9999px',
   },
   shadows: {
-    soft: '0 5px 15px -5px rgba(3, 47, 105, 0.05)',
-    medium: '0 10px 30px -10px rgba(3, 47, 105, 0.1)',
-    strong: '0 15px 40px -10px rgba(3, 47, 105, 0.15)',
-    glow: '0 0 20px rgba(4, 158, 223, 0.2)',
+    soft: '0 5px 15px -5px rgba(7, 21, 43, 0.05)',
+    medium: '0 10px 30px -10px rgba(7, 21, 43, 0.1)',
+    strong: '0 15px 40px -10px rgba(7, 21, 43, 0.15)',
+    glow: '0 0 20px rgba(30, 66, 117, 0.2)',
   },
 };

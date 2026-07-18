@@ -261,9 +261,9 @@ export function Watch() {
       <div className="flex items-center justify-between border-b border-slate-100 pb-1.5 mb-2.5 rtl" style={{ direction: "rtl" }}>
         <div className="flex items-center gap-3">
           <div className="relative bg-blue-50/70 p-2 rounded-xl border border-blue-100/20">
-            <Tv className="w-7 h-7 text-blue-600 stroke-[2]" />
+            <Tv className="w-7 h-7 text-red-600 stroke-[2]" />
             <div className="absolute inset-0 flex items-center justify-center">
-              <Play className="w-2.5 h-2.5 text-blue-600 fill-blue-600 translate-x-[0.5px] translate-y-[-0.5px]" />
+              <Play className="w-2.5 h-2.5 text-red-600 fill-blue-600 translate-x-[0.5px] translate-y-[-0.5px]" />
             </div>
           </div>
           <div className="flex flex-col text-right">
@@ -435,7 +435,7 @@ export function Watch() {
           <div className="w-full border-t border-slate-200/60"></div>
         </div>
         <div className="relative flex items-center gap-1.5 bg-[#f4f7fc] px-3.5 py-0.5 rounded-full text-slate-800 font-black font-cairo text-[10px] sm:text-xs border border-slate-100 shadow-sm">
-          <MonitorPlay className="w-3.5 h-3.5 text-blue-600 stroke-[2.5]" />
+          <MonitorPlay className="w-3.5 h-3.5 text-red-600 stroke-[2.5]" />
           <span>المحتوى المرئي</span>
         </div>
       </div>
@@ -574,14 +574,14 @@ export function Watch() {
                             {/* Video Duration (bottom-left) */}
                             {vid.duration && (
                               <div className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-white/10 shadow-sm">
-                                <Clock className="w-2.5 h-2.5 text-blue-400" />
+                                <Clock className="w-2.5 h-2.5 text-red-600" />
                                 <span>{vid.duration}</span>
                               </div>
                             )}
 
                             {/* Video Views (bottom-right) */}
                             <div className="absolute bottom-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-white/10 shadow-sm font-cairo">
-                              <Eye className="w-2.5 h-2.5 text-blue-400" />
+                              <Eye className="w-2.5 h-2.5 text-red-600" />
                               <span>{formattedViews}</span>
                               <span className="hidden xs:inline">&nbsp;مشاهدة</span>
                             </div>
@@ -613,7 +613,7 @@ export function Watch() {
               <div className="flex items-center justify-between mb-5 mt-6 rtl" style={{ direction: "rtl" }}>
                 <div className="flex items-center gap-2">
                   <span className="p-1.5 bg-blue-50 rounded-xl text-blue-600 flex items-center justify-center">
-                    <Clock className="w-5 h-5 text-blue-600 stroke-[2.5]" />
+                    <Clock className="w-5 h-5 text-red-600 stroke-[2.5]" />
                   </span>
                   <h2 className="text-base sm:text-lg font-black text-slate-900 font-cairo">أحدث الفيديوهات</h2>
                 </div>
@@ -696,14 +696,14 @@ export function Watch() {
                             {/* Video Duration (bottom-left) */}
                             {vid.duration && (
                               <div className="absolute bottom-1.5 left-1.5 bg-black/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-white/10 shadow-sm">
-                                <Clock className="w-2.5 h-2.5 text-blue-400" />
+                                <Clock className="w-2.5 h-2.5 text-red-600" />
                                 <span>{vid.duration}</span>
                               </div>
                             )}
 
                             {/* Video Views (bottom-right) */}
                             <div className="absolute bottom-1.5 right-1.5 bg-black/60 backdrop-blur-md text-white text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded flex items-center gap-0.5 border border-white/10 shadow-sm font-cairo font-black">
-                              <Eye className="w-2.5 h-2.5 text-blue-400" />
+                              <Eye className="w-2.5 h-2.5 text-red-600" />
                               <span>{formattedViews}</span>
                               <span className="hidden xs:inline">&nbsp;مشاهدة</span>
                             </div>
@@ -743,7 +743,7 @@ export function Watch() {
              >
                 <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
                    <h3 className="text-base sm:text-lg font-black text-slate-900 flex items-center gap-2 font-cairo">
-                      <SlidersHorizontal className="w-5 h-5 text-blue-600 stroke-[2.5]" />
+                      <SlidersHorizontal className="w-5 h-5 text-red-600 stroke-[2.5]" />
                       تصفية وتصنيف المواد
                    </h3>
                    <button onClick={() => setIsFilterModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-xl transition text-slate-400 hover:text-slate-600 cursor-pointer">

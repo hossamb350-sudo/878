@@ -20,9 +20,9 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = f
         const catMap: Record<string, string> = {};
         (data.items || data.list || []).forEach((c: any) => {
           if (typeof c === 'string') {
-            catMap[c] = "#049EDF";
+            catMap[c] = "#34619B";
           } else if (c.name) {
-            catMap[c.name] = c.color || "#049EDF";
+            catMap[c.name] = c.color || "#34619B";
           }
         });
         setCategories(catMap);
@@ -40,7 +40,7 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = f
   return (
     <div className={`flex flex-wrap items-center gap-1.5 z-20 ${className}`}>
       {cats.map((c, i) => {
-        const color = categories[c] || "#049EDF";
+        const color = categories[c] || "#34619B";
         const isPrimary = i === 0;
         
         if (isSecondary) {

@@ -45,7 +45,7 @@ export function FavoritesList() {
         className="fixed top-2.5 left-4 z-[60] p-2 bg-white/50 hover:bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-border-light transition-all active:scale-95"
         title="المفضلة"
       >
-        <Menu className="w-6 h-6 text-taiz-navy dark:text-white" />
+        <Menu className="w-6 h-6 text-red-600 dark:text-white" />
       </button>
 
       {isOpen && (
@@ -54,7 +54,7 @@ export function FavoritesList() {
           <div className="fixed top-0 bottom-0 left-0 w-80 max-w-[85vw] bg-surface-card z-[70] shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-0" dir="rtl">
             <div className="p-4 border-b border-border-light flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Bookmark className="w-5 h-5 text-taiz-royal" />
+                <Bookmark className="w-5 h-5 text-red-600" />
                 <h3 className="text-xl font-bold text-text-primary">مفضلتي</h3>
               </div>
               <button onClick={() => setIsOpen(false)} className="p-2 bg-surface-main hover:bg-surface-hover rounded-full transition-colors">
@@ -73,7 +73,7 @@ export function FavoritesList() {
                   {groupedFavorites.news.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
-                        <FileText className="w-4 h-4 text-taiz-sky" /> الأخبار والمقالات
+                        <FileText className="w-4 h-4 text-red-600" /> الأخبار والمقالات
                       </h4>
                       {groupedFavorites.news.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
                     </div>
@@ -82,7 +82,7 @@ export function FavoritesList() {
                   {groupedFavorites.watch.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
-                        <Video className="w-4 h-4 text-taiz-sky" /> شاهد
+                        <Video className="w-4 h-4 text-red-600" /> شاهد
                       </h4>
                       {groupedFavorites.watch.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
                     </div>
@@ -91,7 +91,7 @@ export function FavoritesList() {
                   {groupedFavorites.leader.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
-                        <User className="w-4 h-4 text-taiz-sky" /> السيد القائد
+                        <User className="w-4 h-4 text-red-600" /> السيد القائد
                       </h4>
                       {groupedFavorites.leader.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
                     </div>
@@ -114,7 +114,7 @@ function FavoriteCard({ item, onRemove, onClick }: { item: FavoriteItem; onRemov
         <img src={item.imageUrl} alt={item.title} className="w-14 h-14 object-cover rounded-lg shrink-0" />
       ) : (
         <div className="w-14 h-14 bg-taiz-royal/5 rounded-lg flex items-center justify-center shrink-0">
-          <Bookmark className="w-6 h-6 text-taiz-royal/50" />
+          <Bookmark className="w-6 h-6 text-red-600/50" />
         </div>
       )}
       <div className="flex-1 min-w-0 flex flex-col justify-center">

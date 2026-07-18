@@ -7,7 +7,7 @@ import { Tag, X, Plus, Edit, Trash2, PlusCircle, Save } from "lucide-react";
 export const AdminCategoryManager: React.FC = () => {
   const [savedCats, setSavedCats] = useState<{name: string, color: string}[]>([]);
   const [newCatName, setNewCatName] = useState("");
-  const [newCatColor, setNewCatColor] = useState("#049EDF");
+  const [newCatColor, setNewCatColor] = useState("#34619B");
   const [editingCat, setEditingCat] = useState<{oldName: string, newName: string, color: string} | null>(null);
 
   useEffect(() => {
@@ -15,7 +15,7 @@ export const AdminCategoryManager: React.FC = () => {
       if (snapshot.exists()) {
         const data = snapshot.data();
         const list = (data.items || data.list || []).map((c: any) => 
-          typeof c === 'string' ? { name: c, color: "#049EDF" } : c
+          typeof c === 'string' ? { name: c, color: "#34619B" } : c
         );
         setSavedCats(list);
       }
@@ -32,7 +32,7 @@ export const AdminCategoryManager: React.FC = () => {
       const newList = [...savedCats, newItem];
       await setDoc(doc(db, "newsMetadata", "categories"), { items: newList });
       setNewCatName("");
-      setNewCatColor("#049EDF");
+      setNewCatColor("#34619B");
     } catch (e) {
       alert("خطأ في إضافة التصنيف");
     }
@@ -163,12 +163,12 @@ export const AdminCategoryManager: React.FC = () => {
                   ) : (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl shadow-inner border-2 border-white dark:border-gray-800" style={{ backgroundColor: c.color || "#049EDF" }}></div>
+                        <div className="w-10 h-10 rounded-xl shadow-inner border-2 border-white dark:border-gray-800" style={{ backgroundColor: c.color || "#34619B" }}></div>
                         <span className="font-bold text-gray-700 dark:text-gray-300">{c.name}</span>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
-                          onClick={() => setEditingCat({oldName: c.name, newName: c.name, color: c.color || "#049EDF"})}
+                          onClick={() => setEditingCat({oldName: c.name, newName: c.name, color: c.color || "#34619B"})}
                           className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
                         >
                           <Edit className="w-4 h-4" />

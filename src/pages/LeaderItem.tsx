@@ -386,7 +386,7 @@ export function LeaderItem() {
               </button>
               <button 
                 onClick={toggleBookmark} 
-                className={`flex items-center justify-center rounded-full p-3 transition-all cursor-pointer border shadow-lg ${isFavorited ? "text-[#00e5ff] bg-black/70 border-[#00e5ff]/30" : "text-white bg-black/60 hover:bg-black/80 border-white/10"}`}
+                className={`flex items-center justify-center rounded-full p-3 transition-all cursor-pointer border shadow-lg ${isFavorited ? "text-red-600 bg-black/70 border-red-600/30" : "text-white bg-black/60 hover:bg-black/80 border-white/10"}`}
               >
                 <Bookmark className={`w-5 h-5 ${isFavorited ? "fill-[#00e5ff]" : ""}`} />
               </button>
@@ -411,8 +411,8 @@ export function LeaderItem() {
                 <span className="text-white/30">|</span>
                 <span>{mTime}</span>
                 <span className="text-white/30">|</span>
-                <span className="text-[#00e5ff] flex items-center gap-1 font-semibold animate-pulse">
-                  <Eye className="w-3 h-3 text-[#00e5ff] fill-none shrink-0" />
+                <span className="text-red-600 flex items-center gap-1 font-semibold animate-pulse">
+                  <Eye className="w-3 h-3 text-red-600 fill-none shrink-0" />
                   <span>{(content.views || 0) + 1} مشاهدة</span>
                 </span>
               </div>
@@ -438,7 +438,7 @@ export function LeaderItem() {
                 <span>{hDate}</span>
                 <span className="text-stone-200 dark:text-stone-700">|</span>
                 <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
-                  <Eye className="w-3 h-3 shrink-0" />
+                  <Eye className="w-3 h-3 text-red-600 shrink-0" />
                   <span>{(content.views || 0) + 1} مشاهدة</span>
                 </span>
               </div>
@@ -454,7 +454,7 @@ export function LeaderItem() {
             >
               <span>{isDarkMode ? "ليلي" : "نهاري"}</span>
               {isDarkMode ? (
-                <Moon className="w-5 h-5 text-indigo-400 fill-indigo-400/20" />
+                <Moon className="w-5 h-5 text-red-600 fill-indigo-400/20" />
               ) : (
                 <Sun className="w-5 h-5 text-amber-500 fill-amber-500" />
               )}
@@ -535,7 +535,7 @@ export function LeaderItem() {
                       onClick={handleCopyText}
                       className="flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-bold text-xs font-cairo"
                     >
-                      {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? <Check className="w-3.5 h-3.5 text-red-600" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{copied ? "تم النسخ" : "نسخ النص"}</span>
                     </button>
                   </div>

@@ -210,7 +210,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                 onClick={() => setActiveCardIndex(index)}
                 animate={{
                   width: index === activeCardIndex ? 20 : 6,
-                  backgroundColor: index === activeCardIndex ? "#049edf" : "rgba(3, 47, 105, 0.15)",
+                  backgroundColor: index === activeCardIndex ? "#34619b" : "rgba(7, 21, 43, 0.15)",
                 }}
                 className="h-1.5 rounded-full cursor-pointer border-none focus:outline-none transition-all"
               />

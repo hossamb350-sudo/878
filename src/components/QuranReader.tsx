@@ -769,7 +769,7 @@ export function QuranReader({
             onClick={() => setFocusMode(false)}
             className="flex items-center gap-1.5 px-5 py-2.5 bg-black/80 hover:bg-black backdrop-blur-xl text-white font-black rounded-full text-xs shadow-strong border border-white/20 transition-all duration-300 pointer-events-auto hover:scale-105 active:scale-95"
           >
-            <Minimize2 className="w-4 h-4 text-taiz-royal" />
+            <Minimize2 className="w-4 h-4 text-red-600" />
             <span>خروج من وضع التركيز</span>
           </button>
         </div>
@@ -848,7 +848,7 @@ export function QuranReader({
                       className="w-10 h-10 rounded-full bg-emerald-400 border-2 border-white shadow-xl flex items-center justify-center cursor-pointer shrink-0"
                       title="تظليل أخضر"
                     >
-                      <Highlighter className="w-5 h-5 text-emerald-800" />
+                      <Highlighter className="w-5 h-5 text-red-600" />
                     </motion.button>
                   </div>
 
@@ -977,7 +977,7 @@ export function QuranReader({
                       );
                       setFloatingNote(null);
                     }}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-taiz-royal hover:bg-taiz-royal/90 text-white rounded-xl text-xs font-black shadow-lg shadow-taiz-royal/20 transition active:scale-95"
+                    className="flex items-center gap-1.5 px-4 py-2 bg-taiz-royal hover:bg-red-700/90 text-white rounded-xl text-xs font-black shadow-lg shadow-taiz-royal/20 transition active:scale-95"
                   >
                     <Check className="w-3.5 h-3.5" />
                     <span>حفظ الملحوظة</span>
@@ -1079,7 +1079,7 @@ export function QuranReader({
                         <Bookmark className="w-4 h-4 text-status-error fill-status-error" />
                       )}
                       {paragraphNotes.length > 0 && (
-                        <FileText className="w-4 h-4 text-taiz-royal" />
+                        <FileText className="w-4 h-4 text-red-600" />
                       )}
                     </div>
 
@@ -1108,7 +1108,7 @@ export function QuranReader({
                           onClick={(e) => e.stopPropagation()}
                           className="mt-3 bg-surface-card p-3 rounded-xl border-r-4 border-taiz-royal text-text-primary text-sm shadow-sm flex items-start gap-3"
                         >
-                          <FileText className="w-4 h-4 shrink-0 text-taiz-royal mt-1" />
+                          <FileText className="w-4 h-4 shrink-0 text-red-600 mt-1" />
                           <div className="flex-1">
                             <span className="font-bold text-xs text-text-muted block mb-1">
                               ملاحظة {paragraphNotes.length > 1 ? nIdx + 1 : ""}:
@@ -1255,7 +1255,7 @@ export function QuranReader({
                               onSaveNote(idx, noteText);
                               setNoteEditIndex(null);
                             }}
-                            className="px-3 py-1 bg-taiz-royal hover:bg-taiz-royal/90 text-white text-xs rounded-lg font-bold"
+                            className="px-3 py-1 bg-taiz-royal hover:bg-red-700/90 text-white text-xs rounded-lg font-bold"
                           >
                             حفظ الملاحظة
                           </button>
@@ -1274,7 +1274,7 @@ export function QuranReader({
       {!focusMode && (
         <div className="bg-taiz-navy border-t border-white/10 text-white px-4 py-2.5 flex items-center justify-between shadow-lg text-xs font-sans shrink-0">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-emerald-400" />
+            <Clock className="w-4 h-4 text-red-600" />
             <span className="font-bold">
               بقي حوالي:{" "}
               <span className="text-emerald-400 font-black">
@@ -1297,7 +1297,7 @@ export function QuranReader({
           </div>
 
           <div className="flex items-center gap-2">
-            <BookText className="w-4 h-4 text-blue-400" />
+            <BookText className="w-4 h-4 text-red-600" />
             <span className="font-bold">
               متبقي:{" "}
               <span className="text-blue-400 font-black">

@@ -9,11 +9,11 @@
   --font-tajawal: "Tajawal", sans-serif;
 
   /* Brand Colors */
-  --color-taiz-navy: #032F69;
-  --color-taiz-royal: #055198;
-  --color-taiz-sky: #049EDF;
-  --color-taiz-cyan: #00E5FF;
-  --color-taiz-soft: #90BAD6;
+  --color-taiz-navy: #07152B;
+  --color-taiz-royal: #10264A;
+  --color-taiz-sky: #1E4275;
+  --color-taiz-cyan: #34619B;
+  --color-taiz-soft: #6D8BAF;
 
   /* Surface & Background Colors */
   --color-surface-main: #eef1f5;
@@ -49,10 +49,10 @@
   --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-soft: 0 5px 15px -5px rgba(3, 47, 105, 0.05);
-  --shadow-medium: 0 10px 30px -10px rgba(3, 47, 105, 0.1);
-  --shadow-strong: 0 15px 40px -10px rgba(3, 47, 105, 0.15);
-  --shadow-glow: 0 0 20px rgba(4, 158, 223, 0.2);
+  --shadow-soft: 0 5px 15px -5px rgba(7, 21, 43, 0.05);
+  --shadow-medium: 0 10px 30px -10px rgba(7, 21, 43, 0.1);
+  --shadow-strong: 0 15px 40px -10px rgba(7, 21, 43, 0.15);
+  --shadow-glow: 0 0 20px rgba(30, 66, 117, 0.2);
 }
 
 @layer base {
@@ -68,8 +68,8 @@
   .btn {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
   }
-  .btn-primary { @apply bg-taiz-navy text-white hover:bg-taiz-royal focus:ring-taiz-sky shadow-md hover:shadow-lg transform hover:-translate-y-0.5; }
-  .btn-secondary { @apply bg-surface-main text-taiz-navy border border-border-subtle hover:bg-white hover:border-taiz-sky/30 focus:ring-taiz-sky shadow-sm; }
+  .btn-primary { @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-md hover:shadow-lg transform hover:-translate-y-0.5; }
+  .btn-secondary { @apply bg-surface-main text-red-600 border border-border-subtle hover:bg-white hover:border-red-500/30 focus:ring-red-500 shadow-sm; }
   .input-field { @apply w-full bg-surface-main border border-border-subtle focus:border-taiz-sky focus:bg-white focus:outline-none focus:ring-4 focus:ring-taiz-sky/10 rounded-xl px-4 py-3 text-sm font-bold transition-all placeholder:text-text-muted; }
   .card { @apply bg-surface-card rounded-2xl border border-border-light shadow-soft; }
   .card-hover { @apply hover:shadow-medium hover:border-taiz-sky/20 hover:-translate-y-0.5 transition-all duration-300; }
@@ -130,5 +130,5 @@
 }
 
 @utility bg-taiz-gradient {
-  background-image: linear-gradient(to right, #032F69, #055198, #049EDF);
+  background-image: linear-gradient(to right, #07152B, #10264A, #1E4275);
 }

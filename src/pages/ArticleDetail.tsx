@@ -108,47 +108,48 @@ export function ArticleDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0E1622] to-[#090D14] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D32027]"></div>
+      <div className="min-h-screen bg-surface-main flex flex-col items-center justify-center" dir="rtl">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-[#D32027] mb-4"></div>
+        <p className="font-medium text-text-secondary font-ibm text-sm">جاري تحميل المقال...</p>
       </div>
     );
   }
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0E1622] to-[#090D14] text-white flex flex-col items-center justify-center p-6">
-        <h2 className="text-2xl font-black mb-4">المقال غير موجود</h2>
-        <button onClick={() => navigate("/articles")} className="bg-[#D32027] px-6 py-2 rounded-xl">العودة للمقالات</button>
+      <div className="min-h-screen bg-surface-main text-text-primary flex flex-col items-center justify-center p-6" dir="rtl">
+        <h2 className="text-xl font-bold mb-4 font-ibm">المقال غير موجود</h2>
+        <button onClick={() => navigate("/articles")} className="bg-red-600 text-white px-6 py-2.5 rounded-xl font-bold font-ibm shadow-md hover:bg-red-700 transition-all">العودة للمقالات</button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0E1622] to-[#090D14] text-white pb-32 font-sans" dir="rtl">
-      {/* Top Nav with matching gradient background */}
-      <div className="fixed top-0 inset-x-0 z-50 bg-[#0E1622]/80 backdrop-blur-md border-b border-white/5 px-4 h-16 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+    <div className="min-h-screen bg-surface-main text-text-primary pb-32 font-sans" dir="rtl">
+      {/* Top Nav with matching light background */}
+      <div className="sticky top-0 z-40 bg-surface-main/90 backdrop-blur-md border-b border-border-light px-4 h-16 flex items-center justify-between text-text-primary">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary">
           <ArrowRight className="w-6 h-6" />
         </button>
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsBookmarked(!isBookmarked)}
-            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-[#D32027] bg-[#D32027]/10" : "hover:bg-white/10"}`}
+            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-[#D32027] bg-[#D32027]/10" : "hover:bg-slate-200/50 text-text-primary"}`}
           >
             <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
           </button>
-          <button onClick={() => handleShare("copy")} className="p-2 hover:bg-white/10 rounded-xl transition-colors relative">
-            {copied ? <Check className="w-6 h-6 text-emerald-500" /> : <Share2 className="w-6 h-6" />}
+          <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors relative text-text-primary">
+            {copied ? <Check className="w-6 h-6 text-red-600" /> : <Share2 className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      <div className="max-w-[390px] mx-auto w-full px-4 pt-20">
+      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
         {/* Featured Article Card Header - Matching the Landing Page's Featured Card EXACTLY */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full h-[376px] rounded-[24px] overflow-hidden border border-white/5 shadow-lg mb-6 select-none"
+          className="relative w-full h-[376px] rounded-[24px] overflow-hidden border border-border-light shadow-medium mb-6 select-none"
         >
           {article.imageUrl ? (
             <img 
@@ -157,7 +158,7 @@ export function ArticleDetail() {
               className="w-full h-full object-cover" 
             />
           ) : (
-            <div className="w-full h-full bg-[#141B26] flex items-center justify-center">
+            <div className="w-full h-full bg-slate-100 flex items-center justify-center">
               <img 
                 src={article.authorPhoto || "https://i.pravatar.cc/150"} 
                 className="w-full h-full object-cover opacity-80" 
@@ -184,15 +185,15 @@ export function ArticleDetail() {
               <div className="flex items-center gap-[8px]">
                 <img 
                   src={article.authorPhoto || "https://i.pravatar.cc/150"} 
-                  className="w-[44px] h-[44px] rounded-full object-cover shrink-0" 
+                  className="w-[44px] h-[44px] rounded-full object-cover shrink-0 border border-white/20" 
                   alt={article.authorName} 
                 />
                 <span className="text-[14px] font-medium font-ibm text-white">{article.authorName}</span>
               </div>
-              <div className="flex flex-col text-[12px] text-[#A8A8A8] font-normal font-ibm text-left">
+              <div className="flex flex-col text-[12px] text-slate-300 font-normal font-ibm text-left">
                 <span>{article.hijriDate || "ذو الحجة 1446 هـ"}</span>
                 {article.gregorianDate && (
-                  <span className="text-[10px] text-[#8F98A7] mt-[2px]">{article.gregorianDate}</span>
+                  <span className="text-[10px] text-slate-400 mt-[2px]">{article.gregorianDate}</span>
                 )}
               </div>
             </div>
@@ -201,24 +202,24 @@ export function ArticleDetail() {
 
         {/* Content Controls */}
         <div className="sticky top-20 z-40 mb-6 flex justify-center">
-           <div className="bg-[#1A2230]/95 border border-white/10 rounded-2xl px-4 py-2 flex items-center gap-6 shadow-2xl backdrop-blur-sm">
+           <div className="bg-white/95 border border-border-light rounded-2xl px-4 py-2 flex items-center gap-6 shadow-medium backdrop-blur-sm text-text-primary">
               <div className="flex items-center gap-2">
-                 <button onClick={() => setFontSize(f => Math.min(f + 1, 30))} className="p-1.5 hover:bg-white/10 rounded-lg text-white"><Plus className="w-4 h-4" /></button>
-                 <span className="text-sm font-bold min-w-[36px] text-center font-ibm text-white">{fontSize}px</span>
-                 <button onClick={() => setFontSize(f => Math.max(f - 1, 12))} className="p-1.5 hover:bg-white/10 rounded-lg text-white"><Minus className="w-4 h-4" /></button>
+                 <button onClick={() => setFontSize(f => Math.min(f + 1, 30))} className="p-1.5 hover:bg-slate-100 rounded-lg text-text-primary"><Plus className="w-4 h-4" /></button>
+                 <span className="text-sm font-bold min-w-[36px] text-center font-ibm text-text-primary">{fontSize}px</span>
+                 <button onClick={() => setFontSize(f => Math.max(f - 1, 12))} className="p-1.5 hover:bg-slate-100 rounded-lg text-text-primary"><Minus className="w-4 h-4" /></button>
               </div>
-              <div className="w-px h-6 bg-white/10"></div>
+              <div className="w-px h-6 bg-slate-200"></div>
               <div className="flex items-center gap-4">
-                 <button onClick={() => handleShare("whatsapp")} className="text-gray-400 hover:text-green-500 transition-colors"><MessageCircle className="w-5 h-5" /></button>
-                 <button onClick={() => handleShare("twitter")} className="text-gray-400 hover:text-sky-400 transition-colors"><Twitter className="w-5 h-5" /></button>
-                 <button onClick={() => handleShare("facebook")} className="text-gray-400 hover:text-blue-500 transition-colors"><Facebook className="w-5 h-5" /></button>
+                 <button onClick={() => handleShare("whatsapp")} className="text-slate-400 hover:text-green-500 transition-colors"><MessageCircle className="w-5 h-5" /></button>
+                 <button onClick={() => handleShare("twitter")} className="text-slate-400 hover:text-sky-400 transition-colors"><Twitter className="w-5 h-5" /></button>
+                 <button onClick={() => handleShare("facebook")} className="text-slate-400 hover:text-blue-500 transition-colors"><Facebook className="w-5 h-5" /></button>
               </div>
            </div>
         </div>
 
         {/* Body content styled to match NewsDetail exactly */}
         <div 
-          className="prose prose-stone dark:prose-invert max-w-none text-[#F1F5F9] text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-[1.8] [&_p]:text-justify mb-12 px-[4px]"
+          className="prose prose-slate max-w-none text-text-primary text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-[1.8] [&_p]:text-justify mb-12 px-[4px]"
           style={{ 
             fontSize: `${fontSize}px`, 
             lineHeight: 1.8,
@@ -229,18 +230,18 @@ export function ArticleDetail() {
 
         {/* Related Articles */}
         {relatedArticles.length > 0 && (
-          <div className="border-t border-white/5 pt-8 mt-8">
-             <h3 className="text-lg font-bold font-ibm mb-6 flex items-center gap-2 text-white">
+          <div className="border-t border-border-light pt-8 mt-8">
+             <h3 className="text-lg font-bold font-ibm mb-6 flex items-center gap-2 text-text-primary">
                 <div className="w-[4px] h-[18px] bg-[#D32027] rounded-[2px]"></div>
                 مقالات ذات صلة
              </h3>
              <div className="grid grid-cols-2 gap-4">
                 {relatedArticles.map(a => (
-                  <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-[#141B26] rounded-2xl p-3 border border-white/5 hover:bg-[#1B2431] transition-colors">
+                  <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-white rounded-2xl p-3 border border-border-light hover:bg-slate-50 transition-all shadow-soft">
                      <div className="aspect-video rounded-xl overflow-hidden mb-3">
-                        <img src={a.imageUrl} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                        <img src={a.imageUrl || a.authorPhoto} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                      </div>
-                     <h4 className="font-bold font-ibm text-xs text-white line-clamp-2 leading-relaxed text-right">{a.title}</h4>
+                     <h4 className="font-bold font-ibm text-xs text-text-primary line-clamp-2 leading-relaxed text-right">{a.title}</h4>
                   </Link>
                 ))}
              </div>

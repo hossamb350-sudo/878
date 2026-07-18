@@ -54,7 +54,7 @@ function FeaturedArticlesSlider({ featuredList }: { featuredList: Article[] }) {
 
   return (
     <div className="w-full relative select-none">
-      <div className="relative w-full h-[376px] rounded-[24px] overflow-hidden border border-white/5 shadow-lg">
+      <div className="relative w-full h-[376px] rounded-[20px] sm:rounded-[24px] overflow-hidden border border-white/5 shadow-lg">
         {/* Slider viewport */}
         <div className="w-full h-full relative overflow-hidden">
           <motion.div
@@ -142,7 +142,7 @@ function FeaturedArticlesSlider({ featuredList }: { featuredList: Article[] }) {
               className={`transition-all duration-300 ${
                 idx === currentIndex 
                   ? "w-[26px] h-[8px] bg-[#D32027] rounded-[4px]" 
-                  : "w-[8px] h-[8px] bg-white/20 rounded-[4px] hover:bg-white/40"
+                  : "w-[8px] h-[8px] bg-slate-300 rounded-[4px] hover:bg-slate-400"
               }`}
             />
           ))}
@@ -178,9 +178,9 @@ export function Articles() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#0E1622] to-[#090D14] text-white p-6 flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D32027] mb-4"></div>
-        <p className="font-medium text-[#C6C6C6] font-ibm">جاري تحميل المقالات...</p>
+      <div className="min-h-screen bg-surface-main flex flex-col items-center justify-center" dir="rtl">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-[#D32027] mb-4"></div>
+        <p className="font-medium text-text-secondary font-ibm text-sm">جاري تحميل المقالات...</p>
       </div>
     );
   }
@@ -252,7 +252,7 @@ export function Articles() {
   });
 
   const featuredArticles = filteredArticles.filter((a) => a.isFeatured === true);
-  const displayLatest = filteredArticles.filter((a) => a.isFeatured !== true);
+  const displayLatest = filteredArticles;
 
   // Helper to ensure Gregorian date exists
   const getGregorianDate = (article: Article) => {
@@ -265,59 +265,57 @@ export function Articles() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0E1622] to-[#090D14] text-white pb-[24px]" dir="rtl">
-      <div className="max-w-[390px] mx-auto w-full">
+    <div className="min-h-screen bg-surface-main text-text-primary pb-[24px]" dir="rtl">
+      <div className="max-w-[760px] mx-auto w-full">
         {/* Sub-Tabs (Segmented Control) */}
         <div className="pt-4 pb-2 px-4 bg-transparent sticky top-0 z-50">
-          <div className="bg-[#1A2230]/90 p-1.5 rounded-2xl flex items-center w-full max-w-sm mx-auto relative shadow-sm border border-white/5">
-            <motion.div 
-              layoutId="activeTabIndicatorArticles"
-              className="absolute h-[calc(100%-12px)] bg-[#D32027] rounded-xl z-0"
-              style={{ 
-                width: 'calc(50% - 6px)',
-                left: '6px'
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            />
+          <div className="flex items-center justify-center gap-12 w-full max-w-xs mx-auto relative border-b border-slate-200/60 pb-1">
             <Link 
               to="/"
-              className="flex-1 py-2.5 text-sm font-black relative z-10 text-gray-400 hover:text-white flex items-center justify-center gap-2 font-ibm"
+              className="pb-2.5 text-base font-black relative z-10 text-text-muted hover:text-text-primary flex items-center justify-center gap-2 transition-colors duration-300 font-ibm"
             >
-              <Newspaper className="w-4 h-4 text-gray-400 shrink-0" />
+              <Newspaper className="w-4 h-4 text-text-muted shrink-0" />
               <span>الأخبار</span>
             </Link>
             <div 
-              className="flex-1 py-2.5 text-sm font-black relative z-10 text-white flex items-center justify-center gap-2 select-none font-ibm"
+              className="pb-2.5 text-base font-black relative z-10 text-text-primary flex items-center justify-center gap-2 select-none font-ibm"
             >
-              <BookOpen className="w-4 h-4 text-white shrink-0" />
+              <BookOpen className="w-4 h-4 text-red-600 shrink-0" />
               <span>المقالات</span>
+              <motion.div 
+                layoutId="activeTabUnderline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-taiz-navy rounded-full"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
             </div>
           </div>
         </div>
 
         {/* Search Input Bar */}
-        <div className="px-[20px] pt-[12px] pb-[8px]">
-          <div className="relative flex items-center bg-[#1A2230]/90 rounded-full px-4 py-2.5 w-full focus-within:ring-1 focus-within:ring-[#D32027] border border-white/5 transition-all">
-            <Search className="w-5 h-5 text-gray-400 shrink-0 ml-2" />
+        <div className="px-4 sm:px-6 lg:px-8 pt-[12px] pb-[8px]">
+          <div className="relative flex items-center bg-white rounded-full px-4 py-2.5 w-full focus-within:ring-1 focus-within:ring-[#D32027] border border-border-subtle transition-all shadow-soft">
+            <Search className="w-5 h-5 text-text-muted shrink-0 ml-2" />
             <input 
               type="text" 
               placeholder="بحث في المقالات..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-transparent border-none outline-none text-white text-[14px] w-full placeholder-gray-400 font-ibm"
+              className="bg-transparent border-none outline-none text-text-primary text-[14px] w-full placeholder-text-muted font-ibm"
             />
           </div>
         </div>
 
-        <div className="px-[20px] pt-[10px]">
+        <div className="px-4 sm:px-6 lg:px-8 pt-[10px]">
           {/* Featured Articles Carousel / Slider */}
           {featuredArticles.length > 0 && (
-            <FeaturedArticlesSlider featuredList={featuredArticles} />
+            <div className="mb-6">
+              <FeaturedArticlesSlider featuredList={featuredArticles} />
+            </div>
           )}
 
           {/* Section Title */}
           <div className="flex items-center justify-between h-[42px] mt-[16px] mb-[16px]">
-            <h3 className="text-[20px] font-bold font-ibm flex items-center gap-[8px] text-white">
+            <h3 className="text-[20px] font-bold font-ibm flex items-center gap-[8px] text-text-primary">
               <div className="w-[4px] h-[20px] bg-[#D32027] rounded-[2px]"></div>
               أحدث المقالات
             </h3>
@@ -329,7 +327,7 @@ export function Articles() {
 
           {/* Articles Grid */}
           {displayLatest.length > 0 ? (
-            <div className="grid grid-cols-2 gap-x-[16px] gap-y-[18px]">
+            <div className="grid grid-cols-2 gap-x-[12px] gap-y-[14px] ">
               {displayLatest.map((article, idx) => {
                 const coverSource = article.imageUrl || article.authorPhoto || "https://i.pravatar.cc/150";
 
@@ -342,10 +340,10 @@ export function Articles() {
                   >
                     <Link 
                       to={`/articles/${article.id}`} 
-                      className="block group bg-[#141B26] rounded-[18px] w-full flex flex-col h-[324px] overflow-hidden hover:bg-[#1B2431] transition-colors border border-white/5 shadow"
+                      className="block group bg-white rounded-[18px] w-full flex flex-col h-[275px] overflow-hidden hover:bg-slate-50 transition-all border border-border-light shadow-soft"
                     >
                       {/* Image Area on Top */}
-                      <div className="relative w-full h-[150px] shrink-0">
+                      <div className="relative w-full h-[120px] shrink-0">
                         <img 
                           src={coverSource} 
                           alt={article.title} 
@@ -353,8 +351,8 @@ export function Articles() {
                         />
                         
                         {/* Bookmark Button top-left of image */}
-                        <button className="absolute top-[12px] left-[12px] bg-black/40 backdrop-blur-md w-[28px] h-[28px] rounded-[8px] flex items-center justify-center text-white hover:bg-black/60 transition-colors z-10">
-                          <Bookmark className="w-[14px] h-[14px]" />
+                        <button className="absolute top-[8px] left-[8px] bg-black/40 backdrop-blur-md w-[24px] h-[24px] rounded-[6px] flex items-center justify-center text-white hover:bg-black/60 transition-colors z-10">
+                          <Bookmark className="w-[12px] h-[12px]" />
                         </button>
                       </div>
 
@@ -362,32 +360,32 @@ export function Articles() {
                       <div className="p-[12px] flex flex-col justify-between flex-1 text-right">
                         {/* Title: Occupies top area of content, scales font size to ensure all text fits fully without clipping within 4 lines max */}
                         <h4 
-                          className="font-semibold font-ibm text-white text-right"
+                          className="font-semibold font-ibm text-text-primary text-right"
                           style={getTitleStyle(article.title)}
                         >
                           {article.title}
                         </h4>
 
-                        <div className="flex flex-col gap-2 mt-auto">
+                        <div className="flex flex-col gap-1.5 mt-auto">
                           {/* Date: Hijri & Gregorian stacked */}
-                          <div className="flex flex-col text-[11px] text-[#A8A8A8] font-normal font-ibm gap-[2px]">
+                          <div className="flex flex-col text-[10px] text-text-secondary font-normal font-ibm gap-[1px]">
                             <div className="flex items-center gap-[4px] justify-start text-right">
-                              <CalendarDays className="w-3.5 h-3.5 text-[#8F98A7]" />
+                              <CalendarDays className="w-3.5 h-3.5 text-text-muted" />
                               <span>{article.hijriDate || "ذو الحجة 1446 هـ"}</span>
                             </div>
-                            <span className="text-[9px] text-[#8F98A7] pr-[18px] text-right">
+                            <span className="text-[9px] text-text-muted pr-[18px] text-right">
                               {getGregorianDate(article)}
                             </span>
                           </div>
 
                           {/* Author Info */}
-                          <div className="flex items-center gap-[6px] h-[28px] justify-start">
+                          <div className="flex items-center gap-[6px] h-[24px] justify-start">
                             <img 
                               src={article.authorPhoto || "https://i.pravatar.cc/150"} 
-                              className="w-[24px] h-[24px] rounded-full object-cover shrink-0" 
+                              className="w-[20px] h-[20px] rounded-full object-cover shrink-0" 
                               alt={article.authorName} 
                             />
-                            <span className="text-[11px] sm:text-[12px] font-medium font-ibm text-white truncate text-right">
+                            <span className="text-[10px] sm:text-[11px] font-medium font-ibm text-text-primary truncate text-right">
                               {article.authorName}
                             </span>
                           </div>

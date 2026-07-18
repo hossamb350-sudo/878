@@ -282,7 +282,7 @@ export function ActivityDetail() {
       <div className="flex items-center justify-end gap-3 pt-2">
         <button
           onClick={() => setIsEditing(true)}
-          className="flex items-center gap-2 bg-taiz-navy hover:bg-taiz-royal text-white px-5 py-3 rounded-xl text-xs font-black transition-all shadow-md cursor-pointer select-none"
+          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl text-xs font-black transition-all shadow-md cursor-pointer select-none"
         >
           <Edit className="w-4 h-4" />
           <span>تعديل الفعالية</span>
@@ -409,7 +409,7 @@ export function ActivityDetail() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-2 bg-taiz-navy hover:bg-taiz-royal text-white py-3 rounded-xl text-xs font-black shadow-md transition duration-200 cursor-pointer disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl text-xs font-black shadow-md transition duration-200 cursor-pointer disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{saving ? "جاري الحفظ..." : "حفظ التعديلات"}</span>

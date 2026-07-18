@@ -7,7 +7,7 @@ import { NewsItem, VideoItem, LeaderContent, Article } from "../types";
 import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen } from "lucide-react";
+import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen, Star } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../components/PullToRefresh";
 
@@ -57,6 +57,169 @@ function formatPublishInfo(timestamp: number) {
   return { mDate, mTime, hDate };
 }
 
+function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
+
+  // Reset index if list length changes and index is out of bounds
+  useEffect(() => {
+    if (currentIndex >= sliderList.length) {
+      setCurrentIndex(0);
+    }
+  }, [sliderList.length, currentIndex]);
+
+  // Autoplay functionality
+  useEffect(() => {
+    if (sliderList.length <= 1) return;
+    const interval = setInterval(() => {
+      setDirection(1);
+      setCurrentIndex((prev) => (prev + 1) % sliderList.length);
+    }, 5000); // 5 seconds autoplay
+    return () => clearInterval(interval);
+  }, [sliderList.length]);
+
+  if (sliderList.length === 0) return null;
+
+  const handleNext = () => {
+    setDirection(1);
+    setCurrentIndex((prev) => (prev + 1) % sliderList.length);
+  };
+
+  const handlePrev = () => {
+    setDirection(-1);
+    setCurrentIndex((prev) => (prev - 1 + sliderList.length) % sliderList.length);
+  };
+
+  const currentItem = sliderList[currentIndex];
+
+  return (
+    <div className="w-full relative select-none px-4 sm:px-6 lg:px-8 mb-6">
+      <div className="relative w-full h-[376px] rounded-[20px] sm:rounded-[24px] overflow-hidden border border-white/5 shadow-lg bg-surface-card">
+        {/* Slider viewport */}
+        <div className="w-full h-full relative overflow-hidden">
+          <AnimatePresence initial={false} custom={direction}>
+            <motion.div
+              key={currentIndex}
+              initial={{ opacity: 0, x: direction > 0 ? 300 : -300 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: direction > 0 ? -300 : 300 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.4}
+              onDragEnd={(e, info) => {
+                const swipeThreshold = 50;
+                if (info.offset.x > swipeThreshold) {
+                  handlePrev();
+                } else if (info.offset.x < -swipeThreshold) {
+                  handleNext();
+                }
+              }}
+              className="w-full h-full absolute top-0 left-0 cursor-grab active:cursor-grabbing"
+            >
+              <Link to={currentItem.isLeader ? `/leader/${currentItem.id}` : `/news/${currentItem.id}`} className="block w-full h-full relative">
+                {currentItem.imageUrl ? (
+                  <img 
+                    src={currentItem.imageUrl} 
+                    alt={currentItem.title} 
+                    className="w-full h-full object-cover pointer-events-none" 
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#141B26] flex items-center justify-center pointer-events-none">
+                    <Newspaper className="w-12 h-12 text-white/20" />
+                  </div>
+                )}
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.85)] via-[rgba(0,0,0,0.4)] to-transparent"></div>
+                
+                {/* Pinned News Tag if applicable */}
+                {currentItem.isPinned && (
+                  <div className="absolute top-[16px] left-0 z-10">
+                    <span className="bg-blue-600 text-white text-[13px] font-bold font-ibm w-[100px] h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5">
+                      <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
+                      خبر مثبت
+                    </span>
+                  </div>
+                )}
+
+                {/* Content Container at the Bottom */}
+                <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 pb-10 sm:pb-10 flex flex-col justify-end text-right z-10">
+                   {/* Meta Row: Chip & Details */}
+                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
+                     {/* Category Chip */}
+                     <div className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md shrink-0">
+                        {currentItem.category}
+                     </div>
+
+                     {/* Breaking News Indicator if applicable */}
+                     {currentItem.isBreaking && (
+                       <div className="flex items-center gap-1 text-status-error font-bold text-[10px] sm:text-[11px] bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm shrink-0">
+                          <span className="relative flex h-1.5 w-1.5">
+                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
+                          </span>
+                          تغطية مباشرة
+                       </div>
+                     )}
+
+                     {/* Meta Details */}
+                     <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-white/90">
+                        {currentItem.author && (
+                          <span className="font-bold">{currentItem.author}</span>
+                        )}
+                        {currentItem.author && <span className="opacity-50 text-[8px]">•</span>}
+                        <span>{formatPublishInfo(currentItem.createdAt).mTime}</span>
+                        <span className="opacity-50 text-[8px]">•</span>
+                        <span>{formatPublishInfo(currentItem.createdAt).mDate}</span>
+                        <span className="opacity-50 text-[8px]">•</span>
+                        <span className="text-white/70">{formatPublishInfo(currentItem.createdAt).hDate}</span>
+                      </div>
+                    </div>
+
+                   {/* Title */}
+                   <h2 
+                     className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3"
+                     style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                      {currentItem.title}
+                    </h2>
+
+                    {/* Views below title - aligned to far left of the card */}
+                    <div className="flex justify-start mt-2" style={{ direction: 'ltr' }}>
+                      <div className="flex items-center gap-1 text-white/80 text-[10px] sm:text-[11px] font-medium">
+                        <Eye className="w-3.5 h-3.5 text-red-600" />
+                        <span>{currentItem.views || 0}</span>
+                      </div>
+                    </div>
+                 </div>
+              </Link>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Pagination indicators inside the image at the bottom */}
+        {sliderList.length > 1 && (
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-[8px] z-20">
+            {sliderList.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  setDirection(idx > currentIndex ? 1 : -1);
+                  setCurrentIndex(idx);
+                }}
+                className={`transition-all duration-300 ${
+                  idx === currentIndex 
+                    ? "w-[26px] h-[8px] bg-red-600 rounded-[4px]" 
+                    : "w-[8px] h-[8px] bg-white/30 rounded-[4px] hover:bg-white/50"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Home() {
   const navigate = useNavigate();
   const [rawNews, setRawNews] = useState<NewsItem[]>([]);
@@ -65,6 +228,21 @@ export function Home() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeSubTab, setActiveSubTab] = useState<"news" | "articles">("news");
+  const [sliderShowLatest, setSliderShowLatest] = useState(true);
+
+  useEffect(() => {
+    const fetchSliderConfig = async () => {
+      try {
+        const sliderDoc = await getDoc(doc(db, "newsMetadata", "sliderConfig"));
+        if (sliderDoc.exists()) {
+          setSliderShowLatest(sliderDoc.data().showLatest !== false);
+        }
+      } catch (e) {
+        console.warn("Error fetching slider config:", e);
+      }
+    };
+    fetchSliderConfig();
+  }, []);
 
   useEffect(() => {
     if (activeSubTab === "articles") {
@@ -74,9 +252,9 @@ export function Home() {
   }, [activeSubTab, navigate]);
   const prevVideoIdsRef = useRef<string[]>([]);
   const [categories, setCategories] = useState<Record<string, string>>({
-    "محلية": "#049EDF",
-    "تعبئة عامة": "#032F69",
-    "اجتماعية": "#055198",
+    "محلية": "#34619B",
+    "تعبئة عامة": "#07152B",
+    "اجتماعية": "#10264A",
     "أنشطة وزيارات": "#7C3AED",
     "مشاريع": "#10B981",
     "مقال": "#F59E0B"
@@ -300,18 +478,27 @@ export function Home() {
   // Filter items
   let filteredNews = [...news];
 
-  // Pin manually-pinned news at top
-  const pinnedNewsIndex = filteredNews.findIndex(n => n.isPinned);
-  let heroItem = filteredNews[0];
-  let listItems = filteredNews.slice(1);
+  // Determine news items for the slider
+  const sliderItems = useMemo(() => {
+    const pinned = news.filter(n => n.isPinned);
+    if (sliderShowLatest) {
+      const combined = [...pinned];
+      for (const item of news) {
+        if (combined.length >= 5) break;
+        if (!combined.some(c => c.id === item.id)) {
+          combined.push(item);
+        }
+      }
+      return combined;
+    } else {
+      return pinned;
+    }
+  }, [news, sliderShowLatest]);
 
-  if (pinnedNewsIndex > 0) {
-    heroItem = filteredNews[pinnedNewsIndex];
-    listItems = [...filteredNews.slice(0, pinnedNewsIndex), ...filteredNews.slice(pinnedNewsIndex + 1)];
-  } else if (pinnedNewsIndex === 0) {
-    heroItem = filteredNews[0];
-    listItems = filteredNews.slice(1);
-  }
+  // Determine list items below the slider
+  const listItems = useMemo(() => {
+    return news;
+  }, [news]);
 
   // Define breakingNewsIndex as fallback or kept as empty if not needed
   const breakingNewsIndex = -1;
@@ -344,30 +531,37 @@ export function Home() {
       className="max-w-[760px] mx-auto w-full pb-16 bg-surface-main text-text-primary transition-colors"
     >
       {/* Sub-Tabs (Segmented Control) */}
-      <div className="pt-4 pb-2 px-4 bg-surface-main sticky top-0 z-50">
-        <div className="bg-gray-100 dark:bg-gray-800/50 p-1.5 rounded-2xl flex items-center w-full max-w-sm mx-auto relative shadow-sm border border-border-light">
-          <motion.div 
-            layoutId="activeTabIndicator"
-            className="absolute h-[calc(100%-12px)] bg-taiz-navy dark:bg-taiz-sky rounded-xl z-0"
-            style={{ 
-              width: 'calc(50% - 6px)',
-              right: '6px'
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          />
+      <div className="pt-4 pb-2 px-4 bg-transparent sticky top-0 z-50">
+        <div className="flex items-center justify-center gap-12 w-full max-w-xs mx-auto relative border-b border-slate-200/60 pb-1">
           <button 
             onClick={() => setActiveSubTab("news")}
-            className="flex-1 py-2.5 text-sm font-black relative z-10 text-white flex items-center justify-center gap-2 transition-colors duration-300"
+            className={`pb-2.5 text-base font-black relative z-10 flex items-center justify-center gap-2 transition-colors duration-300 font-ibm ${
+              activeSubTab === "news" ? "text-text-primary" : "text-text-muted hover:text-text-primary"
+            }`}
           >
-            <Newspaper className="w-4 h-4 text-white" />
+            <Newspaper className={`w-4 h-4 ${activeSubTab === "news" ? "text-taiz-navy" : "text-text-muted"}`} />
             <span>الأخبار</span>
+            {activeSubTab === "news" && (
+              <motion.div 
+                layoutId="activeTabUnderline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-taiz-navy rounded-full"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
           </button>
           <Link 
             to="/articles"
-            className="flex-1 py-2.5 text-sm font-black relative z-10 text-text-muted hover:text-text-primary flex items-center justify-center gap-2 transition-colors duration-300"
+            className="pb-2.5 text-base font-black relative z-10 text-text-muted hover:text-text-primary flex items-center justify-center gap-2 transition-colors duration-300 font-ibm"
           >
-            <BookOpen className="w-4 h-4" />
+            <BookOpen className="w-4 h-4 text-text-muted" />
             <span>المقالات</span>
+            {activeSubTab === "articles" && (
+              <motion.div 
+                layoutId="activeTabUnderline"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-taiz-navy rounded-full"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
           </Link>
         </div>
       </div>
@@ -388,10 +582,10 @@ export function Home() {
               }}
             >
         {loading ? (
-           <div className="space-y-6 pt-4 px-4 sm:px-0">
+           <div className="space-y-6 pt-4 px-4 sm:px-6 lg:px-8">
               <div className="animate-pulse bg-surface-card h-64 sm:h-80 w-full mb-6 rounded-3xl shadow-soft"></div>
               {[1, 2, 3].map(i => (
-                <div key={i} className="flex gap-4 animate-pulse px-4 sm:px-0">
+                <div key={i} className="flex gap-4 animate-pulse">
                    <div className="w-[110px] h-[110px] bg-surface-card rounded-2xl shrink-0 shadow-soft"></div>
                    <div className="flex-1 space-y-3 py-2">
                       <div className="h-6 bg-surface-card rounded-lg w-full"></div>
@@ -402,160 +596,96 @@ export function Home() {
            </div>
         ) : filteredNews.length === 0 ? (
           <div className="text-center py-24 card m-4 sm:m-0 font-sans">
-             <Newspaper className="w-16 h-16 mx-auto mb-4 text-taiz-sky opacity-40" />
+             <Newspaper className="w-16 h-16 mx-auto mb-4 text-red-600 opacity-40" />
              <p className="text-lg font-bold text-text-primary">لا توجد أخبار حالياً</p>
           </div>
         ) : (
           <div className="space-y-0">
             
-            {/* HERO FEATURED POST */}
-            {heroItem && (
-              <Link 
-                to={heroItem.isLeader ? `/leader/${heroItem.id}` : `/news/${heroItem.id}`} 
-                className="block relative w-full overflow-hidden mb-2.5 group aspect-[4/3] sm:aspect-[16/10]"
-                style={{ direction: 'rtl', borderRadius: 0 }}
-              >
-                {/* Background Image */}
-                {heroItem.imageUrl ? (
-                  <img 
-                    src={heroItem.imageUrl} 
-                    alt={heroItem.title} 
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                  />
-                ) : (
-                  <div className="absolute inset-0 w-full h-full bg-gray-200"></div>
-                )}
-                
-                {/* Gradient Overlay for Text Readability */}
-                <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-taiz-navy/90 via-taiz-navy/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0"></div>
-                
-                {/* Content Container at the Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 flex flex-col justify-end">
-                   {/* Meta Row: Chip & Details */}
-                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
-                     {/* Category Chip */}
-                     <div className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md shrink-0">
-                        {heroItem.category}
-                     </div>
-
-                     {/* Breaking News Indicator if applicable */}
-                     {heroItem.isBreaking && (
-                       <div className="flex items-center gap-1 text-status-error font-bold text-[10px] sm:text-[11px] bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm shrink-0">
-                          <span className="relative flex h-1.5 w-1.5">
-                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
-                          </span>
-                          تغطية مباشرة
-                       </div>
-                     )}
-
-                     {/* Meta Details */}
-                     <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-white/90">
-                        {heroItem.author && (
-                          <span className="font-bold">{heroItem.author}</span>
-                        )}
-                        {heroItem.author && <span className="opacity-50 text-[8px]">•</span>}
-                        <span>{formatPublishInfo(heroItem.createdAt).mTime}</span>
-                        <span className="opacity-50 text-[8px]">•</span>
-                        <span>{formatPublishInfo(heroItem.createdAt).mDate}</span>
-                        <span className="opacity-50 text-[8px]">•</span>
-                        <span className="text-white/70">{formatPublishInfo(heroItem.createdAt).hDate}</span>
-                      </div>
-                    </div>
-
-                   {/* Title */}
-                   <h2 
-                     className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3"
-                     style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
-                      {heroItem.title}
-                    </h2>
-
-                    {/* Views below title - aligned to far left of the card */}
-                    <div className="flex justify-start mt-2" style={{ direction: 'ltr' }}>
-                      <div className="flex items-center gap-1 text-white/80 text-[10px] sm:text-[11px] font-medium">
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>{heroItem.views || 0}</span>
-                      </div>
-                    </div>
-                 </div>
-               </Link>
-            )}
+            {/* HERO FEATURED POST SLIDER */}
+            <NewsSlider sliderList={sliderItems} />
 
             {/* LIST OF OTHER POSTS */}
             <div className="flex flex-col">
               {listItems.map((item, index) => (
                 <div key={item.id} className="relative">
                   {item.isFeaturedLayout ? (
-                    <Link 
-                      to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
-                      className="block relative w-full overflow-hidden mb-2.5 group aspect-[16/10] sm:aspect-[21/9]"
-                      style={{ direction: 'rtl', borderRadius: 0 }}
-                    >
-                      {item.imageUrl ? (
-                        <img 
-                          src={item.imageUrl} 
-                          alt={item.title} 
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
-                        />
-                      ) : (
-                        <div className="absolute inset-0 w-full h-full bg-gray-200"></div>
-                      )}
-                      
-                      {/* Gradient Overlay for Text Readability */}
-                      <div className="absolute inset-x-0 bottom-0 h-4/5 bg-gradient-to-t from-taiz-navy/90 via-taiz-navy/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-0"></div>
-                      
-                      {/* Content Container at the Bottom */}
-                      <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 flex flex-col justify-end">
-                         {/* Meta Row: Chip & Details */}
-                         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
-                           {/* Category Chip */}
-                           <div className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md shrink-0">
-                              {item.category}
-                           </div>
-
-                           {/* Breaking News Indicator if applicable */}
-                           {item.isBreaking && (
-                             <div className="flex items-center gap-1 text-status-error font-bold text-[10px] sm:text-[11px] bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm shrink-0">
-                                <span className="relative flex h-1.5 w-1.5">
-                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
-                                </span>
-                                تغطية مباشرة
+                    <div className="px-4 sm:px-6 lg:px-8">
+                      <Link 
+                        to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
+                        className="block relative w-full h-[376px] rounded-[20px] sm:rounded-[24px] overflow-hidden border border-white/5 shadow-lg mb-4 select-none group"
+                        style={{ direction: 'rtl' }}
+                      >
+                        {item.imageUrl ? (
+                          <img 
+                            src={item.imageUrl} 
+                            alt={item.title} 
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none" 
+                          />
+                        ) : (
+                          <div className="absolute inset-0 w-full h-full bg-[#141B26] flex items-center justify-center">
+                            <Newspaper className="w-12 h-12 text-white/20" />
+                          </div>
+                        )}
+                        
+                        {/* Gradient Overlay for Text Readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.85)] via-[rgba(0,0,0,0.4)] to-transparent pointer-events-none"></div>
+                        
+                        {/* Content Container at the Bottom */}
+                        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 pb-10 sm:pb-10 flex flex-col justify-end text-right z-10">
+                           {/* Meta Row: Chip & Details */}
+                           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
+                             {/* Category Chip */}
+                             <div className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md shrink-0">
+                                {item.category}
                              </div>
-                           )}
 
-                           {/* Meta Details */}
-                           <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-white/90">
-                              {item.author && (
-                                <span className="font-bold">{item.author}</span>
-                              )}
-                              {item.author && <span className="opacity-50 text-[8px]">•</span>}
-                              <span>{formatPublishInfo(item.createdAt).mTime}</span>
-                              <span className="opacity-50 text-[8px]">•</span>
-                              <span>{formatPublishInfo(item.createdAt).mDate}</span>
-                              <span className="opacity-50 text-[8px]">•</span>
-                              <span className="text-white/70">{formatPublishInfo(item.createdAt).hDate}</span>
-                              
-                              {/* Views */}
-                              <div className="flex items-center gap-1 text-white/90 mr-auto pl-2">
-                                 <Eye className="w-3 h-3"/> 
-                                 <span>{item.views || 0}</span>
-                              </div>
+                             {/* Breaking News Indicator if applicable */}
+                             {item.isBreaking && (
+                               <div className="flex items-center gap-1 text-status-error font-bold text-[10px] sm:text-[11px] bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm shrink-0">
+                                  <span className="relative flex h-1.5 w-1.5">
+                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
+                                  </span>
+                                  تغطية مباشرة
+                               </div>
+                             )}
+
+                             {/* Meta Details */}
+                             <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-white/90">
+                                {item.author && (
+                                  <span className="font-bold">{item.author}</span>
+                                )}
+                                {item.author && <span className="opacity-50 text-[8px]">•</span>}
+                                <span>{formatPublishInfo(item.createdAt).mTime}</span>
+                                <span className="opacity-50 text-[8px]">•</span>
+                                <span>{formatPublishInfo(item.createdAt).mDate}</span>
+                                <span className="opacity-50 text-[8px]">•</span>
+                                <span className="text-white/70">{formatPublishInfo(item.createdAt).hDate}</span>
+                             </div>
                            </div>
-                         </div>
 
-                         {/* Title */}
-                         <h2 
-                           className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3"
-                           style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
-                            {item.title}
-                          </h2>
-                       </div>
-                     </Link>
+                           {/* Title */}
+                           <h2 
+                             className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3"
+                             style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                              {item.title}
+                           </h2>
+
+                           {/* Views below title - aligned to far left of the card */}
+                           <div className="flex justify-start mt-2" style={{ direction: 'ltr' }}>
+                             <div className="flex items-center gap-1 text-white/80 text-[10px] sm:text-[11px] font-medium">
+                               <Eye className="w-3.5 h-3.5 text-red-600" />
+                               <span>{item.views || 0}</span>
+                             </div>
+                           </div>
+                        </div>
+                      </Link>
+                    </div>
                   ) : (
                     <Link
 to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
-                      className="flex items-center bg-white rounded-none shadow-sm mb-2.5 group relative transition-all hover:shadow-md h-[110px] sm:h-[130px]"
+                      className="flex items-center bg-white rounded-[16px] shadow-sm mx-4 sm:mx-6 lg:mx-8 mb-2.5 overflow-hidden group relative transition-all hover:shadow-md h-[110px] sm:h-[130px]"
                       style={{ direction: 'rtl' }}
                     >
                       {/* Right Side Compact Image */}
@@ -594,7 +724,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                                
                                {/* Views */}
                                <span className="flex items-center gap-1 shrink-0 text-taiz-royal mr-auto">
-                                 <Eye className="w-3 h-3"/> 
+                                 <Eye className="w-3 h-3 text-red-600"/> 
                                  {item.views || 0}
                                </span>
                             </div>
@@ -605,7 +735,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
 
                   {/* Insert Video Slider Container */}
                   {index === 1 && videos.length > 0 && (
-                    <div className="my-2.5 py-2 px-4 sm:px-0 bg-surface-main relative overflow-hidden">
+                    <div className="my-2.5 py-2 px-4 sm:px-6 lg:px-8 bg-surface-main relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-taiz-sky/5 rounded-full blur-[40px] -mt-10 -mr-10"></div>
                       <div className="flex items-center justify-between mb-3 text-right relative z-10" style={{ direction: "rtl" }}>
                         <Link to="/watch" className="flex items-center gap-3 group cursor-pointer inline-flex">

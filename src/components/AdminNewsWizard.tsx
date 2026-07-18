@@ -3,7 +3,7 @@ import {
   PlusCircle, Plus, List, ChevronDown, FileText, Edit, Trash2, ArrowRight, 
   X, Save, Type, User, Clock, Bold, Italic, Highlighter, CornerDownLeft, 
   Globe, Image as ImageIcon, Video, Settings, Tag, Check, CheckCircle, Eye, 
-  ChevronRight, ChevronLeft, Search, Users, ExternalLink 
+  ChevronRight, ChevronLeft, Search, Users, ExternalLink, Sliders 
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -63,6 +63,8 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
   const [showCatManager, setShowCatManager] = useState(false);
   const [showAuthorManager, setShowAuthorManager] = useState(false);
+  const [showSliderManager, setShowSliderManager] = useState(false);
+  const [sliderShowLatest, setSliderShowLatest] = useState(true);
   const [showAddCatModal, setShowAddCatModal] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
 
@@ -78,7 +80,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   const [catSearch, setCatSearch] = useState("");
   const [showCatDropdown, setShowCatDropdown] = useState(false);
   const [customCat, setCustomCat] = useState("");
-  const [customCatColor, setCustomCatColor] = useState("#049EDF");
+  const [customCatColor, setCustomCatColor] = useState("#34619B");
   const [isBreaking, setIsBreaking] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [isFeaturedLayout, setIsFeaturedLayout] = useState(false);
@@ -113,13 +115,13 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
         if (data.items) {
           items = data.items;
         } else if (data.list) {
-          items = data.list.map((name: string) => ({ name, color: "#049EDF" }));
+          items = data.list.map((name: string) => ({ name, color: "#34619B" }));
         }
         
         const defaultCats: CategoryItem[] = [
-          { name: "محلية", color: "#049EDF" },
-          { name: "تعبئة عامة", color: "#032F69" },
-          { name: "اجتماعية", color: "#055198" },
+          { name: "محلية", color: "#34619B" },
+          { name: "تعبئة عامة", color: "#07152B" },
+          { name: "اجتماعية", color: "#10264A" },
           { name: "أنشطة وزيارات", color: "#7C3AED" },
           { name: "مشاريع", color: "#10B981" },
           { name: "مقال", color: "#F59E0B" }
@@ -147,8 +149,25 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
         setSavedAuthors(list);
         localStorage.setItem("wizard_saved_authors", JSON.stringify(list));
       }
+
+      const sliderDoc = await getDoc(doc(db, "newsMetadata", "sliderConfig"));
+      if (sliderDoc.exists()) {
+        const data = sliderDoc.data();
+        setSliderShowLatest(data.showLatest !== false);
+      } else {
+        setSliderShowLatest(true);
+      }
     } catch (e) {
       console.warn("Error fetching metadata (using cache fallback):", e);
+    }
+  };
+
+  const saveSliderConfig = async (showLatest: boolean) => {
+    setSliderShowLatest(showLatest);
+    try {
+      await setDoc(doc(db, "newsMetadata", "sliderConfig"), { showLatest });
+    } catch (e) {
+      console.error("Error saving slider config:", e);
     }
   };
 
@@ -398,7 +417,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
         className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 max-w-sm w-full text-center shadow-2xl"
       >
         <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-10 h-10 text-emerald-600" />
+          <CheckCircle className="w-10 h-10 text-red-600" />
         </div>
         <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">تم العملية بنجاح!</h3>
         <p className="text-gray-500 dark:text-gray-400 mb-8 font-bold">تم {newsMode === "edit" ? "تحديث" : "نشر"} الخبر بنجاح في المنصة.</p>
@@ -986,7 +1005,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                           }}
                           className="w-full flex items-center justify-center gap-1.5 py-3 px-4 bg-white hover:bg-gray-50 dark:bg-gray-900 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-750 rounded-2xl text-xs font-bold text-gray-700 dark:text-gray-300 transition-all cursor-pointer"
                         >
-                          <Plus className="w-4 h-4 text-blue-600" />
+                          <Plus className="w-4 h-4 text-red-600" />
                           <span>إضافة حقل صورة واحد</span>
                         </button>
                       </div>
@@ -1064,7 +1083,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                           {isAdmin && (
                             <div className="p-4 bg-blue-50/30 dark:bg-blue-900/10 rounded-2xl border border-blue-100/30 dark:border-blue-800/30 space-y-3">
                               <label className="block text-sm font-black text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                <Eye className="w-4 h-4 text-blue-500" />
+                                <Eye className="w-4 h-4 text-red-600" />
                                 عدد المشاهدات يدوياً
                               </label>
                               <input 
@@ -1247,7 +1266,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
           <div className="relative z-10 flex flex-col items-center text-center gap-8">
             <div className="w-full max-w-lg">
               <h2 className="text-3xl font-black text-gray-900 dark:text-white flex flex-col items-center justify-center gap-4 mb-4">
-                 <PlusCircle className="w-16 h-16 text-blue-600" />
+                 <PlusCircle className="w-16 h-16 text-red-600" />
                  <span>خبر جديد</span>
               </h2>
               <p className="text-gray-500 dark:text-gray-400 font-medium mb-8">قم بنشر محتوى جديد أو إدارة التصنيفات والمصادر من هنا</p>
@@ -1272,6 +1291,16 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                       <Users className="w-6 h-6" />
                     </div>
                     <span className="font-black text-xs">المحررين والمصادر</span>
+                  </button>
+
+                  <button 
+                    onClick={() => setShowSliderManager(true)}
+                    className="flex flex-col items-center gap-2 text-red-600 hover:text-red-700 transition-all group/link"
+                  >
+                    <div className="w-12 h-12 bg-red-50 dark:bg-red-900/30 rounded-2xl flex items-center justify-center group-hover/link:scale-110 transition-transform">
+                      <Sliders className="w-6 h-6" />
+                    </div>
+                    <span className="font-black text-xs">إعدادات السلايدر</span>
                   </button>
                 </div>
 
@@ -1326,6 +1355,59 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                 </div>
                 <div className="flex-1 overflow-y-auto p-6 md:p-10">
                    <AdminAuthorManager />
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {showSliderManager && (
+            <div className="fixed inset-0 z-[3000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+              <motion.div 
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 50 }}
+                className="bg-white dark:bg-gray-950 w-full max-w-lg rounded-[3rem] shadow-2xl flex flex-col overflow-hidden border border-white/20"
+              >
+                <div className="p-6 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                   <button onClick={() => setShowSliderManager(false)} className="p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-2xl transition-colors">
+                      <X className="w-6 h-6" />
+                   </button>
+                   <h3 className="text-xl font-black">إعدادات سلايدر الأخبار</h3>
+                </div>
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 text-right" dir="rtl">
+                   <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-6">
+                     قم بتخصيص خيارات عرض السلايدر في الواجهة الرئيسية.
+                   </p>
+                   
+                   <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900 rounded-2xl border border-gray-100 dark:border-gray-800 mb-6">
+                      <div className="flex-1 ml-4">
+                         <h4 className="font-bold text-gray-900 dark:text-white text-sm mb-1">عرض أحدث الأخبار تلقائياً</h4>
+                         <p className="text-gray-500 dark:text-gray-400 text-xs">عند تفعيل هذا الخيار، سيتم عرض الأخبار الأحدث تلقائياً في السلايدر بجانب الأخبار المثبتة. وعند التعطيل سيقتصر السلايدر على الأخبار المثبتة فقط.</p>
+                      </div>
+                      <div className="mr-auto shrink-0">
+                         <button
+                           type="button"
+                           onClick={() => saveSliderConfig(!sliderShowLatest)}
+                           className={`w-12 h-7 rounded-full transition-colors relative focus:outline-none ${
+                             sliderShowLatest ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-700"
+                           }`}
+                         >
+                            <span 
+                              className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow-sm ${
+                                sliderShowLatest ? "right-6" : "right-1"
+                              }`}
+                            />
+                         </button>
+                      </div>
+                   </div>
+
+                   <button
+                     type="button"
+                     onClick={() => setShowSliderManager(false)}
+                     className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black transition-all shadow-lg shadow-blue-500/20"
+                   >
+                     حفظ وإغلاق
+                   </button>
                 </div>
               </motion.div>
             </div>

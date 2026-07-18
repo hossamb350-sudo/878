@@ -168,7 +168,7 @@ export function WatchItem() {
         <p className="text-slate-500 mb-6 font-bold">ربما قد تم إزالته من قبل الإدارة أو تم كتابته بشكل غير دقيق.</p>
         <button 
           onClick={() => navigate(-1)}
-          className="bg-blue-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-blue-600/20 hover:scale-105 transition"
+          className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-red-600/20 hover:scale-105 transition"
         >
           عودة لقسم شاهد
         </button>
@@ -218,7 +218,7 @@ export function WatchItem() {
             <h1 className="text-lg sm:text-xl font-black text-slate-900 leading-[1.3] font-cairo flex-1">
               {video.title}
             </h1>
-            <div className="w-1.5 bg-blue-600 rounded-full shrink-0 h-6 mt-1.5"></div>
+            <div className="w-1.5 bg-red-600 rounded-full shrink-0 h-6 mt-1.5"></div>
           </div>
           
           {/* Description Block - Only show if exists */}
@@ -234,7 +234,7 @@ export function WatchItem() {
           {/* Metadata Row: Date (Right), Views (Left) */}
           <div className="flex items-center justify-between text-slate-400 font-bold text-[10px] sm:text-[11px] font-cairo mb-8">
             <div className="flex items-center gap-2">
-               <Eye className="w-3.5 h-3.5 opacity-60" />
+               <Eye className="w-3.5 h-3.5 opacity-60 text-red-600" />
                <span>{(video.views || 2568).toLocaleString('ar-EG')} مشاهدة</span>
             </div>
             <div className="flex items-center gap-2">
@@ -247,14 +247,14 @@ export function WatchItem() {
           <div className="flex gap-3 mb-12">
             <button 
               onClick={handleShare}
-              className="flex-[1.5] bg-blue-600 text-white rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-black text-xs shadow-lg shadow-blue-600/20 active:scale-95 transition-transform font-cairo"
+              className="flex-[1.5] bg-red-600 text-white rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-black text-xs shadow-lg shadow-red-600/20 active:scale-95 transition-transform font-cairo"
             >
               <Share2 className="w-3.5 h-3.5" />
               <span>مشاركة المحتوى</span>
             </button>
             <button 
               onClick={toggleBookmark}
-              className={`flex-1 bg-white text-slate-600 border border-slate-200 rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-black text-xs active:scale-95 transition-transform font-cairo ${isFavorited ? 'text-blue-600 border-blue-100 bg-blue-50/50' : ''}`}
+              className={`flex-1 bg-white text-slate-600 border border-slate-200 rounded-xl py-3.5 px-6 flex items-center justify-center gap-2 font-black text-xs active:scale-95 transition-transform font-cairo ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
             >
               <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
               <span>حفظ</span>
@@ -266,7 +266,7 @@ export function WatchItem() {
         <div className="pb-12">
           <div className="flex gap-3 mb-6 px-5 sm:px-8">
             <h2 className="text-lg font-black text-slate-900 font-cairo">شاهد أيضاً</h2>
-            <div className="w-1 bg-blue-600 rounded-full h-5 mt-1.5"></div>
+            <div className="w-1 bg-red-600 rounded-full h-5 mt-1.5"></div>
           </div>
           
           {/* Horizontal Scroll Container */}
@@ -302,7 +302,7 @@ export function WatchItem() {
                     {/* Centered Play Button */}
                     <div className="absolute inset-0 flex items-center justify-center">
                       <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-lg">
-                         <Play className="w-5 h-5 fill-blue-600 text-blue-600 translate-x-[-1px]" />
+                         <Play className="w-5 h-5 fill-blue-600 text-red-600 translate-x-[-1px]" />
                       </div>
                     </div>
 

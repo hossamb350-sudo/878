@@ -228,7 +228,7 @@ const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }:
                     dir="rtl"
                   >
                     {/* Left Side: Arrow Button */}
-                    <div className="shrink-0 flex items-center justify-center w-7 h-7 md:w-12 md:h-12 rounded-full bg-stone-50 dark:bg-stone-800 text-stone-400 group-hover:bg-taiz-royal group-hover:text-white transition-all shadow-inner">
+                    <div className="shrink-0 flex items-center justify-center w-7 h-7 md:w-12 md:h-12 rounded-full bg-stone-50 dark:bg-stone-800 text-stone-400 group-hover:bg-red-700 group-hover:text-white transition-all shadow-inner">
                       <ChevronLeft className="w-3.5 h-3.5 md:w-6 md:h-6" />
                     </div>
 
@@ -317,7 +317,7 @@ const LessonsView = ({
         >
           {/* Decorative left icon */}
           <div className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-stone-50 dark:bg-stone-800 items-center justify-center border border-stone-100 dark:border-stone-700">
-            <Library className="w-10 h-10 text-taiz-royal/20" />
+            <Library className="w-10 h-10 text-red-600/20" />
           </div>
 
           {/* Surah Title & Metadata */}
@@ -333,7 +333,7 @@ const LessonsView = ({
                   {/* Verses Count */}
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-taiz-royal/5 flex items-center justify-center">
-                      <Scroll className="w-3 md:w-4 h-3 md:h-4 text-taiz-royal" />
+                      <Scroll className="w-3 md:w-4 h-3 md:h-4 text-red-600" />
                     </div>
                     <span className="text-xs md:text-sm font-bold text-stone-500 dark:text-stone-400 font-ibm">
                       {selectedSeries?.title?.includes("آل عمران") ? "200" : "120"} آية
@@ -345,7 +345,7 @@ const LessonsView = ({
                   {/* Type */}
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-taiz-royal/5 flex items-center justify-center">
-                      <Compass className="w-3 md:w-4 h-3 md:h-4 text-taiz-royal" />
+                      <Compass className="w-3 md:w-4 h-3 md:h-4 text-red-600" />
                     </div>
                     <span className="text-xs md:text-sm font-bold text-stone-500 dark:text-stone-400 font-ibm">
                       مدنية
@@ -381,7 +381,7 @@ const LessonsView = ({
                     dir="rtl"
                   >
                     {/* Left Side: Arrow Button */}
-                    <div className="shrink-0 flex items-center justify-center w-9 h-9 md:w-12 md:h-12 rounded-full bg-[#F7F8FC] dark:bg-stone-800 text-taiz-royal group-hover:bg-taiz-royal group-hover:text-white transition-all">
+                    <div className="shrink-0 flex items-center justify-center w-9 h-9 md:w-12 md:h-12 rounded-full bg-[#F7F8FC] dark:bg-stone-800 text-taiz-royal group-hover:bg-red-700 group-hover:text-white transition-all">
                       <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
 
@@ -462,7 +462,7 @@ const SyllabusesView = ({
               >
                 <div className="absolute -left-12 -top-12 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl" />
                 <div className="flex justify-between w-full items-start">
-                  <Calendar className="w-8 h-8 text-emerald-600 mb-2" />
+                  <Calendar className="w-8 h-8 text-red-600 mb-2" />
                   <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-black">
                     المقرر الحالي
                   </span>
@@ -513,7 +513,7 @@ const ExcerptsView = ({
               className="w-full bg-surface-card p-4 rounded-2xl shadow-soft border border-border-light hover:border-taiz-royal/30 hover:shadow-strong transition text-right flex gap-4 focus:outline-none"
             >
               <div className="w-12 h-12 shrink-0 bg-taiz-royal/5 rounded-xl flex items-center justify-center">
-                <Quote className="w-5 h-5 text-taiz-royal" />
+                <Quote className="w-5 h-5 text-red-600" />
               </div>
               <div className="flex flex-col gap-1.5 flex-1">
                 <span className="text-sm font-black text-text-primary">
@@ -576,7 +576,7 @@ const ExcerptDetailView = ({
           </div>
         )}
         <div className="whitespace-pre-wrap text-base md:text-lg leading-[2.1] relative">
-          <Quote className="absolute -top-4 -right-2 w-12 h-12 text-taiz-royal/10 -z-10 transform scale-x-[-1]" />
+          <Quote className="absolute -top-4 -right-2 w-12 h-12 text-red-600/10 -z-10 transform scale-x-[-1]" />
           {selectedExcerpt?.content || "تفاصيل المقتطف غير متوفرة."}
         </div>
       </div>
@@ -800,7 +800,7 @@ const Sidebar = ({
               <X className="w-5 h-5 text-text-secondary" />
             </button>
             <div className="w-20 h-20 mb-4 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden border-2 border-border-light">
-              <User className="w-12 h-12 text-taiz-navy translate-y-1.5" />
+              <User className="w-12 h-12 text-red-600 translate-y-1.5" />
             </div>
             <h3 className="text-lg font-black text-text-primary">
               هدي القرآن الكَريم
@@ -812,7 +812,7 @@ const Sidebar = ({
 
           <div className="flex-1 overflow-y-auto py-4 bg-surface-main">
             <SidebarItem
-              icon={<Shield className="w-5 h-5 text-taiz-royal" />}
+              icon={<Shield className="w-5 h-5 text-red-600" />}
               label="الشهيد القائد"
               description="من هو الشهيد القائد؟"
               active={activeView === "leader"}
@@ -822,7 +822,7 @@ const Sidebar = ({
               }}
             />
             <SidebarItem
-              icon={<Library className="w-5 h-5 text-taiz-royal" />}
+              icon={<Library className="w-5 h-5 text-red-600" />}
               label="دروس الهدى"
               description="قائمة السلاسل والدروس الكاملة"
               active={activeView === "series" || activeView === "lessons"}
@@ -832,7 +832,7 @@ const Sidebar = ({
               }}
             />
             <SidebarItem
-              icon={<Trophy className="w-5 h-5 text-taiz-sky" />}
+              icon={<Trophy className="w-5 h-5 text-red-600" />}
               label="لوحة التقدم"
               description="متابعة إنجازك وإحصائيات القراءة"
               active={activeView === "stats"}
@@ -842,13 +842,13 @@ const Sidebar = ({
               }}
             />
             <SidebarItem
-              icon={<Undo2 className="w-5 h-5 rotate-180 text-taiz-royal" />}
+              icon={<Undo2 className="w-5 h-5 rotate-180 text-red-600" />}
               label="آخر قراءة"
               description="العودة لأخر درس توقفت عنده"
               onClick={handleLastReadClick}
             />
             <SidebarItem
-              icon={<Calendar className="w-5 h-5 text-taiz-sky" />}
+              icon={<Calendar className="w-5 h-5 text-red-600" />}
               label="مقرر الدروس"
               description="المقررات الدراسية المحددة"
               active={
@@ -860,7 +860,7 @@ const Sidebar = ({
               }}
             />
             <SidebarItem
-              icon={<Quote className="w-5 h-5 text-taiz-royal" />}
+              icon={<Quote className="w-5 h-5 text-red-600" />}
               label="المقتطفات"
               description="الجواهر المنتقاة من الدروس"
               active={

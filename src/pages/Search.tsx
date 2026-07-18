@@ -42,7 +42,7 @@ export function Search() {
   return (
     <div className="max-w-4xl mx-auto w-full p-4 pb-12">
       <div className="flex items-center gap-3 mb-8 border-b border-border-light pb-4">
-         <SearchIcon className="w-8 h-8 text-taiz-royal" />
+         <SearchIcon className="w-8 h-8 text-red-600" />
          <h1 className="text-2xl font-bold text-text-primary">نتائج البحث عن: "{q}"</h1>
       </div>
 
@@ -93,7 +93,7 @@ export function Search() {
                         <span className="shrink-0">{format(item.createdAt, "dd/MM/yyyy", { locale: ar })}</span>
                         {/* Views */}
                         <span className="flex items-center gap-1 shrink-0 text-taiz-royal mr-auto">
-                          <Eye className="w-3 h-3"/> 
+                          <Eye className="w-3 h-3 text-red-600"/> 
                           {item.views || 0}
                         </span>
                      </div>

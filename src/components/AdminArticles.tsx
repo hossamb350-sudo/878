@@ -413,7 +413,7 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
                          <div className="flex items-center justify-end gap-3 text-[10px] text-gray-400 font-bold">
                             <span className="flex items-center gap-1"><User className="w-3 h-3" /> {article.authorName}</span>
                             <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {article.hijriDate} هـ</span>
-                            <span className="flex items-center gap-1 text-taiz-sky"><Eye className="w-3 h-3" /> {article.views || 0}</span>
+                            <span className="flex items-center gap-1 text-taiz-sky"><Eye className="w-3 h-3 text-red-600" /> {article.views || 0}</span>
                          </div>
                       </div>
 

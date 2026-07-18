@@ -396,7 +396,7 @@ export function ImageUpload({
             {/* Controls */}
             <div className="flex flex-col items-center md:items-start space-y-2.5 w-full">
               <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400">
-                <ImageIcon className="w-4 h-4 text-emerald-500" />
+                <ImageIcon className="w-4 h-4 text-red-600" />
                 <span className="text-xs font-bold truncate max-w-[200px] md:max-w-xs">
                   {value.split("/").pop() || "تم رفع الصورة بنجاح"}
                 </span>
@@ -529,7 +529,7 @@ export function ImageUpload({
                 onClick={() => triggerNativePick(CameraSource.Photos)}
                 className="flex flex-col items-center justify-center gap-2.5 p-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl transition-all active:scale-95 cursor-pointer"
               >
-                <ImageIcon className="w-8 h-8 text-blue-500" />
+                <ImageIcon className="w-8 h-8 text-red-600" />
                 <span className="text-xs font-black text-gray-700 dark:text-gray-300">معرض الصور</span>
               </button>
               
@@ -538,7 +538,7 @@ export function ImageUpload({
                 onClick={() => triggerNativePick(CameraSource.Camera)}
                 className="flex flex-col items-center justify-center gap-2.5 p-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-950 dark:hover:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-xl transition-all active:scale-95 cursor-pointer"
               >
-                <CameraIcon className="w-8 h-8 text-emerald-500" />
+                <CameraIcon className="w-8 h-8 text-red-600" />
                 <span className="text-xs font-black text-gray-700 dark:text-gray-300">كاميرا الهاتف</span>
               </button>
             </div>

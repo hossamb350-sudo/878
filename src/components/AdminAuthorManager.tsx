@@ -73,7 +73,7 @@ export const AdminAuthorManager: React.FC = () => {
         <div className="md:col-span-1">
           <div className="bg-white dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm sticky top-8">
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-              <PlusCircle className="w-5 h-5 text-blue-600" />
+              <PlusCircle className="w-5 h-5 text-red-600" />
               إضافة مصدر جديد
             </h3>
             
@@ -104,7 +104,7 @@ export const AdminAuthorManager: React.FC = () => {
         <div className="md:col-span-2">
           <div className="bg-white dark:bg-gray-800/50 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6 flex items-center gap-2 text-right">
-              <User className="w-5 h-5 text-blue-600" />
+              <User className="w-5 h-5 text-red-600" />
               المصادر الحالية ({savedAuthors.length})
             </h3>
 

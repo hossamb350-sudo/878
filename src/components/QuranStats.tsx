@@ -262,7 +262,7 @@ export function QuranStats({
                       </div>
                       <button
                         onClick={() => onNavigateToLesson(lesson.id)}
-                        className="px-3 py-1.5 bg-taiz-royal hover:bg-taiz-royal/90 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1 shrink-0"
+                        className="px-3 py-1.5 bg-taiz-royal hover:bg-red-700/90 text-white rounded-xl text-xs font-black transition-all flex items-center gap-1 shrink-0"
                       >
                         <Undo2 className="w-3 rotate-180" />
                         <span>عرض الدرس</span>
@@ -339,7 +339,7 @@ export function QuranStats({
                           {lesson.lessonNotes.map((note, nIdx) => (
                             <div
                               key={`gl_note_${note.id || nIdx}`}
-                              className="bg-taiz-royal/[0.02] hover:bg-taiz-royal/[0.05] border border-taiz-royal/10 p-3 rounded-xl flex flex-col justify-between gap-2 transition"
+                              className="bg-taiz-royal/[0.02] hover:bg-red-700/[0.05] border border-taiz-royal/10 p-3 rounded-xl flex flex-col justify-between gap-2 transition"
                             >
                               <div className="flex justify-between text-[10px] text-text-muted font-bold">
                                 <span>مذكرة على الفِقرة {note.paragraphIndex + 1}</span>
@@ -364,7 +364,7 @@ export function QuranStats({
                                     const exactId = `note-inline-${note.id}`;
                                     onNavigateToLesson(note.lessonId, note.paragraphIndex, exactId);
                                   }}
-                                  className="px-2.5 py-1 bg-taiz-royal hover:bg-taiz-royal/90 text-white text-[10px] rounded-lg font-black flex items-center gap-1 transition-all"
+                                  className="px-2.5 py-1 bg-taiz-royal hover:bg-red-700/90 text-white text-[10px] rounded-lg font-black flex items-center gap-1 transition-all"
                                 >
                                   <Undo2 className="w-2.5 rotate-180" />
                                   <span>انتقال لموضع الملاحظة</span>
@@ -423,7 +423,7 @@ export function QuranStats({
 
                     <button
                       onClick={() => onNavigateToLesson(lesson.id)}
-                      className="px-4 py-2 bg-taiz-royal/10 hover:bg-taiz-royal/20 text-taiz-royal font-black rounded-xl text-xs flex items-center gap-1 transition self-end sm:self-center"
+                      className="px-4 py-2 bg-taiz-royal/10 hover:bg-red-700/20 text-taiz-royal font-black rounded-xl text-xs flex items-center gap-1 transition self-end sm:self-center"
                     >
                       <Undo2 className="w-3.5 h-3.5 rotate-180" />
                       <span>
@@ -481,7 +481,7 @@ export function QuranStats({
                             const exactId = `bookmark-${bm.id || bm.createdAt}`;
                             onNavigateToLesson(bm.lessonId, bm.paragraphIndex, exactId);
                           }}
-                          className="px-3 py-1 bg-taiz-royal hover:bg-taiz-royal/90 text-white text-xs rounded-lg font-bold flex items-center gap-1 transition shadow-sm"
+                          className="px-3 py-1 bg-taiz-royal hover:bg-red-700/90 text-white text-xs rounded-lg font-bold flex items-center gap-1 transition shadow-sm"
                         >
                           <Undo2 className="w-3 rotate-180" />
                           <span>ذهاب للموضع الدقيق</span>
@@ -546,7 +546,7 @@ export function QuranStats({
                           const exactId = `note-inline-${n.id}`;
                           onNavigateToLesson(n.lessonId, n.paragraphIndex, exactId);
                         }}
-                        className="px-3 py-1 bg-taiz-royal hover:bg-taiz-royal/90 text-white rounded-lg font-bold flex items-center gap-1 transition-all"
+                        className="px-3 py-1 bg-taiz-royal hover:bg-red-700/90 text-white rounded-lg font-bold flex items-center gap-1 transition-all"
                       >
                         <Undo2 className="w-3 rotate-180" />
                         <span>ذهاب للموضع الدقيق</span>

@@ -197,6 +197,28 @@ const ContactUsSection = () => {
           },
         ];
 
+  const allItems = [
+    ...displayLinks,
+    {
+      id: "sms-service",
+      platform: "sms",
+      label: "خدمة رسائل SMS",
+      url: "sms:5552?body=%D8%AA%D8%B9%D8%B2",
+      description: "أرسل تعز برسالة نصية إلى الرقم 5552",
+      order: 10,
+      createdAt: 0,
+    },
+    {
+      id: "radio-broadcast",
+      platform: "radio",
+      label: "البث الإذاعي الإف إم",
+      url: "#",
+      description: "على موجة FM 88.1",
+      order: 11,
+      createdAt: 0,
+    }
+  ];
+
   return (
     <div className="space-y-4">
       <div className="p-6 md:p-8 bg-taiz-gradient text-white rounded-[2rem] text-right relative overflow-hidden shadow-[0_15px_40px_-10px_rgba(3,47,105,0.2)]">
@@ -220,14 +242,15 @@ const ContactUsSection = () => {
           className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-4"
           dir="rtl"
         >
-          {displayLinks.map((link) => (
+          {allItems.map((link) => (
             <a
               key={link.id}
               href={link.url}
-              target="_blank"
+              target={link.id === "radio-broadcast" ? undefined : "_blank"}
+              onClick={link.id === "radio-broadcast" ? (e) => e.preventDefault() : undefined}
               rel="referrerPolicy"
               className={`p-4 bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 transition flex items-center justify-between ${
-                link.platform === "whatsapp" || link.platform === "meyon"
+                link.platform === "whatsapp" || link.platform === "meyon" || link.platform === "sms" || link.platform === "radio"
                   ? "sm:col-span-2"
                   : ""
               } hover:shadow-md active:scale-[0.98] transition-all`}
@@ -240,6 +263,10 @@ const ContactUsSection = () => {
                     ? "#0ea5e9"
                     : link.platform === "meyon"
                     ? "#ef4444"
+                    : link.platform === "sms"
+                    ? "#a855f7"
+                    : link.platform === "radio"
+                    ? "#f97316"
                     : "#6366f1",
               }}
             >
@@ -252,6 +279,10 @@ const ContactUsSection = () => {
                       ? "text-sky-500"
                       : link.platform === "meyon"
                       ? "text-red-600"
+                      : link.platform === "sms"
+                      ? "text-purple-600"
+                      : link.platform === "radio"
+                      ? "text-orange-600"
                       : "text-indigo-600"
                   }`}
                 >
@@ -271,6 +302,10 @@ const ContactUsSection = () => {
                     ? "bg-sky-50 dark:bg-sky-900/20 text-sky-500"
                     : link.platform === "meyon"
                     ? "bg-red-50 dark:bg-red-900/20 text-red-600"
+                    : link.platform === "sms"
+                    ? "bg-purple-50 dark:bg-purple-900/20 text-purple-600"
+                    : link.platform === "radio"
+                    ? "bg-orange-50 dark:bg-orange-900/20 text-orange-600"
                     : "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600"
                 }`}
               >
@@ -286,6 +321,10 @@ const ContactUsSection = () => {
                   <Send className="w-5 h-5" />
                 ) : link.platform === "meyon" ? (
                   <MonitorPlay className="w-5 h-5" />
+                ) : link.platform === "sms" ? (
+                  <MessageSquare className="w-5 h-5" />
+                ) : link.platform === "radio" ? (
+                  <Radio className="w-5 h-5" />
                 ) : (
                   <Globe className="w-5 h-5" />
                 )}
@@ -581,7 +620,7 @@ export function Admin() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
         <div className="w-20 h-20 bg-blue-100 dark:bg-blue-950/40 rounded-full flex items-center justify-center mb-6">
-          <User className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+          <User className="w-10 h-10 text-blue-600 dark:text-red-600" />
         </div>
         <h1 className="text-3xl font-black mb-2 text-gray-900 dark:text-white">
           مرحباً بك في منصة تعز الإعلامية
@@ -904,7 +943,7 @@ function AdminSummaryDashboard({
       {/* Navigation Grid - 2/3/4 columns, vertical style matching channels */}
       <div className="flex flex-col gap-6">
         <h3 className="text-lg font-black text-text-primary px-2 flex items-center gap-2">
-          <LayoutGrid className="w-6 h-6 text-taiz-sky" />
+          <LayoutGrid className="w-6 h-6 text-red-600" />
           أقسام الإدارة
         </h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
@@ -1570,7 +1609,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
         className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 max-w-sm w-full text-center shadow-2xl"
       >
         <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-10 h-10 text-emerald-600" />
+          <CheckCircle className="w-10 h-10 text-red-600" />
         </div>
         <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
           تم العملية بنجاح!
@@ -1938,7 +1977,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
               {/* Media Settings */}
               <div className="bg-white dark:bg-gray-800/50 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
                 <h4 className="font-black text-gray-900 dark:text-white flex items-center gap-2">
-                  <Image className="w-5 h-5 text-blue-600" />
+                  <Image className="w-5 h-5 text-red-600" />
                   الوسائط والصور
                 </h4>
 
@@ -1993,7 +2032,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
                     }}
                     className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-700 dark:text-gray-300 transition-all cursor-pointer"
                   >
-                    <Plus className="w-4 h-4 text-blue-600" />
+                    <Plus className="w-4 h-4 text-red-600" />
                     <span>إضافة صورة جديدة لمعرض الصور</span>
                   </button>
                 </div>
@@ -2002,7 +2041,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
               {/* Classification & Meta */}
               <div className="bg-white dark:bg-gray-800/50 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-6">
                 <h4 className="font-black text-gray-900 dark:text-white flex items-center gap-2">
-                  <Settings className="w-5 h-5 text-blue-600" />
+                  <Settings className="w-5 h-5 text-red-600" />
                   الإعدادات والتصنيف
                 </h4>
 
@@ -3196,7 +3235,7 @@ function AdminQuran() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <Settings className="w-6 h-6 text-emerald-600" />
+            <Settings className="w-6 h-6 text-red-600" />
             <h2 className="text-xl font-bold">إعداد هدي القران</h2>
           </div>
         </div>
@@ -3321,7 +3360,7 @@ function AdminQuranSeries() {
     <div className="space-y-6">
       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm" dir="rtl">
         <h3 className="font-black text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-          {editingId ? <Edit className="w-5 h-5 text-blue-500" /> : <PlusCircle className="w-5 h-5 text-emerald-500" />}
+          {editingId ? <Edit className="w-5 h-5 text-red-600" /> : <PlusCircle className="w-5 h-5 text-red-600" />}
           {editingId ? "تعديل سلسلة" : "إضافة سلسلة جديدة يدوياً"}
         </h3>
         
@@ -3527,7 +3566,7 @@ function AdminQuranLessons() {
     <div className="space-y-6">
       <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm" dir="rtl">
         <h3 className="font-black text-gray-800 dark:text-white mb-4 flex items-center gap-2">
-          {editingId ? <Edit className="w-5 h-5 text-blue-500" /> : <PlusCircle className="w-5 h-5 text-emerald-500" />}
+          {editingId ? <Edit className="w-5 h-5 text-red-600" /> : <PlusCircle className="w-5 h-5 text-red-600" />}
           {editingId ? "تعديل محتوى الدرس" : "إضافة درس جديد يدوياً"}
         </h3>
         
@@ -5021,7 +5060,7 @@ function AdminEvents() {
     <div className="space-y-8" dir="rtl">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-          <CalendarIcon className="w-6 h-6 text-blue-600" />
+          <CalendarIcon className="w-6 h-6 text-red-600" />
           قسم المناسبات والفعاليات
         </h2>
       </div>
@@ -5232,7 +5271,7 @@ function AdminRoles() {
     <div className="space-y-8 animate-fade-in" dir="rtl">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-light pb-6">
         <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-taiz-sky" />
+          <Shield className="w-8 h-8 text-red-600" />
           <div>
             <h2 className="text-2xl font-black text-text-primary">
               إدارة الصلاحيات
@@ -5245,7 +5284,7 @@ function AdminRoles() {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative group min-w-[200px]">
-            <Search className="w-4 h-4 absolute right-3 top-3 text-text-muted group-focus-within:text-taiz-sky transition-colors" />
+            <Search className="w-4 h-4 absolute right-3 top-3 text-text-muted group-focus-within:text-red-600 transition-colors" />
             <input
               type="text"
               placeholder="بحث بالاسم أو البريد..."
@@ -5433,7 +5472,7 @@ function AdminRoles() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 py-3 bg-taiz-sky text-white rounded-xl font-bold hover:bg-taiz-navy transition-colors disabled:opacity-50"
+                  className="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors disabled:opacity-50"
                 >
                   {saving ? "جاري الحفظ..." : "حفظ التعديلات"}
                 </button>
@@ -5597,7 +5636,7 @@ function AdminSocialLinks() {
       <div className="border-b dark:border-gray-700 pb-4">
         <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center justify-end gap-2">
           <span>إدارة روابط تابعنا</span>
-          <Share2 className="w-6 h-6 text-blue-600" />
+          <Share2 className="w-6 h-6 text-red-600" />
         </h2>
         <p className="text-gray-500 text-sm mt-1 font-bold">
           هذه الروابط تظهر في قسم "تابعنا" في صفحة حسابي لجميع المستخدمين.
@@ -5777,7 +5816,7 @@ function AdminSocialLinks() {
       <div className="bg-gray-50 dark:bg-gray-900/40 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-4 mt-8">
         <h3 className="font-black text-lg text-blue-600 mb-2 flex items-center justify-end gap-2">
           <span>إدارة صورة قسم حسابي</span>
-          <Image className="w-5 h-5 text-blue-600" />
+          <Image className="w-5 h-5 text-red-600" />
         </h3>
         <p className="text-gray-500 text-xs font-bold leading-relaxed">
           يمكنك تغيير الصورة الترويجية أو الخاصة التي تظهر أسفل قسم "تابعنا" في صفحة حسابي. يتم حفظ الصورة في Firestore وتنزيلها لمرة واحدة فقط لتظهر للعملاء بشكل أسرع دون استهلاك بيانات.

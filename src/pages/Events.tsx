@@ -502,7 +502,7 @@ export function Events() {
                 </div>
                 <button
                   onClick={() => setSelectedEventId(nearestUpcoming.id)}
-                  className="text-white bg-taiz-royal hover:bg-taiz-royal/90 text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
+                  className="text-white bg-taiz-royal hover:bg-red-700/90 text-xs font-black px-4 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
                 >
                   استعراض الأن
                 </button>
@@ -801,7 +801,7 @@ export function Events() {
                                 >
                                   {status.label}
                                 </span>
-                                <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-taiz-royal group-hover:-translate-x-1 transition-all" />
+                                <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-red-600 group-hover:-translate-x-1 transition-all" />
                               </div>
                             </motion.div>
                           );
@@ -896,7 +896,7 @@ export function Events() {
                                 >
                                   {status.label}
                                 </span>
-                                <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-taiz-royal group-hover:-translate-x-1 transition-all" />
+                                <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-red-600 group-hover:-translate-x-1 transition-all" />
                               </div>
                             </motion.div>
                           );
@@ -1001,7 +1001,7 @@ export function Events() {
                       }
                       .react-calendar__navigation button {
                         font-weight: 800;
-                        color: var(--color-taiz-royal, #055198);
+                        color: var(--color-taiz-royal, #10264A);
                         font-size: 1.05rem;
                         min-width: 44px;
                         background: none;
@@ -1013,7 +1013,7 @@ export function Events() {
                       }
                       .react-calendar__navigation button:enabled:hover {
                         background-color: var(--color-surface-hover, #f0f7ff);
-                        color: var(--color-taiz-navy, #032f69);
+                        color: var(--color-taiz-navy, #07152b);
                       }
                       .react-calendar__month-view__weekdays {
                          font-weight: 800;
@@ -1032,7 +1032,7 @@ export function Events() {
                          padding: 1.2rem 0.5rem;
                          border-radius: 12px;
                          font-weight: 700;
-                         color: var(--color-text-primary, #032f69);
+                         color: var(--color-text-primary, #07152b);
                          background: none;
                          border: none;
                          cursor: pointer;
@@ -1041,25 +1041,25 @@ export function Events() {
                       }
                       .react-calendar__tile:enabled:hover {
                          background-color: var(--color-surface-hover, #f8fafc);
-                         color: var(--color-taiz-royal, #049edf);
+                         color: var(--color-taiz-royal, #34619b);
                       }
                       .react-calendar__tile--now {
                          background: var(--color-surface-hover, #f0f7ff) !important;
-                         color: var(--color-taiz-navy, #055198) !important;
+                         color: var(--color-taiz-navy, #10264A) !important;
                          border: 1px solid var(--color-taiz-sky, #90bad6) !important;
                       }
                       .react-calendar__tile--active {
-                         background: var(--color-taiz-royal, #055198) !important;
+                         background: var(--color-taiz-royal, #10264A) !important;
                          color: white !important;
                       }
                       .event-tile {
-                         color: var(--color-taiz-royal, #049edf) !important;
+                         color: var(--color-taiz-royal, #34619b) !important;
                          font-weight: 900 !important;
                       }
                       .event-dot {
                          width: 5px;
                          height: 5px;
-                         background-color: var(--color-taiz-navy, #055198);
+                         background-color: var(--color-taiz-navy, #10264A);
                          border-radius: 50%;
                          margin: 4px auto 0;
                          position: absolute;
@@ -1459,7 +1459,7 @@ function EventDetailsModal({
           badge: "bg-taiz-royal/5 text-taiz-royal border-taiz-royal/10",
         }
       : {
-          btn: "bg-taiz-navy text-white",
+          btn: "bg-red-600 text-white",
           badge: "bg-taiz-navy/5 text-text-primary border-border-light",
         };
 
@@ -1524,7 +1524,7 @@ function EventDetailsModal({
           {/* Main Description */}
           <div className="space-y-2">
             <div className="flex items-center gap-1 px-1">
-              <Info className="w-4 h-4 text-taiz-sky" />
+              <Info className="w-4 h-4 text-red-600" />
               <span className="text-xs font-black text-text-secondary">
                 ملخص وموضوع المناسبة
               </span>
@@ -1563,7 +1563,7 @@ function EventDetailsModal({
           {relatedSyllabus && (
             <div className="space-y-2">
               <div className="flex items-center gap-1 px-1">
-                <BookOpen className="w-4 h-4 text-emerald-600" />
+                <BookOpen className="w-4 h-4 text-red-600" />
                 <span className="text-xs font-black text-text-secondary">
                   مقرر الدروس المرتبط بالمناسبة
                 </span>
@@ -1585,7 +1585,7 @@ function EventDetailsModal({
                     </div>
                   </div>
                 </div>
-                <ChevronLeft className="w-5 h-5 text-emerald-600/50 group-hover:text-emerald-600 transition-colors" />
+                <ChevronLeft className="w-5 h-5 text-emerald-600/50 group-hover:text-red-600 transition-colors" />
               </div>
             </div>
           )}
@@ -1593,7 +1593,7 @@ function EventDetailsModal({
           {/* Time Gaps between adjacent events */}
           <div className="space-y-2">
             <div className="flex items-center gap-1 px-1">
-              <Timer className="w-4 h-4 text-taiz-sky" />
+              <Timer className="w-4 h-4 text-red-600" />
               <span className="text-xs font-black text-text-secondary">
                 الربط والمسافات الزمنية
               </span>
@@ -1627,7 +1627,7 @@ function EventDetailsModal({
         <div className="pt-4 border-t border-border-light flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 bg-taiz-navy hover:bg-taiz-royal text-white py-3.5 rounded-xl text-xs sm:text-sm font-black shadow-lg transition duration-200 cursor-pointer text-center"
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3.5 rounded-xl text-xs sm:text-sm font-black shadow-lg transition duration-200 cursor-pointer text-center"
           >
             إغلاق
           </button>
