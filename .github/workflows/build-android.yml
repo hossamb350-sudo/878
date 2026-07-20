@@ -93,6 +93,7 @@ jobs:
         working-directory: ./android
         run: |
           chmod +x ./gradlew
+          ./gradlew clean
           ./gradlew --version
           ./gradlew assembleDebug --no-daemon --stacktrace --info
 
