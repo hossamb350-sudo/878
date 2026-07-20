@@ -75,15 +75,22 @@ jobs:
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
-          # Fix deprecated syntax in capacitor-google-auth to prevent build failures
-          SED_PATH="node_modules/@southdevs/capacitor-google-auth/android/build.gradle"
-          if [ -f "$SED_PATH" ]; then
-            echo "Fixing $SED_PATH syntax..."
-            sed -i 's/jcenter()/mavenCentral()/g' "$SED_PATH"
-            sed -i 's/^\s*namespace\s\+/namespace = /' "$SED_PATH"
-            sed -i 's/^\s*compileSdk\s\+/compileSdk = /' "$SED_PATH"
-            sed -i 's/^\s*abortOnError\s\+/abortOnError = /' "$SED_PATH"
-          fi
+          # Robustly fix deprecated syntax in capacitor-google-auth to prevent build failures
+          node -e '
+            const fs = require("fs");
+            const file = "node_modules/@southdevs/capacitor-google-auth/android/build.gradle";
+            if (fs.existsSync(file)) {
+              let content = fs.readFileSync(file, "utf8");
+              content = content.replace(/jcenter\(\)/g, "mavenCentral()");
+              content = content.replace(/namespace\s+"/, "namespace = \"");
+              content = content.replace(/compileSdk\s+project/, "compileSdk = project");
+              content = content.replace(/abortOnError\s+false/, "abortOnError = false");
+              fs.writeFileSync(file, content, "utf8");
+              console.log("Successfully patched capacitor-google-auth build.gradle");
+            } else {
+              console.log("capacitor-google-auth build.gradle not found to patch");
+            }
+          '
 
       - name: Build Web App
         run: npm run build
@@ -96,7 +103,17 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew clean
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          echo "Starting assembleDebug and capturing log..."
+          ./gradlew assembleDebug --no-daemon --stacktrace > gradle_build.log 2>&1 || {
+            echo "=========================================================================="
+            echo "❌ GRADLE BUILD FAILED! Printing the last 250 lines of gradle_build.log below:"
+            echo "=========================================================================="
+            tail -n 250 gradle_build.log
+            echo "=========================================================================="
+            exit 1
+          }
+          echo "Gradle build succeeded! Printing the full build log:"
+          cat gradle_build.log
 
       - name: Print SHA-1 fingerprint
         working-directory: ./android
