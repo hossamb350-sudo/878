@@ -21,9 +21,11 @@ import {
   Sliders,
   Maximize,
   Minimize2,
-  Check
+  Check,
+  Repeat
 } from "lucide-react";
 import { SURAHS_METADATA, SurahMetadata } from "../data/surahData";
+import { useQuranAudio } from "../context/QuranAudioContext";
 
 interface Ayah {
   number: number;
@@ -71,100 +73,70 @@ const lineHeightClasses = {
 
 export function QuranKareem() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSurah, setSelectedSurah] = useState<SurahMetadata | null>(null);
-  const [surahDetail, setSurahDetail] = useState<SurahDetail | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [resumeAyahIndex, setResumeAyahIndex] = useState<number>(-1);
+  const {
+    selectedSurah,
+    setSelectedSurah,
+    surahDetail,
+    setSurahDetail,
+    loading,
+    error,
+    isPlaying,
+    setIsPlaying,
+    currentAyahIndex,
+    setCurrentAyahIndex,
+    resumeAyahIndex,
+    setResumeAyahIndex,
+    showSettings,
+    setShowSettings,
+    readerTheme,
+    setReaderTheme,
+    fontSize,
+    setFontSize,
+    lineHeight,
+    setLineHeight,
+    fontMedium,
+    setFontMedium,
+    focusMode,
+    setFocusMode,
+    autoPlayNext,
+    setAutoPlayNext,
+    togglePlay,
+    playNext,
+    playPrevious,
+    playNextSurah,
+    selectVerseDirectly,
+    toggleBookmarkCurrentVerse,
+    isCurrentVerseBookmarked,
+    closePlayer,
+    qProgress,
+    setQProgress,
+    toArabicNumerals,
+    getRevelationArabic,
+    shouldShowBasmalah
+  } = useQuranAudio();
 
-  // Reading toolbar and focus mode states matching QuranReader
-  const [showSettings, setShowSettings] = useState(false);
-  const [readerTheme, setReaderTheme] = useState<"day" | "sepia" | "night">(() => {
-    try {
-      const stored = localStorage.getItem("quran_kareem_reader_theme");
-      if (stored === "day" || stored === "sepia" || stored === "night") return stored;
-    } catch (e) {}
-    return "day";
-  });
-  const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(() => {
-    try {
-      const stored = localStorage.getItem("quran_kareem_font_size");
-      if (stored === "sm" || stored === "md" || stored === "lg" || stored === "xl") return stored;
-    } catch (e) {}
-    return "lg";
-  });
-  const [lineHeight, setLineHeight] = useState<"compact" | "relaxed" | "loose">(() => {
-    try {
-      const stored = localStorage.getItem("quran_kareem_line_height");
-      if (stored === "compact" || stored === "relaxed" || stored === "loose") return stored;
-    } catch (e) {}
-    return "relaxed";
-  });
-  const [fontMedium, setFontMedium] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem("quran_kareem_font_medium");
-      if (stored !== null) return JSON.parse(stored);
-    } catch (e) {}
-    return true;
-  });
-  const [focusMode, setFocusMode] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem("quran_kareem_reader_theme", readerTheme);
-  }, [readerTheme]);
-
-  useEffect(() => {
-    localStorage.setItem("quran_kareem_font_size", fontSize);
-  }, [fontSize]);
-
-  useEffect(() => {
-    localStorage.setItem("quran_kareem_line_height", lineHeight);
-  }, [lineHeight]);
-
-  useEffect(() => {
-    localStorage.setItem("quran_kareem_font_medium", JSON.stringify(fontMedium));
-  }, [fontMedium]);
-
-  // Use focusMode to toggle a global class to hide the main app navigation
+  // Full screen support for focusMode in QuranKareem matching QuranReader
   useEffect(() => {
     if (focusMode) {
-      document.body.classList.add("quran-reading-focus");
+      try {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen?.();
+        }
+      } catch (err) {
+        console.warn("Could not request full screen:", err);
+      }
     } else {
-      document.body.classList.remove("quran-reading-focus");
+      try {
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.();
+        }
+      } catch (err) {
+        console.warn("Could not exit full screen:", err);
+      }
     }
-    return () => {
-      document.body.classList.remove("quran-reading-focus");
-    };
   }, [focusMode]);
 
-  // Tabs for the main view
-  const [quranTab, setQuranTab] = useState<"surahs" | "progress">("surahs");
-  const [progressSubTab, setProgressSubTab] = useState<"history" | "bookmarks">("history");
-
-  // Recitation progress saved in localStorage
-  const [qProgress, setQProgress] = useState<QuranProgressData>(() => {
-    try {
-      const stored = localStorage.getItem("quran_recitation_progress");
-      if (stored) return JSON.parse(stored);
-    } catch (e) {}
-    return {
-      startedSurahs: {},
-      completedSurahs: [],
-      bookmarks: [],
-      totalAyahsListenedCount: 0,
-    };
-  });
-
-  // Save progress changes
-  useEffect(() => {
-    localStorage.setItem("quran_recitation_progress", JSON.stringify(qProgress));
-  }, [qProgress]);
-
-  // Audio Player State
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentAyahIndex, setCurrentAyahIndex] = useState<number>(-1);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const verseRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const verseRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   // Filter Surahs based on search query
   const filteredSurahs = SURAHS_METADATA.filter(
@@ -174,242 +146,22 @@ export function QuranKareem() {
       surah.number.toString() === searchQuery
   );
 
-  // Fetch Surah Details with Minshawi Audio
+  // Tabs for the main view
+  const [quranTab, setQuranTab] = useState<"surahs" | "progress">("surahs");
+  const [progressSubTab, setProgressSubTab] = useState<"history" | "bookmarks">("history");
+
+  // Scroll active verse into view
   useEffect(() => {
-    if (!selectedSurah) {
-      setSurahDetail(null);
-      setCurrentAyahIndex(-1);
-      setIsPlaying(false);
-      return;
+    if (surahDetail && currentAyahIndex >= 0 && verseRefs.current[currentAyahIndex]) {
+      const scrollTimer = setTimeout(() => {
+        verseRefs.current[currentAyahIndex]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      }, 100);
+      return () => clearTimeout(scrollTimer);
     }
-
-    let active = true;
-    setLoading(true);
-    setError(null);
-
-    fetch(`https://api.alquran.cloud/v1/surah/${selectedSurah.number}/ar.minshawi`)
-      .then((res) => {
-        if (!res.ok) throw new Error("فشل في جلب آيات السورة. يرجى التحقق من اتصالك بالإنترنت.");
-        return res.json();
-      })
-      .then((data) => {
-        if (!active) return;
-        if (data.code === 200 && data.data) {
-          setSurahDetail(data.data);
-          if (resumeAyahIndex >= 0) {
-            setCurrentAyahIndex(resumeAyahIndex);
-            setResumeAyahIndex(-1); // Reset trigger
-          } else {
-            setCurrentAyahIndex(0); // Default to first Ayah
-          }
-        } else {
-          throw new Error("بيانات غير صالحة من المصدر.");
-        }
-      })
-      .catch((err) => {
-        if (!active) return;
-        setError(err.message || "حدث خطأ غير متوقع.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedSurah, resumeAyahIndex]);
-
-  // Handle Play/Pause and sequential playback safely
-  const handleAudioEndedRef = useRef<(() => void) | undefined>(undefined);
-  handleAudioEndedRef.current = () => {
-    if (!surahDetail) return;
-    
-    setCurrentAyahIndex((prevIndex) => {
-      const nextIndex = prevIndex + 1;
-      if (nextIndex < surahDetail.ayahs.length) {
-        return nextIndex;
-      } else {
-        setIsPlaying(false);
-        return prevIndex; // Keep the last verse active
-      }
-    });
-  };
-
-  // Setup audio player listener once
-  useEffect(() => {
-    const audio = new Audio();
-    audioRef.current = audio;
-
-    const onEndedListener = () => {
-      if (handleAudioEndedRef.current) {
-        handleAudioEndedRef.current();
-      }
-    };
-
-    audio.addEventListener("ended", onEndedListener);
-
-    return () => {
-      audio.pause();
-      audio.removeEventListener("ended", onEndedListener);
-    };
-  }, []);
-
-  // Update audio source and scroll when index or surah detail changes
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || !surahDetail || currentAyahIndex < 0 || currentAyahIndex >= surahDetail.ayahs.length) {
-      return;
-    }
-
-    const currentAyah = surahDetail.ayahs[currentAyahIndex];
-    
-    // Check if source actually changed to avoid restarting same track
-    if (audio.src !== currentAyah.audio) {
-      audio.src = currentAyah.audio;
-    }
-
-    // Scroll active verse into view
-    const activeEl = verseRefs.current[currentAyahIndex];
-    if (activeEl) {
-      activeEl.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }
-
-    if (isPlaying) {
-      audio.play().catch((err) => {
-        console.warn("Audio playback failed:", err);
-        setIsPlaying(false);
-      });
-    }
-
-    // Accumulate recitation progress
-    setQProgress((prev) => {
-      const surahNum = surahDetail.number;
-      const total = surahDetail.ayahs.length;
-      
-      const updatedStarted = { ...prev.startedSurahs };
-      const currentRecord = updatedStarted[surahNum] || { lastIndex: 0, total, timestamp: Date.now() };
-      
-      if (currentAyahIndex > currentRecord.lastIndex) {
-        currentRecord.lastIndex = currentAyahIndex;
-        currentRecord.timestamp = Date.now();
-        updatedStarted[surahNum] = currentRecord;
-      } else if (!updatedStarted[surahNum]) {
-        updatedStarted[surahNum] = currentRecord;
-      }
-
-      const completed = [...prev.completedSurahs];
-      if (currentAyahIndex === total - 1 && !completed.includes(surahNum)) {
-        completed.push(surahNum);
-      }
-
-      return {
-        ...prev,
-        startedSurahs: updatedStarted,
-        completedSurahs: completed,
-        totalAyahsListenedCount: prev.totalAyahsListenedCount + 1
-      };
-    });
-
-  }, [surahDetail, currentAyahIndex]);
-
-  // Handle Play/Pause state changes
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.play().catch((err) => {
-        console.warn("Playback failed:", err);
-        setIsPlaying(false);
-      });
-    } else {
-      audio.pause();
-    }
-  }, [isPlaying]);
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
-
-  const playNext = () => {
-    if (!surahDetail) return;
-    if (currentAyahIndex < surahDetail.ayahs.length - 1) {
-      setCurrentAyahIndex(currentAyahIndex + 1);
-    }
-  };
-
-  const playPrevious = () => {
-    if (currentAyahIndex > 0) {
-      setCurrentAyahIndex(currentAyahIndex - 1);
-    }
-  };
-
-  const selectVerseDirectly = (index: number) => {
-    setCurrentAyahIndex(index);
-    setIsPlaying(true);
-  };
-
-  // Convert English revelation types to Arabic
-  const getRevelationArabic = (type: string) => {
-    return type === "Meccan" || type === "meccan" ? "مكية" : "مدنية";
-  };
-
-  // Render Eastern Arabic numerals
-  const toArabicNumerals = (num: number) => {
-    const arabicDigits = ["٠", "١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩"];
-    return num
-      .toString()
-      .split("")
-      .map((digit) => arabicDigits[parseInt(digit, 10)] || digit)
-      .join("");
-  };
-
-  // Format Surah name for displaying Basmalah
-  const shouldShowBasmalah = (surahNum: number) => {
-    return surahNum !== 9 && surahNum !== 1;
-  };
-
-  // Bookmarking handler
-  const isCurrentVerseBookmarked = selectedSurah && qProgress.bookmarks.some(
-    (b) => b.surahNumber === selectedSurah.number && b.ayahIndex === currentAyahIndex
-  );
-
-  const toggleBookmarkCurrentVerse = () => {
-    if (!selectedSurah || !surahDetail || currentAyahIndex < 0) return;
-    
-    setQProgress((prev) => {
-      const isBookmarked = prev.bookmarks.some(
-        (b) => b.surahNumber === selectedSurah.number && b.ayahIndex === currentAyahIndex
-      );
-      
-      let updatedBookmarks = [];
-      if (isBookmarked) {
-        updatedBookmarks = prev.bookmarks.filter(
-          (b) => !(b.surahNumber === selectedSurah.number && b.ayahIndex === currentAyahIndex)
-        );
-      } else {
-        const currentAyah = surahDetail.ayahs[currentAyahIndex];
-        updatedBookmarks = [
-          ...prev.bookmarks,
-          {
-            surahNumber: selectedSurah.number,
-            surahName: selectedSurah.name,
-            ayahIndex: currentAyahIndex,
-            verseText: currentAyah.text,
-            timestamp: Date.now(),
-          }
-        ];
-      }
-      
-      return {
-        ...prev,
-        bookmarks: updatedBookmarks,
-      };
-    });
-  };
+  }, [currentAyahIndex, selectedSurah, surahDetail]);
 
   // Clear Bookmarks or Reset Dashboard
   const handleClearBookmark = (surahNum: number, ayahIdx: number) => {
@@ -749,8 +501,8 @@ export function QuranKareem() {
                                 <span>الآية {toArabicNumerals(bm.ayahIndex + 1)}</span>
                               </div>
 
-                              <p className="text-lg font-serif font-medium text-slate-800 dark:text-white leading-relaxed p-3 bg-amber-50/50 dark:bg-amber-950/10 border-r-4 border-amber-400">
-                                {bm.verseText}
+                              <p className="text-lg font-ibm font-medium text-slate-800 dark:text-white leading-relaxed p-3 bg-amber-50/50 dark:bg-amber-950/10 border-r-4 border-amber-400">
+                                {bm.text}
                               </p>
 
                               <div className="flex justify-end gap-2 text-xs pt-1 border-t border-slate-100 dark:border-stone-800 mt-1 font-cairo">
@@ -1009,49 +761,63 @@ export function QuranKareem() {
                 <div className="max-w-2xl mx-auto space-y-8 pb-32">
                   {/* Basmalah */}
                   {shouldShowBasmalah(selectedSurah.number) && (
-                    <div className={`text-center py-6 text-2xl font-serif font-black tracking-wide select-none transition-colors duration-300 ${
-                      readerTheme === 'day' ? 'text-slate-800' :
+                    <div className={`text-center py-8 text-2xl sm:text-3xl font-ibm font-black tracking-wide select-none transition-colors duration-300 ${
+                      readerTheme === 'day' ? 'text-slate-900' :
                       readerTheme === 'sepia' ? 'text-[#3D2C1E]' :
                       'text-zinc-100'
                     }`}>
-                      بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                      ﴿بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ﴾
                     </div>
                   )}
 
                   {/* Verses Layout (Block/Continuous reading style with distinct verse numbers) */}
                   <div 
-                    className={`p-6 sm:p-10 border text-justify transition-all duration-300 rounded-none shadow-sm flex flex-wrap gap-x-3 gap-y-5 leading-relaxed font-serif justify-center ${
+                    className={`p-6 sm:p-10 border transition-all duration-300 rounded-[2.5rem] shadow-soft font-ibm ${
                       readerTheme === 'day' 
-                        ? 'bg-white border-slate-200/40 text-slate-800' 
+                        ? 'bg-white border-slate-100 text-slate-800' 
                         : readerTheme === 'sepia' 
                         ? 'bg-[#FCF9F2] border-[#E5DEC9] text-[#3D2C1E]' 
                         : 'bg-[#18181A] border-[#2E2E33] text-zinc-100'
                     } ${fontSizeClasses[fontSize]} ${lineHeightClasses[lineHeight]} ${fontMedium ? 'font-medium' : 'font-normal'}`}
-                    style={{ textJustify: "inter-word" }}
+                    style={{ 
+                      textJustify: "inter-word", 
+                      direction: "rtl",
+                      textAlign: "justify",
+                      lineHeight: 2,
+                      maxWidth: "100%"
+                    }}
                   >
                     {surahDetail.ayahs.map((ayah, idx) => {
                       const isActive = idx === currentAyahIndex;
                       
-                      // Remove Basmalah prefix from first verse text if it is included and it is NOT Al-Fatiha
+                      // Remove Basmalah prefix from first verse text if it is included
                       let verseText = ayah.text;
-                      if (idx === 0 && shouldShowBasmalah(selectedSurah.number) && verseText.startsWith("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ")) {
-                        verseText = verseText.replace("بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ", "").trim();
+                      if (idx === 0 && shouldShowBasmalah(selectedSurah.number)) {
+                        // More robust stripping of Basmalah using regex to handle different character variants (diacritics, Alef-Wasla)
+                        const basmalahRegex = /^(بِسْمِ\s+اللَّهِ\s+الرَّحْمَٰنِ\s+الرَّحِيمِ|بِسْمِ\s+ٱللَّهِ\s+ٱلرَّحْمَٰنِ\s+ٱلرَّحِيمِ|بِسْمِ\s+اللهِ\s+الرَّحْمَنِ\s+الرَّحِيمِ)\s*/;
+                        verseText = verseText.replace(basmalahRegex, "").trim();
+                      }
+
+                      // If verse is empty after stripping (like Al-Fatiha Ayah 1), 
+                      // we skip it in the loop because it's already shown as a separate line header
+                      if (idx === 0 && verseText === "" && shouldShowBasmalah(selectedSurah.number)) {
+                        return null;
                       }
 
                       return (
-                        <div
+                        <span
                           key={ayah.number}
                           ref={(el) => {
                             verseRefs.current[idx] = el;
                           }}
                           onClick={() => selectVerseDirectly(idx)}
-                          className={`inline cursor-pointer px-1.5 py-0.5 rounded transition-all duration-300 select-none ${
+                          className={`inline cursor-pointer px-1 py-0.5 rounded transition-all duration-300 select-none ${
                             isActive
                               ? readerTheme === "day"
-                                ? "bg-emerald-50 text-emerald-950 ring-2 ring-emerald-400 font-bold scale-[1.01] shadow-sm"
+                                ? "bg-emerald-50 text-emerald-950 ring-2 ring-emerald-400 font-bold scale-[1.01] shadow-sm mx-1"
                                 : readerTheme === "sepia"
-                                ? "bg-emerald-900/15 text-emerald-950 ring-2 ring-emerald-600/40 font-bold scale-[1.01] shadow-sm"
-                                : "bg-emerald-950/40 text-emerald-300 ring-2 ring-emerald-500/50 font-bold scale-[1.01] shadow-sm"
+                                ? "bg-emerald-900/15 text-emerald-950 ring-2 ring-emerald-600/40 font-bold scale-[1.01] shadow-sm mx-1"
+                                : "bg-emerald-950/40 text-emerald-300 ring-2 ring-emerald-500/50 font-bold scale-[1.01] shadow-sm mx-1"
                               : readerTheme === "day"
                               ? "text-slate-800 hover:bg-slate-100"
                               : readerTheme === "sepia"
@@ -1063,7 +829,7 @@ export function QuranKareem() {
                           <span className="inline-block text-emerald-600 dark:text-emerald-400 mx-1.5 font-sans font-bold text-sm select-none">
                             ﴿{toArabicNumerals(ayah.numberInSurah)}﴾
                           </span>
-                        </div>
+                        </span>
                       );
                     })}
                   </div>
@@ -1116,6 +882,17 @@ export function QuranKareem() {
                     title="الآية التالية"
                   >
                     <SkipBack className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => setAutoPlayNext(!autoPlayNext)}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg transition active:scale-95 text-[10px] font-bold font-cairo ${
+                      autoPlayNext ? "text-emerald-400 bg-emerald-400/10" : "text-slate-500 bg-slate-800/50 hover:text-slate-400"
+                    }`}
+                    title={autoPlayNext ? "إيقاف التشغيل التلقائي للسور" : "تشغيل السور التالية تلقائياً"}
+                  >
+                    <Repeat className={`w-3 h-3 ${autoPlayNext ? "animate-pulse" : ""}`} />
+                    <span>التالي</span>
                   </button>
                 </div>
 

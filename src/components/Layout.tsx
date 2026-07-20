@@ -1,12 +1,13 @@
-import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { HeaderWidgets } from "./HeaderWidgets";
-import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X } from "lucide-react";
+import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X, Play, Pause, Volume2, ArrowLeft } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
 import { UrgentNews } from "../types";
 import { motion, AnimatePresence } from "motion/react";
+import { useQuranAudio } from "../context/QuranAudioContext";
 
 function NotificationCenter() {
   return null;
@@ -218,7 +219,17 @@ function UrgentNewsBanner() {
 export function Layout() {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isArticlesPage = location.pathname.startsWith("/articles");
+  const { 
+    selectedSurah, 
+    surahDetail, 
+    isPlaying, 
+    togglePlay, 
+    closePlayer, 
+    currentAyahIndex,
+    toArabicNumerals
+  } = useQuranAudio();
 
   useEffect(() => {
     const handleResize = () => {
@@ -255,6 +266,59 @@ export function Layout() {
       <main className="flex-1 flex flex-col overflow-y-auto pb-20 min-w-0 w-full overflow-x-hidden">
         <Outlet />
       </main>
+
+      {/* Global Mini Audio Player for background playback when not in Quran page */}
+      <AnimatePresence>
+        {location.pathname !== "/quran" && selectedSurah && (
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            className="fixed bottom-[84px] left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm bg-slate-900/95 dark:bg-stone-900/95 text-white backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] border border-slate-800/80 dark:border-stone-800/80 flex items-center justify-between z-50 gap-3"
+          >
+            {/* Clickable Area to return to Quran page and open Surah */}
+            <button
+              onClick={() => navigate("/quran?view=quran")}
+              className="flex items-center gap-2.5 min-w-0 flex-1 text-right group active:scale-[0.98] transition"
+              title="الذهاب للسورة وتتبع الآية"
+            >
+              <div className="w-8 h-8 rounded-full bg-emerald-950/80 flex items-center justify-center shrink-0 border border-emerald-800/30 group-hover:bg-emerald-900 transition">
+                <Volume2 className={`w-4 h-4 text-emerald-400 ${isPlaying ? "animate-pulse" : ""}`} />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-[11px] font-black font-cairo leading-none text-emerald-400 group-hover:text-emerald-300 transition flex items-center gap-1">
+                  <span>سورة {selectedSurah.name}</span>
+                  <ArrowLeft className="w-2.5 h-2.5 text-emerald-500/80 group-hover:translate-x-[-1px] transition-transform" />
+                </span>
+                <span className="text-[9px] text-slate-300 font-bold font-cairo mt-1 leading-none truncate">
+                  {surahDetail ? `الآية ${toArabicNumerals(surahDetail.ayahs[currentAyahIndex]?.numberInSurah || 1)}` : "جاري تلاوة السورة..."}
+                </span>
+              </div>
+            </button>
+
+            {/* Play/Pause & Close Controls */}
+            <div className="flex items-center gap-2 shrink-0 select-none">
+              <button
+                onClick={togglePlay}
+                className="w-7 h-7 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-md active:scale-90 transition"
+                title={isPlaying ? "إيقاف مؤقت" : "تشغيل"}
+              >
+                {isPlaying ? <Pause className="w-3.5 h-3.5 fill-white" /> : <Play className="w-3.5 h-3.5 fill-white translate-x-[-0.5px]" />}
+              </button>
+
+              <div className="w-px h-5 bg-slate-700/60" />
+
+              <button
+                onClick={closePlayer}
+                className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition active:scale-90"
+                title="إغلاق المشغل"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Navigation for All Devices */}
       <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.04)] border-t border-slate-100/80 px-2 flex justify-center items-center z-40 pb-safe transition-transform duration-300 h-[72px] sm:h-[76px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>

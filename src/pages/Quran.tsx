@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
+import { useSearchParams } from "react-router-dom";
 import {
   QuranSeries,
   QuranLesson,
@@ -1194,9 +1195,18 @@ const StatsView = ({
 );
 
 export function Quran() {
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [isFetchingLesson, setIsFetchingLesson] = useState(false);
   const [activeView, setActiveView] = useState<QuranView>("series");
+
+  useEffect(() => {
+    const viewParam = searchParams.get("view");
+    if (viewParam === "quran") {
+      setActiveView("quran");
+    }
+  }, [searchParams]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Data State - Loaded from Firestore

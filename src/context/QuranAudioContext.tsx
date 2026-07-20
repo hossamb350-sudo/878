@@ -66,6 +66,8 @@ interface QuranAudioContextType {
   setFontMedium: (medium: boolean) => void;
   focusMode: boolean;
   setFocusMode: (focus: boolean) => void;
+  autoPlayNext: boolean;
+  setAutoPlayNext: (autoplay: boolean) => void;
   
   // Player functions
   togglePlay: () => void;
@@ -127,6 +129,18 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
     return true;
   });
   const [focusMode, setFocusMode] = useState(false);
+  const [autoPlayNext, setAutoPlayNext] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem("quran_auto_play_next");
+      return stored !== null ? JSON.parse(stored) : true;
+    } catch (e) {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("quran_auto_play_next", JSON.stringify(autoPlayNext));
+  }, [autoPlayNext]);
 
   useEffect(() => {
     localStorage.setItem("quran_kareem_reader_theme", readerTheme);
@@ -178,21 +192,31 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Setup audio player listener once
+  const handleAudioEndedRef = useRef<() => void>(undefined);
+  
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
 
     const onEndedListener = () => {
-      handleAudioEnded();
+      if (handleAudioEndedRef.current) {
+        handleAudioEndedRef.current();
+      }
     };
 
     audio.addEventListener("ended", onEndedListener);
 
     return () => {
       audio.pause();
+      audio.src = "";
       audio.removeEventListener("ended", onEndedListener);
     };
-  }, [surahDetail, selectedSurah]);
+  }, []);
+
+  // Update the ref whenever dependencies change
+  useEffect(() => {
+    handleAudioEndedRef.current = handleAudioEnded;
+  }, [surahDetail, currentAyahIndex, autoPlayNext, selectedSurah]);
 
   // Fetch Surah Details with Minshawi Audio
   useEffect(() => {
@@ -310,22 +334,28 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
     
     if (currentAyahIndex + 1 < surahDetail.ayahs.length) {
       setCurrentAyahIndex(currentAyahIndex + 1);
+      setIsPlaying(true);
     } else {
-      // Current Surah completed! Auto-advance to Next Surah!
-      playNextSurah();
+      // Current Surah completed! Auto-advance to Next Surah if enabled!
+      if (autoPlayNext) {
+        playNextSurah();
+      } else {
+        setIsPlaying(false);
+      }
     }
   };
 
   const playNextSurah = () => {
     if (!selectedSurah) return;
-    const nextNum = selectedSurah.number + 1;
-    const nextSurahMetadata = SURAHS_METADATA.find((s) => s.number === nextNum);
-    if (nextSurahMetadata) {
-      setSelectedSurah(nextSurahMetadata);
-      setCurrentAyahIndex(0);
+    const currentIndex = SURAHS_METADATA.findIndex(s => s.number === selectedSurah.number);
+    if (currentIndex !== -1 && currentIndex + 1 < SURAHS_METADATA.length) {
+      const nextSurah = SURAHS_METADATA[currentIndex + 1];
+      // Set playing true first so fetch effect knows to start playing when ready
       setIsPlaying(true);
+      setSelectedSurah(nextSurah);
+      setCurrentAyahIndex(0);
+      setSurahDetail(null); // Clear old detail to show loader
     } else {
-      // No next surah (reached end of Quran)
       setIsPlaying(false);
     }
   };
@@ -381,7 +411,7 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
 
   // Format Surah name for displaying Basmalah
   const shouldShowBasmalah = (surahNum: number) => {
-    return surahNum !== 9 && surahNum !== 1;
+    return surahNum !== 9;
   };
 
   // Bookmarking handler
@@ -451,6 +481,8 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
         setFontMedium,
         focusMode,
         setFocusMode,
+        autoPlayNext,
+        setAutoPlayNext,
         togglePlay,
         playNext,
         playPrevious,
