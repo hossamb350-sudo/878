@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { API_BASE } from "../config/apiConfig";
+import { API_BASE, fetchWithFallback } from "../config/apiConfig";
 import { 
   Sun, 
   CloudSun, 
@@ -167,9 +167,29 @@ const WeatherIcon = ({ code, isNight, temp = 25, hours }: { code?: number, isNig
 
 export const HeaderWidgets: React.FC = () => {
   const [time, setTime] = useState(new Date());
-  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max?: number; temp_min?: number; condition: string; id: number; icon?: string } | null>(null);
-  const [prayerTimes, setPrayerTimes] = useState<{ name: string; time: string }[] | null>(null);
-  const [apiHijriDate, setApiHijriDate] = useState<string | null>(null);
+  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max?: number; temp_min?: number; condition: string; id: number; icon?: string } | null>(() => {
+    try {
+      const cached = localStorage.getItem("cached_weather_data");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [prayerTimes, setPrayerTimes] = useState<{ name: string; time: string }[] | null>(() => {
+    try {
+      const cached = localStorage.getItem("cached_prayer_times");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [apiHijriDate, setApiHijriDate] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem("cached_hijri_date");
+    } catch {
+      return null;
+    }
+  });
   
   useEffect(() => {
     const timer = setInterval(() => {
@@ -182,8 +202,8 @@ export const HeaderWidgets: React.FC = () => {
     const fetchWeather = async () => {
       try {
         const [weatherRes, forecastRes] = await Promise.all([
-          fetch(`${API_BASE}/api/weather?lat=13.5795&lon=44.0203`),
-          fetch(`${API_BASE}/api/forecast?lat=13.5795&lon=44.0203`)
+          fetchWithFallback(`/api/weather?lat=13.5795&lon=44.0203`),
+          fetchWithFallback(`/api/forecast?lat=13.5795&lon=44.0203`)
         ]);
         
         if (weatherRes.ok && forecastRes.ok) {
@@ -202,14 +222,17 @@ export const HeaderWidgets: React.FC = () => {
           const temp_min = Math.round(Math.min(...minTemps));
           const temp_max = Math.round(Math.max(...maxTemps));
 
-          setWeatherData({
+          const newWeatherData = {
             temp: Math.round(wData.main.temp),
             temp_max: temp_max,
             temp_min: temp_min,
             condition: wData.weather[0].description,
             id: wData.weather[0].id,
             icon: wData.weather[0].icon
-          });
+          };
+
+          setWeatherData(newWeatherData);
+          localStorage.setItem("cached_weather_data", JSON.stringify(newWeatherData));
         }
       } catch (err) {
         console.error("Failed to fetch weather", err);
@@ -218,21 +241,25 @@ export const HeaderWidgets: React.FC = () => {
 
     const fetchPrayerTimes = async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/prayer-times`);
+        const response = await fetchWithFallback(`/api/prayer-times`);
         if (response.ok) {
           const data = await response.json();
           const timings = data.data.timings;
-          setPrayerTimes([
+          const newPrayerTimes = [
             { name: "الفجر", time: timings.Fajr },
             { name: "الظهر", time: timings.Dhuhr },
             { name: "العصر", time: timings.Asr },
             { name: "المغرب", time: timings.Maghrib },
             { name: "العشاء", time: timings.Isha },
-          ]);
+          ];
+          setPrayerTimes(newPrayerTimes);
+          localStorage.setItem("cached_prayer_times", JSON.stringify(newPrayerTimes));
 
           // Extract and store accurate Hijri date from Aladhan API response
           const hijri = data.data.date.hijri;
-          setApiHijriDate(`${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`);
+          const newHijriDate = `${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
+          setApiHijriDate(newHijriDate);
+          localStorage.setItem("cached_hijri_date", newHijriDate);
         }
       } catch (err) {
         console.error("Failed to fetch prayer times", err);

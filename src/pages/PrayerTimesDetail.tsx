@@ -1,40 +1,85 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { API_BASE } from "../config/apiConfig";
+import { API_BASE, fetchWithFallback } from "../config/apiConfig";
 import { Sunrise, Sun, Sunset, Moon, MapPin, Clock } from "lucide-react";
 
 export const PrayerTimesDetail: React.FC = () => {
-  const [prayerTimes, setPrayerTimes] = useState<{ name: string; time: string; icon: React.ReactNode }[] | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [prayerTimes, setPrayerTimes] = useState<{ name: string; time: string; icon: React.ReactNode }[] | null>(() => {
+    try {
+      const cached = localStorage.getItem("cached_detail_prayer_times");
+      if (cached) {
+        // Since ReactNodes (JSX elements like Sunrise, Sun) can't be stored in JSON, we need to reconstruct them
+        const parsed = JSON.parse(cached);
+        return parsed.map((p: any) => {
+          let icon: React.ReactNode = null;
+          if (p.name === "الفجر") icon = <Sunrise className="w-6 h-6 text-indigo-500" />;
+          else if (p.name === "الشروق") icon = <Sunrise className="w-6 h-6 text-amber-500" />;
+          else if (p.name === "الظهر") icon = <Sun className="w-6 h-6 text-amber-500" />;
+          else if (p.name === "العصر") icon = <Sun className="w-6 h-6 text-orange-500" />;
+          else if (p.name === "المغرب") icon = <Sunset className="w-6 h-6 text-rose-500" />;
+          else if (p.name === "العشاء") icon = <Moon className="w-6 h-6 text-blue-500" />;
+          return { name: p.name, time: p.time, icon };
+        });
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(!prayerTimes);
   const [error, setError] = useState<string | null>(null);
-  const [hijriDate, setHijriDate] = useState<string>("");
+  const [hijriDate, setHijriDate] = useState<string>(() => {
+    try {
+      return localStorage.getItem("cached_detail_hijri_date") || "";
+    } catch {
+      return "";
+    }
+  });
 
   useEffect(() => {
     const fetchPrayerTimes = async () => {
       try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE}/api/prayer-times`);
+        if (!prayerTimes) setLoading(true);
+        const response = await fetchWithFallback(`/api/prayer-times`);
         if (response.ok) {
           const data = await response.json();
           const timings = data.data.timings;
           
-          setPrayerTimes([
-            { name: "الفجر", time: timings.Fajr, icon: <Sunrise className="w-6 h-6 text-indigo-500" /> },
-            { name: "الشروق", time: timings.Sunrise, icon: <Sunrise className="w-6 h-6 text-amber-500" /> },
-            { name: "الظهر", time: timings.Dhuhr, icon: <Sun className="w-6 h-6 text-amber-500" /> },
-            { name: "العصر", time: timings.Asr, icon: <Sun className="w-6 h-6 text-orange-500" /> },
-            { name: "المغرب", time: timings.Maghrib, icon: <Sunset className="w-6 h-6 text-rose-500" /> },
-            { name: "العشاء", time: timings.Isha, icon: <Moon className="w-6 h-6 text-blue-500" /> },
-          ]);
+          const newPrayerTimes = [
+            { name: "الفجر", time: timings.Fajr },
+            { name: "الشروق", time: timings.Sunrise },
+            { name: "الظهر", time: timings.Dhuhr },
+            { name: "العصر", time: timings.Asr },
+            { name: "المغرب", time: timings.Maghrib },
+            { name: "العشاء", time: timings.Isha },
+          ];
+          
+          setPrayerTimes(newPrayerTimes.map((p: any) => {
+            let icon: React.ReactNode = null;
+            if (p.name === "الفجر") icon = <Sunrise className="w-6 h-6 text-indigo-500" />;
+            else if (p.name === "الشروق") icon = <Sunrise className="w-6 h-6 text-amber-500" />;
+            else if (p.name === "الظهر") icon = <Sun className="w-6 h-6 text-amber-500" />;
+            else if (p.name === "العصر") icon = <Sun className="w-6 h-6 text-orange-500" />;
+            else if (p.name === "المغرب") icon = <Sunset className="w-6 h-6 text-rose-500" />;
+            else if (p.name === "العشاء") icon = <Moon className="w-6 h-6 text-blue-500" />;
+            return { name: p.name, time: p.time, icon };
+          }));
+          
+          localStorage.setItem("cached_detail_prayer_times", JSON.stringify(newPrayerTimes));
 
           const hijri = data.data.date.hijri;
-          setHijriDate(`${hijri.day} ${hijri.month.ar} ${hijri.year}`);
+          const newHijriDate = `${hijri.day} ${hijri.month.ar} ${hijri.year}`;
+          setHijriDate(newHijriDate);
+          localStorage.setItem("cached_detail_hijri_date", newHijriDate);
+          setError(null);
         } else {
           setError("تعذر جلب مواقيت الصلاة");
         }
       } catch (err) {
         console.error("Failed to fetch prayer times", err);
-        setError("حدث خطأ أثناء جلب البيانات");
+        if (!prayerTimes) {
+          setError("حدث خطأ أثناء جلب البيانات");
+        }
       } finally {
         setLoading(false);
       }

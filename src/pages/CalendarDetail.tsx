@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
-import { API_BASE } from "../config/apiConfig";
+import { API_BASE, fetchWithFallback } from "../config/apiConfig";
 import { SyncService } from "../services/SyncService";
 import { EventItem, ActivityItem } from "../types";
 import { BASE_EVENTS } from "../data/staticEvents";
@@ -154,14 +153,26 @@ export default function CalendarDetail() {
 
   const fetchCalendar = async (month: number, year: number) => {
     setLoading(true);
+    const cacheKey = `cached_calendar_${month}_${year}`;
     try {
-      const response = await axios.get(`${API_BASE}/api/calendar?month=${month}&year=${year}`);
-      if (response.data.code === 200) {
-        setCalendarData(response.data.data);
-        return response.data.data;
+      const response = await fetchWithFallback(`/api/calendar?month=${month}&year=${year}`);
+      if (response.ok) {
+        const jsonData = await response.json();
+        if (jsonData.code === 200) {
+          setCalendarData(jsonData.data);
+          localStorage.setItem(cacheKey, JSON.stringify(jsonData.data));
+          return jsonData.data;
+        }
       }
     } catch (error) {
       console.error("Error fetching calendar:", error);
+      // Try local cache fallback
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        setCalendarData(cachedData);
+        return cachedData;
+      }
     } finally {
       setLoading(false);
     }

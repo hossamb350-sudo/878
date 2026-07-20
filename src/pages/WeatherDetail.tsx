@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import { API_BASE } from "../config/apiConfig";
+import { API_BASE, fetchWithFallback } from "../config/apiConfig";
 import { 
   CloudSun, Wind, Droplets, Gauge, 
   Sunrise, Sunset, MapPin, Cloud, AlertCircle, CalendarDays,
@@ -8,18 +8,32 @@ import {
 } from "lucide-react";
 
 export const WeatherDetail: React.FC = () => {
-  const [weatherData, setWeatherData] = useState<any>(null);
-  const [forecastData, setForecastData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [weatherData, setWeatherData] = useState<any>(() => {
+    try {
+      const cached = localStorage.getItem("cached_full_weather_data");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [forecastData, setForecastData] = useState<any>(() => {
+    try {
+      const cached = localStorage.getItem("cached_full_forecast_data");
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [loading, setLoading] = useState(!weatherData);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        setLoading(true);
+        if (!weatherData) setLoading(true);
         const [weatherRes, forecastRes] = await Promise.all([
-          fetch(`${API_BASE}/api/weather?lat=13.5795&lon=44.0203`),
-          fetch(`${API_BASE}/api/forecast?lat=13.5795&lon=44.0203`)
+          fetchWithFallback(`/api/weather?lat=13.5795&lon=44.0203`),
+          fetchWithFallback(`/api/forecast?lat=13.5795&lon=44.0203`)
         ]);
         
         if (weatherRes.ok && forecastRes.ok) {
@@ -27,12 +41,17 @@ export const WeatherDetail: React.FC = () => {
           const fData = await forecastRes.json();
           setWeatherData(wData);
           setForecastData(fData);
+          localStorage.setItem("cached_full_weather_data", JSON.stringify(wData));
+          localStorage.setItem("cached_full_forecast_data", JSON.stringify(fData));
+          setError(null);
         } else {
           setError("تعذر جلب بيانات الطقس");
         }
       } catch (err) {
         console.error("Failed to fetch weather", err);
-        setError("حدث خطأ أثناء جلب البيانات");
+        if (!weatherData) {
+          setError("حدث خطأ أثناء جلب البيانات");
+        }
       } finally {
         setLoading(false);
       }
