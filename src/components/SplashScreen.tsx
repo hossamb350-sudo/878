@@ -131,8 +131,17 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
               return;
             }
             
-            // If the png custom splash failed, fall back to the general splash.png
+            // If the png custom splash failed, try the Resources directory
             if (target.src.includes("splash_first") || target.src.includes("splash_subsequent")) {
+              if (!target.src.includes("/Resources/")) {
+                const isFirst = target.src.includes("splash_first");
+                target.src = isFirst ? "/Resources/splash_first.png" : "/Resources/splash_subsequent.png";
+                return;
+              }
+            }
+            
+            // If the Resources path failed, fall back to the general splash.png
+            if (target.src.includes("splash_first") || target.src.includes("splash_subsequent") || target.src.includes("/Resources/")) {
               target.src = "/splash.png";
               return;
             }
@@ -145,7 +154,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
 
       {/* Interactive sliding cards for first launch only */}
       {isLoaded && isFirstLaunch && (
-        <div className="absolute inset-x-0 top-[58%] -translate-y-1/2 flex flex-col items-center justify-center px-4 z-20">
+        <div className="absolute inset-x-0 top-[63%] -translate-y-1/2 flex flex-col items-center justify-center px-4 z-20">
           {/* Cards side-by-side horizontal track matching the uploaded reference video */}
           <div className="w-full max-w-md flex items-center justify-center gap-2 sm:gap-4 overflow-visible" dir="rtl">
             {cards.map((card, index) => {

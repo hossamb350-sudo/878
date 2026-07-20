@@ -14,29 +14,58 @@ async function syncResources() {
     'splash_first.png',
     'splash_subsequent.png',
     'logo.png',
+    'logo2.png',
+    'logo3.png',
     'custom_footer.png',
     'copyright.png'
   ];
 
   console.log('Syncing resources from Resources/ to public/...');
 
+  // Ensure target directories exist
+  const capResourcesDir = path.join(publicDir, 'Resources');
+  const lowerResourcesDir = path.join(publicDir, 'resources');
+  
+  if (!fs.existsSync(capResourcesDir)) {
+    fs.mkdirSync(capResourcesDir, { recursive: true });
+  }
+  if (!fs.existsSync(lowerResourcesDir)) {
+    fs.mkdirSync(lowerResourcesDir, { recursive: true });
+  }
+
   for (const file of filesToSync) {
     const srcPath = path.join(resourcesDir, file);
-    const destPath = path.join(publicDir, file);
-
+    
     if (fs.existsSync(srcPath)) {
+      // Copy to public root
+      const destPath = path.join(publicDir, file);
       fs.copyFileSync(srcPath, destPath);
       console.log(`Copied ${file} to public/`);
+
+      // Copy to public/Resources
+      const capDestPath = path.join(capResourcesDir, file);
+      fs.copyFileSync(srcPath, capDestPath);
+      console.log(`Copied ${file} to public/Resources/`);
+
+      // Copy to public/resources
+      const lowerDestPath = path.join(lowerResourcesDir, file);
+      fs.copyFileSync(srcPath, lowerDestPath);
+      console.log(`Copied ${file} to public/resources/`);
 
       // If it's a splash image, also generate the webp version if sharp is available
       if (file.startsWith('splash_') && file.endsWith('.png')) {
         const webpDestPath = destPath.replace('.png', '.webp');
+        const capWebpDestPath = capDestPath.replace('.png', '.webp');
+        const lowerWebpDestPath = lowerDestPath.replace('.png', '.webp');
+        
         try {
           const sharp = (await import('sharp')).default;
-          await sharp(srcPath)
-            .webp({ quality: 85 })
-            .toFile(webpDestPath);
-          console.log(`Generated webp for ${file} at ${webpDestPath}`);
+          
+          await sharp(srcPath).webp({ quality: 85 }).toFile(webpDestPath);
+          await sharp(srcPath).webp({ quality: 85 }).toFile(capWebpDestPath);
+          await sharp(srcPath).webp({ quality: 85 }).toFile(lowerWebpDestPath);
+          
+          console.log(`Generated webp versions for ${file}`);
         } catch (err: any) {
           console.warn(`Could not generate webp for ${file} using sharp, using png fallback:`, err.message);
         }

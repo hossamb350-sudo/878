@@ -357,7 +357,17 @@ export const HeaderWidgets: React.FC = () => {
           <div className="flex flex-col items-center justify-center w-full">
             {/* Platform Logo */}
             <img 
-              src="/logo3.png" 
+              src="/Resources/logo3.png" 
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src.includes("/Resources/")) {
+                  target.src = "/resources/logo3.png";
+                } else if (target.src.includes("/resources/")) {
+                  target.src = "/logo3.png";
+                } else if (target.src.includes("/logo3.png")) {
+                  target.src = "Resources/logo3.png";
+                }
+              }}
               alt="Taiz Media Platform Logo" 
               className="h-[58px] sm:h-[78px] md:h-[94px] lg:h-[106px] w-auto object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.05)] transform hover:scale-102 transition-transform" 
             />

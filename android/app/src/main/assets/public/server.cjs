@@ -28,6 +28,7 @@ var import_fs = __toESM(require("fs"), 1);
 var import_vite = require("vite");
 var import_dotenv = __toESM(require("dotenv"), 1);
 var import_multer = __toESM(require("multer"), 1);
+var import_axios = __toESM(require("axios"), 1);
 var import_imagekit = __toESM(require("imagekit"), 1);
 var import_cors = __toESM(require("cors"), 1);
 var import_web_push = __toESM(require("web-push"), 1);
@@ -122,6 +123,87 @@ app.get("/api/quran-data", (req, res) => {
     }
   }
   res.status(404).json({ error: "Quran data not found" });
+});
+app.get("/api/weather", async (req, res) => {
+  try {
+    const { lat = "13.5795", lon = "44.0203" } = req.query;
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "OpenWeather API key is not configured" });
+    }
+    const response = await import_axios.default.get(`https://api.openweathermap.org/data/2.5/weather`, {
+      params: {
+        lat,
+        lon,
+        appid: apiKey,
+        units: "metric",
+        lang: "ar"
+        // Arabic for condition descriptions
+      }
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching weather data:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch weather data" });
+  }
+});
+app.get("/api/forecast", async (req, res) => {
+  try {
+    const { lat = "13.5795", lon = "44.0203" } = req.query;
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "OpenWeather API key is not configured" });
+    }
+    const response = await import_axios.default.get(`https://api.openweathermap.org/data/2.5/forecast`, {
+      params: {
+        lat,
+        lon,
+        appid: apiKey,
+        units: "metric",
+        lang: "ar"
+        // Arabic for condition descriptions
+      }
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching forecast data:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch forecast data" });
+  }
+});
+app.get("/api/prayer-times", async (req, res) => {
+  try {
+    const response = await import_axios.default.get(`https://api.aladhan.com/v1/timingsByCity`, {
+      params: {
+        city: "Taiz",
+        country: "Yemen",
+        method: 4
+        // Umm Al-Qura University, Makkah
+      }
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching prayer times:", error.message);
+    res.status(500).json({ error: "Failed to fetch prayer times" });
+  }
+});
+app.get("/api/calendar", async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    if (!month || !year) {
+      return res.status(400).json({ error: "Month and year are required" });
+    }
+    const response = await import_axios.default.get(`https://api.aladhan.com/v1/hijriCalendarByCity/${year}/${month}`, {
+      params: {
+        city: "Taiz",
+        country: "Yemen",
+        method: 4
+      }
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching calendar:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json(error.response?.data || { error: "Failed to fetch calendar" });
+  }
 });
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
@@ -328,16 +410,19 @@ app.post("/api/upload", upload.single("image"), (req, res) => {
   res.json({ url: fileUrl });
 });
 app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
+  console.log(`[Server] ImageKit upload request received. req.file: ${!!req.file}, req.body.imageBase64: ${!!req.body?.imageBase64}`);
   let fileContent;
   let originalName = "uploaded_image.jpg";
   let isTempFile = false;
   let tempFilePath = "";
   if (req.file) {
+    console.log(`[Server] Received file via Multer: ${req.file.originalname}, size: ${req.file.size}`);
     fileContent = import_fs.default.readFileSync(req.file.path);
     originalName = req.file.originalname;
     isTempFile = true;
     tempFilePath = req.file.path;
   } else if (req.body && req.body.imageBase64) {
+    console.log(`[Server] Received base64 image string, length: ${req.body.imageBase64.length}`);
     let base64String = req.body.imageBase64;
     if (base64String.startsWith("data:image")) {
       const matches = base64String.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
@@ -348,10 +433,15 @@ app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
     fileContent = Buffer.from(base64String, "base64");
     originalName = req.body.fileName || "uploaded_image_" + Date.now() + ".jpg";
   } else {
+    console.warn("[Server] No file or base64 data in request body:", req.body);
     return res.status(400).json({ error: "No file or base64 image uploaded" });
   }
   if (!imagekit.options.publicKey || !imagekit.options.privateKey || !imagekit.options.urlEndpoint) {
-    console.error("ImageKit credentials are not fully set");
+    console.error("[Server] ImageKit credentials missing. Config:", {
+      publicKey: !!imagekit.options.publicKey,
+      privateKey: !!imagekit.options.privateKey,
+      urlEndpoint: !!imagekit.options.urlEndpoint
+    });
     if (isTempFile) {
       try {
         import_fs.default.unlinkSync(tempFilePath);
@@ -361,16 +451,18 @@ app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
     return res.status(500).json({ error: "\u062E\u062F\u0645\u0629 \u0631\u0641\u0639 \u0627\u0644\u0635\u0648\u0631 \u063A\u064A\u0631 \u0645\u0647\u064A\u0623\u0629 (\u0628\u064A\u0627\u0646\u0627\u062A ImageKit \u0645\u0641\u0642\u0648\u062F\u0629)" });
   }
   try {
+    console.log(`[Server] Sending to ImageKit: fileName=${originalName}, size=${fileContent.length}`);
     const uploadResponse = await imagekit.upload({
       file: fileContent,
       fileName: originalName,
       folder: "/uploads"
     });
+    console.log("[Server] ImageKit upload success:", uploadResponse.url);
     if (isTempFile) {
       try {
         import_fs.default.unlinkSync(tempFilePath);
       } catch (err) {
-        console.error("Error deleting temp file:", err);
+        console.error("[Server] Error deleting temp file:", err);
       }
     }
     res.json({
@@ -380,7 +472,7 @@ app.post("/api/upload/imagekit", upload.single("image"), async (req, res) => {
       fileId: uploadResponse.fileId
     });
   } catch (error) {
-    console.error("ImageKit upload error:", error);
+    console.error("[Server] ImageKit upload error details:", error);
     if (isTempFile && req.file && import_fs.default.existsSync(req.file.path)) {
       try {
         import_fs.default.unlinkSync(req.file.path);
@@ -698,5 +790,8 @@ async function startServer() {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
-startServer();
+startServer().catch((err) => {
+  console.error("Critical failure during server startup:", err);
+  process.exit(1);
+});
 //# sourceMappingURL=server.cjs.map
