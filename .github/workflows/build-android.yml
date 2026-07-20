@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,6 +34,43 @@ jobs:
         with:
           gradle-version: 8.13
           validate-wrappers: false
+
+      - name: Debug Gradle wrapper
+        run: |
+          echo "Listing android/gradle/wrapper..."
+          ls -la android/gradle/wrapper || true
+          if [ -f android/gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "gradle-wrapper.jar size and info:"
+            stat --format='%s %n' android/gradle/wrapper/gradle-wrapper.jar || true
+            echo "Attempting to list jar contents (will fail if corrupt):"
+            if command -v jar >/dev/null 2>&1; then
+              jar tf android/gradle/wrapper/gradle-wrapper.jar || echo "jar is invalid or corrupt"
+            else
+              echo "jar tool not available in PATH"
+            fi
+          else
+            echo "gradle-wrapper.jar not found"
+          fi
+
+      - name: Regenerate Gradle wrapper (if missing or corrupt)
+        working-directory: ./android
+        run: |
+          set -e
+          echo "Trying to regenerate gradle wrapper using system gradle or existing gradlew..."
+          if command -v gradle >/dev/null 2>&1; then
+            echo "Using system gradle to regenerate wrapper..."
+            gradle wrapper --gradle-version 8.13 || true
+          else
+            echo "system gradle not found, trying existing ./gradlew..."
+            if [ -f ./gradlew ]; then
+              chmod +x ./gradlew || true
+              ./gradlew wrapper --gradle-version 8.13 || true
+            else
+              echo "No system gradle and no ./gradlew present — cannot regenerate wrapper here"
+            fi
+          fi
+          chmod +x ./gradlew || true
+          echo "Done regeneration step (if possible)."
 
       - name: Cache Android debug.keystore
         uses: actions/cache@v4
