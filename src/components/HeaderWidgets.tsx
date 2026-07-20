@@ -255,14 +255,24 @@ export const HeaderWidgets: React.FC = () => {
         day: 'numeric',
         month: 'long',
       }).format(time);
-      const year = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
+      const yearStr = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
         year: 'numeric'
       }).format(time);
-      return { dayMonth, year };
+      
+      const numericMonth = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {
+        month: 'numeric'
+      }).format(time);
+      const numericYear = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {
+        year: 'numeric'
+      }).format(time);
+
+      return { dayMonth, year: yearStr, m: parseInt(numericMonth), y: parseInt(numericYear) };
     } catch (e) {
       return {
         dayMonth: time.toLocaleDateString("ar-SA-u-ca-islamic", { day: "numeric", month: "long" }),
-        year: time.toLocaleDateString("ar-SA-u-ca-islamic", { year: "numeric" })
+        year: time.toLocaleDateString("ar-SA-u-ca-islamic", { year: "numeric" }),
+        m: 1,
+        y: 1448
       };
     }
   }, [time]);
@@ -403,7 +413,7 @@ export const HeaderWidgets: React.FC = () => {
 
         {/* 4. Date Card */}
         <Link 
-          to="/calendar" 
+          to={`/calendar/${hijriParts.m}/${hijriParts.y}`} 
           className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1 hover:bg-slate-50 active:scale-98 transition-all duration-200"
         >
           <div className="mb-1 sm:mb-1.5 shrink-0">

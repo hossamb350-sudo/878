@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { SyncService } from "../services/SyncService";
 import { EventItem } from "../types";
@@ -55,6 +55,7 @@ interface AladhanDay {
 
 export default function CalendarDetail() {
   const navigate = useNavigate();
+  const { month: paramMonth, year: paramYear } = useParams();
   const [loading, setLoading] = useState(true);
   const [calendarData, setCalendarData] = useState<AladhanDay[]>([]);
   const [dbEvents, setDbEvents] = useState<EventItem[]>([]);
@@ -87,8 +88,13 @@ export default function CalendarDetail() {
     return merged;
   }, [dbEvents]);
 
-  // Initialize with current date
+  // Initialize with current date or params
   useEffect(() => {
+    if (paramMonth && paramYear) {
+      setHijriMonth(parseInt(paramMonth));
+      setHijriYear(parseInt(paramYear));
+      return;
+    }
     const today = new Date();
     const formatter = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {
       day: 'numeric',

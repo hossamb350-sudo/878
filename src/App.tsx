@@ -48,6 +48,7 @@ function AnimatedRoutes() {
           <Route path="weather" element={<WeatherDetail />} />
           <Route path="prayer-times" element={<PrayerTimesDetail />} />
           <Route path="calendar" element={<CalendarDetail />} />
+          <Route path="calendar/:month/:year" element={<CalendarDetail />} />
           <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>
