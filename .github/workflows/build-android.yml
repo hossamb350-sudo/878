@@ -32,7 +32,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.7
+          gradle-version: 8.10.2
           validate-wrappers: false
 
       - name: Debug Gradle wrapper
@@ -53,12 +53,12 @@ jobs:
           echo "Trying to regenerate gradle wrapper using system gradle or existing gradlew..."
           if command -v gradle >/dev/null 2>&1; then
             echo "Using system gradle to regenerate wrapper..."
-            gradle wrapper --gradle-version 8.7 || true
+            gradle wrapper --gradle-version 8.10.2 || true
           else
             echo "system gradle not found, trying existing ./gradlew..."
             if [ -f ./gradlew ]; then
               chmod +x ./gradlew || true
-              ./gradlew wrapper --gradle-version 8.7 || true
+              ./gradlew wrapper --gradle-version 8.10.2 || true
             else
               echo "No system gradle and no ./gradlew present — cannot regenerate wrapper here"
             fi
