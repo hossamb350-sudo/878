@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { API_BASE } from "../config/apiConfig";
 import { 
   CloudSun, Wind, Droplets, Gauge, 
   Sunrise, Sunset, MapPin, Cloud, AlertCircle, CalendarDays,
@@ -17,8 +18,8 @@ export const WeatherDetail: React.FC = () => {
       try {
         setLoading(true);
         const [weatherRes, forecastRes] = await Promise.all([
-          fetch('/api/weather?lat=13.5795&lon=44.0203'),
-          fetch('/api/forecast?lat=13.5795&lon=44.0203')
+          fetch(`${API_BASE}/api/weather?lat=13.5795&lon=44.0203`),
+          fetch(`${API_BASE}/api/forecast?lat=13.5795&lon=44.0203`)
         ]);
         
         if (weatherRes.ok && forecastRes.ok) {

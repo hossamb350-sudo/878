@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { API_BASE } from "../config/apiConfig";
 import { 
   Sun, 
   CloudSun, 
@@ -181,8 +182,8 @@ export const HeaderWidgets: React.FC = () => {
     const fetchWeather = async () => {
       try {
         const [weatherRes, forecastRes] = await Promise.all([
-          fetch('/api/weather?lat=13.5795&lon=44.0203'),
-          fetch('/api/forecast?lat=13.5795&lon=44.0203')
+          fetch(`${API_BASE}/api/weather?lat=13.5795&lon=44.0203`),
+          fetch(`${API_BASE}/api/forecast?lat=13.5795&lon=44.0203`)
         ]);
         
         if (weatherRes.ok && forecastRes.ok) {
@@ -217,7 +218,7 @@ export const HeaderWidgets: React.FC = () => {
 
     const fetchPrayerTimes = async () => {
       try {
-        const response = await fetch('/api/prayer-times');
+        const response = await fetch(`${API_BASE}/api/prayer-times`);
         if (response.ok) {
           const data = await response.json();
           const timings = data.data.timings;

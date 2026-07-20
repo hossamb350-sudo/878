@@ -145,7 +145,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
 
       {/* Interactive sliding cards for first launch only */}
       {isLoaded && isFirstLaunch && (
-        <div className="absolute inset-x-0 top-[53%] -translate-y-1/2 flex flex-col items-center justify-center px-4 z-20">
+        <div className="absolute inset-x-0 top-[58%] -translate-y-1/2 flex flex-col items-center justify-center px-4 z-20">
           {/* Cards side-by-side horizontal track matching the uploaded reference video */}
           <div className="w-full max-w-md flex items-center justify-center gap-2 sm:gap-4 overflow-visible" dir="rtl">
             {cards.map((card, index) => {
@@ -159,7 +159,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                   animate={{
                     scale: isActive ? 1.1 : 0.9,
                     y: isActive ? -6 : 6,
-                    opacity: isActive ? 1 : 0.4,
+                    opacity: isActive ? 1 : 0.5,
                   }}
                   transition={{
                     type: "spring",
@@ -167,14 +167,18 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                     damping: 18,
                     mass: 0.8
                   }}
-                  className={`w-24 sm:w-28 h-28 sm:h-32 rounded-2xl flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all duration-300 border border-transparent bg-transparent`}
+                  className={`w-24 sm:w-28 h-28 sm:h-32 rounded-2xl flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all duration-300 border ${
+                    isActive
+                      ? "bg-[#162a45]/95 border-[#34619b]/80 shadow-[0_0_20px_rgba(52,97,155,0.4)] text-white"
+                      : "bg-[#0f1b2d]/80 border-white/10 text-white/60 hover:bg-[#162a45]/50"
+                  }`}
                 >
                   {/* Icon wrapper circular border */}
                   <div
                     className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
                       isActive
-                        ? "bg-taiz-sky/15 text-taiz-sky border border-taiz-sky/30 shadow-[0_0_15px_rgba(4,158,223,0.15)]"
-                        : "bg-taiz-navy/5 text-taiz-navy/30 border border-taiz-navy/10"
+                        ? "bg-[#34619b]/30 text-[#60a5fa] border border-[#34619b]/50 shadow-[0_0_15px_rgba(52,97,155,0.3)]"
+                        : "bg-white/5 text-white/30 border border-white/10"
                     }`}
                   >
                     <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
@@ -183,7 +187,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                   {/* Main Title */}
                   <h3
                     className={`text-[10px] sm:text-xs font-black mt-2.5 transition-colors duration-300 ${
-                      isActive ? "text-taiz-navy" : "text-taiz-navy/40"
+                      isActive ? "text-white" : "text-white/70"
                     }`}
                   >
                     {card.title}
@@ -192,7 +196,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                   {/* Subtitle */}
                   <p
                     className={`text-[8px] sm:text-[9px] font-black mt-0.5 transition-colors duration-300 ${
-                      isActive ? "text-taiz-royal" : "text-taiz-royal/35"
+                      isActive ? "text-[#eab355]" : "text-white/50"
                     }`}
                   >
                     {card.subtitle}
@@ -210,7 +214,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                 onClick={() => setActiveCardIndex(index)}
                 animate={{
                   width: index === activeCardIndex ? 20 : 6,
-                  backgroundColor: index === activeCardIndex ? "#34619b" : "rgba(7, 21, 43, 0.15)",
+                  backgroundColor: index === activeCardIndex ? "#60a5fa" : "rgba(255, 255, 255, 0.2)",
                 }}
                 className="h-1.5 rounded-full cursor-pointer border-none focus:outline-none transition-all"
               />
@@ -222,7 +226,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
             initial={{ opacity: 0, y: 5 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-[10px] sm:text-[11px] font-black text-taiz-navy/60 mt-5 text-center max-w-xs leading-relaxed"
+            className="text-[10px] sm:text-[11px] font-black text-white mt-6 text-center max-w-xs leading-relaxed"
           >
             منصة إخبارية ثقافية متكاملة تنقل الواقع وتستنير بالقرآن والقائد
           </motion.p>
@@ -232,7 +236,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-6 flex flex-col items-center gap-2.5 w-full max-w-[240px] relative z-30"
+            className="mt-8 flex flex-col items-center gap-2.5 w-full max-w-[240px] relative z-30"
           >
             <button
               onClick={() => setIsAuthModalOpen(true)}
@@ -243,7 +247,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
 
             <button
               onClick={handleSkip}
-              className="text-[11px] font-black text-taiz-royal hover:text-taiz-navy active:scale-95 transition-all cursor-pointer underline underline-offset-4 decoration-2"
+              className="text-[11px] font-black text-slate-300 hover:text-white active:scale-95 transition-all cursor-pointer underline underline-offset-4 decoration-2"
             >
               تخطي تسجيل الدخول
             </button>

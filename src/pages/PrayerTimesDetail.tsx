@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { API_BASE } from "../config/apiConfig";
 import { Sunrise, Sun, Sunset, Moon, MapPin, Clock } from "lucide-react";
 
 export const PrayerTimesDetail: React.FC = () => {
@@ -12,7 +13,7 @@ export const PrayerTimesDetail: React.FC = () => {
     const fetchPrayerTimes = async () => {
       try {
         setLoading(true);
-        const response = await fetch('/api/prayer-times');
+        const response = await fetch(`${API_BASE}/api/prayer-times`);
         if (response.ok) {
           const data = await response.json();
           const timings = data.data.timings;

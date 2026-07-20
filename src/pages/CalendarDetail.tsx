@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import { API_BASE } from "../config/apiConfig";
 import { SyncService } from "../services/SyncService";
 import { EventItem, ActivityItem } from "../types";
 import { BASE_EVENTS } from "../data/staticEvents";
@@ -154,7 +155,7 @@ export default function CalendarDetail() {
   const fetchCalendar = async (month: number, year: number) => {
     setLoading(true);
     try {
-      const response = await axios.get(`/api/calendar?month=${month}&year=${year}`);
+      const response = await axios.get(`${API_BASE}/api/calendar?month=${month}&year=${year}`);
       if (response.data.code === 200) {
         setCalendarData(response.data.data);
         return response.data.data;

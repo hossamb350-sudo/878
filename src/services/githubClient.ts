@@ -1,10 +1,7 @@
 import { get, set } from "idb-keyval";
 import { Capacitor } from "@capacitor/core";
+import { API_BASE } from "../config/apiConfig";
 
-const isProd = import.meta.env.PROD;
-const DEV_URL = "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
-const PROD_URL = "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
-const API_BASE = Capacitor.isNativePlatform() ? (isProd ? PROD_URL : DEV_URL) : "";
 
 export interface GitHubStatus {
   configured: boolean;
