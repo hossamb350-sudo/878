@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { SyncService } from "../services/SyncService";
-import { EventItem } from "../types";
+import { EventItem, ActivityItem } from "../types";
 import { BASE_EVENTS } from "../data/staticEvents";
 import { 
   ChevronRight, 
@@ -59,34 +59,49 @@ export default function CalendarDetail() {
   const [loading, setLoading] = useState(true);
   const [calendarData, setCalendarData] = useState<AladhanDay[]>([]);
   const [dbEvents, setDbEvents] = useState<EventItem[]>([]);
+  const [dbActivities, setDbActivities] = useState<ActivityItem[]>([]);
   const [selectedDay, setSelectedDay] = useState<AladhanDay | null>(null);
   
   // Current view Hijri Month and Year
   const [hijriMonth, setHijriMonth] = useState(1);
   const [hijriYear, setHijriYear] = useState(1448);
   
-  // Sync Events from Firestore
+  // Sync Events and Activities from Firestore
   useEffect(() => {
     let active = true;
-    const unsubPromise = SyncService.syncCollection<EventItem>("events", (data) => {
+    const unsubEventsPromise = SyncService.syncCollection<EventItem>("events", (data) => {
       if (active) setDbEvents(data);
+    });
+    const unsubActivitiesPromise = SyncService.syncCollection<ActivityItem>("activities", (data) => {
+      if (active) setDbActivities(data);
     });
     return () => {
       active = false;
-      unsubPromise.then(unsub => unsub());
+      unsubEventsPromise.then(unsub => unsub());
+      unsubActivitiesPromise.then(unsub => unsub());
     };
   }, []);
 
   const allEvents = useMemo(() => {
     const dbTitles = new Set(dbEvents.map((e) => e.title));
-    const merged = [...dbEvents];
+    const merged: (EventItem | { id: string; title: string; hijriDate: string })[] = [...dbEvents];
+    
+    // Add activities as events
+    dbActivities.forEach((act) => {
+      merged.push({
+        id: act.id,
+        title: act.title || act.type || "نشاط",
+        hijriDate: act.hijriDate
+      });
+    });
+
     BASE_EVENTS.forEach((be, i) => {
       if (!dbTitles.has(be.title)) {
         merged.push({ id: `static-${i}`, ...be } as EventItem);
       }
     });
     return merged;
-  }, [dbEvents]);
+  }, [dbEvents, dbActivities]);
 
   // Initialize with current date or params
   useEffect(() => {

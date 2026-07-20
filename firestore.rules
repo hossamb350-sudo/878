@@ -1,8 +1,10 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // ---------------------------------------------------------
     // Helper functions
-    function isAuthenticated() {
+    // ---------------------------------------------------------
+    function isSignedIn() {
       return request.auth != null;
     }
     
@@ -11,41 +13,162 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isAuthenticated() && getUserData().role == 'admin';
-    }
-    
-    function isManager() {
-      return isAuthenticated() && (getUserData().role == 'admin' || getUserData().role == 'manager');
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && getUserData().role == 'admin';
     }
 
+    function isManager() {
+       return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (getUserData().role == 'admin' || getUserData().role == 'manager');
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // ---------------------------------------------------------
+    // Validation Helpers
+    // ---------------------------------------------------------
+
+    function isValidNews(data) {
+      return data.keys().hasAll(['title', 'shortDescription', 'content', 'category', 'createdAt']) &&
+             data.title is string && data.title.size() <= 300 &&
+             data.shortDescription is string && data.shortDescription.size() <= 1000 &&
+             data.content is string &&
+             data.createdAt is number;
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['email', 'role', 'createdAt']) &&
+             data.email is string &&
+             data.role in ['admin', 'manager', 'user'] &&
+             data.createdAt is number &&
+             (data.get('lastLogin', null) == null || data.lastLogin is number) &&
+             (data.get('displayName', null) == null || data.displayName is string) &&
+             (data.get('photoURL', null) == null || data.photoURL is string);
+    }
+
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ---------------------------------------------------------
+    // Collections
+    // ---------------------------------------------------------
+
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if request.auth.uid == userId || isAdmin();
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(request.resource.data);
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastLogin', 'email'])) ||
+        isAdmin()
+      );
+    }
+
+    match /users/{userId}/bookmarks/{id} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/notes/{id} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/highlights/{id} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/stats/{id} {
+      allow read, write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /news/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /articles/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /urgentNews/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /newsMetadata/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /videos/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /events/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /activities/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /livestreams/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /notifications/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /leader/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /social_links/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /settings/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /authors/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /deletions/{id} {
+      allow read: if true;
+      allow write: if isManager();
     }
 
     match /quran_series/{id} {
       allow read: if true;
       allow write: if isManager();
     }
-    
+
     match /quran_lessons/{id} {
       allow read: if true;
       allow write: if isManager();
     }
-    
+
     match /quran_excerpts/{id} {
       allow read: if true;
       allow write: if isManager();
     }
-    
+
     match /quran_syllabuses/{id} {
       allow read: if true;
       allow write: if isManager();
     }
-
-    match /{document=**} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
   }
 }
+
