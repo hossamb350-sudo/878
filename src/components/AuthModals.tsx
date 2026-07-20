@@ -117,10 +117,30 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
       return false;
     }
     if (activeTab === "register") {
-      if (!displayName.trim()) {
+      const allowedDomains = ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com"];
+      const emailDomain = email.trim().toLowerCase().split("@")[1];
+      if (!emailDomain || !allowedDomains.includes(emailDomain)) {
+        setError("يرجى استخدام بريد إلكتروني من النطاقات المعتمدة فقط (gmail, hotmail, yahoo, outlook)");
+        return false;
+      }
+
+      const nameTrimmed = displayName.trim();
+      const nameParts = nameTrimmed.split(/\s+/);
+      const nameRegex = /^[a-zA-Z\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\s]+$/;
+
+      if (!nameTrimmed) {
         setError("يرجى إدخال اسمك الكامل");
         return false;
       }
+      if (nameParts.length < 2 || nameParts.some(part => part.length < 2)) {
+        setError("يرجى إدخال اسمك الحقيقي الكامل (الاسم واللقب على الأقل)");
+        return false;
+      }
+      if (!nameRegex.test(nameTrimmed)) {
+        setError("يجب أن يحتوي الاسم على حروف فقط وبدون رموز أو أرقام");
+        return false;
+      }
+
       if (password !== confirmPassword) {
         setError("كلمات المرور غير متطابقة");
         return false;
@@ -205,10 +225,10 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
           {/* Backdrop Overlay */}
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.5 }}
+            animate={{ opacity: 0.6 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-stone-900 z-[110] backdrop-blur-[3px]"
+            className="fixed inset-0 bg-[#07152B]/80 z-[110] backdrop-blur-[4px]"
           />
 
           {/* Bottom Sheet Modal */}
@@ -217,28 +237,28 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 180 }}
-            className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-[2.5rem] shadow-2xl z-[120] border-t border-stone-100 flex flex-col max-h-[92vh] overflow-hidden leading-relaxed text-right text-stone-800"
+            className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-[#07152B] rounded-t-[2.5rem] shadow-[0_-8px_32px_rgba(7,21,43,0.6)] z-[120] border-t border-[#1e4275]/50 flex flex-col max-h-[92vh] overflow-hidden leading-relaxed text-right text-white"
             dir="rtl"
           >
             {/* Header / Grabber */}
-            <div className="flex flex-col items-center pt-3 pb-2 select-none shrink-0 relative bg-stone-50 border-b border-stone-100/60">
-              <div className="w-12 h-1 bg-stone-200 rounded-full mb-3" />
+            <div className="flex flex-col items-center pt-3 pb-2 select-none shrink-0 relative bg-[#10264A] border-b border-[#1e4275]/40">
+              <div className="w-12 h-1 bg-[#1e4275]/80 rounded-full mb-3" />
               
               <button 
                 onClick={onClose}
-                className="absolute left-5 top-5 p-1.5 hover:bg-stone-200/50 rounded-full text-stone-400 hover:text-stone-600 transition-colors"
+                className="absolute left-5 top-5 p-1.5 hover:bg-[#1e4275]/50 rounded-full text-white/60 hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex gap-1.5 mt-2 overflow-hidden rounded-xl border border-stone-200 p-0.5 bg-white shadow-inner select-none font-bold text-xs">
+              <div className="flex gap-1.5 mt-2 overflow-hidden rounded-xl border border-[#1e4275]/50 p-0.5 bg-[#07152B] shadow-inner select-none font-bold text-xs">
                 <button
                   type="button"
                   onClick={() => { setActiveTab("login"); setError(null); }}
-                  className={`px-6 py-2 rounded-lg transition-all ${
+                  className={`px-6 py-2 rounded-lg transition-all cursor-pointer ${
                     activeTab === "login"
-                      ? "bg-gradient-to-r from-[#d49a37] to-[#b37f2c] text-white shadow-sm"
-                      : "text-stone-600 hover:bg-stone-50"
+                      ? "bg-gradient-to-r from-[#eab355] to-[#d49a37] text-[#07152B] shadow-sm"
+                      : "text-white/60 hover:text-white hover:bg-[#1e4275]/30"
                   }`}
                 >
                   تسجيل الدخول
@@ -246,10 +266,10 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
                 <button
                   type="button"
                   onClick={() => { setActiveTab("register"); setError(null); }}
-                  className={`px-6 py-2 rounded-lg transition-all ${
+                  className={`px-6 py-2 rounded-lg transition-all cursor-pointer ${
                     activeTab === "register"
-                      ? "bg-gradient-to-r from-[#d49a37] to-[#b37f2c] text-white shadow-sm"
-                      : "text-stone-600 hover:bg-stone-50"
+                      ? "bg-gradient-to-r from-[#eab355] to-[#d49a37] text-[#07152B] shadow-sm"
+                      : "text-white/60 hover:text-white hover:bg-[#1e4275]/30"
                   }`}
                 >
                   إنشاء حساب جديد
@@ -260,12 +280,12 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
             {/* Scrollable Content Form Area */}
             <div className="flex-1 overflow-y-auto px-6 py-6 scrollbar-hide">
               <div className="text-center mb-6">
-                <h3 className="text-lg font-black text-stone-900 leading-tight">
+                <h3 className="text-lg font-black text-white leading-tight">
                   {activeTab === "login" 
                     ? "مرحباً بك مجدداً في منصة تعز الإعلامية" 
                     : "انضم إلى أسرة منصة تعز الإعلامية"}
                 </h3>
-                <p className="text-xs text-stone-400 mt-1">
+                <p className="text-xs text-white/60 mt-1">
                   {activeTab === "login"
                     ? "سجل دخولك لتتمكن من حفظ تفضيلاتك والتفاعل بكل أمان"
                     : "أنشئ حساباً اليوم بلمح البصر للدروس الإخبارية والثقافية والمصاحف"}
@@ -279,7 +299,7 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2.5 text-xs font-bold text-red-600"
+                    className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-2.5 text-xs font-bold text-red-400"
                   >
                     <AlertCircle className="w-5 h-5 shrink-0" />
                     <span>{error}</span>
@@ -290,7 +310,7 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
               <form onSubmit={handleSubmit} className="space-y-4">
                 {activeTab === "register" && (
                   <div>
-                    <label className="block text-xs font-bold text-stone-500 mb-1.5 mr-1">الاسم الكامل</label>
+                    <label className="block text-xs font-bold text-[#eab355] mb-1.5 mr-1">الاسم الكامل</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -298,15 +318,15 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         placeholder="مثال: أحمد عبد الله"
-                        className="w-full pl-3 pr-10 py-3 bg-stone-50 hover:bg-stone-100/50 focus:bg-white border border-stone-200 focus:border-[#d49a37] focus:ring-1 focus:ring-[#d49a37] rounded-xl text-stone-800 text-sm focus:outline-none transition-all"
+                        className="w-full pl-3 pr-10 py-3 bg-[#10264A] hover:bg-[#1e4275]/70 focus:bg-[#10264A] border border-[#1e4275] focus:border-[#eab355] focus:ring-1 focus:ring-[#eab355] rounded-xl text-white text-sm focus:outline-none transition-all placeholder:text-white/30"
                       />
-                      <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                      <User className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
                     </div>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-500 mb-1.5 mr-1">البريد الإلكتروني</label>
+                  <label className="block text-xs font-bold text-[#eab355] mb-1.5 mr-1">البريد الإلكتروني</label>
                   <div className="relative">
                     <input
                       type="email"
@@ -314,14 +334,14 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="username@domain.com"
-                      className="w-full pl-3 pr-10 py-3 bg-stone-50 hover:bg-stone-100/50 focus:bg-white border border-stone-200 focus:border-[#d49a37] focus:ring-1 focus:ring-[#d49a37] rounded-xl text-stone-800 text-sm focus:outline-none transition-all ltr text-left"
+                      className="w-full pl-3 pr-10 py-3 bg-[#10264A] hover:bg-[#1e4275]/70 focus:bg-[#10264A] border border-[#1e4275] focus:border-[#eab355] focus:ring-1 focus:ring-[#eab355] rounded-xl text-white text-sm focus:outline-none transition-all ltr text-left placeholder:text-white/30"
                     />
-                    <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                    <Mail className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-500 mb-1.5 mr-1">كلمة المرور</label>
+                  <label className="block text-xs font-bold text-[#eab355] mb-1.5 mr-1">كلمة المرور</label>
                   <div className="relative">
                     <input
                       type={showPassword ? "text" : "password"}
@@ -329,13 +349,13 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full pl-10 pr-10 py-3 bg-stone-50 hover:bg-stone-100/50 focus:bg-white border border-stone-200 focus:border-[#d49a37] focus:ring-1 focus:ring-[#d49a37] rounded-xl text-stone-800 text-sm focus:outline-none transition-all ltr text-left"
+                      className="w-full pl-10 pr-10 py-3 bg-[#10264A] hover:bg-[#1e4275]/70 focus:bg-[#10264A] border border-[#1e4275] focus:border-[#eab355] focus:ring-1 focus:ring-[#eab355] rounded-xl text-white text-sm focus:outline-none transition-all ltr text-left placeholder:text-white/30"
                     />
-                    <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                    <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 cursor-pointer"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white cursor-pointer"
                     >
                       {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
                     </button>
@@ -344,7 +364,7 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
 
                 {activeTab === "register" && (
                   <div>
-                    <label className="block text-xs font-bold text-stone-500 mb-1.5 mr-1">تأكيد كلمة المرور</label>
+                    <label className="block text-xs font-bold text-[#eab355] mb-1.5 mr-1">تأكيد كلمة المرور</label>
                     <div className="relative">
                       <input
                         type={showPassword ? "text" : "password"}
@@ -352,9 +372,9 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-10 py-3 bg-stone-50 hover:bg-stone-100/50 focus:bg-white border border-stone-200 focus:border-[#d49a37] focus:ring-1 focus:ring-[#d49a37] rounded-xl text-stone-800 text-sm focus:outline-none transition-all ltr text-left"
+                        className="w-full pl-10 pr-10 py-3 bg-[#10264A] hover:bg-[#1e4275]/70 focus:bg-[#10264A] border border-[#1e4275] focus:border-[#eab355] focus:ring-1 focus:ring-[#eab355] rounded-xl text-white text-sm focus:outline-none transition-all ltr text-left placeholder:text-white/30"
                       />
-                      <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+                      <Lock className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/50 pointer-events-none" />
                     </div>
                   </div>
                 )}
@@ -362,11 +382,11 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-[#d49a37] to-[#b37f2c] hover:from-[#e3ab4a] hover:to-[#c48f33] active:scale-[0.99] text-white py-3.5 rounded-xl font-bold border border-[#d49e3c]/20 shadow-lg shadow-amber-600/10 flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 disabled:opacity-75 disabled:scale-100"
+                  className="w-full bg-gradient-to-r from-[#eab355] to-[#d49a37] hover:from-[#f5c36a] hover:to-[#e0ab4a] active:scale-[0.99] text-[#07152B] py-3.5 rounded-xl font-bold border border-[#eab355]/20 shadow-lg shadow-amber-600/10 flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 disabled:opacity-75 disabled:scale-100"
                 >
                   {loading ? (
                     <span className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span className="w-2.5 h-2.5 border-2 border-[#07152B] border-t-transparent rounded-full animate-spin" />
                       جاري معالجة طلبك...
                     </span>
                   ) : (
@@ -378,10 +398,10 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
               {/* Divider lines */}
               <div className="relative my-6 select-none shrink-0">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-stone-150" />
+                  <div className="w-full border-t border-[#1e4275]/50" />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white px-3 text-stone-400 font-bold">أو تسجيل الدخول عبر</span>
+                  <span className="bg-[#07152B] px-3 text-white/50 font-bold">أو تسجيل الدخول عبر</span>
                 </div>
               </div>
 
@@ -390,16 +410,16 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
                 type="button"
                 onClick={handleGoogleLogin}
                 disabled={loading}
-                className="w-full border border-stone-200 hover:bg-stone-50 active:scale-[0.99] bg-white text-stone-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all text-xs cursor-pointer shadow-sm md:shadow-none disabled:opacity-50"
+                className="w-full border border-[#1e4275] hover:bg-[#10264A] active:scale-[0.99] bg-[#07152B] text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all text-xs cursor-pointer shadow-sm disabled:opacity-50"
               >
                 <img src="https://www.google.com/favicon.ico" className="w-4 h-4 shrink-0" alt="" />
-                <span>شريك جوجل (Google Auth)</span>
+                <span>تسجيل الدخول عبر حساب جوجل</span>
               </button>
 
               <div className="mt-8 text-center select-none shrink-0">
                 <button
                   onClick={onClose}
-                  className="text-stone-400 font-bold hover:text-[#c28d32] text-xs transition-colors underline decoration-dotted underline-offset-4 cursor-pointer"
+                  className="text-white/50 font-bold hover:text-[#eab355] text-xs transition-colors underline decoration-dotted underline-offset-4 cursor-pointer"
                 >
                   الدخول المباشر كزائر (تخطي)
                 </button>
