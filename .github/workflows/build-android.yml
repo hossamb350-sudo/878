@@ -32,7 +32,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: 8.13
+          gradle-version: 8.7
           validate-wrappers: false
 
       - name: Debug Gradle wrapper
@@ -42,12 +42,6 @@ jobs:
           if [ -f android/gradle/wrapper/gradle-wrapper.jar ]; then
             echo "gradle-wrapper.jar size and info:"
             stat --format='%s %n' android/gradle/wrapper/gradle-wrapper.jar || true
-            echo "Attempting to list jar contents (will fail if corrupt):"
-            if command -v jar >/dev/null 2>&1; then
-              jar tf android/gradle/wrapper/gradle-wrapper.jar || echo "jar is invalid or corrupt"
-            else
-              echo "jar tool not available in PATH"
-            fi
           else
             echo "gradle-wrapper.jar not found"
           fi
@@ -59,12 +53,12 @@ jobs:
           echo "Trying to regenerate gradle wrapper using system gradle or existing gradlew..."
           if command -v gradle >/dev/null 2>&1; then
             echo "Using system gradle to regenerate wrapper..."
-            gradle wrapper --gradle-version 8.13 || true
+            gradle wrapper --gradle-version 8.7 || true
           else
             echo "system gradle not found, trying existing ./gradlew..."
             if [ -f ./gradlew ]; then
               chmod +x ./gradlew || true
-              ./gradlew wrapper --gradle-version 8.13 || true
+              ./gradlew wrapper --gradle-version 8.7 || true
             else
               echo "No system gradle and no ./gradlew present — cannot regenerate wrapper here"
             fi
@@ -81,7 +75,15 @@ jobs:
       - name: Install dependencies
         run: |
           npm install --legacy-peer-deps
-          sed -i 's/jcenter()/mavenCentral()/g' node_modules/@southdevs/capacitor-google-auth/android/build.gradle
+          # Fix deprecated syntax in capacitor-google-auth to prevent build failures
+          SED_PATH="node_modules/@southdevs/capacitor-google-auth/android/build.gradle"
+          if [ -f "$SED_PATH" ]; then
+            echo "Fixing $SED_PATH syntax..."
+            sed -i 's/jcenter()/mavenCentral()/g' "$SED_PATH"
+            sed -i 's/^\s*namespace\s\+/namespace = /' "$SED_PATH"
+            sed -i 's/^\s*compileSdk\s\+/compileSdk = /' "$SED_PATH"
+            sed -i 's/^\s*abortOnError\s\+/abortOnError = /' "$SED_PATH"
+          fi
 
       - name: Build Web App
         run: npm run build
@@ -94,8 +96,7 @@ jobs:
         run: |
           chmod +x ./gradlew
           ./gradlew clean
-          ./gradlew --version
-          ./gradlew assembleDebug --no-daemon --stacktrace --no-configuration-cache || (./gradlew :app:dependencies && exit 1)
+          ./gradlew assembleDebug --no-daemon --stacktrace
 
       - name: Print SHA-1 fingerprint
         working-directory: ./android
