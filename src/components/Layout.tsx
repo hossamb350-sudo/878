@@ -260,9 +260,9 @@ export function Layout() {
           {[
             { to: "/", icon: Newspaper, label: "الأخبار" },
             { to: "/watch", icon: Tv, label: "شاهد" },
-            { to: "/leader", icon: User, label: "القائد" },
-            { to: "/quran", icon: BookOpen, label: "الهدى" },
-            { to: "/events", icon: CalendarIcon, label: "تقويم" },
+            { to: "/leader", icon: User, label: "السيد القائد" },
+            { to: "/quran", icon: BookOpen, label: "هدي القرآن" },
+            { to: "/events", icon: CalendarIcon, label: "أنشطة ومناسبات" },
             { to: "/admin", icon: User, label: "حسابي" }
           ].map((item) => {
             const isItemActive = item.to === "/"

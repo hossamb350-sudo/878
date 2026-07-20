@@ -18,6 +18,8 @@ import { ArticleDetail } from "./pages/ArticleDetail";
 import { Admin } from "./pages/Admin";
 import { ActivityDetail } from "./pages/ActivityDetail";
 import { Search } from "./pages/Search";
+import { WeatherDetail } from "./pages/WeatherDetail";
+import { PrayerTimesDetail } from "./pages/PrayerTimesDetail";
 import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
@@ -41,6 +43,8 @@ function AnimatedRoutes() {
           <Route path="quran" element={<Quran />} />
           <Route path="events" element={<Events />} />
           <Route path="events/activity/:id" element={<ActivityDetail />} />
+          <Route path="weather" element={<WeatherDetail />} />
+          <Route path="prayer-times" element={<PrayerTimesDetail />} />
           <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>

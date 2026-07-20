@@ -118,6 +118,77 @@ app.get("/api/quran-data", (req, res) => {
   res.status(404).json({ error: "Quran data not found" });
 });
 
+// Weather API
+app.get("/api/weather", async (req, res) => {
+  try {
+    const { lat = "13.5795", lon = "44.0203" } = req.query; // Default to Taiz
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(500).json({ error: "OpenWeather API key is not configured" });
+    }
+
+    const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather`, {
+      params: {
+        lat,
+        lon,
+        appid: apiKey,
+        units: "metric",
+        lang: "ar" // Arabic for condition descriptions
+      }
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error("Error fetching weather data:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch weather data" });
+  }
+});
+
+// Forecast API
+app.get("/api/forecast", async (req, res) => {
+  try {
+    const { lat = "13.5795", lon = "44.0203" } = req.query; // Default to Taiz
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+    
+    if (!apiKey) {
+      return res.status(500).json({ error: "OpenWeather API key is not configured" });
+    }
+
+    const response = await axios.get(`https://api.openweathermap.org/data/2.5/forecast`, {
+      params: {
+        lat,
+        lon,
+        appid: apiKey,
+        units: "metric",
+        lang: "ar" // Arabic for condition descriptions
+      }
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error("Error fetching forecast data:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch forecast data" });
+  }
+});
+
+// Prayer Times API
+app.get("/api/prayer-times", async (req, res) => {
+  try {
+    const response = await axios.get(`https://api.aladhan.com/v1/timingsByCity`, {
+      params: {
+        city: 'Taiz',
+        country: 'Yemen',
+        method: 4 // Umm Al-Qura University, Makkah
+      }
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    console.error("Error fetching prayer times:", error.message);
+    res.status(500).json({ error: "Failed to fetch prayer times" });
+  }
+});
+
 // Request logging middleware
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {
