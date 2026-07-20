@@ -237,8 +237,8 @@ export function ArticleDetail() {
              </h3>
              <div className="grid grid-cols-2 gap-4">
                 {relatedArticles.map(a => (
-                  <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-white rounded-2xl p-3 border border-border-light hover:bg-slate-50 transition-all shadow-soft">
-                     <div className="aspect-video rounded-xl overflow-hidden mb-3">
+                  <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-white rounded-none p-3 border border-border-light hover:bg-slate-50 transition-all shadow-soft">
+                     <div className="aspect-video rounded-none overflow-hidden mb-3">
                         <img src={a.imageUrl || a.authorPhoto} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                      </div>
                      <h4 className="font-bold font-ibm text-xs text-text-primary line-clamp-2 leading-relaxed text-right">{a.title}</h4>

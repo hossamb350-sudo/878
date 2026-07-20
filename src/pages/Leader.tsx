@@ -94,57 +94,60 @@ export function Leader() {
            لا يوجد محتوى يطابق خيارات البحث والتصفية المحددة.
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
           {filteredContent.map(item => (
-            <Link 
-              to={`/leader/${item.id}`} 
-              key={item.id} 
-              className="group relative aspect-video rounded-3xl overflow-hidden shadow-md border border-border-light animate-fade-in"
-            >
-              {item.thumbnailUrl ? (
-                <img 
-                  src={item.thumbnailUrl} 
-                  alt={item.title} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  loading="lazy"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-br from-taiz-navy to-taiz-royal flex items-center justify-center">
-                  {item.type === 'video' ? <PlayCircle className="w-12 h-12 text-white/20" /> : <FileText className="w-12 h-12 text-white/20" />}
-                </div>
-              )}
-              
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-              
-              <div className="absolute top-3 right-3">
-                {item.type === 'video' ? (
-                   <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-md flex items-center gap-1.5 shadow-lg">
-                    <PlayCircle className="w-3 h-3" /> فيديو
-                  </span>
+            <div key={item.id} className="flex flex-col gap-4">
+              <Link 
+                to={`/leader/${item.id}`} 
+                className="group relative aspect-video rounded-none overflow-hidden shadow-sm border border-border-light animate-fade-in"
+              >
+                {item.thumbnailUrl ? (
+                  <img 
+                    src={item.thumbnailUrl} 
+                    alt={item.title} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 rounded-none"
+                    loading="lazy"
+                    referrerPolicy="no-referrer"
+                  />
                 ) : (
-                   <span className="bg-taiz-sky text-white text-[10px] font-black px-2 py-1 rounded-md flex items-center gap-1.5 shadow-lg">
-                    <FileText className="w-3 h-3" /> محاضرة
-                  </span>
+                  <div className="w-full h-full bg-gradient-to-br from-taiz-navy to-taiz-royal flex items-center justify-center rounded-none">
+                    {item.type === 'video' ? <PlayCircle className="w-12 h-12 text-white/20" /> : <FileText className="w-12 h-12 text-white/20" />}
+                  </div>
                 )}
-              </div>
-
-              <div className="absolute bottom-4 right-4 left-4 text-right">
-                <h2 className="text-white text-sm sm:text-base font-black leading-snug line-clamp-2 group-hover:text-red-400 transition-colors">
-                  {item.title}
-                </h2>
-                <div className="flex items-center justify-between mt-2 opacity-80">
-                  <span className="text-[10px] text-white/80 font-bold">
-                    {format(item.createdAt, "dd MMMM yyyy", { locale: ar })}
-                  </span>
-                  {item.views !== undefined && (
-                    <span className="flex items-center gap-1 text-[10px] text-white/80 font-bold bg-white/10 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                       <Eye className="w-2.5 h-2.5 text-red-500" /> {item.views}
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent rounded-none"></div>
+                
+                <div className="absolute top-3 right-3">
+                  {item.type === 'video' ? (
+                     <span className="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-none flex items-center gap-1.5 shadow-lg">
+                      <PlayCircle className="w-3 h-3" /> فيديو
+                    </span>
+                  ) : (
+                     <span className="bg-taiz-sky text-white text-[10px] font-black px-2 py-1 rounded-none flex items-center gap-1.5 shadow-lg">
+                      <FileText className="w-3 h-3" /> محاضرة
                     </span>
                   )}
                 </div>
-              </div>
-            </Link>
+
+                <div className="absolute bottom-4 right-4 left-4 text-right">
+                  <h2 className="text-white text-sm sm:text-base font-black leading-snug line-clamp-2 group-hover:text-red-400 transition-colors">
+                    {item.title}
+                  </h2>
+                  <div className="flex items-center justify-between mt-2 opacity-80">
+                    <span className="text-[10px] text-white/80 font-bold">
+                      {format(item.createdAt, "dd MMMM yyyy", { locale: ar })}
+                    </span>
+                    {item.views !== undefined && (
+                      <span className="flex items-center gap-1 text-[10px] text-white/80 font-bold bg-white/10 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                         <Eye className="w-2.5 h-2.5 text-red-500" /> {item.views}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+              {/* Visible horizontal divider below each card */}
+              <div className="w-full h-px bg-slate-200/80 dark:bg-stone-800/80" />
+            </div>
           ))}
         </div>
       )}

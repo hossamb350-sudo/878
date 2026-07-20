@@ -40,6 +40,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { QuranReader } from "../components/QuranReader";
 import { QuranStats } from "../components/QuranStats";
+import { QuranKareem } from "../components/QuranKareem";
 import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData } from "../data/staticQuranData";
 import { loadQuranMetadata, loadLessonContent } from "../data/importedQuranData";
 
@@ -104,7 +105,8 @@ type QuranView =
   | "excerpts"
   | "excerpt-detail"
   | "stats"
-  | "leader";
+  | "leader"
+  | "quran";
 
 // --- Sub-components moved outside to prevent re-mounting on every state update ---
 
@@ -690,6 +692,7 @@ const Header = ({
   if (activeView === "excerpt-detail" && selectedExcerpt)
     title = selectedExcerpt.title;
   if (activeView === "stats") title = "لوحة التقدم";
+  if (activeView === "quran") title = "القرآن الكريم";
 
   return (
     <div className="bg-taiz-navy text-white pt-2 pb-0 relative z-20 shadow-md flex-shrink-0">
@@ -818,6 +821,16 @@ const Sidebar = ({
               active={activeView === "leader"}
               onClick={() => {
                 setActiveView("leader");
+                setIsSidebarOpen(false);
+              }}
+            />
+            <SidebarItem
+              icon={<BookOpen className="w-5 h-5 text-red-600" />}
+              label="القرآن الكريم"
+              description="تصفح واستمع لسور القرآن الكريم"
+              active={activeView === "quran"}
+              onClick={() => {
+                setActiveView("quran");
                 setIsSidebarOpen(false);
               }}
             />
@@ -1686,6 +1699,47 @@ export function Quran() {
           setActiveView={setActiveView}
         />
       )}
+
+      {/* Tab bar for "الدروس" and "القرآن الكريم" */}
+      {(activeView === "series" || activeView === "quran") && (
+        <div className="pt-4 pb-3 px-4 bg-white dark:bg-stone-900 border-b border-slate-200/50 dark:border-stone-800 sticky top-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.01)] shrink-0 select-none">
+          <div className="max-w-[700px] mx-auto w-full flex items-center justify-between">
+            {/* Right side: Active Indicator & Title with Cairo Font */}
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+              </span>
+              <span className="font-black text-base text-slate-800 dark:text-stone-100 font-cairo tracking-tight">
+                {activeView === "quran" ? "القرآن الكريم" : "ملازم هدي القرآن"}
+              </span>
+            </div>
+
+            {/* Left side: Dedicated Direct Navigation Shortcut with Emerald/Spiritual visual identity */}
+            {activeView === "quran" ? (
+              <button 
+                onClick={() => setActiveView("series")}
+                title="الانتقال السريع إلى الدروس"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black"
+              >
+                <Library className="w-4 h-4 text-white/90 group-hover:scale-110 transition-transform duration-300" />
+                <span>الدروس</span>
+                <ChevronLeft className="w-4 h-4 text-white/70 group-hover:-translate-x-1 transition-transform" />
+              </button>
+            ) : (
+              <button 
+                onClick={() => setActiveView("quran")}
+                title="الانتقال السريع إلى القرآن الكريم"
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black"
+              >
+                <BookOpen className="w-4 h-4 text-white/90 group-hover:scale-110 transition-transform duration-300" />
+                <span>القرآن الكريم</span>
+                <ChevronLeft className="w-4 h-4 text-white/70 group-hover:-translate-x-1 transition-transform" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
@@ -1730,6 +1784,9 @@ export function Quran() {
                       setActiveView("lessons");
                     }}
                   />
+                )}
+                {activeView === "quran" && (
+                  <QuranKareem />
                 )}
                 {activeView === "lessons" && (
                   <LessonsView

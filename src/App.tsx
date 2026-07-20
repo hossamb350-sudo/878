@@ -23,6 +23,7 @@ import { PrayerTimesDetail } from "./pages/PrayerTimesDetail";
 import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
+import { QuranAudioProvider } from "./context/QuranAudioContext";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -57,23 +58,25 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <NavigationController />
-      <div className="relative min-h-screen">
-        <AnimatedRoutes />
-        <AnimatePresence>
-          {showSplash && (
-            <motion.div
-              key="splash-screen-container"
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-              className="fixed inset-0 z-[9999]"
-            >
-              <SplashScreen onComplete={() => setShowSplash(false)} />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <QuranAudioProvider>
+        <NavigationController />
+        <div className="relative min-h-screen">
+          <AnimatedRoutes />
+          <AnimatePresence>
+            {showSplash && (
+              <motion.div
+                key="splash-screen-container"
+                initial={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                className="fixed inset-0 z-[9999]"
+              >
+                <SplashScreen onComplete={() => setShowSplash(false)} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </QuranAudioProvider>
     </BrowserRouter>
   );
 }

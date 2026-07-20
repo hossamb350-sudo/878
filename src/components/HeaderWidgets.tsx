@@ -65,6 +65,40 @@ const render3DCalendarIcon = () => (
   </svg>
 );
 
+
+const renderMosqueDomeIcon = () => (
+  <svg className="w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 drop-shadow-md select-none transform hover:scale-105 transition-transform" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="domeGrad" x1="16" y1="20" x2="48" y2="44" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#10B981" />
+        <stop offset="50%" stopColor="#059669" />
+        <stop offset="100%" stopColor="#047857" />
+      </linearGradient>
+      <linearGradient id="domeBaseGrad" x1="12" y1="46" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#047857" />
+        <stop offset="100%" stopColor="#064E3B" />
+      </linearGradient>
+      <linearGradient id="crescentGrad" x1="30" y1="2" x2="36" y2="12" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#34D399" />
+        <stop offset="100%" stopColor="#059669" />
+      </linearGradient>
+    </defs>
+    <rect x="12" y="46" width="40" height="4" rx="2" fill="url(#domeBaseGrad)" />
+    <rect x="18" y="44" width="28" height="2" rx="1" fill="#10B981" />
+    <path d="M16 44C16 31 21 19 32 19C43 19 48 31 48 44H16Z" fill="url(#domeGrad)" />
+    <path d="M31.5 8H32.5V19H31.5V8Z" fill="url(#crescentGrad)" />
+    <circle cx="32" cy="14" r="1.5" fill="#34D399" />
+    <circle cx="32" cy="11" r="1.2" fill="#34D399" />
+    <path d="M32 2C34.5 2 36.5 3.5 36.5 5.5C36.5 7.5 34.5 9 32 9C34 9 35.5 7.5 35.5 5.5C35.5 3.5 34 2 32 2Z" fill="url(#crescentGrad)" />
+  </svg>
+);
+
+
+// Premium Gold Separator
+const GoldSeparator = () => (
+  <div className="w-[1px] my-3 sm:my-4 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent self-stretch shadow-[0_0_8px_rgba(245,158,11,0.2)]" />
+);
+
 const WeatherIcon = ({ code, isNight, temp = 25, hours }: { code?: number, isNight?: boolean, temp?: number, hours?: number }) => {
   const hr = hours !== undefined ? hours : new Date().getHours();
   
@@ -130,42 +164,9 @@ const WeatherIcon = ({ code, isNight, temp = 25, hours }: { code?: number, isNig
   return isNight ? <CloudMoon {...iconProps} className={`${iconProps.className} text-slate-300`} /> : <CloudSun {...iconProps} className={`${iconProps.className} text-amber-500`} />;
 };
 
-const renderMosqueDomeIcon = () => (
-  <svg className="w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 drop-shadow-md select-none transform hover:scale-105 transition-transform" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <linearGradient id="domeGrad" x1="16" y1="20" x2="48" y2="44" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#10B981" />
-        <stop offset="50%" stopColor="#059669" />
-        <stop offset="100%" stopColor="#047857" />
-      </linearGradient>
-      <linearGradient id="domeBaseGrad" x1="12" y1="46" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#047857" />
-        <stop offset="100%" stopColor="#064E3B" />
-      </linearGradient>
-      <linearGradient id="crescentGrad" x1="30" y1="2" x2="36" y2="12" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#34D399" />
-        <stop offset="100%" stopColor="#059669" />
-      </linearGradient>
-    </defs>
-    <rect x="12" y="46" width="40" height="4" rx="2" fill="url(#domeBaseGrad)" />
-    <rect x="18" y="44" width="28" height="2" rx="1" fill="#10B981" />
-    <path d="M16 44C16 31 21 19 32 19C43 19 48 31 48 44H16Z" fill="url(#domeGrad)" />
-    <path d="M31.5 8H32.5V19H31.5V8Z" fill="url(#crescentGrad)" />
-    <circle cx="32" cy="14" r="1.5" fill="#34D399" />
-    <circle cx="32" cy="11" r="1.2" fill="#34D399" />
-    <path d="M32 2C34.5 2 36.5 3.5 36.5 5.5C36.5 7.5 34.5 9 32 9C34 9 35.5 7.5 35.5 5.5C35.5 3.5 34 2 32 2Z" fill="url(#crescentGrad)" />
-  </svg>
-);
-
-
-// Premium Gold Separator
-const GoldSeparator = () => (
-  <div className="w-[1px] my-3 sm:my-4 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent self-stretch shadow-[0_0_8px_rgba(245,158,11,0.2)]" />
-);
-
 export const HeaderWidgets: React.FC = () => {
   const [time, setTime] = useState(new Date());
-  const [weatherData, setWeatherData] = useState<{ temp: number; condition: string; id: number } | null>(null);
+  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max?: number; temp_min?: number; condition: string; id: number; icon?: string } | null>(null);
   const [prayerTimes, setPrayerTimes] = useState<{ name: string; time: string }[] | null>(null);
   const [apiHijriDate, setApiHijriDate] = useState<string | null>(null);
   
@@ -179,13 +180,34 @@ export const HeaderWidgets: React.FC = () => {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const response = await fetch('/api/weather?lat=13.5795&lon=44.0203');
-        if (response.ok) {
-          const data = await response.json();
+        const [weatherRes, forecastRes] = await Promise.all([
+          fetch('/api/weather?lat=13.5795&lon=44.0203'),
+          fetch('/api/forecast?lat=13.5795&lon=44.0203')
+        ]);
+        
+        if (weatherRes.ok && forecastRes.ok) {
+          const wData = await weatherRes.json();
+          const fData = await forecastRes.json();
+          
+          // Compute today's actual min and max from the next 24 hours of forecast
+          const todayForecasts = fData.list.slice(0, 8);
+          const minTemps = todayForecasts.map((item: any) => item.main.temp_min);
+          const maxTemps = todayForecasts.map((item: any) => item.main.temp_max);
+          
+          // Include current weather temp readings to cover all bases
+          minTemps.push(wData.main.temp_min);
+          maxTemps.push(wData.main.temp_max);
+
+          const temp_min = Math.round(Math.min(...minTemps));
+          const temp_max = Math.round(Math.max(...maxTemps));
+
           setWeatherData({
-            temp: Math.round(data.main.temp),
-            condition: data.weather[0].description,
-            id: data.weather[0].id
+            temp: Math.round(wData.main.temp),
+            temp_max: temp_max,
+            temp_min: temp_min,
+            condition: wData.weather[0].description,
+            id: wData.weather[0].id,
+            icon: wData.weather[0].icon
           });
         }
       } catch (err) {
@@ -262,10 +284,16 @@ export const HeaderWidgets: React.FC = () => {
 
   const weather = weatherData ? {
     temp: weatherData.temp,
+    temp_max: weatherData.temp_max,
+    temp_min: weatherData.temp_min,
     condition: weatherData.condition,
+    icon: weatherData.icon,
   } : {
     temp: 27,
+    temp_max: 29,
+    temp_min: 24,
     condition: "غائم جزئي",
+    icon: "02d"
   };
 
   // Calculate Next Prayer Countdown (always displaying hours and minutes)
@@ -309,10 +337,10 @@ export const HeaderWidgets: React.FC = () => {
 
   return (
     <div className="w-full max-w-full mx-auto px-0 pt-0 pb-0 select-none" dir="rtl">
-      <div className="w-full bg-white/10 backdrop-blur-[16px] rounded-none border-b border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] flex items-stretch overflow-hidden min-h-[95px] sm:min-h-[115px] md:min-h-[130px] transition-all duration-300">
+      <div className="w-full bg-slate-50/95 backdrop-blur-md rounded-none border-b border-slate-200/60 shadow-sm flex items-stretch p-1 sm:p-1.5 overflow-hidden min-h-[95px] sm:min-h-[115px] md:min-h-[130px] transition-all duration-300">
         
         {/* 1. Platform Branding Card */}
-        <div className="flex-[1.6] md:flex-[1.8] relative flex flex-col items-center justify-center text-center p-2 select-none bg-white/10 backdrop-blur-md border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]">
+        <div className="flex-[1.6] md:flex-[1.8] relative flex flex-col items-center justify-center text-center p-2 select-none bg-transparent m-1">
           
           {/* Logo container without any background overlay or separators */}
           <div className="flex flex-col items-center justify-center w-full">
@@ -326,10 +354,13 @@ export const HeaderWidgets: React.FC = () => {
 
         </div>
 
+        {/* Separator */}
+        <GoldSeparator />
+
         {/* 2. Prayer Times Card (Dynamic with 3D Emerald Mosque matching reference) */}
         <Link 
           to="/prayer-times" 
-          className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white/10 backdrop-blur-md border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] hover:bg-white/20 active:scale-98 transition-all duration-200"
+          className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1 hover:bg-slate-50 active:scale-98 transition-all duration-200"
         >
           <div className="mb-1 sm:mb-1.5 shrink-0">
             {renderMosqueDomeIcon()}
@@ -350,14 +381,16 @@ export const HeaderWidgets: React.FC = () => {
         {/* 3. Weather Card (Dynamic with 3D Cloud/Sun matching reference) */}
         <Link 
           to="/weather" 
-          className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white/10 backdrop-blur-md border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] hover:bg-white/20 active:scale-98 transition-all duration-200"
+          className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1 hover:bg-slate-50 active:scale-98 transition-all duration-200"
         >
           <div className="mb-1 sm:mb-1.5 shrink-0">
             <WeatherIcon code={weatherData?.id} isNight={isNight} temp={weatherData?.temp} hours={time.getHours()} />
           </div>
           <div className="flex flex-col items-center">
-            <span className="text-[11px] sm:text-[14px] md:text-[18px] lg:text-[20px] font-black text-[#0B1C3E] font-cairo leading-none">
-              {weather.temp}°
+            <span className="text-[11px] sm:text-[14px] md:text-[18px] lg:text-[20px] font-black text-red-600 font-cairo leading-none flex items-center justify-center gap-1">
+              <span>{weather.temp_min}°</span>
+              <span className="text-slate-400 font-normal">/</span>
+              <span>{weather.temp_max}°</span>
             </span>
             <span className="text-[8px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-slate-500 font-bold font-cairo leading-none mt-1 truncate max-w-full">
               {weather.condition}
@@ -369,7 +402,7 @@ export const HeaderWidgets: React.FC = () => {
         <GoldSeparator />
 
         {/* 4. Date Card */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white/10 backdrop-blur-md border border-white/20 shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)]">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1">
           <div className="mb-1 sm:mb-1.5 shrink-0">
             {render3DCalendarIcon()}
           </div>

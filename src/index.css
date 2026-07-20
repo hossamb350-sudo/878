@@ -132,3 +132,17 @@
 @utility bg-taiz-gradient {
   background-image: linear-gradient(to right, #07152B, #10264A, #1E4275);
 }
+
+/* Quran Reading Focus Mode Layout Styles */
+body.quran-reading-focus nav,
+body.quran-reading-focus div.relative.z-30,
+body.quran-reading-focus header {
+  display: none !important;
+}
+
+body.quran-reading-focus main {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}

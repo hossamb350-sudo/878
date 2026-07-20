@@ -149,6 +149,39 @@ export function QuranReader({
     );
   }, [fontMedium]);
 
+  // Handle global focusMode body classes and full screen
+  useEffect(() => {
+    if (focusMode) {
+      document.body.classList.add("quran-reading-focus");
+      try {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen?.();
+        }
+      } catch (err) {
+        console.warn("Could not request full screen:", err);
+      }
+    } else {
+      document.body.classList.remove("quran-reading-focus");
+      try {
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.();
+        }
+      } catch (err) {
+        console.warn("Could not exit full screen:", err);
+      }
+    }
+    return () => {
+      document.body.classList.remove("quran-reading-focus");
+      try {
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.();
+        }
+      } catch (err) {
+        console.warn("Could not exit full screen:", err);
+      }
+    };
+  }, [focusMode]);
+
   // Handle Reading Time Accumulation (active viewing)
   useEffect(() => {
     let lastActive = Date.now();

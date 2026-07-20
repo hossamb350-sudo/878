@@ -245,8 +245,10 @@ export function Layout() {
       <UrgentNewsBanner />
 
       {/* Platform Logo & Widgets Area */}
-      <div className="w-full bg-surface-main">
+      <div className="w-full bg-surface-main relative z-30">
           <HeaderWidgets />
+          {/* Visual Separator: line + subtle premium drop shadow */}
+          <div className="w-full h-1.5 bg-gradient-to-b from-slate-100 to-transparent border-t border-slate-200/50 shadow-[0_4px_12px_rgba(0,0,0,0.02)]" />
       </div>
 
       {/* Main Content Area */}

@@ -662,8 +662,8 @@ export function NewsDetail() {
              </h3>
              <div className="grid grid-cols-2 gap-4">
                 {related.map(rItem => (
-                  <Link key={rItem.id} to={`/news/${rItem.id}`} className="group block bg-white rounded-2xl p-3 border border-border-light hover:bg-slate-50 transition-all shadow-soft">
-                     <div className="aspect-video rounded-xl overflow-hidden mb-3">
+                  <Link key={rItem.id} to={`/news/${rItem.id}`} className="group block bg-white rounded-none p-3 border border-border-light hover:bg-slate-50 transition-all shadow-soft">
+                     <div className="aspect-video rounded-none overflow-hidden mb-3">
                         <img src={rItem.imageUrl || "https://i.pravatar.cc/150"} alt={rItem.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                      </div>
                      <h4 className="font-bold font-ibm text-xs text-text-primary line-clamp-2 leading-relaxed text-right">{rItem.title}</h4>

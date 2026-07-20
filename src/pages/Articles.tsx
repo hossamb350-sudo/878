@@ -267,27 +267,28 @@ export function Articles() {
   return (
     <div className="min-h-screen bg-surface-main text-text-primary pb-[24px]" dir="rtl">
       <div className="max-w-[760px] mx-auto w-full">
-        {/* Sub-Tabs (Segmented Control) */}
-        <div className="pt-4 pb-2 px-4 bg-transparent sticky top-0 z-50">
-          <div className="flex items-center justify-center gap-12 w-full max-w-xs mx-auto relative border-b border-slate-200/60 pb-1">
-            <Link 
-              to="/"
-              className="pb-2.5 text-base font-black relative z-10 text-text-muted hover:text-text-primary flex items-center justify-center gap-2 transition-colors duration-300 font-ibm"
-            >
-              <Newspaper className="w-4 h-4 text-text-muted shrink-0" />
-              <span>الأخبار</span>
-            </Link>
-            <div 
-              className="pb-2.5 text-base font-black relative z-10 text-text-primary flex items-center justify-center gap-2 select-none font-ibm"
-            >
-              <BookOpen className="w-4 h-4 text-red-600 shrink-0" />
-              <span>المقالات</span>
-              <motion.div 
-                layoutId="activeTabUnderline"
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-taiz-navy rounded-full"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
+        {/* Innovative Top Navigation Experience */}
+        <div className="pt-4 pb-3 px-4 bg-surface-main/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100/85 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
+          <div className="max-w-[700px] mx-auto w-full flex items-center justify-between">
+            {/* Right side: Active Indicator & Title with Cairo Font */}
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
+              </span>
+              <span className="font-black text-base text-slate-800 font-cairo tracking-tight">مقالات وآراء</span>
             </div>
+
+            {/* Left side: Dedicated Direct Navigation Shortcut back to News with Hover Micro-animations */}
+            <Link 
+              to="/" 
+              title="الانتقال السريع إلى أحدث الأخبار والتقارير"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black text-white rounded-full border border-slate-800/10 shadow-[0_4px_12px_rgba(15,23,42,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black"
+            >
+              <Newspaper className="w-4 h-4 text-white/90 group-hover:scale-110 transition-transform duration-300" />
+              <span>أحدث الأخبار والتقارير</span>
+              <ChevronLeft className="w-4 h-4 text-white/70 group-hover:-translate-x-1 transition-transform" />
+            </Link>
           </div>
         </div>
 

@@ -234,7 +234,7 @@ export const WeatherDetail: React.FC = () => {
                       </td>
                       <td className="py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center">
+                          <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-amber-500">
                             {forecast.weather[0] ? getWeatherIcon(forecast.weather[0].id, "w-6 h-6 text-amber-500") : <Cloud className="w-5 h-5 text-slate-400" />}
                           </div>
                           <span className="text-slate-600 font-medium">{forecast.weather[0]?.description}</span>
