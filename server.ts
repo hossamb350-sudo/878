@@ -189,6 +189,28 @@ app.get("/api/prayer-times", async (req, res) => {
   }
 });
 
+// Hijri Calendar API
+app.get("/api/calendar", async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    if (!month || !year) {
+      return res.status(400).json({ error: "Month and year are required" });
+    }
+    
+    const response = await axios.get(`https://api.aladhan.com/v1/hijriCalendarByCity/${year}/${month}`, {
+      params: {
+        city: 'Taiz',
+        country: 'Yemen',
+        method: 4
+      }
+    });
+    res.json(response.data);
+  } catch (error: any) {
+    console.error("Error fetching calendar:", error.response?.data || error.message);
+    res.status(error.response?.status || 500).json(error.response?.data || { error: "Failed to fetch calendar" });
+  }
+});
+
 // Request logging middleware
 app.use((req, res, next) => {
   if (req.path.startsWith("/api/")) {

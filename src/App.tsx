@@ -20,6 +20,7 @@ import { ActivityDetail } from "./pages/ActivityDetail";
 import { Search } from "./pages/Search";
 import { WeatherDetail } from "./pages/WeatherDetail";
 import { PrayerTimesDetail } from "./pages/PrayerTimesDetail";
+import CalendarDetail from "./pages/CalendarDetail";
 import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
@@ -46,6 +47,7 @@ function AnimatedRoutes() {
           <Route path="events/activity/:id" element={<ActivityDetail />} />
           <Route path="weather" element={<WeatherDetail />} />
           <Route path="prayer-times" element={<PrayerTimesDetail />} />
+          <Route path="calendar" element={<CalendarDetail />} />
           <Route path="admin" element={<Admin />} />
         </Route>
       </Routes>

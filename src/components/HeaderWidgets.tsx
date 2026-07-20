@@ -402,7 +402,10 @@ export const HeaderWidgets: React.FC = () => {
         <GoldSeparator />
 
         {/* 4. Date Card */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1">
+        <Link 
+          to="/calendar" 
+          className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1 hover:bg-slate-50 active:scale-98 transition-all duration-200"
+        >
           <div className="mb-1 sm:mb-1.5 shrink-0">
             {render3DCalendarIcon()}
           </div>
@@ -414,7 +417,7 @@ export const HeaderWidgets: React.FC = () => {
               {displayHijri}
             </span>
           </div>
-        </div>
+        </Link>
 
       </div>
     </div>

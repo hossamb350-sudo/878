@@ -1228,6 +1228,18 @@ export function Quran() {
     null
   );
 
+  let title = "الدروس";
+  if (activeView === "leader") title = "الشهيد القائد";
+  if (activeView === "lessons" && selectedSeries) title = selectedSeries.title;
+  if (activeView === "syllabuses") title = "مقرر الدروس";
+  if (activeView === "syllabus-detail" && selectedSyllabus)
+    title = (selectedSyllabus as any).title;
+  if (activeView === "excerpts") title = "المقتطفات";
+  if (activeView === "excerpt-detail" && selectedExcerpt)
+    title = selectedExcerpt.title;
+  if (activeView === "stats") title = "لوحة التقدم";
+  if (activeView === "quran") title = "القرآن الكريم";
+
   const [lastRead, setLastRead] = useState<QuranLastRead | null>(null);
   const [lessonProgress, setLessonProgress] = useState<Record<string, number>>(
     {}
@@ -1696,58 +1708,95 @@ export function Quran() {
       dir="rtl"
     >
       {activeView !== "lesson-detail" && (
-        <Header
-          activeView={activeView}
-          selectedSeries={selectedSeries}
-          selectedSyllabus={selectedSyllabus}
-          selectedExcerpt={selectedExcerpt}
-          isSearching={isSearching}
-          searchQuery={searchQuery}
-          setIsSearching={setIsSearching}
-          setSearchQuery={setSearchQuery}
-          setIsSidebarOpen={setIsSidebarOpen}
-          setActiveView={setActiveView}
-        />
-      )}
-
-      {/* Tab bar for "الدروس" and "القرآن الكريم" */}
-      {(activeView === "series" || activeView === "quran") && (
         <div className="pt-4 pb-3 px-4 bg-white dark:bg-stone-900 border-b border-slate-200/50 dark:border-stone-800 sticky top-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.01)] shrink-0 select-none">
           <div className="max-w-[700px] mx-auto w-full flex items-center justify-between">
-            {/* Right side: Active Indicator & Title with Cairo Font */}
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
-              </span>
-              <span className="font-black text-base text-slate-800 dark:text-stone-100 font-cairo tracking-tight">
-                {activeView === "quran" ? "القرآن الكريم" : "ملازم هدي القرآن"}
-              </span>
+            {/* Right side: Menu & Title */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full transition-colors focus:outline-none"
+              >
+                <Menu className="w-6 h-6 text-slate-800 dark:text-white" />
+              </button>
+              
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+                </span>
+                <span className="font-black text-base text-slate-800 dark:text-stone-100 font-cairo tracking-tight truncate max-w-[150px] sm:max-w-none">
+                  {title}
+                </span>
+              </div>
             </div>
 
-            {/* Left side: Dedicated Direct Navigation Shortcut with Emerald/Spiritual visual identity */}
-            {activeView === "quran" ? (
-              <button 
-                onClick={() => setActiveView("series")}
-                title="الانتقال السريع إلى الدروس"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black"
+            {/* Left side: Search & Switch Button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsSearching(!isSearching)}
+                className={`p-2 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full transition-colors focus:outline-none ${isSearching ? 'text-red-600' : 'text-slate-800 dark:text-white'}`}
               >
-                <Library className="w-4 h-4 text-white/90 group-hover:scale-110 transition-transform duration-300" />
-                <span>الدروس</span>
-                <ChevronLeft className="w-4 h-4 text-white/70 group-hover:-translate-x-1 transition-transform" />
+                {isSearching ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
-            ) : (
-              <button 
-                onClick={() => setActiveView("quran")}
-                title="الانتقال السريع إلى القرآن الكريم"
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black"
-              >
-                <BookOpen className="w-4 h-4 text-white/90 group-hover:scale-110 transition-transform duration-300" />
-                <span>القرآن الكريم</span>
-                <ChevronLeft className="w-4 h-4 text-white/70 group-hover:-translate-x-1 transition-transform" />
-              </button>
-            )}
+
+              {(activeView === "series" || activeView === "quran") ? (
+                activeView === "quran" ? (
+                  <button 
+                    onClick={() => setActiveView("series")}
+                    title="الانتقال السريع إلى الدروس"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-[10px] font-black"
+                  >
+                    <Library className="w-3.5 h-3.5 text-white/90" />
+                    <span className="hidden sm:inline">الدروس</span>
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => setActiveView("quran")}
+                    title="الانتقال السريع إلى القرآن الكريم"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-[10px] font-black"
+                  >
+                    <BookOpen className="w-3.5 h-3.5 text-white/90" />
+                    <span className="hidden sm:inline">القرآن الكريم</span>
+                  </button>
+                )
+              ) : (
+                <button
+                  onClick={() => {
+                    if (activeView === "lessons") setActiveView("series");
+                    else if (activeView === "syllabus-detail") setActiveView("syllabuses");
+                    else if (activeView === "excerpt-detail") setActiveView("excerpts");
+                    else if (activeView === "stats" || activeView === "leader") setActiveView("series");
+                  }}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full transition-colors focus:outline-none"
+                >
+                  <ChevronLeft className="w-6 h-6 text-slate-800 dark:text-white" />
+                </button>
+              )}
+            </div>
           </div>
+          
+          {/* Search Bar Overlay */}
+          <AnimatePresence>
+            {isSearching && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="mt-3 overflow-hidden"
+              >
+                <div className="flex items-center bg-slate-100 dark:bg-stone-800 rounded-xl px-3 py-1">
+                  <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                  <input
+                    autoFocus
+                    placeholder="بحث في الدروس والمقتطفات..."
+                    className="bg-transparent border-none outline-none p-2 w-full text-sm font-bold text-slate-800 dark:text-white focus:outline-none placeholder:text-slate-400"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
       <Sidebar
