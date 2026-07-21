@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SplashScreen as CapSplashScreen } from "@capacitor/splash-screen";
-import { Newspaper, BookOpen, Play } from "lucide-react";
+import { Newspaper, BookOpen, Play, User, ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 import { auth, db } from "../firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
@@ -166,9 +166,9 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                   key={card.id}
                   onClick={() => setActiveCardIndex(index)}
                   animate={{
-                    scale: isActive ? 1.1 : 0.9,
-                    y: isActive ? -6 : 6,
-                    opacity: isActive ? 1 : 0.5,
+                    scale: isActive ? 1.05 : 0.95,
+                    y: isActive ? -4 : 4,
+                    opacity: isActive ? 1 : 0.7,
                   }}
                   transition={{
                     type: "spring",
@@ -176,38 +176,26 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                     damping: 18,
                     mass: 0.8
                   }}
-                  className={`w-24 sm:w-28 h-28 sm:h-32 rounded-2xl flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all duration-300 border ${
-                    isActive
-                      ? "bg-[#162a45]/95 border-[#34619b]/80 shadow-[0_0_20px_rgba(52,97,155,0.4)] text-white"
-                      : "bg-[#0f1b2d]/80 border-white/10 text-white/60 hover:bg-[#162a45]/50"
-                  }`}
+                  className="w-24 sm:w-28 h-28 sm:h-32 rounded-2xl flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all duration-300 border backdrop-blur-md bg-[#11284E]/[0.38] border-[#7DBEFF]/[0.28]"
                 >
                   {/* Icon wrapper circular border */}
                   <div
-                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center transition-all duration-300 border bg-[#5691FF]/[0.18] border-[#5CA9FF] ${
                       isActive
-                        ? "bg-[#34619b]/30 text-[#60a5fa] border border-[#34619b]/50 shadow-[0_0_15px_rgba(52,97,155,0.3)]"
-                        : "bg-white/5 text-white/30 border border-white/10"
+                        ? "shadow-[0_0_18px_rgba(78,161,255,0.35)] brightness-125"
+                        : "brightness-90"
                     }`}
                   >
-                    <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
+                    <Icon className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-[#F5FAFF]" />
                   </div>
                   
                   {/* Main Title */}
-                  <h3
-                    className={`text-[10px] sm:text-xs font-black mt-2.5 transition-colors duration-300 ${
-                      isActive ? "text-white" : "text-white/70"
-                    }`}
-                  >
+                  <h3 className="text-[10px] sm:text-xs font-black mt-2.5 transition-colors duration-300 text-white">
                     {card.title}
                   </h3>
                   
                   {/* Subtitle */}
-                  <p
-                    className={`text-[8px] sm:text-[9px] font-black mt-0.5 transition-colors duration-300 ${
-                      isActive ? "text-[#eab355]" : "text-white/50"
-                    }`}
-                  >
+                  <p className="text-[8px] sm:text-[9px] font-black mt-0.5 transition-colors duration-300 text-[#D9A441]">
                     {card.subtitle}
                   </p>
                 </motion.div>
@@ -230,35 +218,30 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
             ))}
           </div>
 
-          {/* Slogan phrase below the cards */}
-          <motion.p
-            initial={{ opacity: 0, y: 5 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-[10px] sm:text-[11px] font-black text-white mt-6 text-center max-w-xs leading-relaxed"
-          >
-            منصة إخبارية ثقافية متكاملة تنقل الواقع وتستنير بالقرآن والقائد
-          </motion.p>
-
-          {/* Google Sign-In and Skip Button Section */}
+          {/* Buttons & Auth Section */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="mt-8 flex flex-col items-center gap-2.5 w-full max-w-[240px] relative z-30"
+            className="mt-8 flex flex-col items-center w-full relative z-30"
           >
             <button
               onClick={() => setIsAuthModalOpen(true)}
-              className="w-full bg-gradient-to-r from-[#d49a37] to-[#b37f2c] hover:from-[#e3ab4a] hover:to-[#c48f33] text-white py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2.5 transition-all text-xs cursor-pointer shadow-md active:scale-95 duration-200"
+              className="w-4/5 max-w-[320px] h-[60px] rounded-[32px] bg-gradient-to-r from-[#D9A441] to-[#BF841F] text-[#FFFFFF] font-bold flex items-center justify-center gap-3 transition-all duration-200 cursor-pointer shadow-[0_8px_20px_rgba(0,0,0,0.22)] active:scale-[0.98] active:brightness-95 relative overflow-hidden"
             >
+              <div className="absolute inset-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-[32px] pointer-events-none"></div>
+              <User className="w-5 h-5 text-[#FFFFFF]" />
               <span>تسجيل الدخول / إنشاء حساب</span>
             </button>
 
             <button
               onClick={handleSkip}
-              className="text-[11px] font-black text-slate-300 hover:text-white active:scale-95 transition-all cursor-pointer underline underline-offset-4 decoration-2"
+              className="mt-6 flex flex-col items-center gap-2 group transition-all cursor-pointer active:scale-105"
             >
-              تخطي تسجيل الدخول
+              <div className="w-12 h-12 rounded-full bg-[#5691FF]/[0.14] border border-[#5CA9FF] flex items-center justify-center shadow-[0_0_8px_rgba(127,195,255,0.1)] group-active:shadow-[0_0_15px_rgba(127,195,255,0.3)] transition-all">
+                <ArrowLeft className="w-5 h-5 text-[#7FC3FF]" />
+              </div>
+              <span className="text-[#EAF4FF] text-sm font-medium">تخطي التسجيل</span>
             </button>
 
             <AuthModals
@@ -271,6 +254,17 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                 onComplete();
               }}
             />
+          </motion.div>
+          
+          {/* Slogan */}
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-8 text-center drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]"
+          >
+            <p className="text-[#FFFFFF] font-bold text-base sm:text-lg">منصة إعلامية ثقافية متكاملة</p>
+            <p className="text-[#D9A441] font-medium text-sm sm:text-[15px] leading-[1.25] mt-1">تنقل الواقع وتستنير بالقرآن والقائد</p>
           </motion.div>
         </div>
       )}

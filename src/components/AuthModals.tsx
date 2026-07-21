@@ -117,10 +117,9 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
       return false;
     }
     if (activeTab === "register") {
-      const allowedDomains = ["gmail.com", "hotmail.com", "yahoo.com", "outlook.com"];
       const emailDomain = email.trim().toLowerCase().split("@")[1];
-      if (!emailDomain || !allowedDomains.includes(emailDomain)) {
-        setError("يرجى استخدام بريد إلكتروني من النطاقات المعتمدة فقط (gmail, hotmail, yahoo, outlook)");
+      if (!emailDomain || !emailDomain.includes(".")) {
+        setError("يرجى استخدام بريد إلكتروني صحيح");
         return false;
       }
 
