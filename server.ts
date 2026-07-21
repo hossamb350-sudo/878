@@ -17,7 +17,15 @@ import { IMAGEKIT_CONFIG } from "./src/config/imagekitConfig";
 dotenv.config();
 
 // Load Firebase Config
-const firebaseConfig = JSON.parse(fs.readFileSync(path.join(process.cwd(), "firebase-applet-config.json"), "utf8"));
+let firebaseConfig: any = { projectId: process.env.FIREBASE_PROJECT_ID || "taiz-media" };
+try {
+  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  if (fs.existsSync(configPath)) {
+    firebaseConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  }
+} catch (e) {
+  console.warn("Could not load firebase-applet-config.json, falling back to env var.");
+}
 
 // Initialize Firebase Admin
 let adminApp: App;
