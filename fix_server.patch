@@ -1,0 +1,26 @@
+--- server.ts
++++ server.ts
+@@ -8,6 +8,7 @@
+ import axios from "axios";
+ import FormData from "form-data";
+ import ImageKit from "imagekit";
++import os from "os";
+ import cors from "cors";
+ import webPush from "web-push";
+ import { GoogleGenAI } from "@google/genai";
+@@ -228,13 +229,13 @@
+ });
+ 
+ // Cache directory setup
+-const CACHE_DIR = path.join(process.cwd(), "cache");
++const CACHE_DIR = process.env.NODE_ENV === "production" ? path.join(os.tmpdir(), "cache") : path.join(process.cwd(), "cache");
+ if (!fs.existsSync(CACHE_DIR)) {
+   fs.mkdirSync(CACHE_DIR, { recursive: true });
+ }
+ 
+ // Uploads directory setup
+-const UPLOADS_DIR = path.join(process.cwd(), "public/uploads");
++const UPLOADS_DIR = process.env.NODE_ENV === "production" ? path.join(os.tmpdir(), "uploads") : path.join(process.cwd(), "public/uploads");
+ if (!fs.existsSync(UPLOADS_DIR)) {
+   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+ }

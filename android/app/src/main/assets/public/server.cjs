@@ -45,7 +45,15 @@ var IMAGEKIT_CONFIG = {
 
 // server.ts
 import_dotenv.default.config();
-var firebaseConfig = JSON.parse(import_fs.default.readFileSync(import_path.default.join(process.cwd(), "firebase-applet-config.json"), "utf8"));
+var firebaseConfig = { projectId: process.env.FIREBASE_PROJECT_ID || "taiz-media" };
+try {
+  const configPath = import_path.default.join(process.cwd(), "firebase-applet-config.json");
+  if (import_fs.default.existsSync(configPath)) {
+    firebaseConfig = JSON.parse(import_fs.default.readFileSync(configPath, "utf8"));
+  }
+} catch (e) {
+  console.warn("Could not load firebase-applet-config.json, falling back to env var.");
+}
 var adminApp;
 if ((0, import_app.getApps)().length === 0) {
   adminApp = (0, import_app.initializeApp)({

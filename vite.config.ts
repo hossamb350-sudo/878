@@ -10,6 +10,9 @@ export default defineConfig(() => {
     build: {
       outDir: 'dist',
     },
+    define: {
+      'import.meta.env.OPENWEATHER_API_KEY': JSON.stringify(process.env.OPENWEATHER_API_KEY || "")
+    },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

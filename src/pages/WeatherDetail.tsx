@@ -32,8 +32,8 @@ export const WeatherDetail: React.FC = () => {
       try {
         if (!weatherData) setLoading(true);
         const [weatherRes, forecastRes] = await Promise.all([
-          fetchWithFallback(`/api/weather?lat=13.5795&lon=44.0203`),
-          fetchWithFallback(`/api/forecast?lat=13.5795&lon=44.0203`)
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=13.5795&lon=44.0203&appid=${import.meta.env.OPENWEATHER_API_KEY}&units=metric&lang=ar`),
+          fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=13.5795&lon=44.0203&appid=${import.meta.env.OPENWEATHER_API_KEY}&units=metric&lang=ar`)
         ]);
         
         if (weatherRes.ok && forecastRes.ok) {

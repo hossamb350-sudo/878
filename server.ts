@@ -7,6 +7,7 @@ import multer from "multer";
 import axios from "axios";
 import FormData from "form-data";
 import ImageKit from "imagekit";
+import os from "os";
 import cors from "cors";
 import webPush from "web-push";
 import { GoogleGenAI } from "@google/genai";
@@ -228,13 +229,13 @@ app.use((req, res, next) => {
 });
 
 // Cache directory setup
-const CACHE_DIR = path.join(process.cwd(), "cache");
+const CACHE_DIR = process.env.NODE_ENV === "production" ? path.join(os.tmpdir(), "cache") : path.join(process.cwd(), "cache");
 if (!fs.existsSync(CACHE_DIR)) {
   fs.mkdirSync(CACHE_DIR, { recursive: true });
 }
 
 // Uploads directory setup
-const UPLOADS_DIR = path.join(process.cwd(), "public/uploads");
+const UPLOADS_DIR = process.env.NODE_ENV === "production" ? path.join(os.tmpdir(), "uploads") : path.join(process.cwd(), "public/uploads");
 if (!fs.existsSync(UPLOADS_DIR)) {
   fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
@@ -286,8 +287,10 @@ app.post("/api/quran-data", async (req, res) => {
   
   try {
     // 1. Save locally using atomic write (write to temp then rename)
-    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf8");
-    fs.renameSync(tempPath, filePath);
+    if (process.env.NODE_ENV !== "production") {
+      fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf8");
+      fs.renameSync(tempPath, filePath);
+    }
     
     // 2. Sync with GitHub if configured (optional but recommended since user asked for GitHub persistence before)
     const { token, owner, repo, branch } = getGitHubConfig();
@@ -410,7 +413,9 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
     data.series = updatedSeries;
     
     // Save locally
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+    if (process.env.NODE_ENV !== "production") {
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
+    }
     
     // Sync with GitHub if configured
     const { token, owner, repo, branch } = getGitHubConfig();

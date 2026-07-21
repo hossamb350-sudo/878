@@ -202,8 +202,8 @@ export const HeaderWidgets: React.FC = () => {
     const fetchWeather = async () => {
       try {
         const [weatherRes, forecastRes] = await Promise.all([
-          fetchWithFallback(`/api/weather?lat=13.5795&lon=44.0203`),
-          fetchWithFallback(`/api/forecast?lat=13.5795&lon=44.0203`)
+          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=13.5795&lon=44.0203&appid=${import.meta.env.OPENWEATHER_API_KEY}&units=metric&lang=ar`),
+          fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=13.5795&lon=44.0203&appid=${import.meta.env.OPENWEATHER_API_KEY}&units=metric&lang=ar`)
         ]);
         
         if (weatherRes.ok && forecastRes.ok) {
@@ -241,7 +241,7 @@ export const HeaderWidgets: React.FC = () => {
 
     const fetchPrayerTimes = async () => {
       try {
-        const response = await fetchWithFallback(`/api/prayer-times`);
+        const response = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Taiz&country=Yemen&method=4`);
         if (response.ok) {
           const data = await response.json();
           const timings = data.data.timings;

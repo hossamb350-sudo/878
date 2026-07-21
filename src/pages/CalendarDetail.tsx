@@ -155,7 +155,7 @@ export default function CalendarDetail() {
     setLoading(true);
     const cacheKey = `cached_calendar_${month}_${year}`;
     try {
-      const response = await fetchWithFallback(`/api/calendar?month=${month}&year=${year}`);
+      const response = await fetch(`https://api.aladhan.com/v1/hToGCalendar/${month}/${year}`);
       if (response.ok) {
         const jsonData = await response.json();
         if (jsonData.code === 200) {

@@ -40,7 +40,7 @@ export const PrayerTimesDetail: React.FC = () => {
     const fetchPrayerTimes = async () => {
       try {
         if (!prayerTimes) setLoading(true);
-        const response = await fetchWithFallback(`/api/prayer-times`);
+        const response = await fetch(`https://api.aladhan.com/v1/timingsByCity?city=Taiz&country=Yemen&method=4`);
         if (response.ok) {
           const data = await response.json();
           const timings = data.data.timings;

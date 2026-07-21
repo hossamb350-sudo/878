@@ -1,0 +1,33 @@
+--- server.ts
++++ server.ts
+@@ -285,10 +285,15 @@
+   const filePath = path.join(process.cwd(), "public/quranData.json");
+   const tempPath = filePath + ".tmp";
+   
+   try {
+-    // 1. Save locally using atomic write (write to temp then rename)
+-    fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf8");
+-    fs.renameSync(tempPath, filePath);
++    // 1. Save locally using atomic write (only if not in production, since production is read-only)
++    if (process.env.NODE_ENV !== "production") {
++      fs.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf8");
++      fs.renameSync(tempPath, filePath);
++    } else {
++      console.log("Skipping local write in production for quranData.json");
++    }
+     
+     // 2. Sync with GitHub if configured (optional but recommended since user asked for GitHub persistence before)
+     const { token, owner, repo, branch } = getGitHubConfig();
+@@ -410,8 +415,12 @@
+     data.series = updatedSeries;
+     
+     // Save locally
+-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
++    if (process.env.NODE_ENV !== "production") {
++      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
++    } else {
++      console.log("Skipping local write in production for quranData.json");
++    }
+     
+     // Sync with GitHub if configured
+     const { token, owner, repo, branch } = getGitHubConfig();
