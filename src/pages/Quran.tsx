@@ -470,7 +470,7 @@ const SyllabusesView = ({
                     المقرر الحالي
                   </span>
                 </div>
-                <span className="text-lg font-black text-text-primary">
+                <span className="text-lg font-black text-text-primary font-cairo">
                   {lesson.title}
                 </span>
                 {item.expiresAt ? (
@@ -518,7 +518,7 @@ const ExcerptsView = ({
               <div className="w-12 h-12 shrink-0 bg-taiz-royal/5 rounded-xl flex items-center justify-center">
                 <Quote className="w-5 h-5 text-red-600" />
               </div>
-              <div className="flex flex-col gap-1.5 flex-1">
+              <div className="flex flex-col gap-1.5 flex-1 font-cairo">
                 <span className="text-sm font-black text-text-primary">
                   {item.title}
                 </span>
@@ -557,7 +557,7 @@ const ExcerptDetailView = ({
         className="max-w-2xl mx-auto p-4 leading-loose text-text-primary text-lg md:text-xl font-medium"
         dir="rtl"
       >
-        <h1 className="text-2xl md:text-3xl font-black mb-2 text-taiz-royal">
+        <h1 className="text-2xl md:text-3xl font-black mb-2 text-taiz-royal font-cairo">
           {selectedExcerpt?.title}
         </h1>
         {lesson && (
@@ -656,7 +656,7 @@ const SidebarItem = ({
     </span>
     <div className="flex flex-col text-right">
       <span
-        className={`text-base font-black leading-tight ${
+        className={`text-base font-black leading-tight font-cairo ${
           active ? "text-taiz-navy" : "text-text-secondary"
         }`}
       >
@@ -806,7 +806,7 @@ const Sidebar = ({
             <div className="w-20 h-20 mb-4 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden border-2 border-border-light">
               <User className="w-12 h-12 text-red-600 translate-y-1.5" />
             </div>
-            <h3 className="text-lg font-black text-text-primary">
+            <h3 className="text-lg font-black text-text-primary font-cairo">
               هدي القرآن الكَريم
             </h3>
             <p className="text-text-secondary text-xs font-bold mt-1 text-center">
@@ -905,7 +905,7 @@ const LeaderView = ({ scrollRef }: any) => (
           <div className="w-20 h-20 bg-taiz-royal/10 text-taiz-royal rounded-full flex items-center justify-center mb-6 shadow-inner">
             <Shield className="w-10 h-10" />
           </div>
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-taiz-royal text-center leading-tight md:leading-snug max-w-3xl">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-taiz-royal text-center leading-tight md:leading-snug max-w-3xl font-cairo">
             ماذا يعني الحديث عن السيد القائد الشهيد حسين بن بدر الدين الحوثي ؟
           </h2>
         </div>
@@ -919,7 +919,7 @@ const LeaderView = ({ scrollRef }: any) => (
           </div>
 
           <div className="pt-6">
-            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3 font-cairo">
               <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
               </span>
@@ -931,7 +931,7 @@ const LeaderView = ({ scrollRef }: any) => (
           </div>
 
           <div className="pt-6">
-            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3 font-cairo">
               <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
               </span>
@@ -943,7 +943,7 @@ const LeaderView = ({ scrollRef }: any) => (
           </div>
 
           <div className="pt-6">
-            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3 font-cairo">
               <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
               </span>
@@ -955,7 +955,7 @@ const LeaderView = ({ scrollRef }: any) => (
           </div>
 
           <div className="pt-6">
-            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3 font-cairo">
               <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
               </span>
@@ -967,7 +967,7 @@ const LeaderView = ({ scrollRef }: any) => (
           </div>
 
           <div className="pt-6">
-            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3 font-cairo">
               <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
               </span>
@@ -979,7 +979,7 @@ const LeaderView = ({ scrollRef }: any) => (
           </div>
 
           <div className="pt-6">
-            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3 font-cairo">
               <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
               </span>
@@ -991,7 +991,7 @@ const LeaderView = ({ scrollRef }: any) => (
           </div>
 
           <div className="pt-6">
-            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3">
+            <h3 className="text-lg md:text-xl font-bold text-taiz-royal mb-4 flex items-start gap-3 font-cairo">
               <span className="mt-1 w-6 h-6 md:w-8 md:h-8 rounded-lg bg-taiz-royal/10 flex items-center justify-center shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-taiz-royal"></span>
               </span>
@@ -1744,19 +1744,19 @@ export function Quran() {
                   <button 
                     onClick={() => setActiveView("series")}
                     title="الانتقال السريع إلى الدروس"
-                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-[10px] font-black"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black shrink-0"
                   >
-                    <Library className="w-3.5 h-3.5 text-white/90" />
-                    <span className="hidden sm:inline">الدروس</span>
+                    <Library className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                    <span className="whitespace-nowrap">الدروس</span>
                   </button>
                 ) : (
                   <button 
                     onClick={() => setActiveView("quran")}
                     title="الانتقال السريع إلى القرآن الكريم"
-                    className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-[10px] font-black"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black shrink-0"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-white/90" />
-                    <span className="hidden sm:inline">القرآن الكريم</span>
+                    <BookOpen className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                    <span className="whitespace-nowrap">القرآن الكريم</span>
                   </button>
                 )
               ) : (
@@ -1774,6 +1774,35 @@ export function Quran() {
               )}
             </div>
           </div>
+
+          {/* Tab Switcher for Lessons / Holy Quran */}
+          {(activeView === "series" || activeView === "quran") && !isSearching && (
+            <div className="bg-slate-100 dark:bg-stone-800/80 p-1 rounded-xl flex items-center gap-1 max-w-[700px] mx-auto w-full mt-2.5 border border-slate-200/60 dark:border-stone-700/50">
+              <button
+                onClick={() => setActiveView("series")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-black transition-all font-cairo ${
+                  activeView === "series"
+                    ? "bg-white dark:bg-stone-900 text-emerald-700 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-stone-700"
+                    : "text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <Library className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">دروس هدي القرآن</span>
+              </button>
+
+              <button
+                onClick={() => setActiveView("quran")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-black transition-all font-cairo ${
+                  activeView === "quran"
+                    ? "bg-white dark:bg-stone-900 text-emerald-700 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-stone-700"
+                    : "text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <BookOpen className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">القرآن الكريم</span>
+              </button>
+            </div>
+          )}
           
           {/* Search Bar Overlay */}
           <AnimatePresence>

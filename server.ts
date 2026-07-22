@@ -27,16 +27,28 @@ try {
   console.warn("Could not load firebase-applet-config.json, falling back to env var.");
 }
 
-// Initialize Firebase Admin
-let adminApp: App;
-if (getApps().length === 0) {
-  adminApp = initializeApp({
-    projectId: firebaseConfig.projectId,
-  });
-} else {
-  adminApp = getApps()[0];
+// Initialize Firebase Admin lazily
+let adminApp: App | null = null;
+let dbInstance: any = null;
+
+function getDb() {
+  if (!dbInstance) {
+    try {
+      if (getApps().length === 0) {
+        adminApp = initializeApp({
+          projectId: firebaseConfig.projectId,
+        });
+      } else {
+        adminApp = getApps()[0];
+      }
+      dbInstance = getFirestore(adminApp);
+    } catch (err) {
+      console.error("Failed to initialize Firebase Admin / Firestore:", err);
+      return null;
+    }
+  }
+  return dbInstance;
 }
-const db = getFirestore(adminApp);
 
 const app = express();
 const PORT = 3000;
@@ -393,12 +405,15 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
         
         // Update in Firestore
         try {
-          console.log(`Updating Firestore for series ${s.id}...`);
-          await db.collection("quran_series").doc(s.id).update({
-            description: description,
-            updatedAt: FieldValue.serverTimestamp()
-          });
-          console.log(`Firestore updated for series ${s.id}`);
+          const db = getDb();
+          if (db) {
+            console.log(`Updating Firestore for series ${s.id}...`);
+            await db.collection("quran_series").doc(s.id).update({
+              description: description,
+              updatedAt: FieldValue.serverTimestamp()
+            });
+            console.log(`Firestore updated for series ${s.id}`);
+          }
         } catch (fsErr: any) {
           console.error(`Firestore update failed for series ${s.id}:`, fsErr.message);
         }
@@ -941,8 +956,10 @@ app.use((err: any, req: any, res: any, next: any) => {
 });
 
 async function startServer() {
+  const isProduction = process.env.NODE_ENV === "production" || !process.argv[1]?.endsWith("server.ts");
+
   // Vite dev server middleware integration
-  if (process.env.NODE_ENV !== "production") {
+  if (!isProduction) {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },

@@ -103,7 +103,7 @@ function FeaturedArticlesSlider({ featuredList }: { featuredList: Article[] }) {
               </div>
 
               <div className="absolute bottom-0 left-0 right-0 p-[20px] pb-[16px] flex flex-col justify-end text-right z-10">
-                <h2 className="text-[18px] font-bold font-ibm leading-[28px] w-full text-white mb-[12px] line-clamp-2">
+                <h2 className="text-[18px] font-bold font-cairo leading-[28px] w-full text-white mb-[12px] line-clamp-2">
                   {currentArticle.title}
                 </h2>
                 
@@ -114,7 +114,7 @@ function FeaturedArticlesSlider({ featuredList }: { featuredList: Article[] }) {
                       className="w-[44px] h-[44px] rounded-full object-cover shrink-0" 
                       alt={currentArticle.authorName} 
                     />
-                    <span className="text-[14px] font-medium font-ibm text-white">{currentArticle.authorName}</span>
+                    <span className="text-[14px] font-medium font-cairo text-white">{currentArticle.authorName}</span>
                   </div>
                   <div className="flex flex-col text-[12px] text-[#A8A8A8] font-normal font-ibm text-left">
                     <span>{currentArticle.hijriDate || "ذو الحجة 1446 هـ"}</span>
@@ -180,7 +180,7 @@ export function Articles() {
     return (
       <div className="min-h-screen bg-surface-main flex flex-col items-center justify-center" dir="rtl">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-[#D32027] mb-4"></div>
-        <p className="font-medium text-text-secondary font-ibm text-sm">جاري تحميل المقالات...</p>
+        <p className="font-medium text-text-secondary font-cairo text-sm">جاري تحميل المقالات...</p>
       </div>
     );
   }
@@ -316,7 +316,7 @@ export function Articles() {
 
           {/* Section Title */}
           <div className="flex items-center justify-between h-[42px] mt-[16px] mb-[16px]">
-            <h3 className="text-[20px] font-bold font-ibm flex items-center gap-[8px] text-text-primary">
+            <h3 className="text-[20px] font-bold font-cairo flex items-center gap-[8px] text-text-primary">
               <div className="w-[4px] h-[20px] bg-[#D32027] rounded-[2px]"></div>
               أحدث المقالات
             </h3>
@@ -361,7 +361,7 @@ export function Articles() {
                       <div className="p-[12px] flex flex-col justify-between flex-1 text-right">
                         {/* Title: Occupies top area of content, scales font size to ensure all text fits fully without clipping within 4 lines max */}
                         <h4 
-                          className="font-semibold font-ibm text-text-primary text-right"
+                          className="font-semibold font-cairo text-text-primary text-right"
                           style={getTitleStyle(article.title)}
                         >
                           {article.title}

@@ -178,7 +178,7 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
 
                    {/* Title */}
                    <h2 
-                     className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3"
+                     className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3 font-cairo"
                      style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
                       {currentItem.title}
                     </h2>
@@ -656,7 +656,7 @@ export function Home() {
 
                            {/* Title */}
                            <h2 
-                             className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3"
+                             className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3 font-cairo"
                              style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
                               {item.title}
                            </h2>
@@ -697,7 +697,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                       {/* Left Side News Content */}
                       <div className="flex-1 min-w-0 flex flex-col justify-center py-2 px-3 text-right">
                          <div>
-                            <h3 className="font-bold text-[12px] sm:text-[13px] text-gray-900 leading-[1.5] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-2" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                            <h3 className="font-bold text-[12px] sm:text-[13px] text-gray-900 leading-[1.5] transition-colors hover:text-taiz-sky mb-2 whitespace-normal line-clamp-2 font-cairo" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
                               {item.title}
                             </h3>
 
@@ -731,7 +731,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                            <div className="bg-red-600 p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all">
                               <MonitorPlay className="w-5 h-5 text-white" />
                            </div>
-                           <h2 className="font-black text-[18px] sm:text-[20px] select-none text-text-primary group-hover:text-red-600 transition-colors">أحدث الفيديوهات</h2>
+                           <h2 className="font-black text-[18px] sm:text-[20px] select-none text-text-primary group-hover:text-red-600 transition-colors font-cairo">أحدث الفيديوهات</h2>
                         </Link>
 
                         <Link 
@@ -772,7 +772,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                                  </div>
                                  
                                  <div className="absolute bottom-0 left-0 right-0 p-3 z-10 text-right">
-                                    <h4 className="text-white text-[13px] sm:text-[14px] font-bold leading-[1.4] line-clamp-2 transition-colors" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                                    <h4 className="text-white text-[13px] sm:text-[14px] font-bold leading-[1.4] line-clamp-2 transition-colors font-cairo" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
                                       {video.title}
                                     </h4>
                                  </div>
@@ -830,7 +830,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                   </span>
                 </div>
                 <div className="absolute bottom-6 right-6 left-6 text-right">
-                  <h3 className="text-white text-xl font-black mb-4 leading-relaxed line-clamp-2">{articles[0].title}</h3>
+                  <h3 className="text-white text-xl font-black mb-4 leading-relaxed line-clamp-2 font-cairo">{articles[0].title}</h3>
                   <div className="flex items-center gap-3">
                     {articles[0].authorPhoto ? (
                       <img src={articles[0].authorPhoto} className="w-8 h-8 rounded-full border border-white/20" alt="" />
@@ -851,7 +851,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
 
           {/* Latest Articles in Tab */}
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg font-black flex items-center gap-2">
+            <h3 className="text-lg font-black flex items-center gap-2 font-cairo">
               <div className="w-1.5 h-6 bg-taiz-sky rounded-full"></div>
               أحدث المقالات
             </h3>
@@ -878,7 +878,7 @@ to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`}
                   )}
                 </div>
                 <div className="flex-1 text-right">
-                  <h4 className="font-black text-sm leading-relaxed mb-2 line-clamp-2">{article.title}</h4>
+                  <h4 className="font-black text-sm leading-relaxed mb-2 line-clamp-2 font-cairo">{article.title}</h4>
                   <div className="flex items-center justify-end gap-2 text-[10px] text-text-muted font-bold">
                     <span>{article.authorName}</span>
                     <span className="opacity-30">•</span>
