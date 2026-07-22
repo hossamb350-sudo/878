@@ -509,7 +509,7 @@ export const HeaderWidgets: React.FC = () => {
               if (target.src.endsWith("/logo3.png") && !target.src.includes("/Resources/")) {
                 target.src = "/Resources/logo3.png";
               } else if (target.src.includes("/Resources/")) {
-                target.src = "/resources/logo3.png";
+                target.src = "/logo3.png";
               }
             }}
             alt="منصة تعز الإعلامية" 

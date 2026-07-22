@@ -20,17 +20,13 @@ async function syncResources() {
     'copyright.png'
   ];
 
-  console.log('Syncing resources from Resources/ to public/...');
+  console.log('Syncing resources from Resources/ to public/Resources/...');
 
-  // Ensure target directories exist
+  // Ensure target directory exists
   const capResourcesDir = path.join(publicDir, 'Resources');
-  const lowerResourcesDir = path.join(publicDir, 'resources');
   
   if (!fs.existsSync(capResourcesDir)) {
     fs.mkdirSync(capResourcesDir, { recursive: true });
-  }
-  if (!fs.existsSync(lowerResourcesDir)) {
-    fs.mkdirSync(lowerResourcesDir, { recursive: true });
   }
 
   for (const file of filesToSync) {
@@ -47,23 +43,16 @@ async function syncResources() {
       fs.copyFileSync(srcPath, capDestPath);
       console.log(`Copied ${file} to public/Resources/`);
 
-      // Copy to public/resources
-      const lowerDestPath = path.join(lowerResourcesDir, file);
-      fs.copyFileSync(srcPath, lowerDestPath);
-      console.log(`Copied ${file} to public/resources/`);
-
       // If it's a splash image, also generate the webp version if sharp is available
       if (file.startsWith('splash_') && file.endsWith('.png')) {
         const webpDestPath = destPath.replace('.png', '.webp');
         const capWebpDestPath = capDestPath.replace('.png', '.webp');
-        const lowerWebpDestPath = lowerDestPath.replace('.png', '.webp');
         
         try {
           const sharp = (await import('sharp')).default;
           
           await sharp(srcPath).webp({ quality: 85 }).toFile(webpDestPath);
           await sharp(srcPath).webp({ quality: 85 }).toFile(capWebpDestPath);
-          await sharp(srcPath).webp({ quality: 85 }).toFile(lowerWebpDestPath);
           
           console.log(`Generated webp versions for ${file}`);
         } catch (err: any) {

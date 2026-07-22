@@ -89,8 +89,8 @@ const Interactive3DHijriIllustration = () => (
       className="w-full h-full object-contain drop-shadow-md"
       onError={(e) => {
         const target = e.currentTarget;
-        if (!target.src.includes("/resources/")) {
-          target.src = "/resources/crescentcalendarhahri.png";
+        if (!target.src.includes("/Resources/")) {
+          target.src = "/Resources/crescentcalendarhahri.png";
         } else if (!target.src.endsWith("/crescentcalendarhahri.png")) {
           target.src = "/crescentcalendarhahri.png";
         }

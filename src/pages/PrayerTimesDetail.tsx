@@ -329,8 +329,8 @@ export const PrayerTimesDetail: React.FC = () => {
               if (target.src.endsWith("/mosque.png") && !target.src.includes("/Resources/")) {
                 target.src = "/Resources/mosque.png";
               } else if (target.src.includes("/Resources/")) {
-                target.src = "/resources/mosque.png";
-              } else if (target.src.includes("/resources/")) {
+                target.src = "/mosque.png";
+              } else if (target.src.includes("/mosque.png")) {
                 target.src = "/mosque_bg.jpg";
               }
             }}
