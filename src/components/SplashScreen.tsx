@@ -125,28 +125,13 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
             hideNativeSplash();
             const target = e.target as HTMLImageElement;
             
-            // If the webp version failed to load, try the png version of the same splash screen
+            // If the webp version failed to load, try the png version
             if (target.src.endsWith(".webp")) {
               target.src = target.src.replace(".webp", ".png");
               return;
             }
             
-            // If the png custom splash failed, try the Resources directory
-            if (target.src.includes("splash_first") || target.src.includes("splash_subsequent")) {
-              if (!target.src.includes("/Resources/")) {
-                const isFirst = target.src.includes("splash_first");
-                target.src = isFirst ? "/Resources/splash_first.png" : "/Resources/splash_subsequent.png";
-                return;
-              }
-            }
-            
-            // If the Resources path failed, fall back to the general splash.png
-            if (target.src.includes("splash_first") || target.src.includes("splash_subsequent") || target.src.includes("/Resources/")) {
-              target.src = "/splash.png";
-              return;
-            }
-            
-            // If even the fallback splash.png fails, show the app content
+            // If even the png fails, show the app content
             setIsLoaded(true);
           }}
         />

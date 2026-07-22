@@ -326,11 +326,7 @@ export const PrayerTimesDetail: React.FC = () => {
             src="/mosque.png" 
             onError={(e) => {
               const target = e.currentTarget;
-              if (target.src.endsWith("/mosque.png") && !target.src.includes("/Resources/")) {
-                target.src = "/Resources/mosque.png";
-              } else if (target.src.includes("/Resources/")) {
-                target.src = "/mosque.png";
-              } else if (target.src.includes("/mosque.png")) {
+              if (target.src.endsWith("/mosque.png")) {
                 target.src = "/mosque_bg.jpg";
               }
             }}

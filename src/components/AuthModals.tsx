@@ -50,22 +50,14 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
     setLoading(true);
     try {
       if (Capacitor.isNativePlatform()) {
-        // Ensure initialized for Android fallback
-        try {
-          await GoogleAuth.initialize({
-            clientId: '565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com',
-          });
-        } catch (e) {
-          console.log("GoogleAuth already initialized or skip:", e);
-        }
-
         const googleUser = await (GoogleAuth.signIn as any)();
         if (googleUser && googleUser.authentication && googleUser.authentication.idToken) {
           const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
           const userCredential = await signInWithCredential(auth, credential);
           await syncUserProfile(userCredential.user);
         } else {
-          throw new Error("No ID Token found from Google Sign-In");
+          console.error("Google Sign-In returned invalid user data:", googleUser);
+          throw new Error(googleUser?.message || "فشل الحصول على رمز الهوية (ID Token) من جوجل");
         }
       } else {
         const userCredential = await signInWithPopup(auth, new GoogleAuthProvider());
@@ -77,7 +69,8 @@ export function AuthModals({ isOpen, onClose, initialTab, onSuccess }: AuthModal
       if (err.code === "auth/operation-not-allowed") {
         setError("تسجيل الدخول عبر جوجل غير مفعل حالياً. يرجى التواصل مع الإدارة.");
       } else {
-        setError("حدث خطأ أثناء الاتصال بجوجل: " + (err.message || err));
+        const detail = err.message || (typeof err === 'string' ? err : JSON.stringify(err));
+        setError("حدث خطأ أثناء الاتصال بجوجل: " + detail);
       }
     } finally {
       setLoading(false);

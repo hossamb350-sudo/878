@@ -585,18 +585,18 @@ export function Admin() {
         await signInWithPopup(auth, new GoogleAuthProvider());
       }
     } catch (error: any) {
+      console.error("Login error:", error);
       if (error.code === "auth/operation-not-allowed") {
         alert(
           "تسجيل الدخول عبر جوجل غير مفعل حالياً. يرجى التواصل مع الإدارة."
         );
       } else {
+        const detail = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
         alert(
           "حدث خطأ أثناء تسجيل الدخول: " +
-            error.message +
+            detail +
             " | كود الخطأ: " +
-            error.code +
-            " | " +
-            JSON.stringify(error)
+            (error.code || "N/A")
         );
       }
     }

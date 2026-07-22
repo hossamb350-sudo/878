@@ -84,17 +84,9 @@ const Interactive3DHijriIllustration = () => (
     className="relative w-28 h-28 xs:w-32 xs:h-32 sm:w-40 sm:h-40 flex items-center justify-center shrink-0 drop-shadow-2xl select-none cursor-pointer transition-transform"
   >
     <img 
-      src="/Resources/crescentcalendarhahri.png" 
+      src="/crescentcalendarhahri.png" 
       alt="الهلال والتقويم الهجري" 
       className="w-full h-full object-contain drop-shadow-md"
-      onError={(e) => {
-        const target = e.currentTarget;
-        if (!target.src.includes("/Resources/")) {
-          target.src = "/Resources/crescentcalendarhahri.png";
-        } else if (!target.src.endsWith("/crescentcalendarhahri.png")) {
-          target.src = "/crescentcalendarhahri.png";
-        }
-      }}
     />
   </motion.div>
 );

@@ -504,14 +504,6 @@ export const HeaderWidgets: React.FC = () => {
         <div className="flex items-center justify-center min-h-[105px] sm:min-h-[160px] md:min-h-[185px] w-full h-full transition-transform duration-200 hover:scale-[1.01] overflow-hidden">
           <img 
             src="/logo3.png" 
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (target.src.endsWith("/logo3.png") && !target.src.includes("/Resources/")) {
-                target.src = "/Resources/logo3.png";
-              } else if (target.src.includes("/Resources/")) {
-                target.src = "/logo3.png";
-              }
-            }}
             alt="منصة تعز الإعلامية" 
             className="w-full h-full max-h-[105px] sm:max-h-[160px] md:max-h-[185px] object-contain select-none" 
           />
@@ -590,13 +582,7 @@ export const HeaderWidgets: React.FC = () => {
           {/* Floating Gold Badge with Crescent Icon at Top Right */}
           <div className="absolute top-1 sm:top-2.5 right-1 sm:right-2.5 w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-[#002814]/70 backdrop-blur-md border border-[#E5A921]/60 shadow-2xs flex items-center justify-center z-10">
             <img 
-              src="/Resources/crescentcalendarhahri.png" 
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src.includes("/Resources/")) {
-                  target.src = "/crescentcalendarhahri.png";
-                }
-              }}
+              src="/crescentcalendarhahri.png" 
               alt="هلال" 
               className="w-3.5 h-3.5 sm:w-5 sm:h-5 object-contain"
             />
