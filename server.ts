@@ -1,7 +1,6 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
-import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import multer from "multer";
 import axios from "axios";
@@ -95,14 +94,14 @@ const imagekit = new ImageKit({
 });
 
 // Initialize Gemini
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    }
+let aiClient: GoogleGenAI | null = null;
+function getAiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const key = process.env.GEMINI_API_KEY;
+    aiClient = new GoogleGenAI({ apiKey: key, httpOptions: { headers: { 'User-Agent': 'aistudio-build' } } });
   }
-});
+  return aiClient;
+}
 
 app.use(express.json({ limit: "50mb" }));
 
@@ -374,7 +373,8 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
       }
 
       const lessonTitles = relatedLessons.map((l: any) => l.title).join("، ");
-      const prompt = `أنت خبير في محتوى هدي القرآن الكريم. بناءً على عناوين الدروس التالية التابعة لسلسلة بعنوان "${s.title}":
+      const ai = getAiClient();
+    const prompt = `أنت خبير في محتوى هدي القرآن الكريم. بناءً على عناوين الدروس التالية التابعة لسلسلة بعنوان "${s.title}":
       
       عناوين الدروس:
       ${lessonTitles}
@@ -943,6 +943,7 @@ app.use((err: any, req: any, res: any, next: any) => {
 async function startServer() {
   // Vite dev server middleware integration
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
