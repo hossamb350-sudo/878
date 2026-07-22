@@ -25,6 +25,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
 import { QuranAudioProvider } from "./context/QuranAudioContext";
+import { useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
+import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -58,6 +61,20 @@ function AnimatedRoutes() {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        GoogleAuth.initialize({
+          clientId: '565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com',
+          scopes: ["profile", "email"],
+          grantOfflineAccess: true,
+        });
+      } catch (e) {
+        console.warn("GoogleAuth init error:", e);
+      }
+    }
+  }, []);
 
   return (
     <BrowserRouter>

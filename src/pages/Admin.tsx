@@ -463,9 +463,10 @@ export function Admin() {
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
       GoogleAuth.initialize({
+        clientId: '565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com',
         scopes: ["profile", "email"],
         grantOfflineAccess: true,
-      });
+      }).catch(e => console.log("GoogleAuth already initialized:", e));
     }
 
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -572,6 +573,13 @@ export function Admin() {
   const login = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
+        try {
+          await GoogleAuth.initialize({
+            clientId: '565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com',
+          });
+        } catch (e) {
+          console.log("GoogleAuth already initialized or skip:", e);
+        }
         const googleUser = await (GoogleAuth.signIn as any)();
         if (googleUser.authentication.idToken) {
           const credential = GoogleAuthProvider.credential(
