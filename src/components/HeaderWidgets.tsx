@@ -1,173 +1,91 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { API_BASE, fetchWithFallback } from "../config/apiConfig";
-import { 
-  Sun, 
-  CloudSun, 
-  Cloud, 
-  CloudFog, 
-  Wind, 
-  Snowflake, 
-  CloudLightning, 
-  CloudRain, 
-  CloudDrizzle, 
-  Moon, 
-  CloudMoon, 
-  Sunrise, 
-  Sunset, 
-  Tornado,
-  ThermometerSun
-} from 'lucide-react';
+import { MapPin } from "lucide-react";
 
-// 3D-styled SVG Icon Renderers to match the premium reference image style
+// Red Calendar Icon Badge for Date Card
+const RedCalendarIcon = () => (
+  <svg className="w-3.5 h-3.5 sm:w-5 sm:h-5" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="6" width="26" height="22" rx="5" stroke="#DC2626" strokeWidth="2.2" fill="none" />
+    <line x1="3" y1="12" x2="29" y2="12" stroke="#DC2626" strokeWidth="2" />
+    <rect x="8" y="3" width="2.5" height="5" rx="1.2" fill="#DC2626" />
+    <rect x="21.5" y="3" width="2.5" height="5" rx="1.2" fill="#DC2626" />
+    <circle cx="9" cy="17" r="1.3" fill="#DC2626" />
+    <circle cx="16" cy="17" r="1.3" fill="#DC2626" />
+    <circle cx="23" cy="17" r="1.3" fill="#DC2626" />
+    <circle cx="9" cy="22" r="1.3" fill="#DC2626" />
+    <circle cx="16" cy="22" r="1.3" fill="#DC2626" />
+    <circle cx="23" cy="22" r="1.3" fill="#DC2626" />
+  </svg>
+);
 
-const render3DCalendarIcon = () => (
-  <svg className="w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 drop-shadow-md select-none transform hover:scale-105 transition-transform" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+// Glossy 3D Sun and Cloud Icon Renderer
+const SunCloud3DIcon = () => (
+  <svg className="w-7 h-7 sm:w-11 sm:h-11 md:w-14 md:h-14 drop-shadow-md select-none shrink-0" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="calBg" x1="8" y1="14" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <radialGradient id="sunGlow3D" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stopColor="#FFEE55" />
+        <stop offset="60%" stopColor="#FFAA00" />
+        <stop offset="100%" stopColor="#E65100" />
+      </radialGradient>
+      <linearGradient id="cloudGrad3D" x1="16" y1="26" x2="52" y2="52" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#FFFFFF" />
-        <stop offset="100%" stopColor="#E2E8F0" />
+        <stop offset="70%" stopColor="#F1F5F9" />
+        <stop offset="100%" stopColor="#CBD5E1" />
       </linearGradient>
-      <linearGradient id="calHeader" x1="8" y1="14" x2="56" y2="28" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#2563EB" />
-        <stop offset="100%" stopColor="#1E40AF" />
-      </linearGradient>
-      <linearGradient id="ringGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor="#94A3B8" />
-        <stop offset="100%" stopColor="#475569" />
-      </linearGradient>
-      <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
-        <feDropShadow dx="0" dy="2" stdDeviation="1.5" floodColor="#0F172A" floodOpacity="0.1" />
+      <filter id="cloudDropShadow" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="3" stdDeviation="2" floodColor="#0F172A" floodOpacity="0.12" />
       </filter>
     </defs>
-    
-    {/* Calendar body base */}
-    <rect x="8" y="14" width="48" height="42" rx="10" fill="url(#calBg)" filter="url(#softShadow)" />
-    
-    {/* Blue Header Bar */}
-    <path d="M8 24C8 18.4772 12.4772 14 18 14H46C51.5228 14 56 18.4772 56 24V28H8V24Z" fill="url(#calHeader)" />
-    
-    {/* Rings / Binder loops */}
-    <rect x="18" y="8" width="5" height="11" rx="2.5" fill="url(#ringGrad)" />
-    <rect x="41" y="8" width="5" height="11" rx="2.5" fill="url(#ringGrad)" />
-    
-    {/* Grid dots on the calendar page representing events/dates */}
-    <g fill="#3B82F6" opacity="0.8">
-      <rect x="16" y="34" width="6" height="5" rx="1.5" />
-      <rect x="26" y="34" width="6" height="5" rx="1.5" />
-      <rect x="36" y="34" width="6" height="5" rx="1.5" />
-      <rect x="46" y="34" width="6" height="5" rx="1.5" />
-      
-      <rect x="16" y="44" width="6" height="5" rx="1.5" />
-      <rect x="26" y="44" width="6" height="5" rx="1.5" />
-      <rect x="36" y="44" width="6" height="5" rx="1.5" />
-      <rect x="46" y="44" width="6" height="5" rx="1.5" />
+    {/* Sun Rays */}
+    <g stroke="#FFB300" strokeWidth="2.5" strokeLinecap="round">
+      <line x1="42" y1="10" x2="42" y2="6" />
+      <line x1="51" y1="13" x2="54" y2="10" />
+      <line x1="55" y1="22" x2="59" y2="22" />
+      <line x1="51" y1="31" x2="54" y2="34" />
+      <line x1="33" y1="13" x2="30" y2="10" />
+      <line x1="28" y1="22" x2="24" y2="22" />
+    </g>
+    {/* Sun Sphere */}
+    <circle cx="42" cy="22" r="11" fill="url(#sunGlow3D)" />
+    {/* 3D Fluffy Cloud */}
+    <g filter="url(#cloudDropShadow)">
+      <path d="M20 46 C15 46 11 42 11 37 C11 32.5 14.5 28.8 19 28.1 C20.8 23.5 25.2 20 30.5 20 C36.8 20 42 24.8 42.8 31 C46.8 31.5 50 35 50 39.5 C50 44 46.4 46 42 46 Z" fill="url(#cloudGrad3D)" />
     </g>
   </svg>
 );
 
-
-const renderMosqueDomeIcon = () => (
-  <svg className="w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 drop-shadow-md select-none transform hover:scale-105 transition-transform" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+// 3D Mosque Dome Vector Illustration
+const MosqueDomeIllustration = () => (
+  <svg className="w-full h-8 sm:h-14 md:h-18 select-none shrink-0" viewBox="0 0 160 90" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="domeGrad" x1="16" y1="20" x2="48" y2="44" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#10B981" />
-        <stop offset="50%" stopColor="#059669" />
-        <stop offset="100%" stopColor="#047857" />
+      <linearGradient id="domeGrad3D" x1="80" y1="15" x2="80" y2="70" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#15803D" />
+        <stop offset="60%" stopColor="#166534" />
+        <stop offset="100%" stopColor="#0F5128" />
       </linearGradient>
-      <linearGradient id="domeBaseGrad" x1="12" y1="46" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#047857" />
-        <stop offset="100%" stopColor="#064E3B" />
-      </linearGradient>
-      <linearGradient id="crescentGrad" x1="30" y1="2" x2="36" y2="12" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#34D399" />
-        <stop offset="100%" stopColor="#059669" />
+      <linearGradient id="skyWave" x1="0" y1="0" x2="0" y2="90" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#E2F3E7" stopOpacity="0.3" />
+        <stop offset="100%" stopColor="#D1EBD9" stopOpacity="0.75" />
       </linearGradient>
     </defs>
-    <rect x="12" y="46" width="40" height="4" rx="2" fill="url(#domeBaseGrad)" />
-    <rect x="18" y="44" width="28" height="2" rx="1" fill="#10B981" />
-    <path d="M16 44C16 31 21 19 32 19C43 19 48 31 48 44H16Z" fill="url(#domeGrad)" />
-    <path d="M31.5 8H32.5V19H31.5V8Z" fill="url(#crescentGrad)" />
-    <circle cx="32" cy="14" r="1.5" fill="#34D399" />
-    <circle cx="32" cy="11" r="1.2" fill="#34D399" />
-    <path d="M32 2C34.5 2 36.5 3.5 36.5 5.5C36.5 7.5 34.5 9 32 9C34 9 35.5 7.5 35.5 5.5C35.5 3.5 34 2 32 2Z" fill="url(#crescentGrad)" />
+    {/* Background Hills/Clouds Wave */}
+    <path d="M0 65 Q 40 45, 80 58 T 160 55 V 90 H 0 Z" fill="url(#skyWave)" />
+    {/* Faint Minaret in background right */}
+    <path d="M120 70 V 38 H 126 V 70 Z M123 28 L120 38 H126 Z M123 22 L123 28" stroke="#86EFAC" strokeWidth="1.5" fill="none" opacity="0.65" />
+    {/* Main Mosque Dome */}
+    <path d="M58 70 C58 48 68 30 80 30 C92 30 102 48 102 70 Z" fill="url(#domeGrad3D)" />
+    {/* Dome Arch Inner Highlight */}
+    <path d="M72 70 C72 60 76 54 80 54 C84 54 88 60 88 70 Z" fill="#DCFCE7" opacity="0.95" />
+    {/* Spire with Crescent Moon */}
+    <line x1="80" y1="30" x2="80" y2="15" stroke="#15803D" strokeWidth="2" />
+    <path d="M80 12 C82 12 84 13.5 84 15.5 C84 17.5 82 19 80 19 C82 19 83.5 17.5 83.5 15.5 C83.5 13.5 82 12 80 12 Z" fill="#15803D" />
   </svg>
 );
 
-
-// Premium Gold Separator
-const GoldSeparator = () => (
-  <div className="w-[1px] my-3 sm:my-4 bg-gradient-to-b from-transparent via-amber-500/40 to-transparent self-stretch shadow-[0_0_8px_rgba(245,158,11,0.2)]" />
-);
-
-const WeatherIcon = ({ code, isNight, temp = 25, hours }: { code?: number, isNight?: boolean, temp?: number, hours?: number }) => {
-  const hr = hours !== undefined ? hours : new Date().getHours();
-  
-  const iconProps = {
-    className: "w-8 h-8 sm:w-11 sm:h-11 md:w-14 md:h-14 stroke-[1.5] drop-shadow-[0_2px_6px_rgba(255,255,255,0.4)] transition-transform hover:scale-105",
-  };
-
-  // 1. Check for Sunrise/Sunset temporal transitions first if sky is relatively clear
-  const isClearOrPartlyCloudy = !code || code === 800 || code === 801 || code === 802;
-  if (isClearOrPartlyCloudy) {
-    if (hr === 5 || hr === 6) return <Sunrise {...iconProps} className={`${iconProps.className} text-amber-400`} />;
-    if (hr === 17 || hr === 18) return <Sunset {...iconProps} className={`${iconProps.className} text-rose-500`} />;
-  }
-
-  // 2. Check for Windy / Dust conditions (Atmosphere group 7xx)
-  if (code && code >= 700 && code < 800) {
-    if (code === 741 || code === 701 || code === 721) {
-      return <CloudFog {...iconProps} className={`${iconProps.className} text-slate-400`} />;
-    }
-    if (code === 761 || code === 751 || code === 731 || code === 762) {
-      return <Tornado {...iconProps} className={`${iconProps.className} text-amber-600/80`} />;
-    }
-    return <Wind {...iconProps} className={`${iconProps.className} text-slate-400`} />;
-  }
-
-  // 3. Snow / Cold conditions (6xx)
-  if (code && code >= 600 && code < 700) {
-    return <Snowflake {...iconProps} className={`${iconProps.className} text-sky-400`} />;
-  }
-  if (temp <= 10 && code && code >= 801) {
-    return <Snowflake {...iconProps} className={`${iconProps.className} text-sky-400`} />;
-  }
-
-  // 4. Thunderstorm conditions (2xx)
-  if (code && code >= 200 && code < 300) {
-    return <CloudLightning {...iconProps} className={`${iconProps.className} text-indigo-500`} />;
-  }
-
-  // 5. Rain / Drizzle conditions (3xx, 5xx)
-  if (code && ((code >= 300 && code < 400) || (code >= 500 && code < 600))) {
-    if (code === 511) return <Snowflake {...iconProps} className={`${iconProps.className} text-sky-400`} />;
-    
-    const isHeavy = code === 502 || code === 503 || code === 504 || code === 522 || code === 531;
-    if (isHeavy) return <CloudRain {...iconProps} className={`${iconProps.className} text-blue-600`} />;
-    return <CloudDrizzle {...iconProps} className={`${iconProps.className} text-blue-400`} />;
-  }
-
-  // 6. Clear Sky (800)
-  if (code === 800) {
-    if (isNight) return <Moon {...iconProps} className={`${iconProps.className} text-slate-100 drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]`} />;
-    if (temp >= 32) return <ThermometerSun {...iconProps} className={`${iconProps.className} text-rose-500`} />;
-    return <Sun {...iconProps} className={`${iconProps.className} text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.6)]`} />;
-  }
-
-  // 7. Cloudy conditions (801 - 804)
-  if (code === 801 || code === 802) {
-    return isNight ? <CloudMoon {...iconProps} className={`${iconProps.className} text-slate-300`} /> : <CloudSun {...iconProps} className={`${iconProps.className} text-amber-500`} />;
-  }
-  if (code === 803 || code === 804) {
-    return <Cloud {...iconProps} className={`${iconProps.className} text-slate-500`} />;
-  }
-
-  return isNight ? <CloudMoon {...iconProps} className={`${iconProps.className} text-slate-300`} /> : <CloudSun {...iconProps} className={`${iconProps.className} text-amber-500`} />;
-};
-
 export const HeaderWidgets: React.FC = () => {
   const [time, setTime] = useState(new Date());
-  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max?: number; temp_min?: number; condition: string; id: number; icon?: string } | null>(() => {
+  
+  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max: number; temp_min: number; condition: string; id: number } | null>(() => {
     try {
       const cached = localStorage.getItem("cached_weather_data");
       return cached ? JSON.parse(cached) : null;
@@ -175,6 +93,7 @@ export const HeaderWidgets: React.FC = () => {
       return null;
     }
   });
+
   const [prayerTimes, setPrayerTimes] = useState<{ name: string; time: string }[] | null>(() => {
     try {
       const cached = localStorage.getItem("cached_prayer_times");
@@ -183,6 +102,7 @@ export const HeaderWidgets: React.FC = () => {
       return null;
     }
   });
+
   const [apiHijriDate, setApiHijriDate] = useState<string | null>(() => {
     try {
       return localStorage.getItem("cached_hijri_date");
@@ -190,11 +110,9 @@ export const HeaderWidgets: React.FC = () => {
       return null;
     }
   });
-  
+
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
+    const timer = setInterval(() => setTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -205,30 +123,23 @@ export const HeaderWidgets: React.FC = () => {
           fetch(`https://api.openweathermap.org/data/2.5/weather?lat=13.5795&lon=44.0203&appid=${import.meta.env.OPENWEATHER_API_KEY}&units=metric&lang=ar`),
           fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=13.5795&lon=44.0203&appid=${import.meta.env.OPENWEATHER_API_KEY}&units=metric&lang=ar`)
         ]);
-        
+
         if (weatherRes.ok && forecastRes.ok) {
           const wData = await weatherRes.json();
           const fData = await forecastRes.json();
-          
-          // Compute today's actual min and max from the next 24 hours of forecast
+
           const todayForecasts = fData.list.slice(0, 8);
           const minTemps = todayForecasts.map((item: any) => item.main.temp_min);
           const maxTemps = todayForecasts.map((item: any) => item.main.temp_max);
-          
-          // Include current weather temp readings to cover all bases
           minTemps.push(wData.main.temp_min);
           maxTemps.push(wData.main.temp_max);
 
-          const temp_min = Math.round(Math.min(...minTemps));
-          const temp_max = Math.round(Math.max(...maxTemps));
-
           const newWeatherData = {
             temp: Math.round(wData.main.temp),
-            temp_max: temp_max,
-            temp_min: temp_min,
+            temp_max: Math.round(Math.max(...maxTemps)),
+            temp_min: Math.round(Math.min(...minTemps)),
             condition: wData.weather[0].description,
             id: wData.weather[0].id,
-            icon: wData.weather[0].icon
           };
 
           setWeatherData(newWeatherData);
@@ -255,7 +166,6 @@ export const HeaderWidgets: React.FC = () => {
           setPrayerTimes(newPrayerTimes);
           localStorage.setItem("cached_prayer_times", JSON.stringify(newPrayerTimes));
 
-          // Extract and store accurate Hijri date from Aladhan API response
           const hijri = data.data.date.hijri;
           const newHijriDate = `${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
           setApiHijriDate(newHijriDate);
@@ -265,19 +175,35 @@ export const HeaderWidgets: React.FC = () => {
         console.error("Failed to fetch prayer times", err);
       }
     };
-    
+
     fetchWeather();
     fetchPrayerTimes();
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
-    const prayerInterval = setInterval(fetchPrayerTimes, 12 * 60 * 60 * 1000); // every 12 hours
+    const prayerInterval = setInterval(fetchPrayerTimes, 12 * 60 * 60 * 1000);
     return () => {
       clearInterval(interval);
       clearInterval(prayerInterval);
     };
   }, []);
 
-  // Local robust Hijri Date calculation fallback
-  const hijriParts = useMemo(() => {
+  // Format Day Name
+  const dayName = useMemo(() => {
+    const days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    return days[time.getDay()];
+  }, [time]);
+
+  // Format Gregorian Date
+  const gregorianDate = useMemo(() => {
+    const months = [
+      "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+      "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+    ];
+    return `${time.getDate()} ${months[time.getMonth()]} ${time.getFullYear()} م`;
+  }, [time]);
+
+  // Hijri Date Fallback or API
+  const hijriDate = useMemo(() => {
+    if (apiHijriDate) return apiHijriDate;
     try {
       const dayMonth = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
         day: 'numeric',
@@ -286,185 +212,182 @@ export const HeaderWidgets: React.FC = () => {
       const yearStr = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
         year: 'numeric'
       }).format(time);
-      
-      const numericMonth = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {
-        month: 'numeric'
-      }).format(time);
-      const numericYear = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {
-        year: 'numeric'
-      }).format(time);
-
-      return { dayMonth, year: yearStr, m: parseInt(numericMonth), y: parseInt(numericYear) };
-    } catch (e) {
-      return {
-        dayMonth: time.toLocaleDateString("ar-SA-u-ca-islamic", { day: "numeric", month: "long" }),
-        year: time.toLocaleDateString("ar-SA-u-ca-islamic", { year: "numeric" }),
-        m: 1,
-        y: 1448
-      };
+      return `${dayMonth} ${yearStr}`;
+    } catch {
+      return "8 صفر 1446 هـ";
     }
-  }, [time]);
+  }, [apiHijriDate, time]);
 
-  const displayHijri = useMemo(() => {
-    if (apiHijriDate) return apiHijriDate;
-    return `${hijriParts.dayMonth} ${hijriParts.year}`;
-  }, [apiHijriDate, hijriParts]);
+  // Active / Next Prayer Determination
+  const activePrayerInfo = useMemo(() => {
+    const defaultPrayer = { name: "الفجر", rawTime: "04:22" };
+    if (!prayerTimes || prayerTimes.length === 0) return defaultPrayer;
 
-  const getArabicDayName = (date: Date) => {
-    const days = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-    return days[date.getDay()];
-  };
-
-  const isNight = useMemo(() => {
-    const hours = time.getHours();
-    return hours < 6 || hours >= 18;
-  }, [time]);
-
-  const weather = weatherData ? {
-    temp: weatherData.temp,
-    temp_max: weatherData.temp_max,
-    temp_min: weatherData.temp_min,
-    condition: weatherData.condition,
-    icon: weatherData.icon,
-  } : {
-    temp: 27,
-    temp_max: 29,
-    temp_min: 24,
-    condition: "غائم جزئي",
-    icon: "02d"
-  };
-
-  // Calculate Next Prayer Countdown (always displaying hours and minutes)
-  const nextPrayerInfo = useMemo(() => {
     const currentHour = time.getHours();
     const currentMin = time.getMinutes();
     const currentTotalMins = currentHour * 60 + currentMin;
 
-    const defaultPrayer = { name: "الفجر", countdown: "... " };
-    
-    if (!prayerTimes) return defaultPrayer;
-
     for (const prayer of prayerTimes) {
       const [pHour, pMin] = prayer.time.split(":").map(Number);
       const prayerTotalMins = pHour * 60 + pMin;
-      
       if (prayerTotalMins > currentTotalMins) {
-        const diff = prayerTotalMins - currentTotalMins;
-        const hours = Math.floor(diff / 60);
-        const mins = diff % 60;
-        return { 
-          name: prayer.name, 
-          countdown: hours > 0 ? `${hours} س و ${mins} د` : `${mins} د`,
-        };
+        return { name: prayer.name, rawTime: prayer.time };
       }
     }
-    
-    // Calculate difference to next day's Fajr
-    const fajr = prayerTimes[0];
-    const [fHour, fMin] = fajr.time.split(":").map(Number);
-    const fajrTotalMinsNextDay = fHour * 60 + fMin + (24 * 60);
-    const diff = fajrTotalMinsNextDay - currentTotalMins;
-    const hours = Math.floor(diff / 60);
-    const mins = diff % 60;
-    
-    return { 
-      name: fajr.name, 
-      countdown: hours > 0 ? `${hours} س و ${mins} د` : `${mins} د`, 
-    };
+    return { name: prayerTimes[0].name, rawTime: prayerTimes[0].time };
   }, [time, prayerTimes]);
 
-  return (
-    <div className="w-full max-w-full mx-auto px-0 pt-0 pb-0 select-none" dir="rtl">
-      <div className="w-full bg-slate-50/95 backdrop-blur-md rounded-none border-b border-slate-200/60 shadow-sm flex items-stretch p-1 sm:p-1.5 overflow-hidden min-h-[95px] sm:min-h-[115px] md:min-h-[130px] transition-all duration-300">
-        
-        {/* 1. Platform Branding Card */}
-        <div className="flex-[1.6] md:flex-[1.8] relative flex flex-col items-center justify-center text-center p-2 select-none bg-transparent m-1">
-          
-          {/* Logo container without any background overlay or separators */}
-          <div className="flex flex-col items-center justify-center w-full">
-            {/* Platform Logo */}
-            <img 
-              src="/Resources/logo3.png" 
-              onError={(e) => {
-                const target = e.currentTarget;
-                if (target.src.includes("/Resources/")) {
-                  target.src = "/resources/logo3.png";
-                } else if (target.src.includes("/resources/")) {
-                  target.src = "/logo3.png";
-                } else if (target.src.includes("/logo3.png")) {
-                  target.src = "Resources/logo3.png";
-                }
-              }}
-              alt="Taiz Media Platform Logo" 
-              className="h-[58px] sm:h-[78px] md:h-[94px] lg:h-[106px] w-auto object-contain filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.05)] transform hover:scale-102 transition-transform" 
-            />
-          </div>
+  // Format 12H Prayer Time
+  const formattedPrayer = useMemo(() => {
+    const raw = activePrayerInfo.rawTime;
+    const parts = raw.split(":");
+    let hours = parseInt(parts[0], 10);
+    const minutes = parts[1] ? parts[1].padStart(2, "0") : "00";
+    const period = hours >= 12 ? "م" : "ص";
+    hours = hours % 12;
+    if (hours === 0) hours = 12;
+    const formattedHours = hours.toString().padStart(2, "0");
+    return {
+      name: activePrayerInfo.name,
+      time: `${formattedHours}:${minutes}`,
+      period,
+    };
+  }, [activePrayerInfo]);
 
+  // Weather values or fallback
+  const weather = useMemo(() => {
+    if (!weatherData) {
+      return { temp: 27, tempMax: 31, tempMin: 23, condition: "غائم جزئياً" };
+    }
+    return {
+      temp: weatherData.temp,
+      tempMax: weatherData.temp_max,
+      tempMin: weatherData.temp_min,
+      condition: weatherData.condition || "غائم جزئياً",
+    };
+  }, [weatherData]);
+
+  return (
+    <div className="w-full max-w-[1400px] mx-auto px-1.5 sm:px-4 py-1.5 sm:py-3 select-none" dir="rtl">
+      {/* 4 Columns Horizontal Grid - Compact & Responsive for Mobile */}
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-3 md:gap-4 items-stretch">
+        
+        {/* 1. Far Right Item: Platform Logo (الشعار الرئيسي للمنصة) */}
+        <div className="flex items-center justify-center p-1 sm:p-3 bg-transparent rounded-[14px] sm:rounded-[22px] min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-transform duration-200 hover:scale-[1.01]">
+          <img 
+            src="/Resources/logo3.png" 
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src.includes("/Resources/")) {
+                target.src = "/resources/logo3.png";
+              } else if (target.src.includes("/resources/")) {
+                target.src = "/logo3.png";
+              }
+            }}
+            alt="منصة تعز الإعلامية" 
+            className="h-[62px] xs:h-[75px] sm:h-[120px] md:h-[145px] w-auto object-contain filter drop-shadow-[0_2px_8px_rgba(0,0,0,0.06)]" 
+          />
         </div>
 
-        {/* Separator */}
-        <GoldSeparator />
-
-        {/* 2. Prayer Times Card (Dynamic with 3D Emerald Mosque matching reference) */}
+        {/* 2. Second Item from Right: Prayer Times Card (كارت مواقيت الصلاة) */}
         <Link 
           to="/prayer-times" 
-          className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1 hover:bg-slate-50 active:scale-98 transition-all duration-200"
+          className="relative bg-gradient-to-b from-[#F2F9F5] via-[#F7FCF9] to-[#EDF7F2] rounded-[14px] sm:rounded-[22px] border border-[#D2EBD9] shadow-[0_2px_12px_rgba(0,0,0,0.04)] sm:shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-1.5 sm:p-3.5 md:p-4 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-[#A3E0B5] active:scale-[0.99] transition-all duration-200 group overflow-hidden"
         >
-          <div className="mb-1 sm:mb-1.5 shrink-0">
-            {renderMosqueDomeIcon()}
+          {/* Top 3D Mosque Dome Graphic */}
+          <div className="w-full flex justify-center">
+            <MosqueDomeIllustration />
           </div>
-          <div className="flex flex-col items-center">
-            <span className="text-[11px] sm:text-[14px] md:text-[18px] lg:text-[20px] font-black text-[#10B981] font-cairo leading-none">
-              {nextPrayerInfo.name}
-            </span>
-            <span className="text-[8px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-[#10B981] font-black font-cairo leading-none mt-1 whitespace-nowrap">
-              {nextPrayerInfo.countdown}
+
+          {/* Middle Prayer Name and Time */}
+          <div className="flex flex-col items-center justify-center w-full my-auto">
+            <h3 className="text-[13px] xs:text-[15px] sm:text-[22px] md:text-[27px] font-black text-[#0B6B3D] tracking-tight leading-none">
+              {formattedPrayer.name}
+            </h3>
+            
+            <div className="flex items-center justify-center gap-1 sm:gap-2 mt-0.5 sm:mt-1.5 text-[#1E293B]">
+              <span className="text-[11px] xs:text-[13px] sm:text-[18px] md:text-[21px] font-bold tracking-wider font-sans">
+                {formattedPrayer.time}
+              </span>
+              <span className="text-[#CBD5E1] text-[9px] sm:text-[14px] font-normal">|</span>
+              <span className="text-[11px] xs:text-[13px] sm:text-[18px] md:text-[21px] font-bold">
+                {formattedPrayer.period}
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom Location Pill Badge */}
+          <div className="w-full bg-[#E1F3E7] rounded-lg sm:rounded-xl py-0.5 sm:py-1 px-1 sm:px-2.5 flex items-center justify-center gap-0.5 sm:gap-1.5 mt-0.5 sm:mt-1.5 group-hover:bg-[#D4EBDC] transition-colors">
+            <MapPin className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-[#0B6B3D] fill-[#0B6B3D]/20 shrink-0" />
+            <span className="text-[8.5px] xs:text-[10px] sm:text-[12px] md:text-[13px] font-bold text-[#0B6B3D] whitespace-nowrap">
+              مكة المكرمة
             </span>
           </div>
         </Link>
 
-        {/* Separator */}
-        <GoldSeparator />
-
-        {/* 3. Weather Card (Dynamic with 3D Cloud/Sun matching reference) */}
+        {/* 3. Third Item from Right: Weather Card (كارت الطقس) */}
         <Link 
           to="/weather" 
-          className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1 hover:bg-slate-50 active:scale-98 transition-all duration-200"
+          className="relative bg-gradient-to-b from-[#EBF4FF] via-[#E5F1FF] to-[#DBEBFF] rounded-[14px] sm:rounded-[22px] border border-[#CBE3FC] shadow-[0_2px_12px_rgba(0,0,0,0.04)] sm:shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-[#93C5FD] active:scale-[0.99] transition-all duration-200 overflow-hidden"
         >
-          <div className="mb-1 sm:mb-1.5 shrink-0">
-            <WeatherIcon code={weatherData?.id} isNight={isNight} temp={weatherData?.temp} hours={time.getHours()} />
+          {/* Top Section: Temp + 3D Sun Cloud Icon */}
+          <div className="flex items-start justify-between w-full">
+            <span className="text-[18px] xs:text-[22px] sm:text-[34px] md:text-[42px] font-black text-[#0F172A] leading-none tracking-tight font-sans">
+              {weather.temp}°
+            </span>
+            <SunCloud3DIcon />
           </div>
-          <div className="flex flex-col items-center">
-            <span className="text-[11px] sm:text-[14px] md:text-[18px] lg:text-[20px] font-black text-red-600 font-cairo leading-none flex items-center justify-center gap-1">
-              <span>{weather.temp_min}°</span>
-              <span className="text-slate-400 font-normal">/</span>
-              <span>{weather.temp_max}°</span>
-            </span>
-            <span className="text-[8px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-slate-500 font-bold font-cairo leading-none mt-1 truncate max-w-full">
+
+          {/* Middle Weather Condition Description */}
+          <div className="my-auto">
+            <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[16px] font-bold text-[#1E293B] tracking-wide whitespace-nowrap leading-tight">
               {weather.condition}
-            </span>
+            </p>
+          </div>
+
+          {/* Bottom Row: Max and Min Temperatures with Triangles */}
+          <div className="flex items-center gap-1.5 sm:gap-3 mt-0.5 sm:mt-1.5">
+            <div className="flex items-center gap-0.5 text-[#DC2626] font-bold text-[9px] xs:text-[11px] sm:text-[14px]">
+              <span className="text-[8px] sm:text-[10px] leading-none">▲</span>
+              <span className="font-sans">{weather.tempMax}°</span>
+            </div>
+            <div className="flex items-center gap-0.5 text-[#2563EB] font-bold text-[9px] xs:text-[11px] sm:text-[14px]">
+              <span className="text-[8px] sm:text-[10px] leading-none">▼</span>
+              <span className="font-sans">{weather.tempMin}°</span>
+            </div>
           </div>
         </Link>
 
-        {/* Separator */}
-        <GoldSeparator />
-
-        {/* 4. Date Card */}
+        {/* 4. Leftmost Item: Date Card (كارت التاريخ) */}
         <Link 
-          to={`/calendar/${hijriParts.m}/${hijriParts.y}`} 
-          className="flex-1 flex flex-col items-center justify-center text-center p-2 min-w-0 bg-white border border-slate-200/60 rounded-none shadow-sm m-1 hover:bg-slate-50 active:scale-98 transition-all duration-200"
+          to="/calendar" 
+          className="relative bg-white rounded-[14px] sm:rounded-[22px] border border-slate-200/90 shadow-[0_2px_12px_rgba(0,0,0,0.04)] sm:shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-1.5 sm:p-3.5 md:p-5 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-slate-300 active:scale-[0.99] transition-all duration-200 overflow-hidden"
         >
-          <div className="mb-1 sm:mb-1.5 shrink-0">
-            {render3DCalendarIcon()}
+          {/* Floating White Badge with Red Calendar Icon at Top Right */}
+          <div className="absolute top-1 sm:top-3 right-1 sm:right-3 w-5 h-5 sm:w-9 sm:h-9 rounded-[6px] sm:rounded-[12px] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06)] sm:shadow-[0_2px_10px_rgba(0,0,0,0.07)] border border-slate-100 flex items-center justify-center z-10">
+            <RedCalendarIcon />
           </div>
-          <div className="flex flex-col items-center">
-            <span className="text-[11px] sm:text-[14px] md:text-[18px] lg:text-[20px] font-black text-[#0B1C3E] font-cairo leading-none">
-              {getArabicDayName(time)}
-            </span>
-            <span className="text-[8px] sm:text-[10px] md:text-[11px] lg:text-[12px] text-slate-500 font-bold font-cairo leading-none mt-1 whitespace-nowrap">
-              {displayHijri}
-            </span>
+
+          {/* Center Date Information */}
+          <div className="flex flex-col items-center justify-center w-full my-auto text-center pt-1 sm:pt-2">
+            {/* Day Name */}
+            <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-[#0F172A] tracking-tight leading-none">
+              {dayName}
+            </h3>
+
+            {/* Hijri Date */}
+            <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[17px] font-bold text-[#DC2626] leading-none mt-1 sm:mt-2 whitespace-nowrap">
+              {hijriDate}
+            </p>
+
+            {/* Gregorian Date */}
+            <p className="text-[8.5px] xs:text-[9.5px] sm:text-[13px] md:text-[14px] font-semibold text-[#64748B] leading-none mt-0.5 sm:mt-1.5 whitespace-nowrap">
+              {gregorianDate}
+            </p>
           </div>
+
+          {/* Bottom Center Red Accent Bar */}
+          <div className="w-6 sm:w-12 h-[2px] sm:h-[3.5px] bg-[#DC2626] rounded-full mt-0.5 sm:mt-1.5" />
         </Link>
 
       </div>
