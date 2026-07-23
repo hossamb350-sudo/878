@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 import { MapPin } from "lucide-react";
 
 // Red Calendar Icon Badge for Date Card
@@ -31,10 +32,10 @@ const DynamicWeather3DIcon = ({ weatherId }: { weatherId?: number }) => {
           </linearGradient>
         </defs>
         <path d="M20 40 C15 40 11 36 11 31 C11 26.5 14.5 22.8 19 22.1 C20.8 17.5 25.2 14 30.5 14 C36.8 14 42 18.8 42.8 25 C46.8 25.5 50 29 50 33.5 C50 38 46.4 40 42 40 Z" fill="url(#rainCloudGrad)" />
-        {/* Rain Drops */}
-        <line x1="22" y1="44" x2="19" y2="52" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="32" y1="44" x2="29" y2="54" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="42" y1="44" x2="39" y2="52" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
+        {/* Animated Rain Drops */}
+        <line x1="22" y1="44" x2="19" y2="52" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" className="animate-pulse" />
+        <line x1="32" y1="44" x2="29" y2="54" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" className="animate-pulse [animation-delay:200ms]" />
+        <line x1="42" y1="44" x2="39" y2="52" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" className="animate-pulse [animation-delay:400ms]" />
       </svg>
     );
   }
@@ -50,7 +51,7 @@ const DynamicWeather3DIcon = ({ weatherId }: { weatherId?: number }) => {
             <stop offset="100%" stopColor="#F57F17" />
           </radialGradient>
         </defs>
-        <g stroke="#F59E0B" strokeWidth="3" strokeLinecap="round">
+        <g stroke="#F59E0B" strokeWidth="3" strokeLinecap="round" className="animate-[spin_12s_linear_infinite] origin-[32px_32px]">
           <line x1="32" y1="8" x2="32" y2="2" />
           <line x1="32" y1="62" x2="32" y2="56" />
           <line x1="8" y1="32" x2="2" y2="32" />
@@ -83,7 +84,7 @@ const DynamicWeather3DIcon = ({ weatherId }: { weatherId?: number }) => {
           <feDropShadow dx="0" dy="3" stdDeviation="2" floodColor="#0F172A" floodOpacity="0.12" />
         </filter>
       </defs>
-      <g stroke="#FFB300" strokeWidth="2.5" strokeLinecap="round">
+      <g stroke="#FFB300" strokeWidth="2.5" strokeLinecap="round" className="animate-[spin_16s_linear_infinite] origin-[42px_22px]">
         <line x1="42" y1="10" x2="42" y2="6" />
         <line x1="51" y1="13" x2="54" y2="10" />
         <line x1="55" y1="22" x2="59" y2="22" />
@@ -118,7 +119,7 @@ const MosqueDomeIllustration = () => (
     <path d="M72 68 C72 56 76 50 80 50 C84 50 88 56 88 68 Z" fill="#EEF8F1" />
     {/* Crescent Finial Top */}
     <line x1="80" y1="22" x2="80" y2="12" stroke="#015028" strokeWidth="2" strokeLinecap="round" />
-    <path d="M80 8 C82 8 83.5 9.5 83.5 11.5 C83.5 13.5 82 15 80 15 C81.5 15 83 13.5 83 11.5 C83 9.5 81.5 8 80 8 Z" fill="#015028" />
+    <path d="M80 8 C82 8 83.5 9.5 83.5 11.5 C83.5 13.5 82 15 80 15 C81.5 15 83 13.5 83 11.5 C83 9.5 81.5 8 80 8 Z" fill="#015028" className="animate-pulse" />
   </svg>
 );
 
@@ -497,116 +498,157 @@ export const HeaderWidgets: React.FC = () => {
       <div className="grid grid-cols-4 gap-1.5 sm:gap-3 md:gap-4 items-stretch">
         
         {/* 1. Far Right Item: Platform Logo (شعار المنصة بدون خلفية بيضاء) */}
-        <div className="flex items-center justify-center min-h-[105px] sm:min-h-[160px] md:min-h-[185px] w-full h-full transition-transform duration-200 hover:scale-[1.01] overflow-hidden">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.35 }}
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          className="flex items-center justify-center min-h-[105px] sm:min-h-[160px] md:min-h-[185px] w-full h-full overflow-hidden"
+        >
           <img 
             src="/logo3.png" 
             alt="منصة تعز الإعلامية" 
-            className="w-full h-full max-h-[105px] sm:max-h-[160px] md:max-h-[185px] object-contain select-none" 
+            className="w-full h-full max-h-[105px] sm:max-h-[160px] md:max-h-[185px] object-contain select-none drop-shadow-xs transition-all duration-300 hover:drop-shadow-md" 
           />
-        </div>
+        </motion.div>
 
         {/* 2. Second Item from Right: Prayer Times Card (كارت مواقيت الصلاة) */}
-        <Link 
-          to="/prayer-times" 
-          className="relative bg-white rounded-[14px] sm:rounded-[22px] border border-slate-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)] sm:shadow-[0_4px_16px_rgba(0,0,0,0.04)] p-1.5 sm:p-3.5 md:p-4 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-emerald-100 active:scale-[0.99] transition-[transform,border-color,box-shadow] duration-200 group overflow-hidden will-change-transform"
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.08 }}
+          whileHover={{ scale: 1.025, y: -3 }}
+          whileTap={{ scale: 0.975 }}
+          className="w-full h-full"
         >
-          {/* Top Mosque Dome Graphic */}
-          <div className="relative z-10 w-full flex justify-center">
-            <MosqueDomeIllustration />
-          </div>
+          <Link 
+            to="/prayer-times" 
+            className="relative bg-white rounded-[14px] sm:rounded-[22px] border border-slate-200/90 shadow-[0_2px_10px_rgba(0,0,0,0.03)] sm:shadow-[0_4px_16px_rgba(0,0,0,0.04)] p-1.5 sm:p-3.5 md:p-4 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-emerald-300 hover:shadow-md transition-all duration-300 group overflow-hidden h-full block"
+          >
+            {/* Soft Shimmer Highlight */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
-          {/* Middle Prayer Name */}
-          <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center">
-            <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-[#015028] tracking-tight leading-none font-cairo">
-              {formattedPrayer.name}
-            </h3>
-            
-            {/* Enlarged Countdown Timer without background */}
-            <span className="text-[10px] xs:text-[12px] sm:text-[16px] md:text-[18px] font-black text-[#015028] font-sans mt-1 sm:mt-2.5 whitespace-nowrap tracking-tight">
-              {prayerTimeRemaining}
-            </span>
-          </div>
+            {/* Top Mosque Dome Graphic */}
+            <div className="relative z-10 w-full flex justify-center group-hover:scale-105 transition-transform duration-300">
+              <MosqueDomeIllustration />
+            </div>
 
-          {/* Bottom Center Green Accent Bar */}
-          <div className="relative z-10 w-6 sm:w-12 h-[2px] sm:h-[3px] bg-[#015028]/40 rounded-full my-1 sm:my-1.5" />
-        </Link>
+            {/* Middle Prayer Name */}
+            <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center">
+              <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-[#015028] tracking-tight leading-none font-cairo group-hover:text-emerald-700 transition-colors">
+                {formattedPrayer.name}
+              </h3>
+              
+              {/* Dynamic Countdown Timer with Pulse Indicator */}
+              <span className="text-[10px] xs:text-[12px] sm:text-[16px] md:text-[18px] font-black text-[#015028] font-sans mt-1 sm:mt-2.5 whitespace-nowrap tracking-tight inline-flex items-center gap-1">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {prayerTimeRemaining}
+              </span>
+            </div>
 
-        {/* 3. Third Item from Right: Weather Card (كارت الطقس ألوان البطاقة الرئيسية تتغير تلقائياً) */}
-        <Link 
-          to="/weather" 
-          className={`relative bg-gradient-to-br ${weatherTheme} rounded-[14px] sm:rounded-[22px] border shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] active:scale-[0.99] transition-[transform,border-color,box-shadow] duration-300 overflow-hidden group will-change-transform`}
+            {/* Bottom Center Green Accent Bar */}
+            <div className="relative z-10 w-6 sm:w-12 h-[2px] sm:h-[3px] bg-[#015028]/40 rounded-full my-1 sm:my-1.5 group-hover:w-10 sm:group-hover:w-16 group-hover:bg-[#015028] transition-all duration-300" />
+          </Link>
+        </motion.div>
+
+        {/* 3. Third Item from Right: Weather Card (كارت الطقس) */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.16 }}
+          whileHover={{ scale: 1.025, y: -3 }}
+          whileTap={{ scale: 0.975 }}
+          className="w-full h-full"
         >
-          {/* Atmosphere Radial Lighting Texture matching main Weather Card */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/15 via-transparent to-black/35 pointer-events-none" />
+          <Link 
+            to="/weather" 
+            className={`relative bg-gradient-to-br ${weatherTheme} rounded-[14px] sm:rounded-[22px] border shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-lg transition-all duration-300 overflow-hidden group h-full block`}
+          >
+            {/* Atmosphere Radial Lighting Texture */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-black/40 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-          {/* Top Section: Temp + Dynamic 3D Weather Icon */}
-          <div className="relative z-10 flex items-start justify-between w-full">
-            <span className={`text-[18px] xs:text-[22px] sm:text-[34px] md:text-[42px] font-black ${weatherTextColor} leading-none tracking-tight font-sans drop-shadow-xs`}>
-              {weather.temp}°
-            </span>
-            <DynamicWeather3DIcon weatherId={weather.id} />
-          </div>
-
-          {/* Middle Weather Condition Description */}
-          <div className="relative z-10 my-auto">
-            <p className={`text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[16px] font-bold ${weatherSubtextColor} tracking-wide whitespace-nowrap leading-tight drop-shadow-xs font-cairo`}>
-              {weather.condition}
-            </p>
-          </div>
-
-          {/* Bottom Row: Max and Min Temperatures with High Contrast Indicators */}
-          <div className="relative z-10 flex items-center gap-1.5 sm:gap-3 mt-0.5 sm:mt-1.5">
-            <div className={`flex items-center gap-0.5 ${maxTempColor} font-bold text-[9px] xs:text-[11px] sm:text-[14px]`}>
-              <span className="text-[8px] sm:text-[10px] leading-none">▲</span>
-              <span className="font-sans">{weather.tempMax}°</span>
+            {/* Top Section: Temp + Dynamic 3D Weather Icon */}
+            <div className="relative z-10 flex items-start justify-between w-full">
+              <span className={`text-[18px] xs:text-[22px] sm:text-[34px] md:text-[42px] font-black ${weatherTextColor} leading-none tracking-tight font-sans drop-shadow-xs group-hover:scale-105 transition-transform duration-300 origin-left`}>
+                {weather.temp}°
+              </span>
+              <div className="group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                <DynamicWeather3DIcon weatherId={weather.id} />
+              </div>
             </div>
-            <div className={`flex items-center gap-0.5 ${minTempColor} font-bold text-[9px] xs:text-[11px] sm:text-[14px]`}>
-              <span className="text-[8px] sm:text-[10px] leading-none">▼</span>
-              <span className="font-sans">{weather.tempMin}°</span>
+
+            {/* Middle Weather Condition Description */}
+            <div className="relative z-10 my-auto">
+              <p className={`text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[16px] font-bold ${weatherSubtextColor} tracking-wide whitespace-nowrap leading-tight drop-shadow-xs font-cairo`}>
+                {weather.condition}
+              </p>
             </div>
-          </div>
-        </Link>
+
+            {/* Bottom Row: Max and Min Temperatures */}
+            <div className="relative z-10 flex items-center gap-1.5 sm:gap-3 mt-0.5 sm:mt-1.5">
+              <div className={`flex items-center gap-0.5 ${maxTempColor} font-bold text-[9px] xs:text-[11px] sm:text-[14px]`}>
+                <span className="text-[8px] sm:text-[10px] leading-none inline-block group-hover:-translate-y-0.5 transition-transform">▲</span>
+                <span className="font-sans">{weather.tempMax}°</span>
+              </div>
+              <div className={`flex items-center gap-0.5 ${minTempColor} font-bold text-[9px] xs:text-[11px] sm:text-[14px]`}>
+                <span className="text-[8px] sm:text-[10px] leading-none inline-block group-hover:translate-y-0.5 transition-transform">▼</span>
+                <span className="font-sans">{weather.tempMin}°</span>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
 
         {/* 4. Leftmost Item: Date Card (كارت التاريخ الهجري) */}
-        <Link 
-          to="/calendar" 
-          className="relative bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] rounded-[14px] sm:rounded-[22px] border-2 border-[#E5A921]/60 shadow-[0_4px_20px_rgba(1,80,40,0.25)] p-1.5 sm:p-3.5 md:p-5 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-[#E5A921] active:scale-[0.99] transition-[transform,border-color,box-shadow] duration-200 overflow-hidden group will-change-transform"
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.24 }}
+          whileHover={{ scale: 1.025, y: -3 }}
+          whileTap={{ scale: 0.975 }}
+          className="w-full h-full"
         >
-          {/* Atmosphere Lighting Glow */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-300/20 via-transparent to-black/40 pointer-events-none" />
+          <Link 
+            to="/calendar" 
+            className="relative bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] rounded-[14px] sm:rounded-[22px] border-2 border-[#E5A921]/60 shadow-[0_4px_20px_rgba(1,80,40,0.25)] p-1.5 sm:p-3.5 md:p-5 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-[#E5A921] hover:shadow-[0_6px_24px_rgba(229,169,33,0.35)] transition-all duration-300 overflow-hidden group h-full block"
+          >
+            {/* Atmosphere Lighting Glow */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-300/25 via-transparent to-black/50 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
 
-          {/* Floating Gold Badge with Crescent Icon at Top Right */}
-          <div className="absolute top-1 sm:top-2.5 right-1 sm:right-2.5 w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-[#002814]/70 backdrop-blur-md border border-[#E5A921]/60 shadow-2xs flex items-center justify-center z-10">
-            <img 
-              src="/crescentcalendarhahri.png" 
-              alt="هلال" 
-              className="w-3.5 h-3.5 sm:w-5 sm:h-5 object-contain"
-            />
-          </div>
+            {/* Floating Gold Badge with Crescent Icon at Top Right */}
+            <div className="absolute top-1 sm:top-2.5 right-1 sm:right-2.5 w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-[#002814]/80 backdrop-blur-md border border-[#E5A921]/70 shadow-2xs flex items-center justify-center z-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
+              <img 
+                src="/crescentcalendarhahri.png" 
+                alt="هلال" 
+                className="w-3.5 h-3.5 sm:w-5 sm:h-5 object-contain"
+              />
+            </div>
 
-          {/* Center Date Information */}
-          <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center pt-1 sm:pt-2">
-            {/* Day Name */}
-            <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-white tracking-tight leading-none drop-shadow-xs font-cairo">
-              {dayName}
-            </h3>
+            {/* Center Date Information */}
+            <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center pt-1 sm:pt-2">
+              {/* Day Name */}
+              <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-white tracking-tight leading-none drop-shadow-xs font-cairo group-hover:text-amber-100 transition-colors">
+                {dayName}
+              </h3>
 
-            {/* Hijri Date */}
-            <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[17px] font-black text-[#FFF2A8] leading-none mt-1 sm:mt-2 whitespace-nowrap drop-shadow-xs font-cairo">
-              {hijriDate}
-            </p>
+              {/* Hijri Date */}
+              <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[17px] font-black text-[#FFF2A8] leading-none mt-1 sm:mt-2 whitespace-nowrap drop-shadow-xs font-cairo group-hover:scale-105 transition-transform duration-300">
+                {hijriDate}
+              </p>
 
-            {/* Gregorian Date */}
-            <p className="text-[8.5px] xs:text-[9.5px] sm:text-[13px] md:text-[14px] font-bold text-emerald-100/90 leading-none mt-0.5 sm:mt-1.5 whitespace-nowrap">
-              {gregorianDate}
-            </p>
-          </div>
+              {/* Gregorian Date */}
+              <p className="text-[8.5px] xs:text-[9.5px] sm:text-[13px] md:text-[14px] font-bold text-emerald-100/90 leading-none mt-0.5 sm:mt-1.5 whitespace-nowrap">
+                {gregorianDate}
+              </p>
+            </div>
 
-          {/* Bottom Center Gold Accent Bar */}
-          <div className="relative z-10 w-6 sm:w-12 h-[2px] sm:h-[3.5px] bg-[#E5A921] rounded-full mt-0.5 sm:mt-1.5 shadow-2xs" />
-        </Link>
+            {/* Bottom Center Gold Accent Bar */}
+            <div className="relative z-10 w-6 sm:w-12 h-[2px] sm:h-[3.5px] bg-[#E5A921] rounded-full mt-0.5 sm:mt-1.5 shadow-2xs group-hover:w-10 sm:group-hover:w-16 group-hover:bg-[#FFF2A8] transition-all duration-300" />
+          </Link>
+        </motion.div>
 
       </div>
     </div>
   );
 };
+

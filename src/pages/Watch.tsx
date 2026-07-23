@@ -73,14 +73,50 @@ const formatViewsArabic = (views: number = 0) => {
   return `${views}`;
 };
 
-// Fallback channels matching the reference design
+// Fallback channels matching the original reference design (Image 1)
 const DEFAULT_CHANNELS: Partial<LiveStream>[] = [
-  { id: "ch-1", name: "القناة اليمنية", iconUrl: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=120&q=80", isActive: true },
-  { id: "ch-2", name: "اليمن اليوم", iconUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=120&q=80", isActive: true },
-  { id: "ch-3", name: "HD المسيرة", iconUrl: "/splash_first.png", isActive: true },
-  { id: "ch-4", name: "العالم", iconUrl: "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&q=80", isActive: true },
-  { id: "ch-5", name: "سبأ", iconUrl: "https://images.unsplash.com/photo-1507676184212-d03ab07a01bf?auto=format&fit=crop&w=120&q=80", isActive: true },
-  { id: "ch-6", name: "المسيرة", iconUrl: "/splash_first.png", isActive: true },
+  { 
+    id: "ch-1", 
+    name: "المسيرة مباشر", 
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%23B91C1C'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23EF4444' stroke-width='2'/><path d='M22 52C25 38 38 30 50 30C62 30 75 38 78 52C70 47 60 45 50 45C40 45 30 47 22 52Z' fill='white'/><text x='50' y='48' font-family='sans-serif' font-weight='900' font-size='18' fill='white' text-anchor='middle'>المسيرة</text><rect x='25' y='58' width='50' height='16' rx='8' fill='white'/><text x='50' y='70' font-family='sans-serif' font-weight='900' font-size='10' fill='%23B91C1C' text-anchor='middle'>مباشر</text></svg>", 
+    streamUrl: "https://almasirah.net.ye/live",
+    isActive: true 
+  },
+  { 
+    id: "ch-2", 
+    name: "المسيرة", 
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%23B91C1C'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23EF4444' stroke-width='2'/><path d='M20 58C25 38 38 30 50 30C62 30 75 38 80 58C72 52 61 50 50 50C39 50 28 52 20 58Z' fill='white'/><text x='50' y='58' font-family='sans-serif' font-weight='900' font-size='22' fill='white' text-anchor='middle'>المسيرة</text></svg>", 
+    streamUrl: "https://almasirah.net.ye/live",
+    isActive: true 
+  },
+  { 
+    id: "ch-3", 
+    name: "الساحات", 
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%230F172A'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23334155' stroke-width='2'/><path d='M30 40Q50 20 70 40Q50 35 30 40Z' fill='%23DC2626'/><path d='M25 50Q50 30 75 50Q50 45 25 50Z' fill='%230284C7'/><text x='50' y='68' font-family='sans-serif' font-weight='900' font-size='15' fill='white' text-anchor='middle'>الساحات</text></svg>", 
+    streamUrl: "https://alsahat.tv/live",
+    isActive: true 
+  },
+  { 
+    id: "ch-4", 
+    name: "عدن", 
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%23F1F5F9'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23CBD5E1' stroke-width='2'/><path d='M46 70V30L50 20L54 30V70H46Z' fill='%2364748B'/><rect x='42' y='55' width='16' height='4' fill='%23DC2626'/><text x='50' y='45' font-family='sans-serif' font-weight='900' font-size='11' fill='%23DC2626' text-anchor='middle'>ADEN TV</text><text x='50' y='78' font-family='sans-serif' font-weight='900' font-size='10' fill='%230F172A' text-anchor='middle'>قناة عدن</text></svg>", 
+    streamUrl: "https://aden-tv.net/live",
+    isActive: true 
+  },
+  { 
+    id: "ch-5", 
+    name: "اليمن", 
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%230C2340'/><circle cx='50' cy='50' r='46' fill='none' stroke='%231E3A8A' stroke-width='2'/><text x='50' y='52' font-family='sans-serif' font-weight='900' font-size='22' fill='%23F59E0B' text-anchor='middle'>اليمن</text><text x='50' y='72' font-family='sans-serif' font-weight='700' font-size='11' fill='%2393C5FD' text-anchor='middle'>YEMEN</text></svg>", 
+    streamUrl: "https://yementv.tv/live",
+    isActive: true 
+  },
+  { 
+    id: "ch-6", 
+    name: "الميادين", 
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%23D97706'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23F59E0B' stroke-width='2'/><path d='M25 45Q50 25 75 45Q50 40 25 45Z' fill='white'/><text x='50' y='62' font-family='sans-serif' font-weight='900' font-size='15' fill='white' text-anchor='middle'>الميادين</text><text x='50' y='78' font-family='sans-serif' font-weight='700' font-size='9' fill='%23FEF3C7' text-anchor='middle'>MAYADEEN</text></svg>", 
+    streamUrl: "https://almayadeen.net/live",
+    isActive: true 
+  },
 ];
 
 // Fallback items to guarantee visually striking reference layout if database is sparse
@@ -166,7 +202,7 @@ export function Watch() {
   const [loading, setLoading] = useState(true);
   const [isPlayingLive, setIsPlayingLive] = useState(false);
   
-  const [activeChannelId, setActiveChannelId] = useState<string | null>("ch-3");
+  const [activeChannelId, setActiveChannelId] = useState<string | null>("ch-4");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("الأحدث");
   const [sortOption, setSortOption] = useState<"newest" | "oldest" | "popular">("newest");
@@ -219,16 +255,10 @@ export function Watch() {
   }, []);
 
   const displayChannels = useMemo(() => {
-    if (channels.length >= 6) return channels;
-    // Blend DB channels with fallbacks to ensure full channel bar
-    const existingNames = new Set(channels.map(c => c.name));
-    const merged = [...channels];
-    for (const def of DEFAULT_CHANNELS) {
-      if (!existingNames.has(def.name!)) {
-        merged.push(def as LiveStream);
-      }
-    }
-    return merged.slice(0, 6);
+    return DEFAULT_CHANNELS.map(def => {
+      const dbMatch = channels.find(c => c.name?.trim() === def.name?.trim());
+      return dbMatch ? { ...def, ...dbMatch } as LiveStream : (def as LiveStream);
+    });
   }, [channels]);
 
   const activeChannel = displayChannels.find(c => c.id === activeChannelId) || displayChannels[0];
