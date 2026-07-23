@@ -956,7 +956,11 @@ app.use((err: any, req: any, res: any, next: any) => {
 });
 
 async function startServer() {
-  const isProduction = process.env.NODE_ENV === "production" || !process.argv[1]?.endsWith("server.ts");
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VITE_USER_NODE_ENV === "production" || !process.argv[1]?.endsWith("server.ts");
+
+  console.log(`Starting server in ${isProduction ? 'production' : 'development'} mode...`);
+  console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`CWD: ${process.cwd()}`);
 
   // Vite dev server middleware integration
   if (!isProduction) {

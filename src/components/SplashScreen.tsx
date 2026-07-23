@@ -139,7 +139,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
 
       {/* Interactive sliding cards for first launch only */}
       {isLoaded && isFirstLaunch && (
-        <div className="absolute inset-x-0 top-[63%] -translate-y-1/2 flex flex-col items-center justify-center px-4 z-20">
+        <div className="absolute inset-x-0 top-[71%] -translate-y-1/2 flex flex-col items-center justify-center px-4 z-20">
           {/* Cards side-by-side horizontal track matching the uploaded reference video */}
           <div className="w-full max-w-md flex items-center justify-center gap-2 sm:gap-4 overflow-visible" dir="rtl">
             {cards.map((card, index) => {
@@ -157,9 +157,15 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                   }}
                   transition={{
                     type: "spring",
-                    stiffness: 120,
-                    damping: 18,
-                    mass: 0.8
+                    stiffness: 150,
+                    damping: 20,
+                    mass: 1,
+                    restDelta: 0.001
+                  }}
+                  style={{ 
+                    willChange: "transform, opacity",
+                    transform: "translateZ(0)",
+                    backfaceVisibility: "hidden"
                   }}
                   className="w-24 sm:w-28 h-28 sm:h-32 rounded-2xl flex flex-col items-center justify-center p-2 text-center cursor-pointer transition-all duration-300 border backdrop-blur-md bg-[#11284E]/[0.38] border-[#7DBEFF]/[0.28]"
                 >

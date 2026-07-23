@@ -359,17 +359,15 @@ export const WeatherDetail: React.FC = () => {
       if (!weatherData) setLoading(true);
       setIsRefreshing(true);
 
-      // Attempt 1: OpenWeather API if key available
+      // Attempt 1: Server-side Proxy (OpenWeather)
       let fetchedSuccess = false;
-      const apiKey = import.meta.env.OPENWEATHER_API_KEY;
 
-      if (apiKey) {
-        const [weatherRes, forecastRes] = await Promise.all([
-          fetch(`https://api.openweathermap.org/data/2.5/weather?lat=13.5795&lon=44.0203&appid=${apiKey}&units=metric&lang=ar`),
-          fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=13.5795&lon=44.0203&appid=${apiKey}&units=metric&lang=ar`)
-        ]);
+      const [weatherRes, forecastRes] = await Promise.all([
+        fetch(`/api/weather?lat=13.5795&lon=44.0203`),
+        fetch(`/api/forecast?lat=13.5795&lon=44.0203`)
+      ]);
 
-        if (weatherRes.ok && forecastRes.ok) {
+      if (weatherRes.ok && forecastRes.ok) {
           const wData = await weatherRes.json();
           const fData = await forecastRes.json();
 
@@ -410,7 +408,6 @@ export const WeatherDetail: React.FC = () => {
 
           fetchedSuccess = true;
         }
-      }
 
       // Attempt 2: Open-Meteo Guaranteed Free API (No key required, 100% accurate for Taiz, Yemen)
       if (!fetchedSuccess) {

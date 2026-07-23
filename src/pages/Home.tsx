@@ -97,13 +97,23 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
       <div className="relative w-full h-[376px] rounded-[20px] sm:rounded-[24px] overflow-hidden border border-white/5 shadow-lg bg-surface-card">
         {/* Slider viewport */}
         <div className="w-full h-full relative overflow-hidden">
-          <AnimatePresence initial={false} custom={direction}>
+          <AnimatePresence initial={false} custom={direction} mode="popLayout">
             <motion.div
               key={currentIndex}
-              initial={{ opacity: 0, x: direction > 0 ? 300 : -300 }}
+              initial={{ opacity: 0, x: direction > 0 ? "100%" : "-100%" }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction > 0 ? -300 : 300 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              exit={{ opacity: 0, x: direction > 0 ? "-100%" : "100%" }}
+              transition={{ 
+                type: "tween", 
+                ease: [0.32, 0.72, 0, 1],
+                duration: 0.5
+              }}
+              style={{ 
+                willChange: "transform, opacity",
+                WebkitBackfaceVisibility: "hidden",
+                backfaceVisibility: "hidden",
+                transform: "translateZ(0)"
+              }}
               drag="x"
               dragConstraints={{ left: 0, right: 0 }}
               dragElastic={0.4}
@@ -560,15 +570,12 @@ export function Home() {
           {activeSubTab === "news" ? (
             <motion.div
               key="news-tab"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              onDragEnd={(e, info) => {
-                if (info.offset.x < -100) setActiveSubTab("articles");
-              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              style={{ willChange: "opacity" }}
+              className="touch-pan-y"
             >
         {loading ? (
            <div className="space-y-6 pt-4 px-4 sm:px-6 lg:px-8">
@@ -602,8 +609,8 @@ export function Home() {
                     <div className="px-4 sm:px-6 lg:px-8">
                       <Link 
                         to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
-                        className="block relative w-full h-[376px] rounded-[20px] sm:rounded-[24px] overflow-hidden border border-white/5 shadow-lg mb-4 select-none group"
-                        style={{ direction: 'rtl' }}
+                        className="block relative w-full h-[376px] rounded-[20px] sm:rounded-[24px] overflow-hidden border border-white/5 shadow-lg mb-4 select-none group will-change-transform"
+                        style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                       >
                         {item.imageUrl ? (
                           <img 
@@ -674,8 +681,8 @@ export function Home() {
                   ) : (
                     <Link
 to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
-                      className="flex items-center bg-white rounded-[16px] shadow-sm mx-4 sm:mx-6 lg:mx-8 mb-2.5 overflow-hidden group relative transition-all hover:shadow-md h-[110px] sm:h-[130px]"
-                      style={{ direction: 'rtl' }}
+                      className="flex items-center bg-white rounded-[16px] shadow-sm mx-4 sm:mx-6 lg:mx-8 mb-2.5 overflow-hidden group relative transition-[transform,box-shadow] duration-200 hover:shadow-md h-[110px] sm:h-[130px] will-change-transform"
+                      style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                     >
                       {/* Right Side Compact Image */}
                       {item.imageUrl ? (

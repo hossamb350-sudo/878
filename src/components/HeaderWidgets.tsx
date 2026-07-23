@@ -160,15 +160,12 @@ export const HeaderWidgets: React.FC = () => {
     const fetchWeather = async () => {
       try {
         let fetched = false;
-        const apiKey = import.meta.env.OPENWEATHER_API_KEY;
+        const [weatherRes, forecastRes] = await Promise.all([
+          fetch(`/api/weather?lat=13.5795&lon=44.0203`),
+          fetch(`/api/forecast?lat=13.5795&lon=44.0203`)
+        ]);
 
-        if (apiKey) {
-          const [weatherRes, forecastRes] = await Promise.all([
-            fetch(`https://api.openweathermap.org/data/2.5/weather?lat=13.5795&lon=44.0203&appid=${apiKey}&units=metric&lang=ar`),
-            fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=13.5795&lon=44.0203&appid=${apiKey}&units=metric&lang=ar`)
-          ]);
-
-          if (weatherRes.ok && forecastRes.ok) {
+        if (weatherRes.ok && forecastRes.ok) {
             const wData = await weatherRes.json();
             const fData = await forecastRes.json();
 
@@ -190,10 +187,9 @@ export const HeaderWidgets: React.FC = () => {
             localStorage.setItem("cached_weather_data", JSON.stringify(newWeatherData));
             fetched = true;
           }
-        }
 
-        if (!fetched) {
-          try {
+          if (!fetched) {
+            try {
             const openMeteoRes = await fetch(
               `https://api.open-meteo.com/v1/forecast?latitude=13.5795&longitude=44.0203&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,surface_pressure,wind_speed_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FRiyadh`
             );
@@ -512,7 +508,7 @@ export const HeaderWidgets: React.FC = () => {
         {/* 2. Second Item from Right: Prayer Times Card (كارت مواقيت الصلاة) */}
         <Link 
           to="/prayer-times" 
-          className="relative bg-white rounded-[14px] sm:rounded-[22px] border border-slate-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)] sm:shadow-[0_4px_16px_rgba(0,0,0,0.04)] p-1.5 sm:p-3.5 md:p-4 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-emerald-100 active:scale-[0.99] transition-all duration-200 group overflow-hidden"
+          className="relative bg-white rounded-[14px] sm:rounded-[22px] border border-slate-200 shadow-[0_2px_10px_rgba(0,0,0,0.03)] sm:shadow-[0_4px_16px_rgba(0,0,0,0.04)] p-1.5 sm:p-3.5 md:p-4 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-emerald-100 active:scale-[0.99] transition-[transform,border-color,box-shadow] duration-200 group overflow-hidden will-change-transform"
         >
           {/* Top Mosque Dome Graphic */}
           <div className="relative z-10 w-full flex justify-center">
@@ -538,7 +534,7 @@ export const HeaderWidgets: React.FC = () => {
         {/* 3. Third Item from Right: Weather Card (كارت الطقس ألوان البطاقة الرئيسية تتغير تلقائياً) */}
         <Link 
           to="/weather" 
-          className={`relative bg-gradient-to-br ${weatherTheme} rounded-[14px] sm:rounded-[22px] border shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] active:scale-[0.99] transition-all duration-300 overflow-hidden group`}
+          className={`relative bg-gradient-to-br ${weatherTheme} rounded-[14px] sm:rounded-[22px] border shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] active:scale-[0.99] transition-[transform,border-color,box-shadow] duration-300 overflow-hidden group will-change-transform`}
         >
           {/* Atmosphere Radial Lighting Texture matching main Weather Card */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/15 via-transparent to-black/35 pointer-events-none" />
@@ -574,7 +570,7 @@ export const HeaderWidgets: React.FC = () => {
         {/* 4. Leftmost Item: Date Card (كارت التاريخ الهجري) */}
         <Link 
           to="/calendar" 
-          className="relative bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] rounded-[14px] sm:rounded-[22px] border-2 border-[#E5A921]/60 shadow-[0_4px_20px_rgba(1,80,40,0.25)] p-1.5 sm:p-3.5 md:p-5 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-[#E5A921] active:scale-[0.99] transition-all duration-200 overflow-hidden group"
+          className="relative bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] rounded-[14px] sm:rounded-[22px] border-2 border-[#E5A921]/60 shadow-[0_4px_20px_rgba(1,80,40,0.25)] p-1.5 sm:p-3.5 md:p-5 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-[#E5A921] active:scale-[0.99] transition-[transform,border-color,box-shadow] duration-200 overflow-hidden group will-change-transform"
         >
           {/* Atmosphere Lighting Glow */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-300/20 via-transparent to-black/40 pointer-events-none" />

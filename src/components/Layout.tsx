@@ -2,7 +2,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { HeaderWidgets } from "./HeaderWidgets";
 import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X, Play, Pause, Volume2, ArrowLeft } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { collection, query, orderBy, limit, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
 import { UrgentNews } from "../types";
@@ -120,7 +120,10 @@ function NotificationCenterDeprecated() {
 */
 
 function UrgentNewsBanner() {
-  const [urgentNews, setUrgentNews] = useState<UrgentNews | null>(null);
+  const [urgentNewsList, setUrgentNewsList] = useState<UrgentNews[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [tickerSpeed, setTickerSpeed] = useState(10); // Default speed in seconds
+  const [isVisible, setIsVisible] = useState(true);
   const audioContextReft = useRef<AudioContext | null>(null);
 
   const playAlertSound = () => {
@@ -150,68 +153,111 @@ function UrgentNewsBanner() {
 
   useEffect(() => {
     let active = true;
-    let timerId: any = null;
 
+    // Sync active urgent news
     const unsubPromise = SyncService.syncCollection<UrgentNews>("urgentNews", (dataList) => {
       if (!active) return;
-      if (timerId) clearTimeout(timerId);
-
-      const latest = dataList[0];
-      if (latest) {
-        const now = Date.now();
-        if (latest.expiresAt > now) {
-          setUrgentNews(latest);
-          
-          // Only play sound and notify if the news is extremely fresh (e.g. added in the last 15 seconds)
-          if (latest.createdAt && now - latest.createdAt < 15000) {
-            playAlertSound();
-          }
-
-          const timeRemaining = latest.expiresAt - now;
-          timerId = setTimeout(() => {
-            setUrgentNews(null);
-          }, timeRemaining);
-        } else {
-          setUrgentNews(null);
+      const now = Date.now();
+      const validItems = dataList.filter(item => item.expiresAt > now);
+      setUrgentNewsList(validItems);
+      
+      // Notify for very fresh news
+      if (validItems.length > 0) {
+        const latest = validItems[0];
+        if (latest.createdAt && now - latest.createdAt < 15000) {
+          playAlertSound();
         }
-      } else {
-        setUrgentNews(null);
       }
-    }, { orderByField: "createdAt", orderDirection: "desc", limit: 1 });
+    }, { orderByField: "createdAt", orderDirection: "desc", limit: 10 });
+
+    // Load speed settings
+    const loadSettings = async () => {
+      try {
+        const docSnap = await getDoc(doc(db, "settings", "urgentNews"));
+        if (docSnap.exists()) {
+          setTickerSpeed(docSnap.data().speed || 10);
+        }
+      } catch (e) {}
+    };
+    loadSettings();
 
     return () => {
       active = false;
-      if (timerId) clearTimeout(timerId);
       unsubPromise.then(unsub => unsub());
     };
   }, []);
 
+  // Ticker rotation logic
+  useEffect(() => {
+    if (urgentNewsList.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % urgentNewsList.length);
+    }, tickerSpeed * 1000);
+
+    return () => clearInterval(interval);
+  }, [urgentNewsList.length, tickerSpeed]);
+
+  if (!isVisible || urgentNewsList.length === 0) return null;
+
+  const currentNews = urgentNewsList[currentIndex];
+
   return (
-    <AnimatePresence>
-       {urgentNews && (
-         <motion.div 
-           initial={{ y: -50, opacity: 0 }}
-           animate={{ y: 0, opacity: 1 }}
-           exit={{ y: -50, opacity: 0 }}
-           className="bg-status-error text-white shadow-md relative z-50 overflow-hidden"
-         >
-            <div className="absolute top-0 left-0 bottom-0 w-1 bg-white opacity-40 animate-pulse"></div>
-            <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between min-w-0 gap-2">
-               <div className="flex items-center gap-3 w-full min-w-0">
-                  <div className="bg-white/20 p-1.5 rounded-lg shrink-0 shadow-inner">
-                     <AlertTriangle className="w-5 h-5 text-white animate-pulse" />
-                  </div>
-                  <h3 className="font-bold text-sm sm:text-base leading-tight w-full text-right truncate whitespace-normal line-clamp-2">
-                    <span className="font-black text-xs sm:text-sm bg-white text-status-error px-2 py-0.5 rounded-md ml-2 hidden sm:inline-block">عاجل</span>
-                    {urgentNews.text}
-                  </h3>
-               </div>
-               <button onClick={() => setUrgentNews(null)} className="p-1 hover:bg-white/20 rounded-full shrink-0 mr-2 transition">
-                 <X className="w-5 h-5" />
-               </button>
+    <AnimatePresence mode="wait">
+      <motion.div 
+        key={currentNews?.id || 'empty'}
+        initial={{ y: -100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -100, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 120, damping: 20 }}
+        className="bg-red-700 text-white shadow-2xl relative z-50 border-b-4 border-red-800 w-full"
+      >
+        <div className="w-full relative px-6 py-3 md:py-4" dir="rtl">
+          {/* Close button - makes it optional for the user to keep the banner */}
+          <button 
+            onClick={() => setIsVisible(false)} 
+            className="absolute top-3 left-4 p-2 hover:bg-white/10 rounded-full transition-colors z-10"
+            title="إغلاق التنبيه"
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="flex flex-col items-start gap-2 text-right">
+            {/* Ticker Label (Vertical First) */}
+            <div className="flex items-center gap-2 bg-white text-red-700 px-3 py-1 rounded font-black text-xs sm:text-sm uppercase tracking-widest shadow-lg">
+              <AlertTriangle className="w-4 h-4" />
+              عاجل
             </div>
-         </motion.div>
-       )}
+
+            {/* News Text Area */}
+            <div className="w-full relative overflow-hidden">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                  className="w-full"
+                >
+                  <p className="font-bold text-lg sm:text-xl md:text-2xl leading-relaxed text-white drop-shadow-sm">
+                    {currentNews?.text}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Progress Bar */}
+        <motion.div 
+          key={`progress-${currentIndex}`}
+          initial={{ scaleX: 1 }}
+          animate={{ scaleX: 0 }}
+          transition={{ duration: tickerSpeed, ease: "linear" }}
+          className="absolute bottom-0 right-0 left-0 h-1.5 bg-white/40 origin-right"
+        />
+      </motion.div>
     </AnimatePresence>
   );
 }
