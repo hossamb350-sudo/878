@@ -558,9 +558,6 @@ export function Events() {
                     </span>
                   )}
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-black font-cairo leading-tight text-[#FFF2A8]">
-                  تقويم المناسبات الإسلامية
-                </h2>
                 <p className="text-xs font-bold text-slate-300 mt-1">
                   عرض مناسبات شهر <span className="text-[#FFF2A8] font-black">{selectedMonthObj.name} {selectedHijriYear} هـ</span> ({monthFilteredEvents.length} مناسبة)
                 </p>

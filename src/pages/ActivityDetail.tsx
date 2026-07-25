@@ -278,24 +278,6 @@ export function ActivityDetail() {
         </div>
       </div>
 
-      {/* Edit & Delete Action Panel */}
-      <div className="flex items-center justify-end gap-3 pt-2">
-        <button
-          onClick={() => setIsEditing(true)}
-          className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-5 py-3 rounded-xl text-xs font-black transition-all shadow-md cursor-pointer select-none"
-        >
-          <Edit className="w-4 h-4" />
-          <span>تعديل الفعالية</span>
-        </button>
-        <button
-          onClick={handleDelete}
-          className="flex items-center gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-5 py-3 rounded-xl text-xs font-black transition-all shadow-sm cursor-pointer select-none"
-        >
-          <Trash2 className="w-4 h-4" />
-          <span>حذف الفعالية</span>
-        </button>
-      </div>
-
       {/* Elegant Edit Slide-over/Modal */}
       <AnimatePresence>
         {isEditing && (

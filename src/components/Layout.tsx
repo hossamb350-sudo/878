@@ -225,15 +225,10 @@ function UrgentNewsBanner() {
         className="bg-gradient-to-r from-red-800 via-red-700 to-red-900 text-white shadow-2xl relative z-50 border-b-2 sm:border-b-4 border-red-900 w-full overflow-hidden select-none"
         dir="rtl"
       >
-        <div className="w-full flex flex-col relative pt-2 sm:pt-3 pb-1.5 sm:pb-2">
+        <div className="w-full flex flex-col relative pt-0.5 pb-0">
           {/* Top Header Row with Title and Close Button */}
-          <div className="flex items-center justify-between px-3 sm:px-5 z-20 shrink-0 font-cairo border-b border-white/10 pb-1.5 mb-1.5 sm:pb-2 sm:mb-2">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-400"></span>
-              </span>
-              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 animate-pulse" />
+          <div className="flex items-center justify-between px-3 sm:px-5 z-20 shrink-0 font-cairo">
+            <div className="flex items-center">
               <span className="font-black text-sm sm:text-base text-amber-400 uppercase tracking-wider whitespace-nowrap drop-shadow-md">
                 {tickerTitle}
               </span>
@@ -250,7 +245,7 @@ function UrgentNewsBanner() {
           </div>
 
           {/* Center Continuous RTL Marquee / Ticker */}
-          <div className="w-full overflow-hidden relative flex items-center group px-0" dir="ltr">
+          <div className="w-full overflow-hidden relative flex items-center group px-0 -mt-2 sm:-mt-2.5 mb-1" dir="ltr">
             <motion.div
               className="flex items-center whitespace-nowrap min-w-max"
               animate={{ x: ["-50%", "0%"] }}
@@ -263,17 +258,17 @@ function UrgentNewsBanner() {
               {displayItems.map((newsItem, index) => (
                 <React.Fragment key={`${newsItem.id}-${index}`}>
                   {/* Full News Text */}
-                  <span className="font-bold text-sm sm:text-base md:text-lg lg:text-xl text-white tracking-wide leading-relaxed font-cairo whitespace-nowrap px-4 drop-shadow-md" dir="rtl">
+                  <span className="font-bold text-sm sm:text-base md:text-lg lg:text-xl text-white tracking-wide leading-relaxed font-cairo whitespace-nowrap px-2 sm:px-3 drop-shadow-md" dir="rtl">
                     {newsItem.text}
                   </span>
 
                   {/* Visual Separator: Platform Logo Emblem (Always between items) */}
-                  <div className="inline-flex items-center gap-2 px-6 sm:px-10 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
-                    <div className="flex items-center justify-center p-1 sm:p-1.5 group-hover:scale-110 transition-transform">
+                  <div className="inline-flex items-center px-1 sm:px-2 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
                       <img 
                         src="/tape.png" 
                         alt="شعار منصة تعز" 
-                        className="w-10 h-10 sm:w-12 sm:h-12 object-contain drop-shadow-lg" 
+                        className="w-6 h-6 sm:w-7 sm:h-7 object-contain drop-shadow-lg mx-0.5 sm:mx-1" 
                       />
                     </div>
                   </div>

@@ -1244,20 +1244,15 @@ function AdminUrgentNews() {
                     معاينة الشريط المتحرك بالسرعة الحالية ({tickerSpeed})
                   </div>
                   <div className="bg-gradient-to-r from-red-800 via-red-700 to-red-900 text-white relative w-full overflow-hidden select-none" dir="rtl">
-                    <div className="w-full flex flex-col relative pt-2 pb-1.5">
-                      <div className="flex items-center justify-between px-3 z-20 shrink-0 font-cairo border-b border-white/10 pb-1.5 mb-1.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="relative flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-400"></span>
-                          </span>
-                          <AlertTriangle className="w-5 h-5 text-amber-400 animate-pulse" />
+                    <div className="w-full flex flex-col relative pt-0.5 pb-0">
+                      <div className="flex items-center justify-between px-3 z-20 shrink-0 font-cairo">
+                        <div className="flex items-center">
                           <span className="font-black text-sm text-amber-400 uppercase tracking-wider whitespace-nowrap drop-shadow-md">
                             {tickerTitle}
                           </span>
                         </div>
                       </div>
-                      <div className="w-full overflow-hidden relative flex items-center group px-0" dir="ltr">
+                      <div className="w-full overflow-hidden relative flex items-center group px-0 -mt-2 mb-1" dir="ltr">
                         <motion.div
                           className="flex items-center whitespace-nowrap min-w-max"
                           animate={{ x: ["-50%", "0%"] }}
@@ -1269,15 +1264,15 @@ function AdminUrgentNews() {
                         >
                           {Array(4).fill(text).map((newsText, index) => (
                             <React.Fragment key={index}>
-                              <span className="font-bold text-sm md:text-base text-white tracking-wide leading-relaxed font-cairo whitespace-nowrap px-4 drop-shadow-md" dir="rtl">
+                              <span className="font-bold text-sm md:text-base text-white tracking-wide leading-relaxed font-cairo whitespace-nowrap px-2 sm:px-3 drop-shadow-md" dir="rtl">
                                 {newsText}
                               </span>
-                              <div className="inline-flex items-center gap-2 px-6 shrink-0 opacity-90">
-                                <div className="flex items-center justify-center p-1">
+                              <div className="inline-flex items-center px-1 sm:px-2 shrink-0 opacity-90">
+                                <div className="flex items-center justify-center">
                                   <img 
                                     src="/tape.png" 
                                     alt="شعار منصة تعز" 
-                                    className="w-8 h-8 object-contain drop-shadow-lg" 
+                                    className="w-6 h-6 sm:w-7 sm:h-7 object-contain drop-shadow-lg mx-0.5 sm:mx-1" 
                                   />
                                 </div>
                               </div>
