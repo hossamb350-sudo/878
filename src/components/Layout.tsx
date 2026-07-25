@@ -122,6 +122,7 @@ function NotificationCenterDeprecated() {
 function UrgentNewsBanner() {
   const [urgentNewsList, setUrgentNewsList] = useState<UrgentNews[]>([]);
   const [tickerSpeed, setTickerSpeed] = useState(25);
+  const [tickerTitle, setTickerTitle] = useState("خبر عاجل");
   const [isVisible, setIsVisible] = useState(true);
   const audioContextReft = useRef<AudioContext | null>(null);
 
@@ -189,6 +190,7 @@ function UrgentNewsBanner() {
         const docSnap = await getDoc(doc(db, "settings", "urgentNews"));
         if (docSnap.exists()) {
           setTickerSpeed(docSnap.data().speed || 25);
+          setTickerTitle(docSnap.data().title || "خبر عاجل");
         }
       } catch (e) {}
     };
@@ -206,6 +208,12 @@ function UrgentNewsBanner() {
   const reversedNews = [...urgentNewsList].reverse();
   const displayItems = [...reversedNews, ...reversedNews, ...reversedNews, ...reversedNews];
 
+  const baseChars = reversedNews.reduce((acc, item) => acc + (item.text?.length || 0), 0);
+  const effectiveLength = baseChars + reversedNews.length * 20; // 20 chars equivalent for separator
+  const totalLengthToAnimate = 2 * effectiveLength; 
+  // tickerSpeed represents seconds per 100 characters
+  const calculatedDuration = Math.max(5, (totalLengthToAnimate / 100) * tickerSpeed);
+
   return (
     <AnimatePresence>
       <motion.div 
@@ -217,61 +225,61 @@ function UrgentNewsBanner() {
         className="bg-gradient-to-r from-red-800 via-red-700 to-red-900 text-white shadow-2xl relative z-50 border-b-2 sm:border-b-4 border-red-900 w-full overflow-hidden select-none"
         dir="rtl"
       >
-        <div className="w-full flex items-center justify-between relative py-2 sm:py-2.5">
-          {/* Right Badge: Fixed "عاجل" Banner Header */}
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-l from-red-950 via-red-900 to-red-800 text-white px-3 sm:px-5 py-2 sm:py-2.5 z-20 shadow-xl border-l border-white/20 shrink-0 font-cairo">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-400"></span>
-            </span>
-            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 animate-pulse" />
-            <span className="font-black text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap">
-              خبر عاجل
-            </span>
+        <div className="w-full flex flex-col relative pt-2 sm:pt-3 pb-1.5 sm:pb-2">
+          {/* Top Header Row with Title and Close Button */}
+          <div className="flex items-center justify-between px-3 sm:px-5 z-20 shrink-0 font-cairo border-b border-white/10 pb-1.5 mb-1.5 sm:pb-2 sm:mb-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-400"></span>
+              </span>
+              <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400 animate-pulse" />
+              <span className="font-black text-sm sm:text-base text-amber-400 uppercase tracking-wider whitespace-nowrap drop-shadow-md">
+                {tickerTitle}
+              </span>
+            </div>
+            
+            {/* Left Close Button (User Discard) */}
+            <button 
+              onClick={() => setIsVisible(false)} 
+              className="p-1.5 hover:bg-white/20 rounded-full transition-colors text-white/80 hover:text-white"
+              title="إغلاق الشريط"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Center Continuous RTL Marquee / Ticker */}
-          <div className="flex-1 overflow-hidden relative flex items-center mx-2 sm:mx-4 group" dir="ltr">
+          <div className="w-full overflow-hidden relative flex items-center group px-0" dir="ltr">
             <motion.div
               className="flex items-center whitespace-nowrap min-w-max"
               animate={{ x: ["-50%", "0%"] }}
               transition={{
                 repeat: Infinity,
                 ease: "linear",
-                duration: tickerSpeed * 2,
+                duration: calculatedDuration,
               }}
             >
               {displayItems.map((newsItem, index) => (
                 <React.Fragment key={`${newsItem.id}-${index}`}>
-                  {/* Full News Text (No Cutoffs or Truncation) */}
-                  <span className="font-black text-xs sm:text-sm md:text-base text-white tracking-wide leading-none font-cairo whitespace-nowrap px-2 drop-shadow-sm" dir="rtl">
+                  {/* Full News Text */}
+                  <span className="font-bold text-sm sm:text-base md:text-lg lg:text-xl text-white tracking-wide leading-relaxed font-cairo whitespace-nowrap px-4 drop-shadow-md" dir="rtl">
                     {newsItem.text}
                   </span>
 
                   {/* Visual Separator: Platform Logo Emblem (Always between items) */}
-                  <div className="inline-flex items-center gap-2 px-4 sm:px-6 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
+                  <div className="inline-flex items-center gap-2 px-6 sm:px-10 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
                     <div className="flex items-center justify-center p-1 sm:p-1.5 group-hover:scale-110 transition-transform">
                       <img 
                         src="/logo3.png" 
                         alt="شعار منصة تعز" 
-                        className="w-6 h-6 sm:w-7 sm:h-7 object-contain" 
+                        className="w-10 h-10 sm:w-12 sm:h-12 object-contain drop-shadow-lg" 
                       />
                     </div>
                   </div>
                 </React.Fragment>
               ))}
             </motion.div>
-          </div>
-
-          {/* Left Close Button (User Discard) */}
-          <div className="z-20 pl-2 sm:pl-4 pr-1 shrink-0 bg-gradient-to-r from-red-900 to-transparent">
-            <button 
-              onClick={() => setIsVisible(false)} 
-              className="p-1.5 hover:bg-white/20 rounded-full transition-colors text-white/80 hover:text-white"
-              title="إغلاق الشريط"
-            >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
-            </button>
           </div>
         </div>
       </motion.div>

@@ -60,10 +60,10 @@ export async function fetchOpenMeteoData() {
     temperature_2m_max: daily.variables(1)!.valuesArray()!,
     temperature_2m_min: daily.variables(2)!.valuesArray()!,
     sunrise: [...Array(sunrise.valuesInt64Length())].map(
-      (_, i) => new Date((Number(sunrise.valuesInt64(i)) + utcOffsetSeconds) * 1000)
+      (_, i) => new Date(Number(sunrise.valuesInt64(i)) * 1000)
     ),
     sunset: [...Array(sunset.valuesInt64Length())].map(
-      (_, i) => new Date((Number(sunset.valuesInt64(i)) + utcOffsetSeconds) * 1000)
+      (_, i) => new Date(Number(sunset.valuesInt64(i)) * 1000)
     ),
     wind_speed_10m_max: daily.variables(5)!.valuesArray()!,
     relative_humidity_2m_max: daily.variables(6)!.valuesArray()!,

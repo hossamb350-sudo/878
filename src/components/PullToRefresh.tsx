@@ -15,9 +15,17 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
   const startY = useRef(0);
   const currentY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMounted = useRef(true);
   const controls = useAnimation();
   
   const threshold = 120; // max pull distance
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -60,7 +68,9 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       if (pullProgress >= 0.8) {
         setIsRefreshing(true);
         // Animate to loading position
-        await controls.start({ y: threshold * 0.5, transition: { type: 'spring', bounce: 0.2, duration: 0.3 } });
+        if (isMounted.current) {
+          await controls.start({ y: threshold * 0.5, transition: { type: 'spring', bounce: 0.2, duration: 0.3 } });
+        }
         
         try {
           await onRefresh();
@@ -68,14 +78,18 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
           console.error("Refresh error", error);
           alert("تعذر تحديث المحتوى، يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.");
         } finally {
-          setIsRefreshing(false);
-          setPullProgress(0);
-          controls.start({ y: 0, transition: { type: 'spring', bounce: 0, duration: 0.3 } });
+          if (isMounted.current) {
+            setIsRefreshing(false);
+            setPullProgress(0);
+            controls.start({ y: 0, transition: { type: 'spring', bounce: 0, duration: 0.3 } });
+          }
         }
       } else {
         // Reset if not reached threshold
         setPullProgress(0);
-        controls.start({ y: 0, transition: { type: 'spring', bounce: 0, duration: 0.3 } });
+        if (isMounted.current) {
+          controls.start({ y: 0, transition: { type: 'spring', bounce: 0, duration: 0.3 } });
+        }
       }
     };
 

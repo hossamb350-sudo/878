@@ -1293,11 +1293,12 @@ export const WeatherDetail: React.FC = () => {
   const formatTime12h = (timestamp: number) => {
     if (!timestamp) return "--:--";
     const date = new Date(timestamp * 1000);
-    let hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const period = hours >= 12 ? 'م' : 'ص';
-    hours = hours % 12 || 12;
-    return `${hours.toString().padStart(2, '0')}:${minutes} ${period}`;
+    return date.toLocaleTimeString('ar-YE', { 
+      timeZone: 'Asia/Aden', 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      hour12: true 
+    });
   };
 
   // Convert Temp logic

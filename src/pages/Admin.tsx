@@ -1087,6 +1087,7 @@ function AdminUrgentNews() {
   const [text, setText] = useState("");
   const [expiryMinutes, setExpiryMinutes] = useState(60); // Default to 1 hour for urgent news
   const [tickerSpeed, setTickerSpeed] = useState(25); // Default speed in seconds
+  const [tickerTitle, setTickerTitle] = useState("خبر عاجل"); // Default title
   const [saving, setSaving] = useState(false);
   const [urgentItems, setUrgentItems] = useState<any[]>([]);
 
@@ -1104,6 +1105,7 @@ function AdminUrgentNews() {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           setTickerSpeed(docSnap.data().speed || 25);
+          setTickerTitle(docSnap.data().title || "خبر عاجل");
         }
       } catch (e) {
         console.error("Error loading ticker settings:", e);
@@ -1114,10 +1116,10 @@ function AdminUrgentNews() {
     return () => unsub();
   }, []);
 
-  const saveSpeed = async () => {
+  const saveSettings = async () => {
     try {
-      await setDoc(doc(db, "settings", "urgentNews"), { speed: tickerSpeed }, { merge: true });
-      alert("تم حفظ إعدادات السرعة بنجاح");
+      await setDoc(doc(db, "settings", "urgentNews"), { speed: tickerSpeed, title: tickerTitle }, { merge: true });
+      alert("تم حفظ إعدادات الشريط بنجاح");
     } catch (e) {
       alert("خطأ في الحفظ");
     }
@@ -1236,6 +1238,58 @@ function AdminUrgentNews() {
                 <p className="text-[10px] text-gray-500 mt-1">سيختفي الخبر تلقائياً من الشريط بعد هذه المدة أو عند إلغائه يدويًا.</p>
               </div>
 
+              {text && (
+                <div className="border border-red-200 dark:border-red-900 rounded-xl overflow-hidden mt-4">
+                  <div className="bg-red-50 dark:bg-red-900/20 p-2 text-center text-xs font-bold text-red-600 dark:text-red-400 border-b border-red-200 dark:border-red-900">
+                    معاينة الشريط المتحرك بالسرعة الحالية ({tickerSpeed})
+                  </div>
+                  <div className="bg-gradient-to-r from-red-800 via-red-700 to-red-900 text-white relative w-full overflow-hidden select-none" dir="rtl">
+                    <div className="w-full flex flex-col relative pt-2 pb-1.5">
+                      <div className="flex items-center justify-between px-3 z-20 shrink-0 font-cairo border-b border-white/10 pb-1.5 mb-1.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="relative flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-400"></span>
+                          </span>
+                          <AlertTriangle className="w-5 h-5 text-amber-400 animate-pulse" />
+                          <span className="font-black text-sm text-amber-400 uppercase tracking-wider whitespace-nowrap drop-shadow-md">
+                            {tickerTitle}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full overflow-hidden relative flex items-center group px-0" dir="ltr">
+                        <motion.div
+                          className="flex items-center whitespace-nowrap min-w-max"
+                          animate={{ x: ["-50%", "0%"] }}
+                          transition={{
+                            repeat: Infinity,
+                            ease: "linear",
+                            duration: Math.max(5, (2 * ((text.length) + 20) / 100) * tickerSpeed),
+                          }}
+                        >
+                          {Array(4).fill(text).map((newsText, index) => (
+                            <React.Fragment key={index}>
+                              <span className="font-bold text-sm md:text-base text-white tracking-wide leading-relaxed font-cairo whitespace-nowrap px-4 drop-shadow-md" dir="rtl">
+                                {newsText}
+                              </span>
+                              <div className="inline-flex items-center gap-2 px-6 shrink-0 opacity-90">
+                                <div className="flex items-center justify-center p-1">
+                                  <img 
+                                    src="/logo3.png" 
+                                    alt="شعار منصة تعز" 
+                                    className="w-8 h-8 object-contain drop-shadow-lg" 
+                                  />
+                                </div>
+                              </div>
+                            </React.Fragment>
+                          ))}
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <button
                 onClick={saveNews}
                 disabled={saving || !text}
@@ -1247,30 +1301,46 @@ function AdminUrgentNews() {
           </div>
 
           <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
-            <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                        <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Settings className="w-5 h-5 text-gray-500" />
               إعدادات الشريط المتحرك
             </h3>
             
-            <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">سرعة الشريط / مدة الدورة كاملة (ثانية):</label>
-              <div className="flex gap-2">
-                <input 
-                  type="number"
-                  className="flex-1 p-4 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
-                  value={tickerSpeed}
-                  onChange={(e) => setTickerSpeed(Number(e.target.value))}
-                  min={5}
-                  max={120}
-                />
-                <button 
-                  onClick={saveSpeed}
-                  className="bg-gray-900 dark:bg-gray-700 text-white px-6 rounded-xl font-bold hover:bg-black transition-all"
-                >
-                  حفظ
-                </button>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">عنوان / نوع الشريط (الافتراضي: خبر عاجل):</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text"
+                    className="flex-1 p-4 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
+                    value={tickerTitle}
+                    onChange={(e) => setTickerTitle(e.target.value)}
+                    placeholder="مثل: خبر عاجل، بيان، إعلان..."
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 mt-1">يظهر هذا العنوان في أعلى الشريط المتحرك بشكل بارز.</p>
               </div>
-              <p className="text-[10px] text-gray-500 mt-1">سرعة دوران الأخبار العاجلة داخل الشريط المتحرك.</p>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">معامل سرعة الشريط (الافتراضي: 25):</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="number"
+                    className="flex-1 p-4 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
+                    value={tickerSpeed}
+                    onChange={(e) => setTickerSpeed(Number(e.target.value))}
+                    min={5}
+                    max={120}
+                  />
+                  <button 
+                    onClick={saveSettings}
+                    className="bg-gray-900 dark:bg-gray-700 text-white px-6 rounded-xl font-bold hover:bg-black transition-all"
+                  >
+                    حفظ الإعدادات
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-1">يُستخدم هذا الرقم كمعامل لتحديد السرعة بناءً على طول النص تلقائياً (كلما زاد الرقم، أصبح الشريط أبطأ). القيمة 25 توفر سرعة قراءة مناسبة.</p>
+              </div>
             </div>
           </div>
         </div>
