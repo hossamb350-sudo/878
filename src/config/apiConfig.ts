@@ -1,6 +1,6 @@
 import { Capacitor } from "@capacitor/core";
 
-const isProd = import.meta.env.PROD;
+const isProd = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.PROD) ?? (process.env.NODE_ENV === "production");
 export const DEV_URL = "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
 export const PROD_URL = "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
 

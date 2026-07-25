@@ -1,7 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
 import { EventItem } from "../types";
 import {
@@ -10,14 +8,11 @@ import {
   isSameDay,
   isAfter,
   startOfDay,
-  addDays,
-  isBefore,
 } from "date-fns";
 import { ar } from "date-fns/locale";
 import {
   Calendar as CalendarIcon,
   List,
-  LayoutGrid,
   Clock,
   Search,
   ChevronLeft,
@@ -27,12 +22,16 @@ import {
   Info,
   CalendarDays,
   Timer,
-  ExternalLink,
   SlidersHorizontal,
   MapPin,
   Share2,
   BookOpen,
   History as HistoryIcon,
+  Sparkles,
+  Tag,
+  ArrowRight,
+  CheckCircle2,
+  Layers,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import Calendar from "react-calendar";
@@ -41,10 +40,42 @@ import { BASE_EVENTS } from "../data/staticEvents";
 import { ModernEventCard } from "../components/ModernEventCard";
 import { PullToRefresh } from "../components/PullToRefresh";
 
+const HIJRI_MONTHS = [
+  { id: 1, name: "محرم" },
+  { id: 2, name: "صفر" },
+  { id: 3, name: "ربيع الأول" },
+  { id: 4, name: "ربيع الثاني" },
+  { id: 5, name: "جمادى الأولى" },
+  { id: 6, name: "جمادى الآخرة" },
+  { id: 7, name: "رجب" },
+  { id: 8, name: "شعبان" },
+  { id: 9, name: "رمضان" },
+  { id: 10, name: "شوال" },
+  { id: 11, name: "ذو القعدة" },
+  { id: 12, name: "ذو الحجة" },
+];
+
+function getEventHijriMonthIndex(hijriDateStr: string): number {
+  if (!hijriDateStr) return 1;
+  const str = hijriDateStr.trim();
+  if (str.includes("محرم")) return 1;
+  if (str.includes("صفر")) return 2;
+  if (str.includes("ربيع الأول") || str.includes("ربيع 1") || str.includes("ربيع الاول")) return 3;
+  if (str.includes("ربيع الثاني") || str.includes("ربيع الآخر") || str.includes("ربيع 2") || str.includes("ربيع الاخر")) return 4;
+  if (str.includes("جمادى الأولى") || str.includes("جمادى 1") || str.includes("جمادى الاولى")) return 5;
+  if (str.includes("جمادى الآخرة") || str.includes("جمادى الثانية") || str.includes("جمادى 2") || str.includes("جمادى الاخره")) return 6;
+  if (str.includes("رجب")) return 7;
+  if (str.includes("شعبان")) return 8;
+  if (str.includes("رمضان")) return 9;
+  if (str.includes("شوال")) return 10;
+  if (str.includes("ذو القعدة") || str.includes("ذو القعده")) return 11;
+  if (str.includes("ذو الحجة") || str.includes("ذو الحجه")) return 12;
+  return 1;
+}
+
 export function Events() {
   const [dbEvents, setDbEvents] = useState<EventItem[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
-  const [isPastActivitiesOpen, setIsPastActivitiesOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeView, setActiveView] = useState<
     "cards" | "list" | "table" | "calendar" | "timeline"
@@ -53,9 +84,37 @@ export function Events() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [syllabuses, setSyllabuses] = useState<any[]>([]);
-  const [isPastEventsOpen, setIsPastEventsOpen] = useState(false);
-  const [isUpcomingEventsOpen, setIsUpcomingEventsOpen] = useState(false);
+
+  // Activities Tab Switcher
+  const [activityTab, setActivityTab] = useState<"today" | "upcoming" | "past">("today");
+
+  // Hijri Month State for Occasions Calendar
+  const [selectedHijriMonth, setSelectedHijriMonth] = useState<number>(2); // Safar default
+  const [selectedHijriYear, setSelectedHijriYear] = useState<number>(1448);
+  const [currentRealHijriMonth, setCurrentRealHijriMonth] = useState<number>(2);
+
   const navigate = useNavigate();
+
+  // Load actual real Hijri month on mount
+  useEffect(() => {
+    try {
+      const formatter = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {
+        month: 'numeric',
+        year: 'numeric'
+      });
+      const parts = formatter.formatToParts(new Date());
+      const m = parts.find(p => p.type === 'month')?.value;
+      const y = parts.find(p => p.type === 'year')?.value;
+      if (m) {
+        const realMonth = parseInt(m);
+        setCurrentRealHijriMonth(realMonth);
+        setSelectedHijriMonth(realMonth);
+      }
+      if (y) setSelectedHijriYear(parseInt(y));
+    } catch (e) {
+      console.warn("Hijri month detection failed", e);
+    }
+  }, []);
 
   const events = useMemo(() => {
     const dbTitles = new Set(dbEvents.map((e) => e.title));
@@ -69,7 +128,7 @@ export function Events() {
   }, [dbEvents]);
 
   useEffect(() => {
-    // Load from cache first
+    // Load cache
     const cachedActivities = localStorage.getItem("taiz_activities_cache");
     const cachedSyllabuses = localStorage.getItem("taiz_syllabuses_cache");
     const cachedDbEvents = localStorage.getItem("taiz_events_cache");
@@ -185,6 +244,7 @@ export function Events() {
 
   const today = startOfDay(new Date());
 
+  // Partitioned Activities
   const partitionedActivities = useMemo(() => {
     const todayActivities: any[] = [];
     const upcomingActivities: any[] = [];
@@ -202,47 +262,60 @@ export function Events() {
       }
     });
 
-    // Sort upcoming ascending (nearest first)
     upcomingActivities.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
-    // Sort past descending (most recent first)
     pastActivities.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
 
     return { todayActivities, upcomingActivities, pastActivities };
   }, [activities, today]);
 
-  const eventOfTheDay = useMemo(() => {
-    return events.find((e) =>
-      isSameDay(startOfDay(new Date(e.timestamp)), today)
-    );
-  }, [events, today]);
+  // Event Count Map by Hijri Month (1 to 12)
+  const eventsCountByMonth = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (let i = 1; i <= 12; i++) counts[i] = 0;
+    events.forEach((e) => {
+      const idx = getEventHijriMonthIndex(e.hijriDate);
+      counts[idx] = (counts[idx] || 0) + 1;
+    });
+    return counts;
+  }, [events]);
 
-  const upcomingEvents = useMemo(() => {
-    return events
-      .filter((e) => isAfter(startOfDay(new Date(e.timestamp)), today))
-      .sort((a, b) => a.timestamp - b.timestamp);
-  }, [events, today]);
-
-  const nearestUpcoming = upcomingEvents[0];
-
-  const filteredEvents = useMemo(() => {
+  // Filter events strictly for Selected Hijri Month + Search Query + Category
+  const monthFilteredEvents = useMemo(() => {
     return events.filter((e) => {
+      const monthIdx = getEventHijriMonthIndex(e.hijriDate);
+      const matchesMonth = monthIdx === selectedHijriMonth;
+
       const matchesSearch =
+        !searchQuery ||
         e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         e.hijriDate.includes(searchQuery) ||
         e.gregorianDate.includes(searchQuery);
+
       const matchesCategory =
         selectedCategory === "all" || e.category === selectedCategory;
-      return matchesSearch && matchesCategory;
+
+      return matchesMonth && matchesSearch && matchesCategory;
     });
-  }, [events, searchQuery, selectedCategory]);
+  }, [events, selectedHijriMonth, searchQuery, selectedCategory]);
+
+  const eventOfTheDay = useMemo(() => {
+    return events.find((e) => isSameDay(startOfDay(new Date(e.timestamp)), today));
+  }, [events, today]);
+
+  const nearestMonthEvent = useMemo(() => {
+    if (monthFilteredEvents.length === 0) return null;
+    const upcoming = monthFilteredEvents.filter((e) => isAfter(startOfDay(new Date(e.timestamp)), today) || isSameDay(startOfDay(new Date(e.timestamp)), today));
+    if (upcoming.length > 0) return upcoming[0];
+    return monthFilteredEvents[0];
+  }, [monthFilteredEvents, today]);
 
   const partitions = useMemo(() => {
     const current: EventItem[] = [];
     const upcoming: EventItem[] = [];
     const past: EventItem[] = [];
 
-    filteredEvents.forEach((e) => {
+    monthFilteredEvents.forEach((e) => {
       const eventDate = startOfDay(new Date(e.timestamp));
       if (isSameDay(eventDate, today)) {
         current.push(e);
@@ -253,32 +326,30 @@ export function Events() {
       }
     });
 
-    // Sort upcoming ascending (nearest first)
     upcoming.sort((a, b) => a.timestamp - b.timestamp);
-    // Sort past descending (most recent first)
     past.sort((a, b) => b.timestamp - a.timestamp);
 
     return { current, upcoming, past };
-  }, [filteredEvents, today]);
+  }, [monthFilteredEvents, today]);
 
   const getEventStatus = (timestamp: number) => {
     const eventDate = startOfDay(new Date(timestamp));
     if (isSameDay(eventDate, today))
       return {
         label: "اليوم",
-        color: "bg-taiz-sky",
-        text: "text-taiz-sky border-taiz-sky/20 bg-taiz-sky/5",
+        color: "bg-[#015028]",
+        text: "text-[#015028] border-emerald-300/60 bg-emerald-50",
       };
     if (isAfter(eventDate, today))
       return {
         label: "قادمة",
-        color: "bg-taiz-royal",
-        text: "text-taiz-royal border-taiz-royal/20 bg-taiz-royal/5",
+        color: "bg-[#10264A]",
+        text: "text-[#10264A] border-blue-300/60 bg-blue-50",
       };
     return {
       label: "منتهية",
-      color: "bg-taiz-soft",
-      text: "text-taiz-soft border-taiz-soft/20 bg-taiz-soft/5",
+      color: "bg-slate-400",
+      text: "text-slate-600 border-slate-200 bg-slate-50",
     };
   };
 
@@ -289,12 +360,12 @@ export function Events() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 bg-surface-main">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 bg-slate-50/50">
         <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-4 border-taiz-navy/10 border-t-taiz-royal animate-spin"></div>
+          <div className="absolute inset-0 rounded-full border-4 border-[#015028]/20 border-t-[#015028] animate-spin"></div>
         </div>
-        <p className="text-text-secondary text-xs font-bold">
-          جاري تحميل تقويم المناسبات...
+        <p className="text-slate-600 text-xs font-bold font-cairo">
+          جاري تحميل قسم الأنشطة والمناسبات...
         </p>
       </div>
     );
@@ -302,689 +373,539 @@ export function Events() {
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
   const relatedSyllabus = syllabuses.find((s) => s.eventId === selectedEventId);
+  const selectedMonthObj = HIJRI_MONTHS.find((m) => m.id === selectedHijriMonth) || HIJRI_MONTHS[1];
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="max-w-7xl mx-auto w-full p-4 pb-20 space-y-12 font-ibm" dir="rtl">
+      <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 pb-24 space-y-12 font-ibm" dir="rtl">
         
-        {/* ==================== 1. ACTIVITIES SECTION ==================== */}
+        {/* ==================== 1. ACTIVITIES SECTION (قسم الأنشطة) ==================== */}
         <section className="space-y-6">
-          <div className="border-b border-gray-100 pb-4">
-            <h2 className="text-xl font-bold text-gray-900 font-ibm">
-              الأنشطة
-            </h2>
-            <p className="text-xs font-bold text-gray-500 mt-1">
-              متابعة الأنشطة اليومية والمقبلة والسابقة بالمنصة
-            </p>
-          </div>
-
-          {/* Today's Activities */}
-          <div className="space-y-4">
-            <h3 className="text-sm font-black text-[#0a8f5c] flex items-center gap-2">
-              <span className="w-2.5 h-2.5 bg-[#0a8f5c] rounded-full animate-pulse"></span>
-              <span>أنشطة اليوم</span>
-            </h3>
-            {partitionedActivities.todayActivities.length === 0 ? (
-              <div className="bg-white border border-gray-100 shadow-sm p-8 text-center flex flex-col items-center justify-center rounded-[2rem] min-h-[160px]">
-                <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 mb-3">
-                  <CalendarIcon className="w-6 h-6" />
-                </div>
-                <p className="text-gray-500 font-bold text-sm">
-                  لا توجد فعاليات لهذا اليوم
-                </p>
+          {/* Section Header */}
+          <div className="bg-gradient-to-r from-[#015028]/10 via-[#015028]/5 to-transparent p-5 sm:p-6 rounded-3xl border border-[#015028]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-2.5 h-2.5 rounded-full bg-[#015028] animate-pulse"></span>
+                <span className="text-xs font-black text-[#015028] font-cairo uppercase tracking-wider">أنشطة المنصة اليومية</span>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-8 w-full max-w-3xl mx-auto">
-                {partitionedActivities.todayActivities.map((act) => (
-                  <ModernEventCard
-                    key={act.id}
-                    activity={act}
-                    statusOverride="حالية"
-                    onClick={() => navigate(`/events/activity/${act.id}`)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Upcoming Activities */}
-          {partitionedActivities.upcomingActivities.length > 0 && (
-            <div className="space-y-4 pt-4">
-              <h3 className="text-sm font-black text-taiz-royal flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-taiz-royal rounded-full"></span>
-                <span>الأنشطة القادمة</span>
-              </h3>
-              <div className="grid grid-cols-1 gap-8 w-full max-w-3xl mx-auto">
-                {partitionedActivities.upcomingActivities.map((act) => (
-                  <ModernEventCard
-                    key={act.id}
-                    activity={act}
-                    statusOverride="قادمة"
-                    onClick={() => navigate(`/events/activity/${act.id}`)}
-                  />
-                ))}
-              </div>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-cairo">
+                الأنشطة والفعاليات
+              </h2>
+              <p className="text-xs font-bold text-slate-500 mt-1">
+                متابعة الأنشطة اليومية والمقبلة والسابقة بالمنصة
+              </p>
             </div>
-          )}
 
-          {/* Past Activities (Collapsible) */}
-          {partitionedActivities.pastActivities.length > 0 && (
-            <div className="border-t border-gray-100 pt-6">
+            {/* Segmented Tab Controls for Activities */}
+            <div className="bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-1 shrink-0 self-start sm:self-center">
               <button
-                type="button"
-                onClick={() => setIsPastActivitiesOpen(!isPastActivitiesOpen)}
-                className="w-full flex items-center justify-between bg-gray-50 hover:bg-gray-100 p-4 rounded-xl text-gray-700 font-bold text-sm transition-all cursor-pointer select-none"
+                onClick={() => setActivityTab("today")}
+                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer font-cairo flex items-center gap-1.5 ${
+                  activityTab === "today"
+                    ? "bg-[#015028] text-white shadow-md"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
               >
-                  <span className="flex items-center gap-2">
-                    <HistoryIcon className="w-4 h-4 text-gray-500" />
-                    <span>الأنشطة السابقة ({partitionedActivities.pastActivities.length})</span>
-                  </span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${isPastActivitiesOpen ? "rotate-180" : ""}`} />
+                <span>أنشطة اليوم</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "today" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                  {partitionedActivities.todayActivities.length}
+                </span>
               </button>
-              {isPastActivitiesOpen && (
-                <div className="grid grid-cols-1 gap-8 mt-6 w-full max-w-3xl mx-auto animate-in fade-in duration-200">
-                  {partitionedActivities.pastActivities.map((act) => (
-                    <ModernEventCard
-                      key={act.id}
-                      activity={act}
-                      statusOverride="سابقة"
-                      onClick={() => navigate(`/events/activity/${act.id}`)}
-                    />
-                  ))}
+
+              <button
+                onClick={() => setActivityTab("upcoming")}
+                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer font-cairo flex items-center gap-1.5 ${
+                  activityTab === "upcoming"
+                    ? "bg-[#015028] text-white shadow-md"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <span>الأنشطة القادمة</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "upcoming" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                  {partitionedActivities.upcomingActivities.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActivityTab("past")}
+                className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer font-cairo flex items-center gap-1.5 ${
+                  activityTab === "past"
+                    ? "bg-[#015028] text-white shadow-md"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <span>الأنشطة السابقة</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "past" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                  {partitionedActivities.pastActivities.length}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Tab Content Display */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activityTab}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+            >
+              {/* Today's Activities */}
+              {activityTab === "today" && (
+                <div>
+                  {partitionedActivities.todayActivities.length === 0 ? (
+                    <div className="bg-white border border-slate-200/80 shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#015028] flex items-center justify-center mb-3 border border-emerald-100">
+                        <CalendarIcon className="w-6 h-6" />
+                      </div>
+                      <p className="text-slate-700 font-extrabold text-sm font-cairo">
+                        لا توجد فعاليات لهذه اليوم
+                      </p>
+                      <p className="text-slate-400 text-xs font-bold mt-1">
+                        يمكنك الاطلاع على الأنشطة القادمة من التبويب المبتكر أعلاه
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                      {partitionedActivities.todayActivities.map((act) => (
+                        <ModernEventCard
+                          key={act.id}
+                          activity={act}
+                          statusOverride="حالية"
+                          onClick={() => navigate(`/events/activity/${act.id}`)}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
+
+              {/* Upcoming Activities */}
+              {activityTab === "upcoming" && (
+                <div>
+                  {partitionedActivities.upcomingActivities.length === 0 ? (
+                    <div className="bg-white border border-slate-200/80 shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 border border-blue-100">
+                        <CalendarDays className="w-6 h-6" />
+                      </div>
+                      <p className="text-slate-700 font-extrabold text-sm font-cairo">
+                        لا توجد أنشطة قادمة حالياً
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                      {partitionedActivities.upcomingActivities.map((act) => (
+                        <ModernEventCard
+                          key={act.id}
+                          activity={act}
+                          statusOverride="قادمة"
+                          onClick={() => navigate(`/events/activity/${act.id}`)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Past Activities */}
+              {activityTab === "past" && (
+                <div>
+                  {partitionedActivities.pastActivities.length === 0 ? (
+                    <div className="bg-white border border-slate-200/80 shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3 border border-slate-200">
+                        <HistoryIcon className="w-6 h-6" />
+                      </div>
+                      <p className="text-slate-700 font-extrabold text-sm font-cairo">
+                        لا توجد أنشطة سابقة مدونة في الأرشيف
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                      {partitionedActivities.pastActivities.map((act) => (
+                        <ModernEventCard
+                          key={act.id}
+                          activity={act}
+                          statusOverride="سابقة"
+                          onClick={() => navigate(`/events/activity/${act.id}`)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </section>
 
-        {/* ==================== 2. CALENDAR / OCCASIONS SECTION ==================== */}
-        <section className="space-y-6 pt-8 border-t border-gray-100">
-          <div className="pb-4">
-            <h2 className="text-xl font-bold text-gray-900 font-ibm">
-              تقويم المناسبات
-            </h2>
-          </div>
-      {/* Modern Bento Highlights Banner Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Bento Cell 1: Event of the Day Card */}
-        <div className="lg:col-span-7 relative overflow-hidden bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-border-light flex flex-col justify-between min-h-[220px] group">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-red-50 rounded-full blur-3xl pointer-events-none -mt-10 -mr-10"></div>
+        {/* ==================== 2. CALENDAR / OCCASIONS SECTION (قسم تقويم المناسبات) ==================== */}
+        <section className="space-y-6 pt-8 border-t border-slate-200/80">
+          
+          {/* Section Heading & Hijri Month Selector Bar */}
+          <div className="bg-gradient-to-br from-[#10264A] via-[#05152e] to-[#015028] text-white p-6 sm:p-8 rounded-3xl shadow-xl space-y-6 relative overflow-hidden border border-[#E5A921]/30">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#E5A921]/10 rounded-full blur-3xl pointer-events-none -mt-20 -mr-20"></div>
 
-          <div className="relative z-10 w-full flex flex-col justify-between h-full">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-red-50 text-red-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-pulse"></span>
-                مناسبة اليوم
-              </div>
-              <div className="text-slate-400 font-bold text-[10px] flex items-center gap-1.5">
-                <span>{format(today, "EEEE, d MMMM yyyy", { locale: ar })}</span>
-                <span className="opacity-40">|</span>
-                <span>{new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' }).format(today)} هـ</span>
-              </div>
-            </div>
-
-            {eventOfTheDay ? (
-              <div className="space-y-3">
-                <h2 className="text-xl sm:text-2xl font-black leading-tight text-slate-900 group-hover:text-red-600 transition-colors duration-300">
-                  {eventOfTheDay.title}
-                </h2>
-                <div className="flex flex-wrap gap-3 text-slate-500 font-bold text-[10px]">
-                  <span className="bg-slate-50 px-2 py-1 rounded-md flex items-center gap-1.5">
-                    <CalendarDays className="w-3.5 h-3.5 text-red-600" />
-                    {eventOfTheDay.hijriDate}
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#E5A921] text-[#10264A] text-[10px] font-black font-cairo">
+                    تقويم الهجرة الشريفة
                   </span>
-                  <span className="bg-slate-50 px-2 py-1 rounded-md flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-red-600" />
-                    {eventOfTheDay.gregorianDate}
+                  {selectedHijriMonth === currentRealHijriMonth && (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 text-[10px] font-bold font-cairo flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                      الشهر الحالي
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black font-cairo leading-tight text-[#FFF2A8]">
+                  تقويم المناسبات الإسلامية
+                </h2>
+                <p className="text-xs font-bold text-slate-300 mt-1">
+                  عرض مناسبات شهر <span className="text-[#FFF2A8] font-black">{selectedMonthObj.name} {selectedHijriYear} هـ</span> ({monthFilteredEvents.length} مناسبة)
+                </p>
+              </div>
+
+              {/* Month Carousel Controls (< > Navigation) */}
+              <div className="flex items-center gap-2 self-start md:self-center bg-white/10 backdrop-blur-md p-1.5 rounded-2xl border border-white/20">
+                <button
+                  onClick={() => setSelectedHijriMonth(prev => prev === 1 ? 12 : prev - 1)}
+                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-white cursor-pointer"
+                  title="الشهر السابق"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+
+                <div className="px-4 text-center min-w-[120px]">
+                  <span className="block text-xs font-black text-[#FFF2A8] font-cairo">
+                    {selectedMonthObj.name}
+                  </span>
+                  <span className="block text-[10px] font-bold text-slate-300">
+                    {selectedHijriYear} هـ
                   </span>
                 </div>
-                <p className="text-slate-600 text-xs leading-relaxed max-w-xl line-clamp-2 font-bold mt-2">
-                  {eventOfTheDay.description || "لا يوجد وصف مدون حالياً لهذه المناسبة الإسلامية الكريمة."}
-                </p>
-                <div className="pt-4 flex justify-end">
-                   <button
-                    onClick={() => setSelectedEventId(eventOfTheDay.id)}
-                    className="bg-red-600 text-white hover:bg-red-700 px-6 py-2.5 rounded-xl font-black text-xs transition-all shadow-md hover:shadow-lg flex items-center gap-2 cursor-pointer"
+
+                <button
+                  onClick={() => setSelectedHijriMonth(prev => prev === 12 ? 1 : prev + 1)}
+                  className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center text-white cursor-pointer"
+                  title="الشهر التالي"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                {selectedHijriMonth !== currentRealHijriMonth && (
+                  <button
+                    onClick={() => setSelectedHijriMonth(currentRealHijriMonth)}
+                    className="px-3 py-1.5 rounded-xl bg-[#E5A921] text-[#10264A] text-xs font-black font-cairo hover:bg-[#FFF2A8] transition-all cursor-pointer mr-2 shadow-sm"
                   >
-                    عرض التفاصيل <ChevronLeft className="w-4 h-4" />
+                    الشهر الحالي
                   </button>
-                </div>
+                )}
               </div>
-            ) : (
-              <div className="py-8 text-center w-full">
-                <div className="text-base font-black text-slate-400 flex items-center justify-center gap-2 mb-2">
-                  <Info className="w-5 h-5" /> لا توجد مناسبات مسجلة لهذا اليوم
-                </div>
-                <p className="text-slate-400 text-[10px] font-bold">
-                  تصفح التقويم وأقرب المناسبات من اللوحة المجاورة
-                </p>
+            </div>
+
+            {/* Horizontal Scrollable Hijri Month Pills */}
+            <div className="relative z-10 pt-2 border-t border-white/10">
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none text-right">
+                {HIJRI_MONTHS.map((m) => {
+                  const isSelected = selectedHijriMonth === m.id;
+                  const count = eventsCountByMonth[m.id] || 0;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setSelectedHijriMonth(m.id)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 font-cairo shrink-0 border ${
+                        isSelected
+                          ? "bg-gradient-to-r from-[#E5A921] to-[#FFF2A8] text-[#10264A] border-white shadow-lg ring-2 ring-amber-300/50 scale-105"
+                          : "bg-white/10 text-slate-200 hover:bg-white/20 border-white/10"
+                      }`}
+                    >
+                      <span>{m.name}</span>
+                      {count > 0 && (
+                        <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-extrabold ${isSelected ? "bg-[#10264A] text-white" : "bg-white/20 text-white"}`}>
+                          {count}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
           </div>
-        </div>
 
-        {/* Bento Cell 2: Nearest Upcoming Card */}
-        <div className="lg:col-span-5 relative overflow-hidden bg-white rounded-3xl p-6 sm:p-8 border border-border-light shadow-sm flex flex-col justify-between group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-red-50/30 rounded-full blur-2xl pointer-events-none" />
+          {/* Month Banner Highlight Card */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Bento Highlight: Featured Occasion of Selected Month */}
+            <div className="lg:col-span-12 relative overflow-hidden bg-white rounded-3xl p-6 sm:p-8 shadow-xs border border-slate-200/80 flex flex-col justify-between group">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-[#015028]/5 rounded-full blur-3xl pointer-events-none"></div>
 
-          {nearestUpcoming ? (
-            <div className="relative z-10 flex flex-col h-full justify-between">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="bg-slate-50 border border-slate-100 text-red-600 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-2">
-                    المناسبة القادمة الأقرب
+              <div className="relative z-10 w-full">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="bg-[#FEF9E6] text-[#8C6200] border border-[#E5A921]/40 px-3 py-1 rounded-full text-xs font-black font-cairo flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-[#E5A921]" />
+                    <span>مناسبات شهر {selectedMonthObj.name}</span>
                   </div>
-                  <div className="text-red-600 font-black text-xs flex items-center gap-1">
-                    <Timer className="w-3.5 h-3.5 animate-spin-slow" />
-                    متبقي {getRemainingDays(nearestUpcoming.timestamp)} يوم
+
+                  <div className="text-slate-500 font-bold text-xs flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-[#015028]" />
+                    <span>المجموع: {monthFilteredEvents.length} مناسبة</span>
                   </div>
                 </div>
 
-                <h2 className="text-xl font-black text-slate-900 leading-tight group-hover:text-red-600 transition-colors duration-300">
-                  {nearestUpcoming.title}
-                </h2>
-
-                <p className="text-slate-500 text-[11px] line-clamp-2 leading-relaxed font-bold">
-                  {nearestUpcoming.description || "معلومات تفصيلية تنشر قريباً، تفيد السيرة النبوية والمناسبات الإسلامية العظيمة."}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between pt-6 border-t border-slate-50 mt-6">
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-400">
-                    التاريخ المجدول
-                  </span>
-                  <span className="text-xs font-black text-slate-700">
-                    {nearestUpcoming.hijriDate}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setSelectedEventId(nearestUpcoming.id)}
-                  className="text-white bg-slate-900 hover:bg-red-600 text-xs font-black px-5 py-2.5 rounded-xl shadow-md transition-all cursor-pointer"
-                >
-                  استعراض
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center text-slate-300 py-10 opacity-60">
-              <CalendarDays className="w-12 h-12 mb-2" />
-              <div className="font-black text-sm">
-                لا توجد مناسبات قادمة مجدولة
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Advanced Control and Filter Center */}
-      <div className="bg-surface-card p-4 rounded-2xl border border-border-light shadow-sm flex flex-col lg:flex-row items-center gap-4">
-        {/* Modern Unified Search Input */}
-        <div className="relative flex-1 w-full">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted" />
-          <input
-            type="text"
-            placeholder="ابحث باسم المناسبة، التاريخ الهجري أو الميلادي..."
-            className="w-full bg-surface-main border border-transparent focus:border-taiz-sky/30 focus:bg-surface-card text-text-primary rounded-xl pr-12 pl-4 py-3 text-sm font-bold transition-all focus:outline-none placeholder:text-text-muted"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        {/* Dynamic Categorized Filters */}
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0 w-full lg:w-auto">
-          {[
-            { id: "all", label: "الكل" },
-            { id: "religious", label: "إسلامية ودينية" },
-            { id: "national", label: "أحداث ووطنية" },
-            { id: "historical", label: "تاريخية ومناسبات" },
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                selectedCategory === cat.id
-                  ? "bg-taiz-royal text-white shadow-md"
-                  : "bg-gray-50 text-taiz-soft hover:bg-gray-100"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Multi-view Interactive Switcher */}
-        <div className="bg-gray-50 p-1 rounded-xl flex items-center gap-1 shrink-0 w-full lg:w-auto justify-center">
-          {[
-            { id: "list", icon: List, label: "قائمة" },
-            { id: "table", icon: SlidersHorizontal, label: "جدولي" },
-            { id: "calendar", icon: CalendarDays, label: "تقويم" },
-            { id: "timeline", icon: Clock, label: "زمني" },
-          ].map((view) => (
-            <button
-              key={view.id}
-              onClick={() => setActiveView(view.id as any)}
-              className={`p-2 rounded-lg transition-all cursor-pointer flex items-center gap-1 text-xs font-black ${
-                activeView === view.id
-                  ? "bg-white text-taiz-royal shadow-sm border border-gray-100"
-                  : "text-taiz-soft hover:text-taiz-navy"
-              }`}
-              title={view.label}
-            >
-              <view.icon className="w-4.5 h-4.5" />
-              <span className="hidden sm:inline">{view.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Responsive Views Area */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeView + selectedCategory + searchQuery}
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -15 }}
-          transition={{ duration: 0.3 }}
-          className="min-h-[400px]"
-        >
-          {/* Grid Layout View */}
-          {activeView === "cards" && (
-            <div className="space-y-8">
-              {/* 2. Collapsible Upcoming Events Section */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => setIsUpcomingEventsOpen(!isUpcomingEventsOpen)}
-                  className="w-full flex items-center justify-between p-4 bg-surface-card hover:bg-surface-hover rounded-2xl border border-border-light shadow-sm transition-all text-right cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-taiz-royal/10 text-taiz-royal flex items-center justify-center">
-                      <CalendarDays className="w-5 h-5" />
+                {nearestMonthEvent ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="bg-[#015028]/10 text-[#015028] px-2.5 py-0.5 rounded-lg text-xs font-extrabold">
+                        {nearestMonthEvent.hijriDate}
+                      </span>
+                      <span className="text-slate-400 text-xs font-bold">|</span>
+                      <span className="text-slate-600 text-xs font-bold">
+                        {nearestMonthEvent.gregorianDate}
+                      </span>
                     </div>
-                    <div>
-                      <h3 className="text-sm sm:text-base font-black text-text-primary">
-                        المناسبات القادمة ({partitions.upcoming.length})
-                      </h3>
-                      <p className="text-[10px] text-text-secondary font-bold">
-                        تصفح واستعرض المناسبات القادمة
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-taiz-royal bg-taiz-royal/5 px-2.5 py-1 rounded-lg">
-                      {isUpcomingEventsOpen ? "إغلاق" : "عرض"}
-                    </span>
-                    {isUpcomingEventsOpen ? (
-                      <ChevronUp className="w-5 h-5 text-text-muted" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-text-muted" />
-                    )}
-                  </div>
-                </button>
 
-                <AnimatePresence initial={false}>
-                  {isUpcomingEventsOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {partitions.upcoming.map((event) => (
-                          <SmallEventCard
-                            key={event.id}
-                            event={event}
-                            status={getEventStatus(event.timestamp)}
-                            remaining={getRemainingDays(event.timestamp)}
-                            onView={() => setSelectedEventId(event.id)}
-                          />
-                        ))}
-                        {partitions.upcoming.length === 0 && (
-                          <div className="col-span-full py-10 text-center text-text-muted text-xs font-bold bg-surface-main rounded-xl border border-dashed border-border-light">
-                            لا توجد مناسبات قادمة مطابقة لبحثك.
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 group-hover:text-[#015028] transition-colors font-cairo">
+                      {nearestMonthEvent.title}
+                    </h2>
 
-              {/* 3. Collapsible Past Events Section */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => setIsPastEventsOpen(!isPastEventsOpen)}
-                  className="w-full flex items-center justify-between p-4 bg-surface-card hover:bg-surface-hover rounded-2xl border border-border-light shadow-sm transition-all text-right cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-taiz-soft/10 text-taiz-soft flex items-center justify-center">
-                      <Clock className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm sm:text-base font-black text-text-primary">
-                        المناسبات المنتهية والمطوية ({partitions.past.length})
-                      </h3>
-                      <p className="text-[10px] text-text-secondary font-bold">
-                        الأرشيف التاريخي للمناسبات والذكريات المنصرمة
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-text-muted bg-surface-main px-2.5 py-1 rounded-lg">
-                      {isPastEventsOpen ? "إغلاق" : "عرض"}
-                    </span>
-                    {isPastEventsOpen ? (
-                      <ChevronUp className="w-5 h-5 text-text-muted" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-text-muted" />
-                    )}
-                  </div>
-                </button>
+                    <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-3xl line-clamp-2 font-medium">
+                      {nearestMonthEvent.description || "معلومات تفصيلية تنشر قريباً لتغطية هذه المناسبة الإسلامية والوطنية الكريمة."}
+                    </p>
 
-                <AnimatePresence initial={false}>
-                  {isPastEventsOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {partitions.past.map((event) => (
-                          <SmallEventCard
-                            key={event.id}
-                            event={event}
-                            status={getEventStatus(event.timestamp)}
-                            remaining={getRemainingDays(event.timestamp)}
-                            onView={() => setSelectedEventId(event.id)}
-                          />
-                        ))}
-                        {partitions.past.length === 0 && (
-                          <div className="col-span-full py-10 text-center text-text-muted text-xs font-bold bg-surface-main rounded-xl border border-dashed border-border-light">
-                            لا توجد مناسبات منتهية مطابقة لبحثك.
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {filteredEvents.length === 0 && <NoResultsFound />}
-            </div>
-          )}
-
-          {/* Compact List View */}
-          {activeView === "list" && (
-            <div className="space-y-8 max-w-4xl mx-auto">
-              {/* 2. Collapsible Upcoming Events Section */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => setIsUpcomingEventsOpen(!isUpcomingEventsOpen)}
-                  className="w-full flex items-center justify-between p-4 bg-surface-card hover:bg-surface-hover rounded-2xl border border-border-light shadow-sm transition-all text-right cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-taiz-royal/10 text-taiz-royal flex items-center justify-center">
-                      <CalendarDays className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm sm:text-base font-black text-text-primary">
-                        المناسبات القادمة ({partitions.upcoming.length})
-                      </h3>
-                      <p className="text-[10px] text-text-secondary font-bold">
-                        تصفح واستعرض المناسبات القادمة
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-taiz-royal bg-taiz-royal/5 px-2.5 py-1 rounded-lg">
-                      {isUpcomingEventsOpen ? "إغلاق" : "عرض"}
-                    </span>
-                    {isUpcomingEventsOpen ? (
-                      <ChevronUp className="w-5 h-5 text-text-muted" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-text-muted" />
-                    )}
-                  </div>
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {isUpcomingEventsOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pt-2 space-y-3">
-                        {partitions.upcoming.map((event) => {
-                          const status = getEventStatus(event.timestamp);
-                          return (
-                            <motion.div
-                              key={event.id}
-                              onClick={() => setSelectedEventId(event.id)}
-                              whileHover={{ x: -4 }}
-                              className="bg-surface-card p-4 rounded-2xl border border-border-light shadow-sm flex items-center gap-4 cursor-pointer hover:border-taiz-sky/30 transition-all group"
-                            >
-                              <div className="w-14 h-14 rounded-2xl bg-surface-main border border-border-light flex flex-col items-center justify-center shrink-0">
-                                <span className="text-xs font-black text-taiz-royal">
-                                  {format(new Date(event.timestamp), "d")}
-                                </span>
-                                <span className="text-[8px] font-black text-text-muted uppercase">
-                                  {format(new Date(event.timestamp), "MMMM", {
-                                    locale: ar,
-                                  })}
-                                </span>
-                              </div>
-                              <div className="flex-1 text-right min-w-0">
-                                <h4 className="text-sm sm:text-base font-black text-text-primary group-hover:text-taiz-royal transition-colors truncate">
-                                  {event.title}
-                                </h4>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-[10px] font-black text-taiz-sky flex items-center gap-1">
-                                    <CalendarIcon className="w-3 h-3" /> {event.hijriDate}
-                                  </span>
-                                  <span className="text-[10px] font-black text-text-muted flex items-center gap-1">
-                                    <Clock className="w-3 h-3" /> {event.gregorianDate}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="shrink-0 flex items-center gap-2">
-                                <span
-                                  className={`text-[9px] font-black px-2 py-0.5 rounded-lg border hidden sm:inline-block ${status.text}`}
-                                >
-                                  {status.label}
-                                </span>
-                                <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-red-600 group-hover:-translate-x-1 transition-all" />
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                        {partitions.upcoming.length === 0 && (
-                          <div className="py-10 text-center text-text-muted text-xs font-bold bg-surface-main rounded-xl border border-dashed border-border-light">
-                            لا توجد مناسبات قادمة مطابقة لبحثك.
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* 3. Collapsible Past Events Section */}
-              <div className="space-y-3">
-                <button
-                  onClick={() => setIsPastEventsOpen(!isPastEventsOpen)}
-                  className="w-full flex items-center justify-between p-4 bg-surface-card hover:bg-surface-hover rounded-2xl border border-border-light shadow-sm transition-all text-right cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-taiz-soft/10 text-taiz-soft flex items-center justify-center">
-                      <Clock className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h3 className="text-sm sm:text-base font-black text-text-primary">
-                        المناسبات المنتهية والمطوية ({partitions.past.length})
-                      </h3>
-                      <p className="text-[10px] text-text-secondary font-bold">
-                        الأرشيف التاريخي للمناسبات والذكريات المنصرمة
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-black text-text-muted bg-surface-main px-2.5 py-1 rounded-lg">
-                      {isPastEventsOpen ? "إغلاق" : "عرض"}
-                    </span>
-                    {isPastEventsOpen ? (
-                      <ChevronUp className="w-5 h-5 text-text-muted" />
-                    ) : (
-                      <ChevronDown className="w-5 h-5 text-text-muted" />
-                    )}
-                  </div>
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {isPastEventsOpen && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pt-2 space-y-3">
-                        {partitions.past.map((event) => {
-                          const status = getEventStatus(event.timestamp);
-                          return (
-                            <motion.div
-                              key={event.id}
-                              onClick={() => setSelectedEventId(event.id)}
-                              whileHover={{ x: -4 }}
-                              className="bg-surface-card p-4 rounded-2xl border border-border-light shadow-sm flex items-center gap-4 cursor-pointer hover:border-taiz-sky/30 transition-all group"
-                            >
-                              <div className="w-14 h-14 rounded-2xl bg-surface-main border border-border-light flex flex-col items-center justify-center shrink-0">
-                                <span className="text-xs font-black text-taiz-royal">
-                                  {format(new Date(event.timestamp), "d")}
-                                </span>
-                                <span className="text-[8px] font-black text-text-muted uppercase">
-                                  {format(new Date(event.timestamp), "MMMM", {
-                                    locale: ar,
-                                  })}
-                                </span>
-                              </div>
-                              <div className="flex-1 text-right min-w-0">
-                                <h4 className="text-sm sm:text-base font-black text-text-primary group-hover:text-taiz-royal transition-colors truncate">
-                                  {event.title}
-                                </h4>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <span className="text-[10px] font-black text-taiz-sky flex items-center gap-1">
-                                    <CalendarIcon className="w-3 h-3" /> {event.hijriDate}
-                                  </span>
-                                  <span className="text-[10px] font-black text-text-muted flex items-center gap-1">
-                                    <Clock className="w-3 h-3" /> {event.gregorianDate}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="shrink-0 flex items-center gap-2">
-                                <span
-                                  className={`text-[9px] font-black px-2 py-0.5 rounded-lg border hidden sm:inline-block ${status.text}`}
-                                >
-                                  {status.label}
-                                </span>
-                                <ChevronLeft className="w-5 h-5 text-text-muted group-hover:text-red-600 group-hover:-translate-x-1 transition-all" />
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                        {partitions.past.length === 0 && (
-                          <div className="py-10 text-center text-text-muted text-xs font-bold bg-surface-main rounded-xl border border-dashed border-border-light">
-                            لا توجد مناسبات منتهية مطابقة لبحثك.
-                          </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {filteredEvents.length === 0 && <NoResultsFound />}
-            </div>
-          )}
-
-          {/* Table Layout View */}
-          {activeView === "table" && (
-            <div className="bg-surface-card rounded-[1.5rem] border border-border-light shadow-sm overflow-x-auto">
-              <table className="w-full text-right border-collapse">
-                <thead>
-                  <tr className="bg-surface-hover text-text-muted font-black text-xs border-b border-border-light">
-                    <th className="p-4.5">#</th>
-                    <th className="p-4.5">المناسبة</th>
-                    <th className="p-4.5">التاريخ الهجري</th>
-                    <th className="p-4.5">التاريخ الميلادي</th>
-                    <th className="p-4.5">الحالة متبقي</th>
-                    <th className="p-4.5 text-center">الإجراءات</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-light">
-                  {filteredEvents.map((event, idx) => {
-                    const status = getEventStatus(event.timestamp);
-                    const rem = getRemainingDays(event.timestamp);
-                    return (
-                      <tr
-                        key={event.id}
-                        className="hover:bg-surface-hover transition-colors border-border-light"
+                    <div className="pt-2 flex justify-end">
+                      <button
+                        onClick={() => setSelectedEventId(nearestMonthEvent.id)}
+                        className="bg-[#015028] hover:bg-[#083b20] text-white px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-md flex items-center gap-2 cursor-pointer font-cairo"
                       >
-                        <td className="p-4.5 text-xs font-black text-text-muted">
-                          {idx + 1}
-                        </td>
-                        <td className="p-4.5">
-                          <div className="font-black text-text-primary text-sm">
-                            {event.title}
-                          </div>
-                          <div className="text-[10px] text-text-secondary font-black mt-0.5">
-                            {event.dayName}
-                          </div>
-                        </td>
-                        <td className="p-4.5 text-xs font-black text-taiz-royal">
-                          {event.hijriDate}
-                        </td>
-                        <td className="p-4.5 text-xs font-bold text-text-secondary">
-                          {event.gregorianDate}
-                        </td>
-                        <td className="p-4.5">
-                          <span
-                            className={`text-[10px] font-black px-2.5 py-1 rounded-lg border ${status.text}`}
-                          >
-                            {rem === 0 ? "اليوم" : `متبقي ${rem} يوم`}
+                        عرض التفاصيل والمحتوى المرتبط <ChevronLeft className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center w-full">
+                    <div className="text-sm font-black text-slate-500 flex items-center justify-center gap-2 mb-1 font-cairo">
+                      <Info className="w-5 h-5 text-slate-400" /> لا توجد مناسبات مسجلة في شهر {selectedMonthObj.name}
+                    </div>
+                    <p className="text-slate-400 text-xs font-bold">
+                      يمكنك الانتقال بين الأشهر باستخدام شريط التنقل العلوي استعراض المناسبات الأخرى
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Controls Bar: Unified Search, Category Filter & View Modes */}
+          <div className="bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col lg:flex-row items-center gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1 w-full">
+              <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400" />
+              <input
+                type="text"
+                placeholder={`ابحث في مناسبات شهر ${selectedMonthObj.name}...`}
+                className="w-full bg-slate-50 border border-slate-200 focus:border-[#015028]/40 focus:bg-white text-slate-900 rounded-2xl pr-11 pl-4 py-2.5 text-xs font-extrabold transition-all focus:outline-none placeholder:text-slate-400 font-cairo"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            {/* Category Filters */}
+            <div className="flex flex-wrap items-center gap-1.5 shrink-0 w-full lg:w-auto">
+              {[
+                { id: "all", label: "الكل" },
+                { id: "religious", label: "إسلامية ودينية" },
+                { id: "national", label: "أحداث ووطنية" },
+                { id: "historical", label: "تاريخية ومناسبات" },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-3 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer font-cairo ${
+                    selectedCategory === cat.id
+                      ? "bg-[#10264A] text-white shadow-sm"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200/80"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* View Switcher */}
+            <div className="bg-slate-100 p-1 rounded-2xl flex items-center gap-1 shrink-0 w-full lg:w-auto justify-center">
+              {[
+                { id: "list", icon: List, label: "قائمة" },
+                { id: "cards", icon: Layers, label: "بطاقات" },
+                { id: "table", icon: SlidersHorizontal, label: "جدول" },
+                { id: "calendar", icon: CalendarDays, label: "تقويم" },
+                { id: "timeline", icon: Clock, label: "زمني" },
+              ].map((view) => (
+                <button
+                  key={view.id}
+                  onClick={() => setActiveView(view.id as any)}
+                  className={`p-2 rounded-xl transition-all cursor-pointer flex items-center gap-1 text-xs font-black font-cairo ${
+                    activeView === view.id
+                      ? "bg-white text-[#015028] shadow-xs border border-slate-200"
+                      : "text-slate-500 hover:text-slate-900"
+                  }`}
+                  title={view.label}
+                >
+                  <view.icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">{view.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Main View Area */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeView + selectedHijriMonth + selectedCategory + searchQuery}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="min-h-[300px]"
+            >
+              {/* Cards View */}
+              {activeView === "cards" && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {monthFilteredEvents.map((event) => (
+                    <EventCard
+                      key={event.id}
+                      event={event}
+                      status={getEventStatus(event.timestamp)}
+                      remaining={getRemainingDays(event.timestamp)}
+                      onView={() => setSelectedEventId(event.id)}
+                    />
+                  ))}
+                  {monthFilteredEvents.length === 0 && (
+                    <div className="col-span-full">
+                      <NoResultsFound monthName={selectedMonthObj.name} />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* List View */}
+              {activeView === "list" && (
+                <div className="space-y-3 max-w-4xl mx-auto">
+                  {monthFilteredEvents.map((event) => {
+                    const status = getEventStatus(event.timestamp);
+                    return (
+                      <motion.div
+                        key={event.id}
+                        onClick={() => setSelectedEventId(event.id)}
+                        whileHover={{ x: -4 }}
+                        className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs flex items-center gap-4 cursor-pointer hover:border-[#015028]/30 transition-all group"
+                      >
+                        <div className="w-14 h-14 rounded-2xl bg-[#015028]/10 border border-[#015028]/20 flex flex-col items-center justify-center shrink-0">
+                          <span className="text-xs font-black text-[#015028] font-cairo">
+                            {format(new Date(event.timestamp), "d")}
                           </span>
-                        </td>
-                        <td className="p-4.5 text-center">
-                          <button
-                            onClick={() => setSelectedEventId(event.id)}
-                            className="text-text-muted hover:text-taiz-royal hover:bg-taiz-sky/5 p-2 rounded-lg transition-colors inline-block cursor-pointer"
-                          >
-                            <Info className="w-4.5 h-4.5" />
-                          </button>
-                        </td>
-                      </tr>
+                          <span className="text-[8px] font-black text-slate-500 uppercase">
+                            {format(new Date(event.timestamp), "MMM", { locale: ar })}
+                          </span>
+                        </div>
+                        <div className="flex-1 text-right min-w-0">
+                          <h4 className="text-sm sm:text-base font-black text-slate-900 group-hover:text-[#015028] transition-colors truncate font-cairo">
+                            {event.title}
+                          </h4>
+                          <div className="flex flex-wrap items-center gap-3 mt-1">
+                            <span className="text-[11px] font-bold text-[#015028] flex items-center gap-1">
+                              <CalendarIcon className="w-3 h-3" /> {event.hijriDate}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {event.gregorianDate}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="shrink-0 flex items-center gap-2">
+                          <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-lg border hidden sm:inline-block font-cairo ${status.text}`}>
+                            {status.label}
+                          </span>
+                          <ChevronLeft className="w-5 h-5 text-slate-400 group-hover:text-[#015028] group-hover:-translate-x-1 transition-all" />
+                        </div>
+                      </motion.div>
                     );
                   })}
-                </tbody>
-              </table>
-              {filteredEvents.length === 0 && (
-                <NoResultsFound className="py-20" />
+                  {monthFilteredEvents.length === 0 && (
+                    <NoResultsFound monthName={selectedMonthObj.name} />
+                  )}
+                </div>
               )}
-            </div>
-          )}
 
-          {/* Calendar Layout View */}
-          {activeView === "calendar" && (
-            <div className="flex flex-col items-center">
-              <div className="w-full max-w-4xl bg-surface-card rounded-[2rem] border border-border-light shadow-sm p-4 sm:p-8">
-                <style>{`
+              {/* Table View */}
+              {activeView === "table" && (
+                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-x-auto">
+                  <table className="w-full text-right border-collapse font-ibm">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-600 font-extrabold text-xs border-b border-slate-200 font-cairo">
+                        <th className="p-4">#</th>
+                        <th className="p-4">المناسبة</th>
+                        <th className="p-4">التاريخ الهجري</th>
+                        <th className="p-4">التاريخ الميلادي</th>
+                        <th className="p-4">الحالة</th>
+                        <th className="p-4 text-center">التفاصيل</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {monthFilteredEvents.map((event, idx) => {
+                        const status = getEventStatus(event.timestamp);
+                        const rem = getRemainingDays(event.timestamp);
+                        return (
+                          <tr
+                            key={event.id}
+                            className="hover:bg-slate-50/80 transition-colors"
+                          >
+                            <td className="p-4 text-xs font-black text-slate-400">
+                              {idx + 1}
+                            </td>
+                            <td className="p-4">
+                              <div className="font-black text-slate-900 text-sm font-cairo">
+                                {event.title}
+                              </div>
+                              {event.dayName && (
+                                <div className="text-[10px] text-slate-500 font-bold">
+                                  {event.dayName}
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-4 text-xs font-black text-[#015028]">
+                              {event.hijriDate}
+                            </td>
+                            <td className="p-4 text-xs font-bold text-slate-600">
+                              {event.gregorianDate}
+                            </td>
+                            <td className="p-4">
+                              <span className={`text-[10px] font-black px-2.5 py-1 rounded-lg border font-cairo ${status.text}`}>
+                                {rem === 0 ? "اليوم" : `متبقي ${rem} يوم`}
+                              </span>
+                            </td>
+                            <td className="p-4 text-center">
+                              <button
+                                onClick={() => setSelectedEventId(event.id)}
+                                className="text-slate-500 hover:text-[#015028] hover:bg-emerald-50 p-2 rounded-xl transition-colors inline-block cursor-pointer"
+                              >
+                                <Info className="w-4.5 h-4.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                  {monthFilteredEvents.length === 0 && (
+                    <NoResultsFound monthName={selectedMonthObj.name} className="py-12" />
+                  )}
+                </div>
+              )}
+
+              {/* Calendar View */}
+              {activeView === "calendar" && (
+                <div className="flex flex-col items-center">
+                  <div className="w-full max-w-4xl bg-white rounded-3xl border border-slate-200/80 shadow-xs p-4 sm:p-8">
+                    <style>{`
                       .react-calendar {
                         width: 100%;
                         border: none;
@@ -994,12 +915,12 @@ export function Events() {
                       .react-calendar__navigation {
                         display: flex;
                         margin-bottom: 1.5rem;
-                        border-bottom: 1px solid var(--color-border-light, #f3f4f6);
+                        border-bottom: 1px solid #f1f5f9;
                         padding-bottom: 1rem;
                       }
                       .react-calendar__navigation button {
                         font-weight: 800;
-                        color: var(--color-taiz-royal, #10264A);
+                        color: #10264A;
                         font-size: 1.05rem;
                         min-width: 44px;
                         background: none;
@@ -1007,157 +928,101 @@ export function Events() {
                         cursor: pointer;
                         padding: 0.5rem;
                         border-radius: 12px;
-                        transition: all 0.2s;
-                      }
-                      .react-calendar__navigation button:enabled:hover {
-                        background-color: var(--color-surface-hover, #f0f7ff);
-                        color: var(--color-taiz-navy, #07152b);
                       }
                       .react-calendar__month-view__weekdays {
                          font-weight: 800;
-                         text-transform: none;
-                         color: var(--color-taiz-sky, #90bad6);
+                         color: #015028;
                          font-size: 0.85rem;
                          padding-bottom: 0.5rem;
-                      }
-                      .react-calendar__month-view__weekdays__weekday {
-                        text-align: center;
-                      }
-                      .react-calendar__month-view__days {
-                        gap: 4px;
                       }
                       .react-calendar__tile {
                          padding: 1.2rem 0.5rem;
                          border-radius: 12px;
                          font-weight: 700;
-                         color: var(--color-text-primary, #07152b);
-                         background: none;
-                         border: none;
-                         cursor: pointer;
-                         transition: all 0.2s;
+                         color: #0f172a;
                          position: relative;
                       }
-                      .react-calendar__tile:enabled:hover {
-                         background-color: var(--color-surface-hover, #f8fafc);
-                         color: var(--color-taiz-royal, #34619b);
-                      }
-                      .react-calendar__tile--now {
-                         background: var(--color-surface-hover, #f0f7ff) !important;
-                         color: var(--color-taiz-navy, #10264A) !important;
-                         border: 1px solid var(--color-taiz-sky, #90bad6) !important;
-                      }
-                      .react-calendar__tile--active {
-                         background: var(--color-taiz-royal, #10264A) !important;
-                         color: white !important;
-                      }
                       .event-tile {
-                         color: var(--color-taiz-royal, #34619b) !important;
+                         color: #015028 !important;
                          font-weight: 900 !important;
                       }
                       .event-dot {
-                         width: 5px;
-                         height: 5px;
-                         background-color: var(--color-taiz-navy, #10264A);
+                         width: 6px;
+                         height: 6px;
+                         background-color: #015028;
                          border-radius: 50%;
-                         margin: 4px auto 0;
                          position: absolute;
                          bottom: 6px;
                          left: 50%;
                          transform: translateX(-50%);
                       }
                     `}</style>
-                <Calendar
-                  locale="ar"
-                  className="mx-auto"
-                  tileClassName={({ date }) => {
-                    const hasEvent = events.some((e) =>
-                      isSameDay(new Date(e.timestamp), date)
-                    );
-                    return hasEvent ? "event-tile" : "";
-                  }}
-                  tileContent={({ date }) => {
-                    const hasEvent = events.some((e) =>
-                      isSameDay(new Date(e.timestamp), date)
-                    );
-                    return hasEvent ? (
-                      <div className="event-dot bg-taiz-royal"></div>
-                    ) : null;
-                  }}
-                  onClickDay={(date) => {
-                    const event = events.find((e) =>
-                      isSameDay(new Date(e.timestamp), date)
-                    );
-                    if (event) setSelectedEventId(event.id);
-                  }}
-                />
-              </div>
+                    <Calendar
+                      locale="ar"
+                      className="mx-auto"
+                      tileClassName={({ date }) => {
+                        const hasEvent = monthFilteredEvents.some((e) =>
+                          isSameDay(new Date(e.timestamp), date)
+                        );
+                        return hasEvent ? "event-tile" : "";
+                      }}
+                      tileContent={({ date }) => {
+                        const hasEvent = monthFilteredEvents.some((e) =>
+                          isSameDay(new Date(e.timestamp), date)
+                        );
+                        return hasEvent ? <div className="event-dot"></div> : null;
+                      }}
+                      onClickDay={(date) => {
+                        const event = monthFilteredEvents.find((e) =>
+                          isSameDay(new Date(e.timestamp), date)
+                        );
+                        if (event) setSelectedEventId(event.id);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
 
-              {/* Quick upcoming list beneath calendar */}
-              <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-4xl">
-                {events
-                  .filter(
-                    (e) =>
-                      isAfter(new Date(e.timestamp), today) ||
-                      isSameDay(new Date(e.timestamp), today)
-                  )
-                  .slice(0, 4)
-                  .map((e) => (
-                    <div
-                      key={e.id}
-                      onClick={() => setSelectedEventId(e.id)}
-                      className="flex items-center gap-4 bg-surface-card p-4.5 rounded-2xl border border-border-light shadow-sm cursor-pointer hover:border-taiz-sky/30 transition-all select-none"
-                    >
-                      <div className="w-12 h-12 rounded-xl bg-surface-main border border-border-light flex items-center justify-center font-black text-taiz-royal text-sm">
-                        {format(new Date(e.timestamp), "d")}
-                      </div>
-                      <div className="flex-1 text-right">
-                        <h4 className="text-sm font-black text-text-primary truncate">
-                          {e.title}
-                        </h4>
-                        <p className="text-[10px] font-black text-text-secondary">
-                          {e.hijriDate} • {e.gregorianDate}
-                        </p>
-                      </div>
-                      <ChevronLeft className="w-4.5 h-4.5 text-text-muted" />
-                    </div>
-                  ))}
-              </div>
-            </div>
-          )}
+              {/* Timeline View */}
+              {activeView === "timeline" && (
+                <div className="relative py-8 max-w-2xl mx-auto px-4 overflow-hidden">
+                  <div className="absolute top-0 right-1/2 -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-[#10264A] via-[#015028] to-slate-200"></div>
 
-          {/* Timeline Layout View */}
-          {activeView === "timeline" && (
-            <div className="relative py-12 max-w-2xl mx-auto px-4 overflow-hidden">
-              {/* Luxury Central Line Indicator */}
-              <div className="absolute top-0 right-1/2 -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-taiz-navy via-taiz-royal to-gray-100"></div>
+                  <div className="space-y-8">
+                    {monthFilteredEvents.map((event, idx) => (
+                      <TimelineItem
+                        key={event.id}
+                        event={event}
+                        idx={idx}
+                        status={getEventStatus(event.timestamp)}
+                        onView={() => setSelectedEventId(event.id)}
+                      />
+                    ))}
+                  </div>
+                  {monthFilteredEvents.length === 0 && (
+                    <NoResultsFound monthName={selectedMonthObj.name} />
+                  )}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </section>
 
-              <div className="space-y-10">
-                {filteredEvents.map((event, idx) => (
-                  <TimelineItem
-                    key={event.id}
-                    event={event}
-                    idx={idx}
-                    status={getEventStatus(event.timestamp)}
-                    onView={() => setSelectedEventId(event.id)}
-                  />
-                ))}
-              </div>
-              {filteredEvents.length === 0 && <NoResultsFound />}
-            </div>
-          )}
-        </motion.div>
-      </AnimatePresence>
-    </section>
-
-    {/* Event Details Modal */}
-    <EventDetailsModal
-      event={selectedEvent}
-      events={events}
-      onClose={() => setSelectedEventId(null)}
-      onNavigateToSyllabus={() => {}}
-    />
-  </div>
-</PullToRefresh>
+        {/* Event Details Modal */}
+        <EventDetailsModal
+          event={selectedEvent}
+          events={events}
+          onClose={() => setSelectedEventId(null)}
+          relatedSyllabus={relatedSyllabus}
+          onNavigateToSyllabus={() => {
+            if (relatedSyllabus) {
+              navigate(`/syllabus/${relatedSyllabus.id}`);
+              setSelectedEventId(null);
+            }
+          }}
+        />
+      </div>
+    </PullToRefresh>
   );
 }
 
@@ -1171,181 +1036,44 @@ function EventCard({
   status: any;
   remaining: number;
   onView: () => void;
-  key?: any;
 }) {
   return (
     <motion.div
       onClick={onView}
       whileHover={{ y: -4, scale: 1.01 }}
-      className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between"
+      className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between"
     >
-      {/* Highlight Bar */}
-      <div
-        className={`absolute top-0 right-0 w-1.5 h-full ${status.color}`}
-      ></div>
+      <div className={`absolute top-0 right-0 w-1.5 h-full ${status.color}`}></div>
 
       <div className="text-right">
-        <div className="flex justify-between items-start mb-4">
-          <div className="bg-gray-50 border border-gray-100 px-2.5 py-1.5 rounded-xl font-black text-taiz-royal text-xs">
-            {event.hijriDate.split(" ")[0]} {event.hijriDate.split(" ")[1]}
+        <div className="flex justify-between items-start mb-3">
+          <div className="bg-[#FEF9E6] border border-[#E5A921]/40 px-3 py-1 rounded-xl font-black text-[#8C6200] text-xs font-cairo">
+            {event.hijriDate}
           </div>
-          <span
-            className={`text-[9px] font-black px-2.5 py-0.5 rounded-full border ${status.text}`}
-          >
+          <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border font-cairo ${status.text}`}>
             {status.label}
           </span>
         </div>
 
-        <h3 className="text-sm sm:text-base font-black text-taiz-navy leading-tight mb-2 group-hover:text-taiz-royal transition-colors">
+        <h3 className="text-base font-black text-slate-900 leading-snug mb-2 group-hover:text-[#015028] transition-colors font-cairo">
           {event.title}
         </h3>
 
-        <p className="text-taiz-soft text-xs line-clamp-2 leading-relaxed mb-4 font-bold">
-          {event.description ||
-            "استعرض التفاصيل لمعرفة الأهمية الكبرى والأبعاد الدينية والتوعوية للحدث."}
+        <p className="text-slate-600 text-xs line-clamp-2 leading-relaxed mb-4 font-medium">
+          {event.description || "استعرض التفاصيل لمعرفة الأبعاد التوعوية والثقافية للحدث."}
         </p>
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-        <span className="text-[10px] sm:text-xs font-black text-taiz-royal group-hover:underline flex items-center gap-1">
-          عرض التفاصيل <ChevronLeft className="w-3.5 h-3.5" />
+      <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-auto">
+        <span className="text-xs font-black text-[#015028] group-hover:underline flex items-center gap-1 font-cairo">
+          التفاصيل كاملة <ChevronLeft className="w-3.5 h-3.5" />
         </span>
         {remaining > 0 && (
-          <span className="text-[10px] font-black text-taiz-sky flex items-center gap-1 bg-taiz-sky/5 px-2 py-0.5 rounded-lg">
+          <span className="text-[10px] font-black text-[#10264A] flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
             <Timer className="w-3.5 h-3.5" />
             متبقي {remaining} يوم
           </span>
         )}
-      </div>
-    </motion.div>
-  );
-}
-
-function SmallEventCard({
-  event,
-  status,
-  remaining,
-  onView,
-}: {
-  event: EventItem;
-  status: any;
-  remaining: number;
-  onView: () => void;
-  key?: any;
-}) {
-  return (
-    <motion.div
-      onClick={onView}
-      whileHover={{ y: -2, scale: 1.01 }}
-      className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between"
-    >
-      <div
-        className={`absolute top-0 right-0 w-1 h-full ${status.color}`}
-      ></div>
-
-      <div className="text-right">
-        <div className="flex justify-between items-center mb-2">
-          <span className="bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-lg font-black text-taiz-royal text-[10px]">
-            {event.hijriDate}
-          </span>
-          <span
-            className={`text-[8px] font-black px-2 py-0.5 rounded-md border ${status.text}`}
-          >
-            {status.label}
-          </span>
-        </div>
-
-        <h3 className="text-xs sm:text-sm font-black text-taiz-navy leading-snug mb-1 group-hover:text-taiz-royal transition-colors line-clamp-1">
-          {event.title}
-        </h3>
-
-        <p className="text-taiz-soft text-[10px] line-clamp-1 leading-normal mb-2 font-bold">
-          {event.description || "تصفح التفاصيل لمعرفة المزيد عن هذه المناسبة الكريمة."}
-        </p>
-      </div>
-
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100 mt-auto">
-        <span className="text-[10px] font-black text-taiz-royal group-hover:underline flex items-center gap-0.5">
-          التفاصيل <ChevronLeft className="w-3 h-3" />
-        </span>
-        {remaining > 0 && (
-          <span className="text-[8px] font-black text-taiz-sky flex items-center gap-0.5 bg-taiz-sky/5 px-1.5 py-0.5 rounded-md">
-            <Timer className="w-3 h-3" />
-            متبقي {remaining} يوم
-          </span>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-function HighlightedEventCard({
-  event,
-  status,
-  remaining,
-  onView,
-  isActualToday,
-}: {
-  event: EventItem;
-  status: any;
-  remaining: number;
-  onView: () => void;
-  isActualToday: boolean;
-  key?: any;
-}) {
-  return (
-    <motion.div
-      onClick={onView}
-      whileHover={{ scale: 1.005 }}
-      className="relative overflow-hidden bg-gradient-to-br from-taiz-navy via-taiz-navy to-taiz-royal rounded-[2rem] p-6 sm:p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6 cursor-pointer group border-2 border-taiz-sky/40"
-    >
-      <div className="absolute top-0 left-0 w-48 h-48 bg-taiz-sky/25 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-32 h-32 bg-taiz-royal/15 rounded-full blur-2xl pointer-events-none" />
-
-      <div className="relative z-10 space-y-4 flex-1 text-right">
-        <div className="flex flex-wrap items-center gap-2 justify-start">
-          <span className="bg-taiz-sky text-white px-3 py-1 rounded-full text-xs font-black flex items-center gap-1.5">
-            <span className="w-2 h-2 bg-white rounded-full animate-pulse"></span>
-            {isActualToday ? "المناسبة الحالية اليوم" : "المناسبة القادمة المميزة"}
-          </span>
-          <span className="bg-white/15 border border-white/10 text-white px-3 py-1 rounded-full text-xs font-black">
-            {event.hijriDate}
-          </span>
-          {remaining > 0 && (
-            <span className="text-white/95 font-black text-xs flex items-center gap-1 bg-white/10 px-2.5 py-1 rounded-lg">
-              <Timer className="w-3.5 h-3.5" />
-              متبقي {remaining} يوم
-            </span>
-          )}
-        </div>
-
-        <h2 className="text-2xl sm:text-3xl font-black leading-tight text-white group-hover:text-taiz-sky transition-colors duration-300">
-          {event.title}
-        </h2>
-
-        <p className="text-gray-150 text-xs sm:text-sm leading-relaxed max-w-2xl line-clamp-3 font-bold">
-          {event.description ||
-            "لا يوجد وصف مدون حالياً لهذه المناسبة الإسلامية الكريمة، استكشف التفاصيل الكبرى لقراءة المزيد."}
-        </p>
-
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onView();
-          }}
-          className="bg-white text-taiz-navy hover:bg-taiz-sky hover:text-white px-5 py-2.5 rounded-xl font-black text-xs transition-all shadow-lg flex items-center gap-2 cursor-pointer self-start"
-        >
-          عرض التفاصيل الكبرى <ChevronLeft className="w-4 h-4" />
-        </button>
-      </div>
-
-      <div className="relative z-10 w-24 h-24 rounded-[1.5rem] bg-white/10 border border-white/20 flex flex-col items-center justify-center shrink-0 self-center hidden md:flex backdrop-blur-md shadow-inner">
-        <span className="text-2xl font-black text-white">
-          {format(new Date(event.timestamp), "d")}
-        </span>
-        <span className="text-[10px] font-black text-taiz-sky uppercase mt-0.5">
-          {format(new Date(event.timestamp), "MMMM", { locale: ar })}
-        </span>
       </div>
     </motion.div>
   );
@@ -1361,48 +1089,32 @@ function TimelineItem({
   idx: number;
   status: any;
   onView: () => void;
-  key?: any;
 }) {
   const isEven = idx % 2 === 0;
   return (
-    <div
-      className={`relative flex items-center gap-6 ${
-        isEven ? "flex-row" : "flex-row-reverse"
-      }`}
-    >
-      {/* Circle Connector */}
-      <div
-        className={`absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 w-4.5 h-4.5 rounded-full border-4 border-white z-10 shadow-sm ${status.color}`}
-      ></div>
+    <div className={`relative flex items-center gap-6 ${isEven ? "flex-row" : "flex-row-reverse"}`}>
+      <div className={`absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white z-10 shadow-sm ${status.color}`}></div>
 
-      {/* Card Container */}
       <div className={`w-1/2 ${isEven ? "text-left pl-2" : "text-right pr-2"}`}>
         <motion.div
           whileHover={{ scale: 1.02 }}
           onClick={onView}
-          className="inline-block bg-white p-4.5 rounded-2xl border border-gray-100 shadow-sm cursor-pointer hover:shadow-md transition-all text-right"
+          className="inline-block bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs cursor-pointer hover:shadow-md transition-all text-right"
         >
-          <div className="bg-taiz-navy/5 text-taiz-navy text-[9px] font-black px-2.5 py-0.5 rounded-md inline-block mb-2">
+          <div className="bg-emerald-50 text-[#015028] text-[10px] font-black px-2.5 py-0.5 rounded-md inline-block mb-1.5 font-cairo">
             {event.hijriDate}
           </div>
-          <h4 className="text-xs sm:text-sm font-black text-taiz-navy mb-1 leading-tight">
+          <h4 className="text-xs sm:text-sm font-black text-slate-900 mb-1 leading-tight font-cairo">
             {event.title}
           </h4>
-          <div className="text-[10px] text-taiz-soft font-bold">
+          <div className="text-[10px] text-slate-500 font-bold">
             {event.gregorianDate}
           </div>
         </motion.div>
       </div>
 
-      {/* Number Pointer */}
-      <div
-        className={`w-1/2 text-center ${
-          isEven
-            ? "text-right pr-2 animate-pulse"
-            : "text-left pl-2 animate-pulse"
-        }`}
-      >
-        <div className="text-xl font-black text-taiz-navy/10 select-none">
+      <div className={`w-1/2 text-center ${isEven ? "text-right pr-2" : "text-left pl-2"}`}>
+        <div className="text-lg font-black text-slate-300 font-cairo">
           #{idx + 1}
         </div>
       </div>
@@ -1410,17 +1122,15 @@ function TimelineItem({
   );
 }
 
-function NoResultsFound({ className = "" }: { className?: string }) {
+function NoResultsFound({ monthName, className = "" }: { monthName?: string; className?: string }) {
   return (
-    <div
-      className={`flex flex-col items-center justify-center py-20 bg-surface-main rounded-2xl border border-dashed border-border-light w-full ${className}`}
-    >
-      <Search className="w-10 h-10 text-text-muted mb-3" />
-      <div className="text-sm font-black text-text-primary">
-        مرحباً.. لا توجد نتائج مطابقة لبحثك
+    <div className={`flex flex-col items-center justify-center py-12 bg-white rounded-3xl border border-dashed border-slate-200 text-center p-6 w-full ${className}`}>
+      <Search className="w-10 h-10 text-slate-300 mb-3" />
+      <div className="text-sm font-black text-slate-800 font-cairo">
+        لا توجد نتائج مطابقة في {monthName ? `شهر ${monthName}` : "هذا القسم"}
       </div>
-      <p className="text-text-secondary text-xs mt-1 font-bold">
-        تأكد من كتابة الكلمات بشكل صحيح وتصفية الفئات والمناسبات الفرعية
+      <p className="text-slate-500 text-xs mt-1 font-bold max-w-sm">
+        يمكنك تصفح بقية الأشهر من خلال التنقل بين أسماء الأشهر الهجرية أعلاه
       </p>
     </div>
   );
@@ -1443,203 +1153,102 @@ function EventDetailsModal({
 
   const today = startOfDay(new Date());
   const diff = differenceInDays(startOfDay(new Date(event.timestamp)), today);
-  const statusLabel =
-    diff === 0 ? "يحدث اليوم" : diff > 0 ? "قادمة قريباً" : "مناسبة منتهية";
-  const statusTheme =
-    diff === 0
-      ? {
-          btn: "bg-taiz-sky text-white",
-          badge: "bg-taiz-sky/5 text-taiz-sky border-taiz-sky/10",
-        }
-      : diff > 0
-      ? {
-          btn: "bg-taiz-royal text-white",
-          badge: "bg-taiz-royal/5 text-taiz-royal border-taiz-royal/10",
-        }
-      : {
-          btn: "bg-red-600 text-white",
-          badge: "bg-taiz-navy/5 text-text-primary border-border-light",
-        };
-
-  const sortedEvents = [...events].sort((a, b) => a.timestamp - b.timestamp);
-  const currentIndex = sortedEvents.findIndex((e) => e.id === event.id);
-
-  const prevEvent = currentIndex > 0 ? sortedEvents[currentIndex - 1] : null;
-  const nextEvent =
-    currentIndex < sortedEvents.length - 1
-      ? sortedEvents[currentIndex + 1]
-      : null;
-
-  const daysFromPrev = prevEvent
-    ? differenceInDays(new Date(event.timestamp), new Date(prevEvent.timestamp))
-    : null;
-  const daysToNext = nextEvent
-    ? differenceInDays(new Date(nextEvent.timestamp), new Date(event.timestamp))
-    : null;
+  const statusLabel = diff === 0 ? "يحدث اليوم" : diff > 0 ? "مناسبة قادمة" : "مناسبة منتهية";
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in"
-      dir="rtl"
-    >
-      <button
-        onClick={onClose}
-        className="absolute inset-0 cursor-default bg-transparent w-full h-full border-none"
-      />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in" dir="rtl">
+      <button onClick={onClose} className="absolute inset-0 cursor-default bg-transparent w-full h-full border-none" />
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.96, y: 15 }}
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.96, y: 15 }}
-        className="relative w-full max-w-xl bg-surface-card rounded-[2rem] shadow-2xl border border-border-light overflow-hidden flex flex-col p-6 max-h-[90vh]"
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col p-6 max-h-[90vh]"
       >
-        {/* Header */}
-        <div className="flex items-start justify-between pb-4 border-b border-border-light">
+        <div className="flex items-start justify-between pb-4 border-b border-slate-100">
           <div className="space-y-1 text-right">
-            <span
-              className={`text-[10px] font-black px-2.5 py-1 rounded-md border ${statusTheme.badge}`}
-            >
+            <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-emerald-50 text-[#015028] border border-emerald-200 font-cairo">
               {statusLabel}
             </span>
-            <h2 className="text-lg sm:text-xl font-black text-text-primary leading-tight mt-1">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight mt-1 font-cairo">
               {event.title}
             </h2>
-            <p className="text-xs text-text-secondary font-bold">
-              {event.gregorianDate} - {event.dayName}
+            <p className="text-xs text-slate-500 font-bold">
+              {event.gregorianDate} - {event.dayName || ""}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="text-text-muted hover:text-text-primary bg-surface-main hover:bg-surface-hover p-2 rounded-xl transition cursor-pointer"
+            className="text-slate-400 hover:text-slate-700 bg-slate-100 p-2 rounded-xl transition cursor-pointer"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Body Content */}
-        <div className="grow overflow-y-auto py-5 space-y-5 text-right">
-          {/* Main Description */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-1 px-1">
-              <Info className="w-4 h-4 text-red-600" />
-              <span className="text-xs font-black text-text-secondary">
-                ملخص وموضوع المناسبة
-              </span>
-            </div>
-            <div className="bg-surface-main border border-border-light rounded-2xl p-4.5 text-xs sm:text-sm text-text-primary leading-relaxed font-bold">
-              {event.description ||
-                "معلومات تفصيلية تنشر قريباً لتغطية هذه الذكرى والمناسبة الدينية والوطنية الهامة التابعة للثقافة القرآنية المباركة."}
-            </div>
+        <div className="grow overflow-y-auto py-5 space-y-4 text-right">
+          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">
+            {event.description || "معلومات تفصيلية تنشر قريباً لتغطية هذه المناسبة الإسلامية والوطنية الهامة."}
           </div>
 
-          {/* Dates Comparison Bento cards */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-taiz-sky/5 border border-taiz-sky/10 p-4 rounded-xl">
-              <span className="text-[10px] font-black text-taiz-royal block mb-0.5">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-[#FEF9E6] border border-[#E5A921]/30 p-3.5 rounded-2xl">
+              <span className="text-[10px] font-black text-[#8C6200] block mb-0.5 font-cairo">
                 التاريخ الهجري
               </span>
-              <span className="text-xs sm:text-sm font-black text-text-primary">
+              <span className="text-xs sm:text-sm font-black text-slate-900">
                 {event.hijriDate}
               </span>
             </div>
-            <div className="bg-taiz-royal/5 border border-taiz-royal/10 p-4 rounded-xl">
-              <span className="text-[10px] font-black text-text-primary block mb-0.5">
-                تباعد الأيام للحدث
+            <div className="bg-blue-50 border border-blue-200/60 p-3.5 rounded-2xl">
+              <span className="text-[10px] font-black text-blue-800 block mb-0.5 font-cairo">
+                المسافة الزمنية
               </span>
-              <span className="text-xs sm:text-sm font-black text-text-primary">
-                {diff > 0
-                  ? `متبقي ${diff} يوم`
-                  : diff === 0
-                  ? "يصادف اليوم"
-                  : "منتهية ومضت"}
+              <span className="text-xs sm:text-sm font-black text-slate-900">
+                {diff > 0 ? `متبقي ${diff} يوم` : diff === 0 ? "يصادف اليوم" : "منتهية"}
               </span>
             </div>
           </div>
 
-          {/* Related Syllabus Section */}
           {relatedSyllabus && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-1 px-1">
-                <BookOpen className="w-4 h-4 text-red-600" />
-                <span className="text-xs font-black text-text-secondary">
-                  مقرر الدروس المرتبط بالمناسبة
-                </span>
-              </div>
-              <div
-                onClick={onNavigateToSyllabus}
-                className="bg-emerald-50/50 border border-emerald-500/20 rounded-2xl p-4.5 cursor-pointer hover:bg-emerald-50 transition flex items-center justify-between group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center shrink-0">
-                    <BookOpen className="w-5 h-5" />
+            <div
+              onClick={onNavigateToSyllabus}
+              className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100/80 transition flex items-center justify-between group"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#015028] text-white rounded-xl flex items-center justify-center shrink-0">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-emerald-950 font-cairo">
+                    المقرر الحالي للمناسبة
                   </div>
-                  <div>
-                    <div className="text-sm font-black text-emerald-900 group-hover:text-emerald-700 transition-colors">
-                      المقرر الحالي للمناسبة
-                    </div>
-                    <div className="text-xs text-emerald-700/80 mt-1 font-bold">
-                      انقر هنا للانتقال إلى قسم هدي القرآن لقراءة المقرر
-                    </div>
+                  <div className="text-[11px] text-emerald-700 mt-0.5 font-bold">
+                    انقر هنا للانتقال إلى دروس هدي القرآن
                   </div>
                 </div>
-                <ChevronLeft className="w-5 h-5 text-emerald-600/50 group-hover:text-red-600 transition-colors" />
               </div>
+              <ChevronLeft className="w-5 h-5 text-emerald-600" />
             </div>
           )}
-
-          {/* Time Gaps between adjacent events */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-1 px-1">
-              <Timer className="w-4 h-4 text-red-600" />
-              <span className="text-xs font-black text-text-secondary">
-                الربط والمسافات الزمنية
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-2 text-xs font-black">
-              {prevEvent && (
-                <div className="flex items-center justify-between p-3.5 bg-surface-main hover:bg-surface-hover rounded-xl transition border border-border-light">
-                  <span className="text-text-secondary leading-none">
-                    فترة البعد عن [{prevEvent.title.slice(0, 20)}...]:
-                  </span>
-                  <span className="text-taiz-royal font-black">
-                    +{daysFromPrev} يوم
-                  </span>
-                </div>
-              )}
-              {nextEvent && (
-                <div className="flex items-center justify-between p-3.5 bg-surface-main hover:bg-surface-hover rounded-xl transition border border-border-light">
-                  <span className="text-text-secondary leading-none">
-                    فترة القرب من [{nextEvent.title.slice(0, 20)}...]:
-                  </span>
-                  <span className="text-taiz-sky font-black">
-                    {daysToNext} يوم
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
-        {/* Footer Action */}
-        <div className="pt-4 border-t border-border-light flex gap-3">
+        <div className="pt-4 border-t border-slate-100 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3.5 rounded-xl text-xs sm:text-sm font-black shadow-lg transition duration-200 cursor-pointer text-center"
+            className="flex-1 bg-[#015028] hover:bg-[#083b20] text-white py-3 rounded-2xl text-xs sm:text-sm font-black shadow-md transition duration-200 cursor-pointer text-center font-cairo"
           >
             إغلاق
           </button>
           <button
             onClick={() => {
-              navigator.clipboard.writeText(
-                `${event.title} - ${event.hijriDate}`
-              );
+              navigator.clipboard.writeText(`${event.title} - ${event.hijriDate}`);
               alert("تم نسخ تفاصيل المناسبة بنجاح!");
             }}
-            className="bg-surface-main hover:bg-surface-hover text-text-primary border border-border-light px-4 rounded-xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer"
+            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 rounded-2xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer font-cairo"
           >
-            <Share2 className="w-4.5 h-4.5" />
-            <span className="hidden sm:inline">نشر المناسبة</span>
+            <Share2 className="w-4 h-4" />
+            <span>مشاركة</span>
           </button>
         </div>
       </motion.div>

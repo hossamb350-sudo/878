@@ -3,7 +3,7 @@ import { SyncService } from "../services/SyncService";
 import { LeaderContent } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Search, Play, Calendar, Eye, MoreVertical, FileText, Video as VideoIcon } from "lucide-react";
+import { Search, Play, Calendar, Eye, FileText, Video as VideoIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -248,16 +248,16 @@ export function Leader() {
                       {/* RIGHT ZONE: Title & Metadata (~58% width) */}
                       <div className="relative flex-1 p-3 sm:p-4.5 pr-4.5 sm:pr-6 flex flex-col justify-between overflow-hidden z-10">
                         
-                        {/* Title Section: Font sized down, full title displayed completely without line clamping */}
-                        <div className="pt-0.5 pb-2">
-                          <h2 className="text-white text-[12.5px] xs:text-xs sm:text-[13.5px] font-bold sm:font-black leading-snug sm:leading-relaxed group-hover:text-amber-200 transition-colors font-cairo text-right">
+                        {/* Title Section: Centered vertically and horizontally in the middle of the card */}
+                        <div className="my-auto py-2 flex items-center justify-center text-center">
+                          <h2 className="text-white text-[13px] xs:text-xs sm:text-[14px] font-bold sm:font-black leading-snug sm:leading-relaxed group-hover:text-amber-200 transition-colors font-cairo text-center">
                             {item.title}
                           </h2>
                         </div>
 
                         {/* Metadata Row */}
                         <div className="flex items-center justify-between text-[#CBD5E1] text-[10.5px] sm:text-xs font-medium pt-2 border-t border-white/10 mt-auto">
-                          <div className="flex items-center gap-2.5 sm:gap-3">
+                          <div className="flex items-center gap-2.5 sm:gap-3 w-full justify-between">
                             {/* Date */}
                             <span className="flex items-center gap-1 text-slate-200 font-bold">
                               <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37]" />
@@ -270,18 +270,6 @@ export function Leader() {
                               <span>{item.views ?? 0}</span>
                             </span>
                           </div>
-
-                          {/* Options Button */}
-                          <button 
-                            type="button" 
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                            }}
-                            className="text-slate-300 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors"
-                          >
-                            <MoreVertical className="w-3.5 h-3.5" />
-                          </button>
                         </div>
 
                       </div>

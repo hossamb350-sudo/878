@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { MapPin } from "lucide-react";
+import { MapPin, Droplets, Sunrise, Sun, SunMedium, Sunset, MoonStar, CloudRain } from "lucide-react";
 
 // Red Calendar Icon Badge for Date Card
 const RedCalendarIcon = () => (
@@ -19,86 +19,9 @@ const RedCalendarIcon = () => (
   </svg>
 );
 
-// Glossy 3D Weather Icon Renderer based on Condition Type
-const DynamicWeather3DIcon = ({ weatherId }: { weatherId?: number }) => {
-  // Rain / Drizzle / Thunder (200-599)
-  if (weatherId && weatherId >= 200 && weatherId < 600) {
-    return (
-      <svg className="w-7 h-7 sm:w-11 sm:h-11 md:w-14 md:h-14 drop-shadow-md select-none shrink-0" viewBox="0 0 64 64" fill="none">
-        <defs>
-          <linearGradient id="rainCloudGrad" x1="16" y1="20" x2="52" y2="48" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#94A3B8" />
-            <stop offset="100%" stopColor="#475569" />
-          </linearGradient>
-        </defs>
-        <path d="M20 40 C15 40 11 36 11 31 C11 26.5 14.5 22.8 19 22.1 C20.8 17.5 25.2 14 30.5 14 C36.8 14 42 18.8 42.8 25 C46.8 25.5 50 29 50 33.5 C50 38 46.4 40 42 40 Z" fill="url(#rainCloudGrad)" />
-        {/* Animated Rain Drops */}
-        <line x1="22" y1="44" x2="19" y2="52" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" className="animate-pulse" />
-        <line x1="32" y1="44" x2="29" y2="54" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" className="animate-pulse [animation-delay:200ms]" />
-        <line x1="42" y1="44" x2="39" y2="52" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" className="animate-pulse [animation-delay:400ms]" />
-      </svg>
-    );
-  }
-
-  // Clear / Sunny (800)
-  if (weatherId === 800) {
-    return (
-      <svg className="w-7 h-7 sm:w-11 sm:h-11 md:w-14 md:h-14 drop-shadow-md select-none shrink-0" viewBox="0 0 64 64" fill="none">
-        <defs>
-          <radialGradient id="pureSunGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FFF176" />
-            <stop offset="65%" stopColor="#FBC02D" />
-            <stop offset="100%" stopColor="#F57F17" />
-          </radialGradient>
-        </defs>
-        <g stroke="#F59E0B" strokeWidth="3" strokeLinecap="round" className="animate-[spin_12s_linear_infinite] origin-[32px_32px]">
-          <line x1="32" y1="8" x2="32" y2="2" />
-          <line x1="32" y1="62" x2="32" y2="56" />
-          <line x1="8" y1="32" x2="2" y2="32" />
-          <line x1="62" y1="32" x2="56" y2="32" />
-          <line x1="15" y1="15" x2="10" y2="10" />
-          <line x1="54" y1="54" x2="49" y2="49" />
-          <line x1="15" y1="49" x2="10" y2="54" />
-          <line x1="54" y1="10" x2="49" y2="15" />
-        </g>
-        <circle cx="32" cy="32" r="16" fill="url(#pureSunGlow)" />
-      </svg>
-    );
-  }
-
-  // Default: Sun + Cloud (Partly Cloudy / General)
-  return (
-    <svg className="w-7 h-7 sm:w-11 sm:h-11 md:w-14 md:h-14 drop-shadow-md select-none shrink-0" viewBox="0 0 64 64" fill="none">
-      <defs>
-        <radialGradient id="sunGlow3D" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#FFEE55" />
-          <stop offset="60%" stopColor="#FFAA00" />
-          <stop offset="100%" stopColor="#E65100" />
-        </radialGradient>
-        <linearGradient id="cloudGrad3D" x1="16" y1="26" x2="52" y2="52" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFFFFF" />
-          <stop offset="70%" stopColor="#F1F5F9" />
-          <stop offset="100%" stopColor="#CBD5E1" />
-        </linearGradient>
-        <filter id="cloudDropShadow" x="-10%" y="-10%" width="120%" height="120%">
-          <feDropShadow dx="0" dy="3" stdDeviation="2" floodColor="#0F172A" floodOpacity="0.12" />
-        </filter>
-      </defs>
-      <g stroke="#FFB300" strokeWidth="2.5" strokeLinecap="round" className="animate-[spin_16s_linear_infinite] origin-[42px_22px]">
-        <line x1="42" y1="10" x2="42" y2="6" />
-        <line x1="51" y1="13" x2="54" y2="10" />
-        <line x1="55" y1="22" x2="59" y2="22" />
-        <line x1="51" y1="31" x2="54" y2="34" />
-        <line x1="33" y1="13" x2="30" y2="10" />
-        <line x1="28" y1="22" x2="24" y2="22" />
-      </g>
-      <circle cx="42" cy="22" r="11" fill="url(#sunGlow3D)" />
-      <g filter="url(#cloudDropShadow)">
-        <path d="M20 46 C15 46 11 42 11 37 C11 32.5 14.5 28.8 19 28.1 C20.8 23.5 25.2 20 30.5 20 C36.8 20 42 24.8 42.8 31 C46.8 31.5 50 35 50 39.5 C50 44 46.4 46 42 46 Z" fill="url(#cloudGrad3D)" />
-      </g>
-    </svg>
-  );
-};
+import { fetchOpenMeteoData } from "../utils/weatherApi";
+import { Interactive3DWeatherIllustration, parseWmoCode, getCategoryFromCode, getWeatherTheme, WeatherBackgroundEffect } from "../pages/WeatherDetail";
+import { PrayerBackgroundEffect } from "./PrayerBackgroundEffect";
 
 // 3D Mosque Dome Vector Illustration matching attached design
 const MosqueDomeIllustration = () => (
@@ -126,7 +49,7 @@ const MosqueDomeIllustration = () => (
 export const HeaderWidgets: React.FC = () => {
   const [time, setTime] = useState(new Date());
   
-  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max: number; temp_min: number; condition: string; id: number } | null>(() => {
+  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max: number; temp_min: number; condition: string; id: number; precip_prob?: number } | null>(() => {
     try {
       const cached = localStorage.getItem("cached_weather_data");
       return cached ? JSON.parse(cached) : null;
@@ -160,81 +83,27 @@ export const HeaderWidgets: React.FC = () => {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        let fetched = false;
-        const [weatherRes, forecastRes] = await Promise.all([
-          fetch(`/api/weather?lat=13.5795&lon=44.0203`),
-          fetch(`/api/forecast?lat=13.5795&lon=44.0203`)
-        ]);
+        const omData = await fetchOpenMeteoData();
+        const current = omData.current;
+        const daily = omData.daily;
 
-        if (weatherRes.ok && forecastRes.ok) {
-            const wData = await weatherRes.json();
-            const fData = await forecastRes.json();
+        const wCode = current.weather_code;
+        const isNightTime = current.is_day === 0;
+        const parsedCondition = parseWmoCode(wCode, isNightTime);
+        const conditionText = parsedCondition.text;
 
-            const todayForecasts = fData.list ? fData.list.slice(0, 8) : [];
-            const minTemps = todayForecasts.map((item: any) => item.main.temp_min);
-            const maxTemps = todayForecasts.map((item: any) => item.main.temp_max);
-            if (wData.main?.temp_min !== undefined) minTemps.push(wData.main.temp_min);
-            if (wData.main?.temp_max !== undefined) maxTemps.push(wData.main.temp_max);
+        const newWeatherData = {
+          temp: Math.round(current.temperature_2m),
+          temp_max: Math.round(daily.temperature_2m_max[0]),
+          temp_min: Math.round(daily.temperature_2m_min[0]),
+          condition: conditionText,
+          id: wCode,
+          precip_prob: daily.precipitation_probability_max && daily.precipitation_probability_max.length > 0 ? Math.round(daily.precipitation_probability_max[0]) : 0,
+        };
 
-            const newWeatherData = {
-              temp: Math.round(wData.main.temp),
-              temp_max: Math.round(Math.max(...maxTemps)),
-              temp_min: Math.round(Math.min(...minTemps)),
-              condition: wData.weather[0].description,
-              id: wData.weather[0].id,
-            };
-
-            setWeatherData(newWeatherData);
-            localStorage.setItem("cached_weather_data", JSON.stringify(newWeatherData));
-            fetched = true;
-          }
-
-          if (!fetched) {
-            try {
-            const openMeteoRes = await fetch(
-              `https://api.open-meteo.com/v1/forecast?latitude=13.5795&longitude=44.0203&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,surface_pressure,wind_speed_10m,visibility&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FRiyadh`
-            );
-            if (openMeteoRes.ok) {
-              const omData = await openMeteoRes.json();
-              const current = omData.current;
-              const daily = omData.daily;
-
-              const wCode = current.weather_code;
-              let conditionText = current.is_day === 0 ? "صافٍ ليلاً" : "مشمس صافٍ";
-              if (wCode === 1 || wCode === 2) conditionText = "غائم جزئياً";
-              else if (wCode === 3) conditionText = "غائم كلياً";
-              else if (wCode >= 51 && wCode <= 67) conditionText = "أمطار خفيفة";
-              else if (wCode >= 80) conditionText = "زخات مطر";
-
-              const newWeatherData = {
-                temp: Math.round(current.temperature_2m),
-                temp_max: Math.round(daily.temperature_2m_max[0]),
-                temp_min: Math.round(daily.temperature_2m_min[0]),
-                condition: conditionText,
-                id: wCode,
-              };
-
-              setWeatherData(newWeatherData);
-              localStorage.setItem("cached_weather_data", JSON.stringify(newWeatherData));
-              fetched = true;
-            }
-          } catch {
-            // Quiet network fallback
-          }
-        }
-
-        if (!fetched && !weatherData) {
-          const fallbackData = {
-            temp: 26,
-            temp_max: 31,
-            temp_min: 20,
-            condition: "غائم جزئياً",
-            id: 801,
-          };
-          setWeatherData(fallbackData);
-          localStorage.setItem("cached_weather_data", JSON.stringify(fallbackData));
-        }
-      } catch {
+        setWeatherData(newWeatherData);
+        localStorage.setItem("cached_weather_data", JSON.stringify(newWeatherData));
+      } catch (e) {
         if (!weatherData) {
           const fallbackData = {
             temp: 26,
@@ -242,6 +111,7 @@ export const HeaderWidgets: React.FC = () => {
             temp_min: 20,
             condition: "غائم جزئياً",
             id: 801,
+            precip_prob: 0,
           };
           setWeatherData(fallbackData);
         }
@@ -268,7 +138,7 @@ export const HeaderWidgets: React.FC = () => {
           const newHijriDate = `${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
           setApiHijriDate(newHijriDate);
           localStorage.setItem("cached_hijri_date", newHijriDate);
-        } else if (prayerTimes.length === 0) {
+        } else if (!prayerTimes || prayerTimes.length === 0) {
           const fallbackPrayers = [
             { name: "الفجر", time: "04:27" },
             { name: "الظهر", time: "12:10" },
@@ -279,7 +149,7 @@ export const HeaderWidgets: React.FC = () => {
           setPrayerTimes(fallbackPrayers);
         }
       } catch {
-        if (prayerTimes.length === 0) {
+        if (!prayerTimes || prayerTimes.length === 0) {
           const fallbackPrayers = [
             { name: "الفجر", time: "04:27" },
             { name: "الظهر", time: "12:10" },
@@ -392,7 +262,7 @@ export const HeaderWidgets: React.FC = () => {
   // Weather values or fallback
   const weather = useMemo(() => {
     if (!weatherData) {
-      return { temp: 27, tempMax: 31, tempMin: 23, condition: "غائم جزئياً", id: 801 };
+      return { temp: 27, tempMax: 31, tempMin: 23, condition: "غائم جزئياً", id: 801, precip_prob: 0 };
     }
     return {
       temp: weatherData.temp,
@@ -400,6 +270,7 @@ export const HeaderWidgets: React.FC = () => {
       tempMin: weatherData.temp_min,
       condition: weatherData.condition || "غائم جزئياً",
       id: weatherData.id || 801,
+      precip_prob: weatherData.precip_prob,
     };
   }, [weatherData]);
 
@@ -411,85 +282,15 @@ export const HeaderWidgets: React.FC = () => {
 
   // Dynamic Weather Card Background & Text Theme (Matching WeatherDetail.tsx exactly)
   const { weatherTheme, weatherTextColor, weatherSubtextColor, maxTempColor, minTempColor } = useMemo(() => {
-    const id = weather.id;
-    if (isNight) {
-      if (id >= 200 && id < 600) {
-        // Rain / Drizzle / Thunderstorm Night
-        return {
-          weatherTheme: "from-[#020617] via-[#0F172A] to-[#1E3A8A] border-sky-500/30",
-          weatherTextColor: "text-white",
-          weatherSubtextColor: "text-sky-200/90",
-          maxTempColor: "text-red-300",
-          minTempColor: "text-sky-300"
-        };
-      } else if (id >= 700 && id < 800) {
-        // Fog / Dust Night
-        return {
-          weatherTheme: "from-[#1E1E24] via-[#2D2D3A] to-[#48485E] border-amber-500/30",
-          weatherTextColor: "text-amber-50",
-          weatherSubtextColor: "text-amber-200/90",
-          maxTempColor: "text-red-300",
-          minTempColor: "text-sky-300"
-        };
-      } else if (id === 800) {
-        // Clear Night
-        return {
-          weatherTheme: "from-[#03071E] via-[#0F172A] to-[#1E1B4B] border-indigo-400/30",
-          weatherTextColor: "text-white",
-          weatherSubtextColor: "text-indigo-200/90",
-          maxTempColor: "text-red-300",
-          minTempColor: "text-sky-300"
-        };
-      } else {
-        // Night Cloudy
-        return {
-          weatherTheme: "from-[#0F172A] via-[#1E293B] to-[#312E81] border-indigo-500/30",
-          weatherTextColor: "text-white",
-          weatherSubtextColor: "text-indigo-200/90",
-          maxTempColor: "text-red-300",
-          minTempColor: "text-sky-300"
-        };
-      }
-    } else {
-      // Daytime
-      if (id >= 200 && id < 600) {
-        // Day Rain / Drizzle / Thunderstorm
-        return {
-          weatherTheme: "from-[#1E3A8A] via-[#2563EB] to-[#0284C7] border-blue-400/30",
-          weatherTextColor: "text-white",
-          weatherSubtextColor: "text-sky-100",
-          maxTempColor: "text-red-300",
-          minTempColor: "text-sky-200"
-        };
-      } else if (id >= 700 && id < 800) {
-        // Day Fog / Dust / Haze
-        return {
-          weatherTheme: "from-[#B45309] via-[#D97706] to-[#F59E0B] border-amber-400/30",
-          weatherTextColor: "text-white",
-          weatherSubtextColor: "text-amber-100",
-          maxTempColor: "text-red-200",
-          minTempColor: "text-sky-200"
-        };
-      } else if (id === 800) {
-        // Clear Sunny Day
-        return {
-          weatherTheme: "from-[#D97706] via-[#B45309] to-[#1E3A8A] border-amber-500/20",
-          weatherTextColor: "text-white",
-          weatherSubtextColor: "text-amber-100",
-          maxTempColor: "text-red-300",
-          minTempColor: "text-sky-200"
-        };
-      } else {
-        // Day Cloudy / Partly Cloudy
-        return {
-          weatherTheme: "from-[#0284C7] via-[#2563EB] to-[#1D4ED8] border-sky-400/30",
-          weatherTextColor: "text-white",
-          weatherSubtextColor: "text-sky-100",
-          maxTempColor: "text-red-300",
-          minTempColor: "text-sky-200"
-        };
-      }
-    }
+    const category = getCategoryFromCode(weather.id, isNight);
+    const themeObj = getWeatherTheme(category, isNight);
+    return {
+      weatherTheme: themeObj.theme,
+      weatherTextColor: themeObj.text,
+      weatherSubtextColor: themeObj.subtext,
+      maxTempColor: themeObj.maxTemp,
+      minTempColor: themeObj.minTemp
+    };
   }, [weather.id, isNight]);
 
   return (
@@ -518,37 +319,45 @@ export const HeaderWidgets: React.FC = () => {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.08 }}
-          whileHover={{ scale: 1.025, y: -3 }}
-          whileTap={{ scale: 0.975 }}
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.98 }}
           className="w-full h-full"
         >
           <Link 
             to="/prayer-times" 
-            className="relative bg-white rounded-[14px] sm:rounded-[22px] border border-slate-200/90 shadow-[0_2px_10px_rgba(0,0,0,0.03)] sm:shadow-[0_4px_16px_rgba(0,0,0,0.04)] p-1.5 sm:p-3.5 md:p-4 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-emerald-300 hover:shadow-md transition-all duration-300 group overflow-hidden h-full block"
+            className="relative bg-transparent rounded-[14px] sm:rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-emerald-500/50 p-2 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-md transition-all duration-300 overflow-hidden group h-full block"
           >
-            {/* Soft Shimmer Highlight */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-            {/* Top Mosque Dome Graphic */}
-            <div className="relative z-10 w-full flex justify-center group-hover:scale-105 transition-transform duration-300">
-              <MosqueDomeIllustration />
+            {/* Top Section */}
+            <div className="relative z-10 flex items-start justify-between w-full">
+              <span className="text-[10px] sm:text-[12px] md:text-[14px] font-bold text-emerald-700 dark:text-emerald-400 leading-none tracking-wide font-cairo">
+                الصلاة القادمة
+              </span>
+              <div className="p-1 sm:p-2 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-all duration-300 shadow-xs">
+                {formattedPrayer.name === "الفجر" && <MoonStar className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-amber-500 dark:text-amber-300" strokeWidth={1.5} />}
+                {formattedPrayer.name === "الظهر" && <Sun className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-amber-500 dark:text-amber-300" strokeWidth={1.5} />}
+                {formattedPrayer.name === "العصر" && <SunMedium className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-amber-600 dark:text-amber-200" strokeWidth={1.5} />}
+                {formattedPrayer.name === "المغرب" && <Sunset className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-rose-600 dark:text-rose-200" strokeWidth={1.5} />}
+                {formattedPrayer.name === "العشاء" && <MoonStar className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-indigo-600 dark:text-indigo-200" strokeWidth={1.5} />}
+              </div>
             </div>
 
             {/* Middle Prayer Name */}
-            <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center">
-              <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-[#015028] tracking-tight leading-none font-cairo group-hover:text-emerald-700 transition-colors">
+            <div className="relative z-10 mt-1 sm:mt-1.5 mb-auto text-right">
+              <h3 className="text-[15px] xs:text-[17px] sm:text-[22px] md:text-[26px] font-black text-slate-900 dark:text-white tracking-tight leading-none font-cairo">
                 {formattedPrayer.name}
               </h3>
-              
-              {/* Dynamic Countdown Timer with Pulse Indicator */}
-              <span className="text-[10px] xs:text-[12px] sm:text-[16px] md:text-[18px] font-black text-[#015028] font-sans mt-1 sm:mt-2.5 whitespace-nowrap tracking-tight inline-flex items-center gap-1">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            </div>
+
+            {/* Bottom Row: Countdown */}
+            <div className="relative z-10 flex items-center justify-center mt-1 sm:mt-2 bg-emerald-50/80 dark:bg-emerald-950/40 rounded-lg sm:rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 border border-emerald-200/80 dark:border-emerald-800/60">
+               <span className="text-[11px] xs:text-[13px] sm:text-[16px] md:text-[18px] font-bold text-emerald-800 dark:text-emerald-300 font-sans tracking-wide flex items-center gap-1.5 sm:gap-2">
+                <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500"></span>
+                </span>
                 {prayerTimeRemaining}
               </span>
             </div>
-
-            {/* Bottom Center Green Accent Bar */}
-            <div className="relative z-10 w-6 sm:w-12 h-[2px] sm:h-[3px] bg-[#015028]/40 rounded-full my-1 sm:my-1.5 group-hover:w-10 sm:group-hover:w-16 group-hover:bg-[#015028] transition-all duration-300" />
           </Link>
         </motion.div>
 
@@ -557,44 +366,49 @@ export const HeaderWidgets: React.FC = () => {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.16 }}
-          whileHover={{ scale: 1.025, y: -3 }}
-          whileTap={{ scale: 0.975 }}
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.98 }}
           className="w-full h-full"
         >
           <Link 
             to="/weather" 
-            className={`relative bg-gradient-to-br ${weatherTheme} rounded-[14px] sm:rounded-[22px] border shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-lg transition-all duration-300 overflow-hidden group h-full block`}
+            className="relative bg-transparent rounded-[14px] sm:rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-sky-400/50 p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-md transition-all duration-300 overflow-hidden group h-full block"
           >
-            {/* Atmosphere Radial Lighting Texture */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/20 via-transparent to-black/40 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
             {/* Top Section: Temp + Dynamic 3D Weather Icon */}
             <div className="relative z-10 flex items-start justify-between w-full">
-              <span className={`text-[18px] xs:text-[22px] sm:text-[34px] md:text-[42px] font-black ${weatherTextColor} leading-none tracking-tight font-sans drop-shadow-xs group-hover:scale-105 transition-transform duration-300 origin-left`}>
+              <span className="text-[18px] xs:text-[22px] sm:text-[34px] md:text-[42px] font-black text-slate-900 dark:text-white leading-none tracking-tight font-sans">
                 {weather.temp}°
               </span>
-              <div className="group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
-                <DynamicWeather3DIcon weatherId={weather.id} />
+              <div className="group-hover:scale-105 transition-transform duration-300">
+                <Interactive3DWeatherIllustration weatherCode={weather.id} isNight={isNight} className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20" />
               </div>
             </div>
 
             {/* Middle Weather Condition Description */}
-            <div className="relative z-10 my-auto">
-              <p className={`text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[16px] font-bold ${weatherSubtextColor} tracking-wide whitespace-nowrap leading-tight drop-shadow-xs font-cairo`}>
+            <div className="relative z-10 mb-auto mt-0.5 sm:mt-1">
+              <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[16px] font-bold text-slate-700 dark:text-slate-300 tracking-wide leading-snug font-cairo">
                 {weather.condition}
               </p>
             </div>
 
-            {/* Bottom Row: Max and Min Temperatures */}
-            <div className="relative z-10 flex items-center gap-1.5 sm:gap-3 mt-0.5 sm:mt-1.5">
-              <div className={`flex items-center gap-0.5 ${maxTempColor} font-bold text-[9px] xs:text-[11px] sm:text-[14px]`}>
-                <span className="text-[8px] sm:text-[10px] leading-none inline-block group-hover:-translate-y-0.5 transition-transform">▲</span>
-                <span className="font-sans">{weather.tempMax}°</span>
+            {/* Bottom Row: Max/Min Temp & Precip */}
+            <div className="relative z-10 flex flex-col gap-1 sm:gap-1.5 mt-auto w-full">
+              <div className="flex items-center gap-1.5 sm:gap-3">
+                <div className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-extrabold text-[9px] xs:text-[11px] sm:text-[14px]">
+                  <span className="text-[8px] sm:text-[10px] leading-none inline-block">▲</span>
+                  <span className="font-sans">{weather.tempMax}°</span>
+                </div>
+                <div className="flex items-center gap-0.5 text-sky-600 dark:text-sky-400 font-extrabold text-[9px] xs:text-[11px] sm:text-[14px]">
+                  <span className="text-[8px] sm:text-[10px] leading-none inline-block">▼</span>
+                  <span className="font-sans">{weather.tempMin}°</span>
+                </div>
               </div>
-              <div className={`flex items-center gap-0.5 ${minTempColor} font-bold text-[9px] xs:text-[11px] sm:text-[14px]`}>
-                <span className="text-[8px] sm:text-[10px] leading-none inline-block group-hover:translate-y-0.5 transition-transform">▼</span>
-                <span className="font-sans">{weather.tempMin}°</span>
-              </div>
+              {weather.precip_prob !== undefined && (
+                <div className="flex items-center gap-1 text-sky-700 dark:text-sky-300 font-bold text-[9px] xs:text-[11px] sm:text-[13px]">
+                  <CloudRain size={12} className="sm:w-3.5 sm:h-3.5 text-sky-500" />
+                  <span className="font-sans">{weather.precip_prob}%</span>
+                </div>
+              )}
             </div>
           </Link>
         </motion.div>
@@ -604,46 +418,34 @@ export const HeaderWidgets: React.FC = () => {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.24 }}
-          whileHover={{ scale: 1.025, y: -3 }}
-          whileTap={{ scale: 0.975 }}
+          whileHover={{ scale: 1.02, y: -2 }}
+          whileTap={{ scale: 0.98 }}
           className="w-full h-full"
         >
           <Link 
             to="/calendar" 
-            className="relative bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] rounded-[14px] sm:rounded-[22px] border-2 border-[#E5A921]/60 shadow-[0_4px_20px_rgba(1,80,40,0.25)] p-1.5 sm:p-3.5 md:p-5 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:border-[#E5A921] hover:shadow-[0_6px_24px_rgba(229,169,33,0.35)] transition-all duration-300 overflow-hidden group h-full block"
+            className="relative bg-transparent rounded-[14px] sm:rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-emerald-500/50 p-1.5 sm:p-3.5 md:p-5 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-md transition-all duration-300 overflow-hidden group h-full block"
           >
-            {/* Atmosphere Lighting Glow */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-300/25 via-transparent to-black/50 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-
-            {/* Floating Gold Badge with Crescent Icon at Top Right */}
-            <div className="absolute top-1 sm:top-2.5 right-1 sm:right-2.5 w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-[#002814]/80 backdrop-blur-md border border-[#E5A921]/70 shadow-2xs flex items-center justify-center z-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300">
-              <img 
-                src="/crescentcalendarhahri.png" 
-                alt="هلال" 
-                className="w-3.5 h-3.5 sm:w-5 sm:h-5 object-contain"
-              />
-            </div>
-
             {/* Center Date Information */}
-            <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center pt-1 sm:pt-2">
+            <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center py-1 sm:py-2">
               {/* Day Name */}
-              <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-white tracking-tight leading-none drop-shadow-xs font-cairo group-hover:text-amber-100 transition-colors">
+              <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-slate-900 dark:text-white tracking-tight leading-none font-cairo">
                 {dayName}
               </h3>
 
               {/* Hijri Date */}
-              <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[17px] font-black text-[#FFF2A8] leading-none mt-1 sm:mt-2 whitespace-nowrap drop-shadow-xs font-cairo group-hover:scale-105 transition-transform duration-300">
+              <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[17px] font-extrabold text-emerald-700 dark:text-emerald-400 leading-none mt-1.5 sm:mt-2.5 whitespace-nowrap font-cairo">
                 {hijriDate}
               </p>
 
               {/* Gregorian Date */}
-              <p className="text-[8.5px] xs:text-[9.5px] sm:text-[13px] md:text-[14px] font-bold text-emerald-100/90 leading-none mt-0.5 sm:mt-1.5 whitespace-nowrap">
+              <p className="text-[8.5px] xs:text-[9.5px] sm:text-[13px] md:text-[14px] font-bold text-slate-500 dark:text-slate-400 leading-none mt-1 sm:mt-2 whitespace-nowrap">
                 {gregorianDate}
               </p>
             </div>
 
-            {/* Bottom Center Gold Accent Bar */}
-            <div className="relative z-10 w-6 sm:w-12 h-[2px] sm:h-[3.5px] bg-[#E5A921] rounded-full mt-0.5 sm:mt-1.5 shadow-2xs group-hover:w-10 sm:group-hover:w-16 group-hover:bg-[#FFF2A8] transition-all duration-300" />
+            {/* Bottom Center Subtle Accent Bar */}
+            <div className="relative z-10 w-6 sm:w-12 h-[2px] sm:h-[3px] bg-emerald-500/60 rounded-full mt-0.5 sm:mt-1.5 group-hover:w-10 sm:group-hover:w-16 transition-all duration-300" />
           </Link>
         </motion.div>
 

@@ -202,9 +202,9 @@ export function Watch() {
   const [loading, setLoading] = useState(true);
   const [isPlayingLive, setIsPlayingLive] = useState(false);
   
-  const [activeChannelId, setActiveChannelId] = useState<string | null>("ch-4");
+  const [activeChannelId, setActiveChannelId] = useState<string | null>("ch-[#ch-1]");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("الأحدث");
+  const [selectedCategory, setSelectedCategory] = useState<string>("الكل");
   const [sortOption, setSortOption] = useState<"newest" | "oldest" | "popular">("newest");
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [showAllMostViewed, setShowAllMostViewed] = useState(false);
@@ -297,7 +297,7 @@ export function Watch() {
     [...fallbackMostViewed, ...fallbackLatest].forEach(v => {
       if (v.category) cats.add(v.category.trim());
     });
-    return ["الكل", ...Array.from(cats)];
+    return ["الكل", "الأحدث", ...Array.from(cats)];
   }, [rawVideos]);
 
   // Process search + classification filtering
@@ -345,23 +345,26 @@ export function Watch() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-surface-main font-cairo px-3.5 sm:px-5 pt-3 pb-24 text-right" dir="rtl" ref={activeVideoRef}>
-        <div className="max-w-2xl mx-auto space-y-5">
-
-          {/* PAGE HEADER (Centered title & subtitle, no TV icon) */}
-          <div className="flex flex-col items-center justify-center text-center pt-2 pb-1 space-y-0.5">
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-cairo">شاهد</h1>
-            <p className="text-xs sm:text-sm font-medium text-slate-500">أحدث المحتوى المرئي المتجدد</p>
-          </div>
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-cairo px-3.5 sm:px-5 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
+        <div className="max-w-3xl mx-auto space-y-6">
 
           {/* 1. HERO SECTION: البث المباشر (LIVE BROADCAST CARD) */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-start gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse" />
-              <h2 className="text-sm font-black text-slate-900 font-cairo">البث المباشر</h2>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="space-y-2.5 pt-1"
+          >
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                </span>
+                <h2 className="text-base font-black text-slate-900 dark:text-white font-cairo">البث المباشر الحي</h2>
+              </div>
             </div>
 
-            <div className="relative w-full aspect-video sm:aspect-[21/9] min-h-[230px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#061224] via-[#091D38] to-[#040C18] border border-slate-800/80 shadow-[0_12px_32px_rgba(0,0,0,0.18)] flex flex-col justify-between p-4">
+            <div className="relative w-full aspect-video sm:aspect-[21/9] min-h-[240px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#061224] via-[#081b38] to-[#030914] border border-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.25)] flex flex-col justify-between p-4 sm:p-5 group">
               
               {/* Full Card Video Container when Playing */}
               {activeChannel && activeChannel.url && isPlayingLive ? (
@@ -372,37 +375,42 @@ export function Watch() {
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                     allowFullScreen
                   />
+                  <button 
+                    onClick={() => setIsPlayingLive(false)}
+                    className="absolute top-3 right-3 z-40 bg-black/70 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition backdrop-blur-md cursor-pointer"
+                    title="إغلاق البث"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               ) : null}
 
-              {/* Live Stream Base - Navy Blue */}
-
               {/* Glowing Ambient Light Effects */}
-              <div className="absolute top-0 right-0 w-40 h-40 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-40 h-40 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-500/25 transition-all duration-700" />
+              <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-600/20 rounded-full blur-3xl pointer-events-none group-hover:bg-red-500/25 transition-all duration-700" />
 
               {/* TOP ROW: Live Badge (Left) & Channel Info (Right) */}
               <div className="relative z-10 flex items-center justify-between w-full">
                 
                 {/* Live Badge (Top Left) */}
-                <div className="bg-[#E11D48] text-white px-3 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 shadow-md">
-                  <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-                  <span>مباشر</span>
+                <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white px-3.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 shadow-lg shadow-red-600/30 border border-white/20">
+                  <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+                  <span>مباشر الآن</span>
                 </div>
 
                 {/* Channel Info (Top Right) */}
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <div className="text-right">
-                    <h3 className="text-xs sm:text-sm font-black text-white leading-tight font-cairo">
+                    <h3 className="text-xs sm:text-sm font-black text-white leading-tight font-cairo drop-shadow-xs">
                       {activeChannel?.name || "قناة المسيرة مباشر"}
                     </h3>
                     <span className="text-[10px] font-bold text-emerald-400 flex items-center justify-end gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>مباشر الآن</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>جودة HD العالية</span>
                     </span>
                   </div>
 
-                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-white/10 backdrop-blur-md border border-white/20 p-0.5 shadow-md shrink-0 flex items-center justify-center overflow-hidden">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/25 p-0.5 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
                     <img 
                       src={activeChannel?.iconUrl || "/splash_first.png"} 
                       alt={activeChannel?.name} 
@@ -419,33 +427,38 @@ export function Watch() {
               {/* CENTER AREA: Glassmorphism Play Button */}
               <div className="relative z-10 my-auto flex flex-col items-center justify-center pt-2 pb-1">
                 <motion.button 
-                  whileHover={{ scale: 1.08 }}
-                  whileTap={{ scale: 0.94 }}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.92 }}
                   onClick={() => setIsPlayingLive(true)}
-                  className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-white/20 backdrop-blur-md border border-white/35 shadow-[0_0_30px_rgba(255,255,255,0.2)] flex items-center justify-center text-white cursor-pointer group hover:bg-white/30 transition-all"
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 shadow-[0_0_35px_rgba(255,255,255,0.25)] flex items-center justify-center text-white cursor-pointer group-hover:bg-red-600/80 group-hover:border-red-400 transition-all duration-300"
                 >
-                  <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-current translate-x-[-1px]" />
+                  <Play className="w-7 h-7 sm:w-9 sm:h-9 fill-current translate-x-[-2px]" />
                 </motion.button>
               </div>
 
               {/* BOTTOM ROW: Click CTA */}
               <div className="relative z-10 flex items-center justify-center w-full pt-1">
-                <p className="text-white text-xs sm:text-sm font-black text-center font-cairo">
-                  انقر لتشغيل البث الحي
+                <p className="text-white/90 text-xs sm:text-sm font-black text-center font-cairo backdrop-blur-sm bg-black/20 px-4 py-1 rounded-full border border-white/10">
+                  انقر لتشغيل البث الفضائي الحي
                 </p>
               </div>
 
             </div>
-          </div>
+          </motion.div>
 
           {/* 2. CHANNELS SECTION (القنوات) */}
           <div className="space-y-2.5">
-            <div className="flex items-center justify-start gap-2">
-              <Tv className="w-4 h-4 text-slate-800 stroke-[2.5]" />
-              <h2 className="text-sm font-black text-slate-900 font-cairo">القنوات</h2>
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <Tv className="w-4 h-4 text-slate-800 dark:text-slate-200 stroke-[2.5]" />
+                <h2 className="text-sm font-black text-slate-900 dark:text-white font-cairo">القنوات المتاحة</h2>
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                {displayChannels.length} قنوات
+              </span>
             </div>
 
-            <div className="grid grid-cols-6 gap-2 w-full">
+            <div className="grid grid-cols-3 xs:grid-cols-6 gap-2 w-full">
               {displayChannels.map((ch) => {
                 const isSelected = activeChannelId === ch.id;
                 return (
@@ -455,13 +468,15 @@ export function Watch() {
                       setActiveChannelId(ch.id!);
                       setIsPlayingLive(true);
                     }}
-                    className={`flex flex-col items-center justify-center py-3 px-1 rounded-[20px] bg-white border transition-all cursor-pointer gap-2 shadow-xs ${
+                    className={`flex flex-col items-center justify-center py-3 px-1 rounded-[20px] bg-white dark:bg-slate-900 border transition-all cursor-pointer gap-2 shadow-xs ${
                       isSelected 
-                        ? 'border-[#07152B] bg-slate-50/80 shadow-md ring-2 ring-[#07152B]/10 scale-[1.03]' 
-                        : 'border-slate-100 hover:border-slate-200'
+                        ? 'border-red-600 dark:border-red-500 bg-red-50/50 dark:bg-red-950/30 shadow-md ring-2 ring-red-600/20 scale-[1.03]' 
+                        : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                     }`}
                   >
-                    <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-slate-100 p-0.5 border border-slate-200/80 shadow-2xs flex items-center justify-center overflow-hidden shrink-0">
+                    <div className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 ${
+                      isSelected ? 'border-red-500 bg-white' : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
+                    }`}>
                       <img 
                         src={ch.iconUrl || "/splash_first.png"} 
                         alt={ch.name} 
@@ -470,9 +485,14 @@ export function Watch() {
                           (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&q=80';
                         }}
                       />
+                      {isSelected && (
+                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-red-600 rounded-full border-2 border-white dark:border-slate-900" />
+                      )}
                     </div>
                     {/* Full Channel Name Display without truncation */}
-                    <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 text-center leading-tight whitespace-normal break-words w-full px-0.5 min-h-[2.2em] flex items-center justify-center font-cairo">
+                    <span className={`text-[10px] sm:text-[11px] font-bold text-center leading-tight whitespace-normal break-words w-full px-0.5 min-h-[2.2em] flex items-center justify-center font-cairo ${
+                      isSelected ? 'text-red-600 dark:text-red-400 font-black' : 'text-slate-800 dark:text-slate-200'
+                    }`}>
                       {ch.name}
                     </span>
                   </button>
@@ -481,31 +501,14 @@ export function Watch() {
             </div>
           </div>
 
-          {/* 3. CATEGORY CHIPS (التصنيفات - Real Video Data Categories) */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-start gap-2">
-              <Sparkles className="w-4 h-4 text-slate-800 stroke-[2.5]" />
-              <h2 className="text-sm font-black text-slate-900 font-cairo">التصنيفات</h2>
+          {/* SECTION TITLE SEPARATOR: "المحتوى المرئي" */}
+          <div className="relative flex items-center justify-center pt-3 pb-1 my-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200/80 dark:border-slate-800" />
             </div>
-
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-              {dynamicCategories.map((catLabel) => {
-                const isActive = selectedCategory === catLabel;
-                return (
-                  <button
-                    key={catLabel}
-                    onClick={() => setSelectedCategory(catLabel)}
-                    className={`h-10 px-4 rounded-full text-xs font-black shrink-0 flex items-center gap-2 transition-all cursor-pointer font-cairo ${
-                      isActive 
-                        ? 'bg-[#07152B] text-white shadow-md shadow-[#07152B]/20' 
-                        : 'bg-white text-slate-700 border border-slate-200/80 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Sparkles className={`w-3.5 h-3.5 ${isActive ? 'text-amber-400' : 'text-slate-400'}`} />
-                    <span>{catLabel}</span>
-                  </button>
-                );
-              })}
+            <div className="relative bg-slate-50 dark:bg-slate-950 px-4 flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 font-cairo">
+              <VideoIcon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+              <span>المحتوى المرئي</span>
             </div>
           </div>
 
@@ -514,52 +517,62 @@ export function Watch() {
             {/* Filter Circle Button (Far Left in RTL) */}
             <button
               onClick={() => setIsFilterModalOpen(true)}
-              className="w-12 h-12 rounded-full bg-[#07152B] text-white flex items-center justify-center shrink-0 shadow-md hover:bg-[#0c2345] transition-colors cursor-pointer"
+              className="w-12 h-12 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-md hover:bg-red-600 dark:hover:bg-red-600 transition-colors cursor-pointer"
+              title="تصفية الفيديوهات"
             >
               <SlidersHorizontal className="w-5 h-5 stroke-[2.5]" />
             </button>
 
             {/* Search Input Bar (Floating White Capsule) */}
-            <div className="relative flex-1 h-12 rounded-full bg-white border border-slate-200/80 shadow-xs flex items-center px-4">
+            <div className="relative flex-1 h-12 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center px-4">
               <input 
                 type="text"
                 placeholder="ابحث عن فيديو..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-0 focus:outline-none text-slate-800 placeholder-slate-400 text-xs sm:text-sm font-medium pr-1 pl-8"
+                className="w-full bg-transparent border-0 focus:outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400 text-xs sm:text-sm font-medium pr-1 pl-8"
               />
-              <Search className="absolute left-4 w-4 h-4 text-slate-400" />
+              {searchQuery ? (
+                <button 
+                  onClick={() => setSearchQuery("")}
+                  className="absolute left-4 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              ) : (
+                <Search className="absolute left-4 w-4 h-4 text-slate-400" />
+              )}
             </div>
           </div>
 
           {/* 5. MOST WATCHED SECTION (الأكثر مشاهدة) */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-red-100 dark:bg-red-950/50 flex items-center justify-center">
-                  <Flame className="w-4 h-4 text-red-600 fill-current" />
+                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center">
+                  <Flame className="w-4.5 h-4.5 text-red-600 fill-current" />
                 </div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-cairo">الأكثر مشاهدة</h2>
               </div>
               <button 
                 onClick={() => setShowAllMostViewed(!showAllMostViewed)}
-                className="text-xs font-black text-red-600 flex items-center gap-1 hover:underline cursor-pointer bg-red-50 dark:bg-red-950/30 px-2.5 py-1 rounded-full border border-red-100 dark:border-red-900/30 transition-all hover:scale-105"
+                className="text-xs font-black text-red-600 dark:text-red-400 flex items-center gap-1 hover:underline cursor-pointer bg-red-50 dark:bg-red-950/30 px-3 py-1.5 rounded-full border border-red-100 dark:border-red-900/30 transition-all hover:scale-105"
               >
                 <span>{showAllMostViewed ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            {/* 3 Tall Vertical Cards */}
-            <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
-              {(showAllMostViewed ? mostViewedList : mostViewedList.slice(0, 3)).map((vid) => (
+            {/* 2x2 Grid Layout identical to Latest Videos */}
+            <div className="grid grid-cols-2 gap-3">
+              {(showAllMostViewed ? mostViewedList : mostViewedList.slice(0, 4)).map((vid) => (
                 <Link
                   key={vid.id}
                   to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
-                  className="group relative flex flex-col rounded-[22px] bg-white dark:bg-stone-900 border border-slate-200/80 dark:border-stone-800 shadow-xs hover:shadow-xl hover:border-red-200 dark:hover:border-red-900/50 transition-all duration-300 overflow-hidden"
+                  className="group flex flex-col bg-white dark:bg-slate-900 rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-xl hover:border-red-300 dark:hover:border-red-900/50 transition-all duration-300 p-2.5 gap-2.5"
                 >
                   {/* Thumbnail Image */}
-                  <div className="relative aspect-[3/4] w-full bg-slate-900 overflow-hidden">
+                  <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
                     <img 
                       src={vid.thumbnailUrl || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=500&q=80"} 
                       alt={vid.title} 
@@ -567,54 +580,54 @@ export function Watch() {
                     />
 
                     {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-                    {/* Category Tag (Top Right) */}
+                    {/* Category Pill Tag */}
                     {vid.category && (
                       <div className="absolute top-2 right-2 z-10">
-                        <span className="bg-gradient-to-r from-red-600 to-rose-700 text-white text-[9px] font-black px-2 py-0.5 rounded-md shadow-sm">
+                        <span className="bg-gradient-to-r from-red-600 to-rose-700 text-white text-[8.5px] font-black px-2 py-0.5 rounded-md shadow-sm">
                           {vid.category}
                         </span>
                       </div>
                     )}
 
-                    {/* Play Button Overlay (Center) */}
+                    {/* Play Button Icon */}
                     <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/25 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 shadow-lg transition-transform border border-white/40">
-                        <Play className="w-3 h-3 sm:w-4 sm:h-4 fill-current ml-0.5" />
+                      <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-red-600 shadow-md transition-all border border-white/40">
+                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                       </div>
                     </div>
 
-                    {/* Duration Badge (Bottom Right) */}
+                    {/* Duration Badge */}
                     {vid.duration && (
                       <div className="absolute bottom-2 right-2 z-10">
-                        <span className="bg-black/80 backdrop-blur-md text-white text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-md border border-white/20 shadow-xs">
+                        <span className="bg-black/80 backdrop-blur-md text-white text-[8.5px] font-mono font-bold px-1.5 py-0.5 rounded-md border border-white/20">
                           {vid.duration}
                         </span>
                       </div>
                     )}
                   </div>
 
-                  {/* Text Details below card */}
-                  <div className="p-3 flex flex-col justify-between flex-1 space-y-2">
+                  {/* Card Details */}
+                  <div className="flex flex-col justify-between flex-1 space-y-2">
                     {/* Formatted Title */}
-                    <h3 className="text-slate-900 dark:text-white font-black text-[11px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-red-600 transition-colors min-h-[2.4em] flex items-start font-cairo">
+                    <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors min-h-[2.4em] flex items-start font-cairo">
                       {vid.title}
                     </h3>
 
-                    {/* Views Count in RED & Publish Date */}
-                    <div className="flex flex-col gap-1.5 border-t border-slate-100 dark:border-stone-800 pt-2">
+                    {/* Bottom Metadata: Views count in RED + Date */}
+                    <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
                       {/* Red Views Badge */}
-                      <div className="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-black text-[10px] sm:text-[10.5px]">
+                      <span className="flex items-center gap-1 text-red-600 dark:text-red-400 font-black">
                         <Eye className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
                         <span>{formatViewsArabic(vid.views)} مشاهدة</span>
-                      </div>
+                      </span>
 
-                      {/* Publish Time */}
-                      <div className="flex items-center gap-1 text-[9.5px] sm:text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+                      {/* Time ago */}
+                      <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold">
                         <Clock className="w-3 h-3 text-slate-400 shrink-0" />
                         <span>{getRelativeTimeArabic(vid.createdAt)}</span>
-                      </div>
+                      </span>
                     </div>
                   </div>
                 </Link>
@@ -624,16 +637,16 @@ export function Watch() {
 
           {/* 6. LATEST VIDEOS SECTION (أحدث الفيديوهات) */}
           <div className="space-y-3 pt-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-xl bg-red-100 dark:bg-red-950/50 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-red-600 stroke-[2.5]" />
+                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center">
+                  <Clock className="w-4.5 h-4.5 text-red-600 stroke-[2.5]" />
                 </div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-cairo">أحدث الفيديوهات</h2>
               </div>
               <button 
                 onClick={() => setShowAllLatest(!showAllLatest)}
-                className="text-xs font-black text-red-600 flex items-center gap-1 hover:underline cursor-pointer bg-red-50 dark:bg-red-950/30 px-2.5 py-1 rounded-full border border-red-100 dark:border-red-900/30 transition-all hover:scale-105"
+                className="text-xs font-black text-red-600 dark:text-red-400 flex items-center gap-1 hover:underline cursor-pointer bg-red-50 dark:bg-red-950/30 px-3 py-1.5 rounded-full border border-red-100 dark:border-red-900/30 transition-all hover:scale-105"
               >
                 <span>{showAllLatest ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -646,7 +659,7 @@ export function Watch() {
                 <Link
                   key={vid.id}
                   to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
-                  className="group flex flex-col bg-white dark:bg-stone-900 rounded-[22px] border border-slate-200/80 dark:border-stone-800 shadow-xs hover:shadow-xl hover:border-red-200 dark:hover:border-red-900/50 transition-all duration-300 p-2.5 gap-2.5"
+                  className="group flex flex-col bg-white dark:bg-slate-900 rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-xl hover:border-red-300 dark:hover:border-red-900/50 transition-all duration-300 p-2.5 gap-2.5"
                 >
                   {/* Thumbnail Image */}
                   <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
@@ -670,8 +683,8 @@ export function Watch() {
 
                     {/* Play Button Icon */}
                     <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <div className="w-7 h-7 rounded-full bg-white/25 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 shadow-md transition-transform border border-white/40">
-                        <Play className="w-3 h-3 fill-current ml-0.5" />
+                      <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-red-600 shadow-md transition-all border border-white/40">
+                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                       </div>
                     </div>
 
@@ -688,12 +701,12 @@ export function Watch() {
                   {/* Card Details */}
                   <div className="flex flex-col justify-between flex-1 space-y-2">
                     {/* Formatted Title */}
-                    <h3 className="text-slate-900 dark:text-white font-black text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-red-600 transition-colors min-h-[2.4em] flex items-start font-cairo">
+                    <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors min-h-[2.4em] flex items-start font-cairo">
                       {vid.title}
                     </h3>
 
                     {/* Bottom Metadata: Views count in RED + Date */}
-                    <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-stone-800 pt-2">
+                    <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
                       {/* Red Views Badge */}
                       <span className="flex items-center gap-1 text-red-600 dark:text-red-400 font-black">
                         <Eye className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
@@ -720,16 +733,16 @@ export function Watch() {
                   initial={{ opacity: 0, scale: 0.9, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                  className="relative w-full max-w-md bg-white rounded-[28px] shadow-2xl border border-slate-100 p-6 text-right space-y-6"
+                  className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[28px] shadow-2xl border border-slate-100 dark:border-slate-800 p-6 text-right space-y-6"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 className="text-base font-black text-slate-900 flex items-center gap-2 font-cairo">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2 font-cairo">
                       <Filter className="w-5 h-5 text-red-600" />
                       تصفية الفيديوهات
                     </h3>
                     <button 
                       onClick={() => setIsFilterModalOpen(false)}
-                      className="p-2 hover:bg-slate-100 rounded-full transition text-slate-400 hover:text-slate-600"
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -737,7 +750,7 @@ export function Watch() {
 
                   {/* Sorting */}
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-800 block">ترتيب حسب:</label>
+                    <label className="text-xs font-black text-slate-800 dark:text-slate-200 block">ترتيب حسب:</label>
                     <div className="grid grid-cols-3 gap-2">
                       {[
                         { id: "newest", label: "الأحدث" },
@@ -747,10 +760,10 @@ export function Watch() {
                         <button
                           key={opt.id}
                           onClick={() => setTempSort(opt.id as any)}
-                          className={`py-2.5 rounded-xl text-xs font-bold transition-all ${
+                          className={`py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             tempSort === opt.id 
-                              ? 'bg-[#07152B] text-white shadow-sm' 
-                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                              ? 'bg-red-600 text-white shadow-sm' 
+                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                           }`}
                         >
                           {opt.label}
@@ -772,7 +785,7 @@ export function Watch() {
                     </button>
                     <button 
                       onClick={() => setIsFilterModalOpen(false)}
-                      className="px-5 bg-slate-100 text-slate-600 py-3 rounded-xl text-xs font-black hover:bg-slate-200 transition cursor-pointer"
+                      className="px-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl text-xs font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
                     >
                       إلغاء
                     </button>

@@ -11,19 +11,11 @@ export const app = initializeApp(firebaseConfig);
 let dbInstance;
 try {
   dbInstance = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
   }, firebaseConfig.firestoreDatabaseId);
 } catch (error) {
   console.warn("Firestore initialization with persistent local cache failed (possibly sandboxed iframe):", error);
-  try {
-    dbInstance = initializeFirestore(app, {
-      experimentalForceLongPolling: true
-    }, firebaseConfig.firestoreDatabaseId);
-  } catch (err) {
-    console.warn("Firestore initialization with force long polling failed, falling back to standard getFirestore:", err);
-    dbInstance = getFirestore(app, firebaseConfig.firestoreDatabaseId);
-  }
+  dbInstance = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 }
 
 export const db = dbInstance;

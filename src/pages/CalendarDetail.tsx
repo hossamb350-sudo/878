@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { SyncService } from "../services/SyncService";
 import { EventItem, ActivityItem } from "../types";
 import { BASE_EVENTS } from "../data/staticEvents";
@@ -16,7 +16,10 @@ import {
   Compass,
   Loader2,
   Check,
-  Bookmark
+  Bookmark,
+  ExternalLink,
+  CalendarDays,
+  Info
 } from "lucide-react";
 
 interface AladhanGregorian {
@@ -67,6 +70,64 @@ const HIJRI_MONTH_NAMES = [
   "رمضان", "شوال", "ذو القعدة", "ذو الحجة"
 ];
 
+// Helper to normalize Arabic text
+const normalizeArabic = (text: string) => {
+  if (!text) return "";
+  return text
+    .replace(/[\u064B-\u065F]/g, "") // remove tashkeel
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ة/g, "ه")
+    .replace(/\s+/g, " ")
+    .trim();
+};
+
+// Helper to parse Hijri Date String and return Month Number (1-12) and Day Numbers
+const parseHijriDateInfo = (hijriDateStr: string): { month: number | null; days: number[] } => {
+  if (!hijriDateStr) return { month: null, days: [] };
+  
+  const norm = normalizeArabic(hijriDateStr);
+  let month: number | null = null;
+
+  if (norm.includes("محرم")) month = 1;
+  else if (norm.includes("صفر")) month = 2;
+  else if (norm.includes("ربيع الاول") || norm.includes("ربيع 1")) month = 3;
+  else if (norm.includes("ربيع الثاني") || norm.includes("ربيع الاخر") || norm.includes("ربيع 2")) month = 4;
+  else if (norm.includes("جمادى الاولى") || norm.includes("جمادى 1")) month = 5;
+  else if (norm.includes("جمادى الاخره") || norm.includes("جمادى الثانية") || norm.includes("جمادى 2")) month = 6;
+  else if (norm.includes("رجب")) month = 7;
+  else if (norm.includes("شعبان")) month = 8;
+  else if (norm.includes("رمضان")) month = 9;
+  else if (norm.includes("شوال")) month = 10;
+  else if (norm.includes("ذو القعدة") || norm.includes("ذو القعده")) month = 11;
+  else if (norm.includes("ذو الحجة") || norm.includes("ذو الحجه")) month = 12;
+
+  const days: number[] = [];
+
+  // Range check e.g. "13-19"
+  const rangeMatch = norm.match(/(\d+)\s*-\s*(\d+)/);
+  if (rangeMatch) {
+    const start = parseInt(rangeMatch[1]);
+    const end = parseInt(rangeMatch[2]);
+    for (let d = start; d <= end; d++) {
+      days.push(d);
+    }
+  } else {
+    // Single number match e.g. "6" or "12" or "25"
+    const numMatch = norm.match(/\d+/);
+    if (numMatch) {
+      days.push(parseInt(numMatch[0]));
+    } else {
+      if (norm.includes("اول جمعة") || norm.includes("اول جمعه")) {
+        days.push(1, 8);
+      } else if (norm.includes("اخر جمعة") || norm.includes("اخر جمعه")) {
+        days.push(25, 28);
+      }
+    }
+  }
+
+  return { month, days };
+};
+
 // Helper to extract day details safely
 const getAladhanDayData = (d: AladhanDay | null) => {
   if (!d) return { gregorian: null, hijri: null, timestamp: "" };
@@ -76,7 +137,7 @@ const getAladhanDayData = (d: AladhanDay | null) => {
   return { gregorian, hijri, timestamp };
 };
 
-// Interactive Crescent Calendar Icon from Resources
+// Interactive Crescent Calendar Icon
 const Interactive3DHijriIllustration = () => (
   <motion.div 
     whileHover={{ scale: 1.05, rotate: -2 }}
@@ -99,57 +160,74 @@ export default function CalendarDetail() {
   const [dbEvents, setDbEvents] = useState<EventItem[]>([]);
   const [dbActivities, setDbActivities] = useState<ActivityItem[]>([]);
   
-  // Selected Hijri day number (default 8 as in screenshot)
-  const [selectedDayNumber, setSelectedDayNumber] = useState<number>(8);
+  // Selected Hijri day number
+  const [selectedDayNumber, setSelectedDayNumber] = useState<number>(6);
   
-  // Current view Hijri Month and Year (Default Safar 1448 H matching reference)
-  const [hijriMonth, setHijriMonth] = useState(2);
-  const [hijriYear, setHijriYear] = useState(1448);
+  // Current view Hijri Month and Year (Default Safar 1448 H)
+  const [hijriMonth, setHijriMonth] = useState<number>(2);
+  const [hijriYear, setHijriYear] = useState<number>(1448);
 
-  // Sync Events and Activities from Firestore
+  // Real-time actual Today Hijri Date
+  const [todayHijri, setTodayHijri] = useState<{ day: number; month: number; year: number }>({
+    day: 6,
+    month: 2,
+    year: 1448
+  });
+
+  // Sync Events from Firestore (Single Source of Truth - strictly occasions/events, no activities)
   useEffect(() => {
     let active = true;
     const unsubEventsPromise = SyncService.syncCollection<EventItem>("events", (data) => {
       if (active) setDbEvents(data);
     });
-    const unsubActivitiesPromise = SyncService.syncCollection<ActivityItem>("activities", (data) => {
-      if (active) setDbActivities(data);
-    });
     return () => {
       active = false;
       unsubEventsPromise.then(unsub => unsub());
-      unsubActivitiesPromise.then(unsub => unsub());
     };
   }, []);
 
+  // Single Source of Truth dataset containing strictly events / occasions (تقويم المناسبات)
   const allEvents = useMemo(() => {
     const dbTitles = new Set(dbEvents.map((e) => e.title));
-    const merged: (EventItem | { id: string; title: string; hijriDate: string; gregorianDate?: string })[] = [...dbEvents];
+    const merged: (EventItem | { id: string; title: string; hijriDate: string; gregorianDate?: string; category?: string; description?: string })[] = [...dbEvents];
     
-    dbActivities.forEach((act) => {
-      merged.push({
-        id: act.id,
-        title: act.title || act.type || "نشاط",
-        hijriDate: act.hijriDate,
-        gregorianDate: act.gregorianDate
-      });
-    });
-
     BASE_EVENTS.forEach((be, i) => {
       if (!dbTitles.has(be.title)) {
         merged.push({ id: `static-${i}`, ...be } as EventItem);
       }
     });
     return merged;
-  }, [dbEvents, dbActivities]);
+  }, [dbEvents]);
 
-  // Initialize with params or current date
+  // Filter events STRICTLY for the currently selected Hijri Month
+  const currentMonthEvents = useMemo(() => {
+    return allEvents
+      .filter((e) => {
+        if (!e.hijriDate) return false;
+        const { month } = parseHijriDateInfo(e.hijriDate);
+        return month === hijriMonth;
+      })
+      .map((e) => {
+        const { days } = parseHijriDateInfo(e.hijriDate);
+        const primaryDay = days[0] || 1;
+        return {
+          ...e,
+          days,
+          primaryDay,
+          hijriDayTag: days.length > 1 ? `${days[0]}-${days[days.length - 1]}` : `${primaryDay}`,
+          hijriMonthTag: HIJRI_MONTH_NAMES[hijriMonth - 1] || ""
+        };
+      })
+      .sort((a, b) => a.primaryDay - b.primaryDay);
+  }, [allEvents, hijriMonth]);
+
+  // Events that fall on the currently selected day
+  const selectedDayEvents = useMemo(() => {
+    return currentMonthEvents.filter(ev => ev.days.includes(selectedDayNumber));
+  }, [currentMonthEvents, selectedDayNumber]);
+
+  // Initialize with params or current Hijri date
   useEffect(() => {
-    if (paramMonth && paramYear) {
-      setHijriMonth(parseInt(paramMonth));
-      setHijriYear(parseInt(paramYear));
-      return;
-    }
     const today = new Date();
     try {
       const formatter = new Intl.DateTimeFormat('en-u-ca-islamic-umalqura-nu-latn', {
@@ -158,16 +236,29 @@ export default function CalendarDetail() {
         year: 'numeric'
       });
       const parts = formatter.formatToParts(today);
+      const d = parts.find(p => p.type === 'day')?.value;
       const m = parts.find(p => p.type === 'month')?.value;
       const y = parts.find(p => p.type === 'year')?.value;
       
-      if (m && y) {
-        setHijriMonth(parseInt(m));
-        setHijriYear(parseInt(y));
+      if (d && m && y) {
+        const realDay = parseInt(d);
+        const realMonth = parseInt(m);
+        const realYear = parseInt(y);
+        setTodayHijri({ day: realDay, month: realMonth, year: realYear });
+
+        if (!paramMonth && !paramYear) {
+          setHijriMonth(realMonth);
+          setHijriYear(realYear);
+          setSelectedDayNumber(realDay);
+        }
       }
     } catch {
-      setHijriMonth(2);
-      setHijriYear(1448);
+      setTodayHijri({ day: 6, month: 2, year: 1448 });
+    }
+
+    if (paramMonth && paramYear) {
+      setHijriMonth(parseInt(paramMonth));
+      setHijriYear(parseInt(paramYear));
     }
   }, [paramMonth, paramYear]);
 
@@ -206,10 +297,14 @@ export default function CalendarDetail() {
       }
     }
 
-    // Generate accurate fallback month calendar matching reference exactly
+    // Fallback calendar month generation
     const fallbackDays: AladhanDay[] = [];
     const monthNameAr = HIJRI_MONTH_NAMES[month - 1] || "صفر";
-    const startDate = new Date(2026, 6, 15); // July 15, 2026 (Saturday = 1 Safar)
+    // Calculate approximate start date offset for fallback
+    const baseDate = new Date(2026, 5, 16); // 1 Muharram 1448 = June 16, 2026
+    const daysOffset = (month - 1) * 29.5;
+    const startDate = new Date(baseDate.getTime() + daysOffset * 86400000);
+    
     const weekdaysAr = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
     const weekdaysEn = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
@@ -260,66 +355,13 @@ export default function CalendarDetail() {
     
     setHijriMonth(nextMonth);
     setHijriYear(nextYear);
+    // Reset selected day to 1 when changing month
+    setSelectedDayNumber(1);
   };
 
   const weekDays = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
 
   const currentMonthName = HIJRI_MONTH_NAMES[hijriMonth - 1] || "صفر";
-
-  // Helper to normalize Arabic text
-  const normalizeArabic = (text: string) => {
-    if (!text) return "";
-    return text
-      .replace(/[\u064B-\u065F]/g, "")
-      .replace(/[أإآ]/g, "ا")
-      .replace(/ة/g, "ه")
-      .replace(/\s+/g, " ")
-      .trim();
-  };
-
-  // Helper to find events for a specific day
-  const getEventsForDay = (day: AladhanDay) => {
-    const { hijri } = getAladhanDayData(day);
-    if (!hijri?.day || !hijri?.month?.ar) return [];
-    const hDay = parseInt(hijri.day).toString();
-    const hMonthName = normalizeArabic(hijri.month.ar);
-    const searchStr = `${hDay} ${hMonthName}`;
-    
-    return allEvents.filter(e => {
-      const normalizedEventDate = normalizeArabic(e.hijriDate);
-      return normalizedEventDate === searchStr || normalizedEventDate.includes(searchStr);
-    });
-  };
-
-  // Filter events in this month
-  const monthEventsList = useMemo(() => {
-    const list: { title: string; dateStr: string; hijriDayTag: string; hijriMonthTag: string }[] = [];
-    
-    calendarData.forEach((day) => {
-      const evs = getEventsForDay(day);
-      const { hijri, gregorian } = getAladhanDayData(day);
-      evs.forEach((e) => {
-        list.push({
-          title: e.title,
-          dateStr: gregorian?.date ? `${hijri?.weekday?.ar || ''} ${gregorian.date}` : (e.gregorianDate || ""),
-          hijriDayTag: `${hijri?.day || '6'}`,
-          hijriMonthTag: `${hijri?.month?.ar || currentMonthName}`
-        });
-      });
-    });
-
-    // Ensure reference event "قدوم الإمام الهادي إلى اليمن" exists for 6 Safar
-    if (list.length === 0 || !list.some(l => l.title.includes("الهادي"))) {
-      list.unshift({
-        title: "قدوم الإمام الهادي إلى اليمن",
-        dateStr: "الإثنين 2026-07-20",
-        hijriDayTag: "6",
-        hijriMonthTag: "صفر"
-      });
-    }
-
-    return list;
-  }, [calendarData, hijriMonth, currentMonthName]);
 
   // Derive selected day info for hero metrics
   const selectedDayData = useMemo(() => {
@@ -331,11 +373,11 @@ export default function CalendarDetail() {
   }, [calendarData, selectedDayNumber]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F0F8F3] via-[#E6F4EA] to-[#DCF0E3] pb-12 pt-2 px-3 sm:px-6 select-none font-sans" dir="rtl">
-      {/* Centered Mobile/Tablet Container matching Weather Detail page width */}
+    <div className="min-h-screen bg-gradient-to-b from-[#F0F8F3] via-[#E6F4EA] to-[#DCF0E3] pb-16 pt-2 px-3 sm:px-6 select-none font-sans" dir="rtl">
+      {/* Centered Mobile/Tablet Container matching Weather & Events page width */}
       <div className="max-w-md md:max-w-xl mx-auto space-y-3.5 sm:space-y-4">
 
-        {/* 1. TOP HEADER BAR (WEATHER STYLE) */}
+        {/* 1. TOP HEADER BAR */}
         <div className="flex items-center justify-between px-1 py-1">
           {/* Right Location & Page Title */}
           <div className="flex flex-col items-start">
@@ -354,11 +396,11 @@ export default function CalendarDetail() {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => {
-                setHijriMonth(2);
-                setHijriYear(1448);
-                setSelectedDayNumber(8);
+                setHijriMonth(todayHijri.month);
+                setHijriYear(todayHijri.year);
+                setSelectedDayNumber(todayHijri.day);
               }}
-              className="px-3 py-1.5 rounded-xl bg-white border border-[#E5A921]/40 text-xs font-extrabold text-[#015028] shadow-xs hover:bg-[#F0FAF4] transition-all font-cairo flex items-center gap-1"
+              className="px-3 py-1.5 rounded-xl bg-white border border-[#E5A921]/40 text-xs font-extrabold text-[#015028] shadow-xs hover:bg-[#F0FAF4] transition-all font-cairo flex items-center gap-1 cursor-pointer"
               title="اليوم الحالي"
             >
               <Sparkles className="w-3.5 h-3.5 text-[#E5A921]" />
@@ -367,7 +409,7 @@ export default function CalendarDetail() {
 
             <button 
               onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors"
+              className="w-10 h-10 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
               aria-label="رجوع"
             >
               <ArrowRight className="w-5 h-5 stroke-[2]" />
@@ -375,7 +417,7 @@ export default function CalendarDetail() {
           </div>
         </div>
 
-        {/* 2. MAIN HERO ISLAMIC CARD (MATCHING CRESCENT JEWEL GREEN & GOLD PALETTE) */}
+        {/* 2. MAIN HERO ISLAMIC CARD */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -400,11 +442,11 @@ export default function CalendarDetail() {
               </h2>
 
               <p className="text-xs sm:text-sm font-bold font-cairo text-emerald-100/90">
-                المقابل الميلادي: {selectedDayData.gregorian?.date || `22-07-2026`} ({selectedDayData.hijri?.weekday?.ar || 'الأربعاء'})
+                المقابل الميلادي: {selectedDayData.gregorian?.date || `2026-07-20`} ({selectedDayData.hijri?.weekday?.ar || 'الإثنين'})
               </p>
             </div>
 
-            {/* RIGHT SIDE: Interactive Crescent Calendar Icon from Resources */}
+            {/* RIGHT SIDE: Interactive Crescent Calendar Icon */}
             <Interactive3DHijriIllustration />
 
           </div>
@@ -416,7 +458,7 @@ export default function CalendarDetail() {
             <div className="bg-[#002814]/50 backdrop-blur-md border border-[#E5A921]/30 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 transition-colors">
               <span className="text-[10px] sm:text-xs text-emerald-100/80 font-bold font-cairo">اليوم</span>
               <span className="text-xs sm:text-sm font-black font-cairo tracking-tight text-white">
-                {selectedDayData.hijri?.weekday?.ar || 'الأربعاء'}
+                {selectedDayData.hijri?.weekday?.ar || 'الإثنين'}
               </span>
             </div>
 
@@ -440,7 +482,7 @@ export default function CalendarDetail() {
             <div className="bg-[#002814]/50 backdrop-blur-md border border-[#E5A921]/30 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 transition-colors">
               <span className="text-[10px] sm:text-xs text-emerald-100/80 font-bold font-cairo">المناسبات</span>
               <span className="text-xs sm:text-sm font-black font-cairo tracking-tight text-[#FFF2A8]">
-                {monthEventsList.length} مناسبة
+                {currentMonthEvents.length} مناسبة
               </span>
             </div>
 
@@ -462,7 +504,7 @@ export default function CalendarDetail() {
                 بداية الشهر
               </span>
               <span className="text-xs sm:text-sm font-black text-slate-900 font-cairo tracking-tight">
-                الأربعاء (1 {currentMonthName})
+                {calendarData[0]?.hijri?.weekday?.ar || 'الأربعاء'} (1 {currentMonthName})
               </span>
             </div>
 
@@ -483,7 +525,7 @@ export default function CalendarDetail() {
                 نهاية الشهر
               </span>
               <span className="text-xs sm:text-sm font-black text-slate-900 font-cairo tracking-tight">
-                الخميس (30 {currentMonthName})
+                {calendarData[calendarData.length - 1]?.hijri?.weekday?.ar || 'الخميس'} ({calendarData.length || 30} {currentMonthName})
               </span>
             </div>
 
@@ -505,7 +547,8 @@ export default function CalendarDetail() {
           <div className="relative bg-gradient-to-r from-[#015028] via-[#0B6B3D] to-[#015028] rounded-full px-3 py-1.5 sm:py-2 shadow-[0_4px_20px_rgba(1,80,40,0.25)] border-2 border-[#E5A921]/70 flex items-center justify-between text-white">
             <button 
               onClick={() => changeMonth(1)}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-[#E5A921]/30 border border-[#E5A921]/40 text-amber-200 flex items-center justify-center transition-colors shrink-0 active:scale-95"
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-[#E5A921]/30 border border-[#E5A921]/40 text-amber-200 flex items-center justify-center transition-colors shrink-0 active:scale-95 cursor-pointer"
+              title="الشهر التالي"
             >
               <ChevronRight className="w-4 h-4 stroke-[2.5]" />
             </button>
@@ -524,7 +567,8 @@ export default function CalendarDetail() {
 
             <button 
               onClick={() => changeMonth(-1)}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-[#E5A921]/30 border border-[#E5A921]/40 text-amber-200 flex items-center justify-center transition-colors shrink-0 active:scale-95"
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-[#E5A921]/30 border border-[#E5A921]/40 text-amber-200 flex items-center justify-center transition-colors shrink-0 active:scale-95 cursor-pointer"
+              title="الشهر السابق"
             >
               <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
             </button>
@@ -548,7 +592,7 @@ export default function CalendarDetail() {
             )}
 
             <div className="grid grid-cols-7 gap-y-2 gap-x-1 text-center">
-              {Array.from({ length: 30 }).map((_, idx) => {
+              {Array.from({ length: calendarData.length || 30 }).map((_, idx) => {
                 const hDayNum = idx + 1;
                 let gDayNum = 15 + idx;
                 if (gDayNum > 31) {
@@ -556,21 +600,39 @@ export default function CalendarDetail() {
                 }
 
                 const isSelected = selectedDayNumber === hDayNum;
-                const isDay6WithDot = hDayNum === 6;
+                const isToday = todayHijri && todayHijri.day === hDayNum && todayHijri.month === hijriMonth && todayHijri.year === hijriYear;
+                
+                // Check if this day has an event/occasion
+                const dayEvs = currentMonthEvents.filter(ev => ev.days.includes(hDayNum));
+                const hasEvent = dayEvs.length > 0;
 
                 return (
                   <button 
                     key={`hday-${hDayNum}`}
                     onClick={() => setSelectedDayNumber(hDayNum)}
-                    className="relative aspect-square flex flex-col items-center justify-center transition-all duration-150 group"
+                    className="relative aspect-square flex flex-col items-center justify-center transition-all duration-150 group cursor-pointer"
                   >
-                    {/* Gold Dot Indicator */}
-                    {isDay6WithDot && !isSelected && (
-                      <div className="absolute top-0 right-1.5 w-1.5 h-1.5 rounded-full bg-[#E5A921] shadow-2xs" />
+                    {/* Event Indicator Dot / Star Badge (Top-Right) */}
+                    {hasEvent && (
+                      <span className="absolute top-0.5 right-0.5 flex h-2.5 w-2.5 z-10" title="يوجد مناسبة">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#E5A921] opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#E5A921] border border-white dark:border-slate-900 shadow-xs"></span>
+                      </span>
+                    )}
+
+                    {/* Today Badge (Top-Left) - Distinct design, stays visible even if hasEvent is true */}
+                    {isToday && (
+                      <span className="absolute -top-1.5 -left-1 z-20 flex items-center justify-center bg-[#015028] text-[#FFF2A8] font-black text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-full border border-[#E5A921] shadow-md font-cairo leading-none tracking-tight animate-pulse" title="اليوم الحالي">
+                        اليوم
+                      </span>
                     )}
 
                     {isSelected ? (
-                      <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] text-white ring-2 ring-[#E5A921] shadow-[0_4px_16px_rgba(229,169,33,0.4)] flex flex-col items-center justify-center transition-transform scale-105">
+                      <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] text-white flex flex-col items-center justify-center transition-transform scale-105 ${
+                        isToday 
+                          ? 'ring-3 ring-emerald-400 ring-offset-2 ring-offset-emerald-50 shadow-[0_0_16px_rgba(16,185,129,0.5)]' 
+                          : 'ring-2 ring-[#E5A921] shadow-[0_4px_16px_rgba(229,169,33,0.4)]'
+                      }`}>
                         <span className="text-xs sm:text-sm font-black font-cairo leading-none text-[#FFF2A8]">
                           {hDayNum}
                         </span>
@@ -579,11 +641,17 @@ export default function CalendarDetail() {
                         </span>
                       </div>
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center rounded-xl hover:bg-[#EBF7EF] transition-colors">
-                        <span className="text-xs sm:text-sm font-black font-cairo text-slate-800 leading-none">
+                      <div className={`w-full h-full flex flex-col items-center justify-center rounded-xl transition-all ${
+                        isToday
+                          ? 'bg-gradient-to-br from-[#E6F7ED] via-[#D8F2E2] to-[#C7EBD3] border-2 border-emerald-600 text-[#015028] shadow-md ring-2 ring-emerald-500/40'
+                          : hasEvent 
+                            ? 'bg-[#FEF9E6] dark:bg-amber-950/40 border-2 border-[#E5A921]/70 text-[#015028] shadow-xs hover:bg-[#FDEEB3]' 
+                            : 'hover:bg-[#EBF7EF]'
+                      }`}>
+                        <span className={`text-xs sm:text-sm font-black font-cairo leading-none ${isToday ? 'text-emerald-950 font-black' : hasEvent ? 'text-[#015028]' : 'text-slate-800'}`}>
                           {hDayNum}
                         </span>
-                        <span className="text-[8px] sm:text-[9px] font-bold text-slate-400 mt-0.5 leading-none">
+                        <span className={`text-[8px] sm:text-[9px] font-bold mt-0.5 leading-none ${isToday ? 'text-emerald-700 font-extrabold' : hasEvent ? 'text-[#A36A00]' : 'text-slate-400'}`}>
                           {gDayNum}
                         </span>
                       </div>
@@ -593,9 +661,59 @@ export default function CalendarDetail() {
               })}
             </div>
           </div>
+
+          {/* 5. OCCASION DETAILS FOR SELECTED DAY (IF ANY) */}
+          <AnimatePresence mode="wait">
+            {selectedDayEvents.length > 0 && (
+              <motion.div 
+                key={`day-ev-${selectedDayNumber}`}
+                initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                className="bg-gradient-to-br from-[#FFFDF2] via-[#FEF9E6] to-[#FDEEB3] border-2 border-[#E5A921] rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-md space-y-2.5 text-right mt-3"
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-[#E5A921]/30">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#E5A921] shrink-0" />
+                    <span className="text-xs sm:text-sm font-black text-[#015028] font-cairo">
+                      مناسبة هذا اليوم ({selectedDayNumber} {currentMonthName})
+                    </span>
+                  </div>
+                  <span className="bg-[#0B6B3D] text-[#FFF2A8] text-[10px] font-black px-2.5 py-0.5 rounded-full border border-[#E5A921]/40">
+                    {selectedDayEvents[0].category === "national" ? "مناسبة وطنية" : "مناسبة دينية"}
+                  </span>
+                </div>
+
+                {/* Details */}
+                {selectedDayEvents.map((ev, i) => (
+                  <div key={i} className="space-y-1.5 pt-0.5">
+                    <h4 className="text-sm sm:text-base font-black text-slate-900 font-cairo leading-snug">
+                      {ev.title}
+                    </h4>
+                    {ev.description && (
+                      <p className="text-xs font-medium text-slate-700 font-cairo leading-relaxed">
+                        {ev.description}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 pt-1">
+                      <span className="text-[#015028]">التاريخ: {ev.hijriDate} {ev.gregorianDate ? `(${ev.gregorianDate})` : ''}</span>
+                      <Link 
+                        to="/events" 
+                        className="inline-flex items-center gap-1 text-[#015028] hover:text-[#0B6B3D] font-extrabold text-[11px] hover:underline"
+                      >
+                        <span>عرض في قسم المناسبات</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
-        {/* 5. UPCOMING EVENTS SECTION */}
+        {/* 6. UPCOMING EVENTS IN THIS MONTH SECTION */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -603,48 +721,74 @@ export default function CalendarDetail() {
           className="bg-white/90 backdrop-blur-md rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 border border-[#0B6B3D]/20 shadow-[0_8px_30px_rgba(1,80,40,0.06)] overflow-hidden space-y-3"
         >
           {/* Header Row */}
-          <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E4F4EB] text-[#015028] flex items-center justify-center shrink-0 border border-[#E5A921]/30">
-              <Bookmark className="w-4 h-4 text-[#E5A921]" />
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E4F4EB] text-[#015028] flex items-center justify-center shrink-0 border border-[#E5A921]/30">
+                <Bookmark className="w-4 h-4 text-[#E5A921]" />
+              </div>
+              <h3 className="text-sm sm:text-base font-black text-[#015028] font-cairo">
+                المناسبات في هذا الشهر ({currentMonthName})
+              </h3>
             </div>
-            <h3 className="text-sm sm:text-base font-black text-[#015028] font-cairo">
-              المناسبات في هذا الشهر
-            </h3>
+            
+            <span className="text-xs font-black text-[#A36A00] bg-[#FFFDF2] border border-[#E5A921]/40 px-2.5 py-1 rounded-full font-cairo">
+              {currentMonthEvents.length} مناسبة
+            </span>
           </div>
 
           {/* Events List Cards */}
-          <div className="space-y-2">
-            {monthEventsList.map((ev, idx) => (
-              <div 
-                key={idx}
-                className="bg-gradient-to-r from-[#FAFCFA] to-[#F0FAF4] rounded-xl p-2.5 sm:p-3 border border-[#0B6B3D]/15 flex items-center justify-between gap-2.5 hover:border-[#E5A921]/60 hover:shadow-xs transition-all cursor-pointer group"
-              >
-                {/* Right Tag: Hijri Day/Month Badge */}
-                <div className="bg-gradient-to-b from-[#0B6B3D] to-[#015028] text-white px-2.5 py-1.5 rounded-lg flex flex-col items-center justify-center shrink-0 min-w-[64px] text-center font-cairo border border-[#E5A921]/40 shadow-xs">
-                  <span className="text-sm font-black leading-none text-[#FFF2A8]">{ev.hijriDayTag}</span>
-                  <span className="text-[10px] font-bold leading-none mt-0.5 text-emerald-100">{ev.hijriMonthTag}</span>
-                </div>
+          {currentMonthEvents.length === 0 ? (
+            <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-2 bg-[#FAFCFA] rounded-2xl border border-dashed border-slate-200">
+              <CalendarDays className="w-8 h-8 text-slate-300" />
+              <p className="text-xs sm:text-sm font-bold text-slate-500 font-cairo">
+                لا توجد مناسبات مسجلة في شهر {currentMonthName}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {currentMonthEvents.map((ev, idx) => {
+                const isSelectedDayEv = ev.days.includes(selectedDayNumber);
+                return (
+                  <div 
+                    key={idx}
+                    onClick={() => setSelectedDayNumber(ev.primaryDay)}
+                    className={`rounded-xl p-2.5 sm:p-3 border flex items-center justify-between gap-2.5 transition-all cursor-pointer group ${
+                      isSelectedDayEv
+                        ? 'bg-[#FEF9E6] border-2 border-[#E5A921] shadow-md ring-2 ring-[#E5A921]/30 scale-[1.01]'
+                        : 'bg-gradient-to-r from-[#FAFCFA] to-[#F0FAF4] border-[#0B6B3D]/15 hover:border-[#E5A921]/60 hover:shadow-xs'
+                    }`}
+                  >
+                    {/* Right Tag: Hijri Day/Month Badge */}
+                    <div className="bg-gradient-to-b from-[#0B6B3D] to-[#015028] text-white px-2.5 py-1.5 rounded-lg flex flex-col items-center justify-center shrink-0 min-w-[64px] text-center font-cairo border border-[#E5A921]/40 shadow-xs">
+                      <span className="text-sm font-black leading-none text-[#FFF2A8]">{ev.hijriDayTag}</span>
+                      <span className="text-[10px] font-bold leading-none mt-0.5 text-emerald-100">{ev.hijriMonthTag}</span>
+                    </div>
 
-                {/* Details */}
-                <div className="flex flex-col flex-1 text-right">
-                  <span className="font-black text-slate-800 text-xs sm:text-sm font-cairo group-hover:text-[#015028] transition-colors">
-                    {ev.title}
-                  </span>
-                  <span className="text-slate-400 text-[10px] sm:text-xs font-bold mt-0.5">
-                    {ev.dateStr}
-                  </span>
-                </div>
+                    {/* Details */}
+                    <div className="flex flex-col flex-1 text-right space-y-0.5">
+                      <span className="font-black text-slate-800 text-xs sm:text-sm font-cairo group-hover:text-[#015028] transition-colors leading-snug">
+                        {ev.title}
+                      </span>
+                      {ev.gregorianDate && (
+                        <span className="text-slate-500 text-[10px] sm:text-xs font-bold">
+                          المقابل: {ev.gregorianDate}
+                        </span>
+                      )}
+                    </div>
 
-                {/* Left Icon */}
-                <div className="w-8 h-8 rounded-full bg-[#015028] text-[#FFF2A8] flex items-center justify-center shrink-0 shadow-xs border border-[#E5A921]/40 group-hover:scale-105 transition-transform">
-                  <Moon className="w-4 h-4 fill-[#FFF2A8]" />
-                </div>
-              </div>
-            ))}
-          </div>
+                    {/* Left Icon */}
+                    <div className="w-8 h-8 rounded-full bg-[#015028] text-[#FFF2A8] flex items-center justify-center shrink-0 shadow-xs border border-[#E5A921]/40 group-hover:scale-105 transition-transform">
+                      <Moon className="w-4 h-4 fill-[#FFF2A8]" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </motion.div>
 
       </div>
     </div>
   );
 }
+

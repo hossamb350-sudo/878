@@ -121,8 +121,7 @@ function NotificationCenterDeprecated() {
 
 function UrgentNewsBanner() {
   const [urgentNewsList, setUrgentNewsList] = useState<UrgentNews[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [tickerSpeed, setTickerSpeed] = useState(10); // Default speed in seconds
+  const [tickerSpeed, setTickerSpeed] = useState(25);
   const [isVisible, setIsVisible] = useState(true);
   const audioContextReft = useRef<AudioContext | null>(null);
 
@@ -136,7 +135,7 @@ function UrgentNewsBanner() {
       const gainNode = ctx.createGain();
       
       osc.type = "sine";
-      osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.5);
       
       gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
@@ -154,11 +153,23 @@ function UrgentNewsBanner() {
   useEffect(() => {
     let active = true;
 
-    // Sync active urgent news
-    const unsubPromise = SyncService.syncCollection<UrgentNews>("urgentNews", (dataList) => {
+    // Sync active urgent news (filtering out manually cancelled or expired items) using real-time listener
+    const q = query(
+      collection(db, "urgentNews"),
+      orderBy("createdAt", "desc"),
+      limit(20)
+    );
+
+    const unsubUrgent = onSnapshot(q, (snap) => {
       if (!active) return;
       const now = Date.now();
-      const validItems = dataList.filter(item => item.expiresAt > now);
+      const validItems = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as UrgentNews))
+        .filter(item => {
+          const isNotExpired = !item.expiresAt || item.expiresAt > now;
+          const isNotCancelled = item.isActive !== false;
+          return isNotExpired && isNotCancelled;
+        });
+      
       setUrgentNewsList(validItems);
       
       // Notify for very fresh news
@@ -168,14 +179,16 @@ function UrgentNewsBanner() {
           playAlertSound();
         }
       }
-    }, { orderByField: "createdAt", orderDirection: "desc", limit: 10 });
+    }, (error) => {
+      console.error("Error fetching urgent news:", error);
+    });
 
     // Load speed settings
     const loadSettings = async () => {
       try {
         const docSnap = await getDoc(doc(db, "settings", "urgentNews"));
         if (docSnap.exists()) {
-          setTickerSpeed(docSnap.data().speed || 10);
+          setTickerSpeed(docSnap.data().speed || 25);
         }
       } catch (e) {}
     };
@@ -183,86 +196,90 @@ function UrgentNewsBanner() {
 
     return () => {
       active = false;
-      unsubPromise.then(unsub => unsub());
+      unsubUrgent();
     };
   }, []);
 
-  // Ticker rotation logic
-  useEffect(() => {
-    if (urgentNewsList.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % urgentNewsList.length);
-    }, tickerSpeed * 1000);
-
-    return () => clearInterval(interval);
-  }, [urgentNewsList.length, tickerSpeed]);
-
   if (!isVisible || urgentNewsList.length === 0) return null;
 
-  const currentNews = urgentNewsList[currentIndex];
+  // Reverse the items so that when moving left-to-right in an LTR container, they appear in chronological order
+  const reversedNews = [...urgentNewsList].reverse();
+  const displayItems = [...reversedNews, ...reversedNews, ...reversedNews, ...reversedNews];
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       <motion.div 
-        key={currentNews?.id || 'empty'}
-        initial={{ y: -100, opacity: 0 }}
+        key="urgent-news-ticker-container"
+        initial={{ y: -60, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -100, opacity: 0 }}
+        exit={{ y: -60, opacity: 0 }}
         transition={{ type: "spring", stiffness: 120, damping: 20 }}
-        className="bg-red-700 text-white shadow-2xl relative z-50 border-b-4 border-red-800 w-full"
+        className="bg-gradient-to-r from-red-800 via-red-700 to-red-900 text-white shadow-2xl relative z-50 border-b-2 sm:border-b-4 border-red-900 w-full overflow-hidden select-none"
+        dir="rtl"
       >
-        <div className="w-full relative px-6 py-3 md:py-4" dir="rtl">
-          {/* Close button - makes it optional for the user to keep the banner */}
-          <button 
-            onClick={() => setIsVisible(false)} 
-            className="absolute top-3 left-4 p-2 hover:bg-white/10 rounded-full transition-colors z-10"
-            title="إغلاق التنبيه"
-          >
-            <X className="w-5 h-5" />
-          </button>
+        <div className="w-full flex items-center justify-between relative py-2 sm:py-2.5">
+          {/* Right Badge: Fixed "عاجل" Banner Header */}
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-l from-red-950 via-red-900 to-red-800 text-white px-3 sm:px-5 py-2 sm:py-2.5 z-20 shadow-xl border-l border-white/20 shrink-0 font-cairo">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-400"></span>
+            </span>
+            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300 animate-pulse" />
+            <span className="font-black text-xs sm:text-sm uppercase tracking-wider whitespace-nowrap">
+              خبر عاجل
+            </span>
+          </div>
 
-          <div className="flex flex-col items-start gap-2 text-right">
-            {/* Ticker Label (Vertical First) */}
-            <div className="flex items-center gap-2 bg-white text-red-700 px-3 py-1 rounded font-black text-xs sm:text-sm uppercase tracking-widest shadow-lg">
-              <AlertTriangle className="w-4 h-4" />
-              عاجل
-            </div>
+          {/* Center Continuous RTL Marquee / Ticker */}
+          <div className="flex-1 overflow-hidden relative flex items-center mx-2 sm:mx-4 group" dir="ltr">
+            <motion.div
+              className="flex items-center whitespace-nowrap min-w-max"
+              animate={{ x: ["-50%", "0%"] }}
+              transition={{
+                repeat: Infinity,
+                ease: "linear",
+                duration: tickerSpeed * 2,
+              }}
+            >
+              {displayItems.map((newsItem, index) => (
+                <React.Fragment key={`${newsItem.id}-${index}`}>
+                  {/* Full News Text (No Cutoffs or Truncation) */}
+                  <span className="font-black text-xs sm:text-sm md:text-base text-white tracking-wide leading-none font-cairo whitespace-nowrap px-2 drop-shadow-sm" dir="rtl">
+                    {newsItem.text}
+                  </span>
 
-            {/* News Text Area */}
-            <div className="w-full relative overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentIndex}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="w-full"
-                >
-                  <p className="font-bold text-lg sm:text-xl md:text-2xl leading-relaxed text-white drop-shadow-sm">
-                    {currentNews?.text}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
+                  {/* Visual Separator: Platform Logo Emblem (Always between items) */}
+                  <div className="inline-flex items-center gap-2 px-4 sm:px-6 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center justify-center p-1 sm:p-1.5 group-hover:scale-110 transition-transform">
+                      <img 
+                        src="/logo3.png" 
+                        alt="شعار منصة تعز" 
+                        className="w-6 h-6 sm:w-7 sm:h-7 object-contain" 
+                      />
+                    </div>
+                  </div>
+                </React.Fragment>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Left Close Button (User Discard) */}
+          <div className="z-20 pl-2 sm:pl-4 pr-1 shrink-0 bg-gradient-to-r from-red-900 to-transparent">
+            <button 
+              onClick={() => setIsVisible(false)} 
+              className="p-1.5 hover:bg-white/20 rounded-full transition-colors text-white/80 hover:text-white"
+              title="إغلاق الشريط"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
           </div>
         </div>
-
-        {/* Dynamic Progress Bar */}
-        <motion.div 
-          key={`progress-${currentIndex}`}
-          initial={{ scaleX: 1 }}
-          animate={{ scaleX: 0 }}
-          transition={{ duration: tickerSpeed, ease: "linear" }}
-          className="absolute bottom-0 right-0 left-0 h-1.5 bg-white/40 origin-right"
-        />
       </motion.div>
     </AnimatePresence>
   );
 }
 
-export function Layout() {
+export function Layout({ children }: { children?: React.ReactNode }) {
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -310,7 +327,7 @@ export function Layout() {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-y-auto pb-20 min-w-0 w-full overflow-x-hidden">
-        <Outlet />
+        {children || <Outlet />}
       </main>
 
       {/* Global Mini Audio Player for background playback when not in Quran page */}

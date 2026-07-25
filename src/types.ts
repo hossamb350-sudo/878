@@ -34,6 +34,7 @@ export interface UrgentNews {
   text: string;
   createdAt: number;
   expiresAt: number;
+  isActive?: boolean;
 }
 
 export interface VideoItem {
@@ -55,6 +56,7 @@ export interface LiveStream {
   name?: string;
   iconUrl?: string;
   url?: string;
+  streamUrl?: string;
   isActive: boolean;
   createdAt?: number;
 }
@@ -219,6 +221,7 @@ export interface Article {
   content: string;
   category: string;
   imageUrl?: string;
+  additionalImages?: string[];
   authorName: string;
   authorPhoto?: string;
   authorId?: string;

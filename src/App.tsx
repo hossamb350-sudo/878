@@ -31,29 +31,28 @@ import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 
 function AnimatedRoutes() {
   const location = useLocation();
+
   return (
     <AnimatePresence mode="wait">
       {/* @ts-ignore */}
       <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="search" element={<Search />} />
-          <Route path="news/:id" element={<NewsDetail />} />
-          <Route path="articles" element={<Articles />} />
-          <Route path="articles/:id" element={<ArticleDetail />} />
-          <Route path="watch" element={<Watch />} />
-          <Route path="watch/:id" element={<WatchItem />} />
-          <Route path="leader" element={<Leader />} />
-          <Route path="leader/:id" element={<LeaderItem />} />
-          <Route path="quran" element={<Quran />} />
-          <Route path="events" element={<Events />} />
-          <Route path="events/activity/:id" element={<ActivityDetail />} />
-          <Route path="weather" element={<WeatherDetail />} />
-          <Route path="prayer-times" element={<PrayerTimesDetail />} />
-          <Route path="calendar" element={<CalendarDetail />} />
-          <Route path="calendar/:month/:year" element={<CalendarDetail />} />
-          <Route path="admin" element={<Admin />} />
-        </Route>
+        <Route index element={<Home />} />
+        <Route path="search" element={<Search />} />
+        <Route path="news/:id" element={<NewsDetail />} />
+        <Route path="articles" element={<Articles />} />
+        <Route path="articles/:id" element={<ArticleDetail />} />
+        <Route path="watch" element={<Watch />} />
+        <Route path="watch/:id" element={<WatchItem />} />
+        <Route path="leader" element={<Leader />} />
+        <Route path="leader/:id" element={<LeaderItem />} />
+        <Route path="quran" element={<Quran />} />
+        <Route path="events" element={<Events />} />
+        <Route path="events/activity/:id" element={<ActivityDetail />} />
+        <Route path="weather" element={<WeatherDetail />} />
+        <Route path="prayer-times" element={<PrayerTimesDetail />} />
+        <Route path="calendar" element={<CalendarDetail />} />
+        <Route path="calendar/:month/:year" element={<CalendarDetail />} />
+        <Route path="admin" element={<Admin />} />
       </Routes>
     </AnimatePresence>
   );
@@ -81,7 +80,9 @@ export default function App() {
       <QuranAudioProvider>
         <NavigationController />
         <div className="relative min-h-screen">
-          <AnimatedRoutes />
+          <Layout>
+            <AnimatedRoutes />
+          </Layout>
           <AnimatePresence>
             {showSplash && (
               <motion.div

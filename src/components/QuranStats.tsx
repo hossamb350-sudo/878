@@ -604,7 +604,7 @@ export function QuranStats({
                       <div
                         className={`p-3 border-r-4 rounded-l-xl leading-relaxed text-sm ${themeColors[h.color as "yellow" | "green" | "underline"] || "bg-surface-hover border-border-light"}`}
                       >
-                        {lessonObj
+                        {lessonObj?.content
                           ? lessonObj.content
                               .split(/\n\s*\n/)
                               .map((p) => p.trim())

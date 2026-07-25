@@ -49,6 +49,22 @@ export function NewsDetail() {
   const [copied, setCopied] = useState(false);
   const [imgGalleryIndex, setImgGalleryIndex] = useState<number | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Combine primary image and additional images into unified array
+  const allImages = news ? [
+    ...(news.imageUrl ? [news.imageUrl] : []),
+    ...(news.additionalImages || [])
+  ].filter(Boolean) as string[] : [];
+
+  // Auto slide interval for the news hero card
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % allImages.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [allImages.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -123,12 +139,12 @@ export function NewsDetail() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (imgGalleryIndex === null || !news?.additionalImages) return;
+      if (imgGalleryIndex === null || allImages.length === 0) return;
       
       if (e.key === "Escape") {
         setImgGalleryIndex(null);
       } else if (e.key === "ArrowLeft") {
-        if (imgGalleryIndex < news.additionalImages.length - 1) {
+        if (imgGalleryIndex < allImages.length - 1) {
           setImgGalleryIndex(imgGalleryIndex + 1);
         }
       } else if (e.key === "ArrowRight") {
@@ -140,7 +156,7 @@ export function NewsDetail() {
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [imgGalleryIndex, news]);
+  }, [imgGalleryIndex, allImages]);
 
   const toggleBookmark = () => {
     if (!news) return;
@@ -265,27 +281,69 @@ export function NewsDetail() {
       </div>
 
       <div className="max-w-[760px] mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        {/* News Card Header - Matching the Landing Page's Featured Card EXACTLY */}
+        {/* News Card Header - Integrated Animated Slider with Fixed News Elements */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full h-[376px] rounded-[24px] overflow-hidden border border-border-light shadow-medium mb-6 select-none"
+          className="relative w-full h-[376px] sm:h-[420px] rounded-[24px] overflow-hidden border border-border-light shadow-medium mb-6 select-none group"
         >
-          {news.imageUrl ? (
-            <img 
-              src={news.imageUrl} 
-              alt={news.title} 
-              className="w-full h-full object-cover" 
-            />
-          ) : (
-            <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-              <Newspaper className="w-12 h-12 text-slate-300" />
+          {/* Sliding Background Images Layer */}
+          <div 
+            className="absolute inset-0 w-full h-full cursor-zoom-in"
+            onClick={() => setImgGalleryIndex(currentSlide)}
+            title="انقر لتكبير الصورة"
+          >
+            {allImages.length > 0 ? (
+              <AnimatePresence mode="popLayout">
+                <motion.img 
+                  key={currentSlide}
+                  src={allImages[currentSlide]} 
+                  alt={news.title} 
+                  className="w-full h-full object-cover absolute inset-0" 
+                  initial={{ opacity: 0, scale: 1.05 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                />
+              </AnimatePresence>
+            ) : (
+              <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                <Newspaper className="w-12 h-12 text-slate-300" />
+              </div>
+            )}
+          </div>
+          
+          {/* Fixed Dark Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.88)] via-[rgba(0,0,0,0.42)] to-transparent pointer-events-none"></div>
+
+          {/* Left/Right manual slide buttons on hover */}
+          {allImages.length > 1 && (
+            <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+                }}
+                className="p-2 bg-black/40 hover:bg-black/70 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
+                title="الصورة السابقة"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide((prev) => (prev + 1) % allImages.length);
+                }}
+                className="p-2 bg-black/40 hover:bg-black/70 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
+                title="الصورة التالية"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
             </div>
           )}
-          
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.85)] via-[rgba(0,0,0,0.4)] to-transparent"></div>
-          
-          <div className="absolute top-[16px] left-0">
+
+          {/* Fixed Category / Live Badge at Top Left */}
+          <div className="absolute top-[16px] left-0 z-10 pointer-events-none">
             {news.isBreaking ? (
               <span className="bg-[#D32027] text-white text-[13px] font-bold font-ibm px-3 h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-lg">
                 <span className="relative flex h-2 w-2">
@@ -306,7 +364,8 @@ export function NewsDetail() {
             )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-[20px] pb-[16px] flex flex-col justify-end text-right">
+          {/* Fixed News Card Footer Details Over the Slider */}
+          <div className="absolute bottom-0 left-0 right-0 p-[20px] pb-[16px] flex flex-col justify-end text-right z-10 pointer-events-none">
             {/* Overlaid Title */}
             <h1 
               className="font-bold text-white leading-normal drop-shadow mb-3 tracking-normal max-w-full font-cairo text-[18px]"
@@ -322,9 +381,9 @@ export function NewsDetail() {
                 </div>
                 <div className="flex flex-col text-right">
                   <span className="text-[13px] font-bold font-ibm text-white leading-tight">{news.author || "رئيس التحرير"}</span>
-                  <span className="text-[10px] text-red-600 font-semibold flex items-center gap-1 mt-0.5" style={{ direction: "ltr" }}>
+                  <span className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-0.5" style={{ direction: "ltr" }}>
                     <span>{news.views || 0} مشاهدة</span>
-                    <Eye className="w-3 h-3 text-red-600" />
+                    <Eye className="w-3 h-3 text-red-500" />
                   </span>
                 </div>
               </div>
@@ -333,6 +392,21 @@ export function NewsDetail() {
                 <span className="text-[10px] text-slate-400 mt-[2px]">{mDate} • {mTime}</span>
               </div>
             </div>
+
+            {/* Slider Dots indicators */}
+            {allImages.length > 1 && (
+              <div className="flex items-center justify-center gap-1.5 mt-2.5 pointer-events-auto">
+                {allImages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      idx === currentSlide ? "w-6 bg-red-600" : "w-1.5 bg-white/40 hover:bg-white/70"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -415,186 +489,15 @@ export function NewsDetail() {
           </div>
         )}
 
-        {/* Image Gallery Section */}
-        {news.additionalImages && news.additionalImages.length > 0 && (
-          <div className="mb-12 pt-8 border-t border-border-light" style={{ direction: "rtl" }}>
-             <h3 className="font-bold text-lg mb-6 text-text-primary font-ibm">معرض الصور</h3>
-             {(() => {
-                const images = news.additionalImages;
-                const count = images.length;
-                const handleImageClick = (index: number) => {
-                  setImgGalleryIndex(index);
-                };
-
-                if (count === 1) {
-                  return (
-                    <div className="w-full overflow-hidden rounded-2xl border border-border-light bg-slate-100 aspect-video relative group">
-                      <button
-                        onClick={() => handleImageClick(0)}
-                        className="w-full h-full block cursor-zoom-in overflow-hidden"
-                      >
-                        <img
-                          src={images[0]}
-                          alt="صورة المعرض 1"
-                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                          loading="lazy"
-                        />
-                      </button>
-                    </div>
-                  );
-                }
-
-                if (count === 2) {
-                  return (
-                    <div className="grid grid-cols-2 gap-3 overflow-hidden rounded-2xl border border-border-light bg-slate-100 aspect-[16/10]">
-                      {images.slice(0, 2).map((img, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => handleImageClick(idx)}
-                          className="w-full h-full cursor-zoom-in overflow-hidden relative group"
-                        >
-                          <img
-                            src={img}
-                            alt={`صورة المعرض ${idx + 1}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            loading="lazy"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  );
-                }
-
-                if (count === 3) {
-                  return (
-                    <div className="grid grid-cols-3 gap-3 overflow-hidden rounded-2xl border border-border-light bg-slate-100 aspect-[16/10]">
-                      <button
-                        onClick={() => handleImageClick(0)}
-                        className="col-span-2 w-full h-full cursor-zoom-in overflow-hidden relative group"
-                      >
-                        <img
-                          src={images[0]}
-                          alt="صورة المعرض رئيسية"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                      </button>
-                      <div className="col-span-1 grid grid-rows-2 gap-3 h-full">
-                        {images.slice(1, 3).map((img, idx) => (
-                          <button
-                            key={idx + 1}
-                            onClick={() => handleImageClick(idx + 1)}
-                            className="w-full h-full cursor-zoom-in overflow-hidden relative group"
-                          >
-                            <img
-                              src={img}
-                              alt={`صورة المعرض ${idx + 2}`}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              loading="lazy"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }
-
-                if (count === 4) {
-                  return (
-                    <div className="grid grid-cols-4 gap-3 overflow-hidden rounded-2xl border border-border-light bg-slate-100 aspect-[16/10]">
-                      <button
-                        onClick={() => handleImageClick(0)}
-                        className="col-span-2 w-full h-full cursor-zoom-in overflow-hidden relative group"
-                      >
-                        <img
-                          src={images[0]}
-                          alt="صورة المعرض رئيسية"
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                      </button>
-                      <div className="col-span-2 grid grid-cols-1 grid-rows-3 gap-3 h-full">
-                        {images.slice(1, 4).map((img, idx) => (
-                          <button
-                            key={idx + 1}
-                            onClick={() => handleImageClick(idx + 1)}
-                            className="w-full h-full cursor-zoom-in overflow-hidden relative group"
-                          >
-                            <img
-                              src={img}
-                              alt={`صورة المعرض ${idx + 2}`}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              loading="lazy"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="grid grid-cols-4 gap-3 overflow-hidden rounded-2xl border border-border-light bg-slate-100 aspect-[16/10]">
-                    <button
-                      onClick={() => handleImageClick(0)}
-                      className="col-span-2 row-span-2 w-full h-full cursor-zoom-in overflow-hidden relative group"
-                    >
-                      <img
-                        src={images[0]}
-                        alt="صورة المعرض رئيسية"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        loading="lazy"
-                      />
-                    </button>
-                    <div className="col-span-2 grid grid-cols-2 grid-rows-2 gap-3 h-full">
-                      {images.slice(1, 4).map((img, idx) => (
-                        <button
-                          key={idx + 1}
-                          onClick={() => handleImageClick(idx + 1)}
-                          className="w-full h-full cursor-zoom-in overflow-hidden relative group"
-                        >
-                          <img
-                            src={img}
-                            alt={`صورة المعرض ${idx + 2}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            loading="lazy"
-                          />
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => handleImageClick(4)}
-                        className="w-full h-full cursor-zoom-in overflow-hidden relative group bg-black"
-                      >
-                        <img
-                          src={images[4]}
-                          alt="صورة المعرض إضافية"
-                          className="w-full h-full object-cover opacity-60 group-hover:opacity-50 group-hover:scale-105 transition-all duration-500"
-                          loading="lazy"
-                        />
-                        {count > 5 && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                            <span className="text-white text-lg font-bold font-ibm tracking-wide">
-                              +{count - 4}
-                            </span>
-                          </div>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                );
-             })()}
-          </div>
-        )}
-
         {/* Full Screen Image Gallery Modal */}
-        {imgGalleryIndex !== null && news.additionalImages && (
+        {imgGalleryIndex !== null && allImages.length > 0 && (
           <div 
             className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
             onClick={() => setImgGalleryIndex(null)}
           >
                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-[210]" onClick={(e) => e.stopPropagation()}>
-                  <span className="text-white/60 font-medium text-sm drop-shadow-md font-ibm">
-                    {imgGalleryIndex + 1} / {news.additionalImages.length}
+                  <span className="text-white/70 font-bold text-sm drop-shadow-md font-ibm">
+                    {imgGalleryIndex + 1} / {allImages.length}
                   </span>
                   <button onClick={() => setImgGalleryIndex(null)} className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer">
                     <X className="w-6 h-6" />
@@ -605,7 +508,7 @@ export function NewsDetail() {
                   <AnimatePresence mode="popLayout">
                     <motion.img 
                       key={imgGalleryIndex}
-                      src={news.additionalImages[imgGalleryIndex]} 
+                      src={allImages[imgGalleryIndex]} 
                       alt={`Gallery image ${imgGalleryIndex + 1}`} 
                       className="max-w-full max-h-full object-contain select-none cursor-grab active:cursor-grabbing"
                       initial={{ opacity: 0, scale: 0.95 }}
@@ -622,7 +525,7 @@ export function NewsDetail() {
                               setImgGalleryIndex(imgGalleryIndex - 1);
                           }
                         } else if (info.offset.x < -swipeThreshold) {
-                          if (imgGalleryIndex < news.additionalImages.length - 1) {
+                          if (imgGalleryIndex < allImages.length - 1) {
                               setImgGalleryIndex(imgGalleryIndex + 1);
                           }
                         }
@@ -640,7 +543,7 @@ export function NewsDetail() {
                     </button>
                   )}
                   
-                  {imgGalleryIndex < news.additionalImages.length - 1 && (
+                  {imgGalleryIndex < allImages.length - 1 && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex + 1); }}
                       className="absolute left-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"

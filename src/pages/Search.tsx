@@ -25,9 +25,9 @@ export function Search() {
         // Fast client-side filter over cached news
         const allNews = await SyncService.getCache<NewsItem>("news");
         const filtered = allNews.filter(n => 
-          n.title.includes(q) || 
-          n.shortDescription.includes(q) || 
-          n.content.includes(q)
+          (n.title && n.title.includes(q)) || 
+          (n.shortDescription && n.shortDescription.includes(q)) || 
+          (n.content && n.content.includes(q))
         );
         setResults(filtered);
       } catch (err) {

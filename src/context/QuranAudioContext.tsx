@@ -427,7 +427,7 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
         (b) => b.surahNumber === selectedSurah.number && b.ayahIndex === currentAyahIndex
       );
       
-      let updatedBookmarks = [];
+      let updatedBookmarks: typeof prev.bookmarks = [];
       if (isBookmarked) {
         updatedBookmarks = prev.bookmarks.filter(
           (b) => !(b.surahNumber === selectedSurah.number && b.ayahIndex === currentAyahIndex)

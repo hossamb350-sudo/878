@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import { Article } from "../types";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   ArrowRight, 
   User, 
@@ -19,7 +19,10 @@ import {
   Facebook,
   MessageCircle,
   Copy,
-  Star
+  Star,
+  X,
+  ChevronRight,
+  ChevronLeft
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -29,6 +32,43 @@ export function ArticleDetail() {
   const [article, setArticle] = useState<Article | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [imgGalleryIndex, setImgGalleryIndex] = useState<number | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Combine primary image and additional images into unified array
+  const allImages = article ? [
+    ...(article.imageUrl ? [article.imageUrl] : []),
+    ...(article.additionalImages || [])
+  ].filter(Boolean) as string[] : [];
+
+  // Auto slide interval for the article hero card
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % allImages.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [allImages.length]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (imgGalleryIndex === null || allImages.length === 0) return;      
+      if (e.key === "Escape") {
+        setImgGalleryIndex(null);
+      } else if (e.key === "ArrowLeft") {
+        if (imgGalleryIndex < allImages.length - 1) {
+          setImgGalleryIndex(imgGalleryIndex + 1);
+        }
+      } else if (e.key === "ArrowRight") {
+        if (imgGalleryIndex > 0) {
+          setImgGalleryIndex(imgGalleryIndex - 1);
+        }
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [imgGalleryIndex, allImages]);
   
   // Starting with the default font size matching news detail page
   const [fontSize, setFontSize] = useState<number>(() => {
@@ -145,38 +185,81 @@ export function ArticleDetail() {
       </div>
 
       <div className="max-w-[760px] mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        {/* Featured Article Card Header - Matching the Landing Page's Featured Card EXACTLY */}
+        {/* Featured Article Card Header - Integrated Animated Slider */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full h-[376px] rounded-[24px] overflow-hidden border border-border-light shadow-medium mb-6 select-none"
+          className="relative w-full h-[376px] sm:h-[420px] rounded-[24px] overflow-hidden border border-border-light shadow-medium mb-6 select-none group"
         >
-          {article.imageUrl ? (
-            <img 
-              src={article.imageUrl} 
-              alt={article.title} 
-              className="w-full h-full object-cover" 
-            />
-          ) : (
-            <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-              <img 
-                src={article.authorPhoto || "https://i.pravatar.cc/150"} 
-                className="w-full h-full object-cover opacity-80" 
-                alt={article.authorName} 
-              />
+          {/* Sliding Background Images Layer */}
+          <div 
+            className="absolute inset-0 w-full h-full cursor-zoom-in"
+            onClick={() => setImgGalleryIndex(currentSlide)}
+            title="انقر لتكبير الصورة"
+          >
+            {allImages.length > 0 ? (
+              <AnimatePresence mode="popLayout">
+                <motion.img 
+                  key={currentSlide}
+                  src={allImages[currentSlide]} 
+                  alt={article.title} 
+                  className="w-full h-full object-cover absolute inset-0" 
+                  initial={{ opacity: 0, scale: 1.05 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                />
+              </AnimatePresence>
+            ) : (
+              <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                <img 
+                  src={article.authorPhoto || "https://i.pravatar.cc/150"} 
+                  className="w-full h-full object-cover opacity-80" 
+                  alt={article.authorName} 
+                />
+              </div>
+            )}
+          </div>
+          
+          {/* Fixed Dark Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.88)] via-[rgba(0,0,0,0.42)] to-transparent pointer-events-none"></div>
+
+          {/* Left/Right manual slide buttons on hover */}
+          {allImages.length > 1 && (
+            <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+                }}
+                className="p-2 bg-black/40 hover:bg-black/70 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
+                title="الصورة السابقة"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide((prev) => (prev + 1) % allImages.length);
+                }}
+                className="p-2 bg-black/40 hover:bg-black/70 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
+                title="الصورة التالية"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
             </div>
           )}
-          
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.85)] via-[rgba(0,0,0,0.4)] to-transparent"></div>
-          
-          <div className="absolute top-[16px] left-0">
-            <span className="bg-[#D32027] text-white text-[13px] font-bold font-ibm w-[100px] h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5">
+
+          {/* Fixed Badge on Top Left */}
+          <div className="absolute top-[16px] left-0 z-10 pointer-events-none">
+            <span className="bg-[#D32027] text-white text-[13px] font-bold font-ibm px-4 h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-lg">
               <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
               مقال مميز
             </span>
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-[20px] pb-[16px] flex flex-col justify-end text-right">
+          {/* Fixed Article Card Footer Details Over the Image */}
+          <div className="absolute bottom-0 left-0 right-0 p-[20px] pb-[16px] flex flex-col justify-end text-right z-10 pointer-events-none">
             <h2 className="text-[18px] font-bold font-ibm leading-[28px] w-full text-white mb-[12px]">
               {article.title}
             </h2>
@@ -197,6 +280,21 @@ export function ArticleDetail() {
                 )}
               </div>
             </div>
+
+            {/* Slider Dots indicators */}
+            {allImages.length > 1 && (
+              <div className="flex items-center justify-center gap-1.5 mt-2.5 pointer-events-auto">
+                {allImages.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      idx === currentSlide ? "w-6 bg-red-600" : "w-1.5 bg-white/40 hover:bg-white/70"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -245,6 +343,73 @@ export function ArticleDetail() {
                   </Link>
                 ))}
              </div>
+          </div>
+        )}
+
+        {/* Full Screen Image Gallery Modal */}
+        {imgGalleryIndex !== null && allImages.length > 0 && (
+          <div 
+            className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
+            onClick={() => setImgGalleryIndex(null)}
+          >
+               <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-[210]" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-white/70 font-bold text-sm drop-shadow-md font-ibm">
+                    {imgGalleryIndex + 1} / {allImages.length}
+                  </span>
+                  <button onClick={() => setImgGalleryIndex(null)} className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer">
+                    <X className="w-6 h-6" />
+                  </button>
+               </div>
+               
+               <div className="relative flex items-center justify-center w-full max-w-4xl h-[70vh] sm:h-[80vh]" onClick={(e) => e.stopPropagation()}>
+                  <AnimatePresence mode="popLayout">
+                    <motion.img 
+                      key={imgGalleryIndex}
+                      src={allImages[imgGalleryIndex]} 
+                      alt={`Gallery image ${imgGalleryIndex + 1}`} 
+                      className="max-w-full max-h-full object-contain select-none cursor-grab active:cursor-grabbing"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      drag="x"
+                      dragConstraints={{ left: 0, right: 0 }}
+                      dragElastic={0.6}
+                      onDragEnd={(event, info) => {
+                        const swipeThreshold = 50;
+                        if (info.offset.x > swipeThreshold) {
+                          if (imgGalleryIndex > 0) {
+                              setImgGalleryIndex(imgGalleryIndex - 1);
+                          }
+                        } else if (info.offset.x < -swipeThreshold) {
+                          if (imgGalleryIndex < allImages.length - 1) {
+                              setImgGalleryIndex(imgGalleryIndex + 1);
+                          }
+                        }
+                      }}
+                    />
+                  </AnimatePresence>
+                  
+                  {imgGalleryIndex > 0 && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex - 1); }}
+                      className="absolute right-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"
+                      title="الصورة السابقة"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  )}
+                  
+                  {imgGalleryIndex < allImages.length - 1 && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex + 1); }}
+                      className="absolute left-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"
+                      title="الصورة التالية"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                  )}
+               </div>
           </div>
         )}
       </div>

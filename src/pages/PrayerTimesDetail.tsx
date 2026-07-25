@@ -3,8 +3,9 @@ import { motion } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { 
   MapPin, Calendar, ChevronLeft, 
-  Sun, Moon, CloudSun, Check, ArrowRight
+  Sun, Moon, Check, ArrowRight
 } from "lucide-react";
+import { PrayerBackgroundEffect } from "../components/PrayerBackgroundEffect";
 
 // ==========================================
 // 1. DISTINCT CUSTOM PRAYER ICONS FOR EACH PRAYER
@@ -318,7 +319,7 @@ export const PrayerTimesDetail: React.FC = () => {
           </button>
         </div>
 
-        {/* HERO BANNER CARD WITH MOSQUE.PNG & TRANSPARENT FLOATING CARD */}
+        {/* HERO BANNER CARD WITH MOSQUE.PNG & FLOATING NEXT PRAYER CARD */}
         <div className="relative w-full h-[230px] sm:h-[250px] rounded-xl overflow-hidden shadow-md border border-slate-200/80 p-3.5 flex flex-col justify-between">
           
           {/* Background Mosque Image */}
@@ -338,11 +339,11 @@ export const PrayerTimesDetail: React.FC = () => {
           {/* Dark Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30" />
 
-          {/* Top Info Overlay: Title Right, Weather Badge Left */}
+          {/* Top Info Overlay: Title Right */}
           <div className="relative z-10 flex items-start justify-between">
             {/* Right: Title & City */}
             <div className="text-right space-y-0.5">
-              <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight font-cairo drop-shadow-md">
+              <h1 className="text-xl font-black text-white tracking-tight font-cairo drop-shadow-md">
                 مواقيت الصلاة
               </h1>
               <div className="flex items-center gap-1 text-emerald-200 text-xs font-bold font-cairo drop-shadow-xs">
@@ -350,152 +351,45 @@ export const PrayerTimesDetail: React.FC = () => {
                 <span>تعز، اليمن</span>
               </div>
             </div>
-
-            {/* Left: Weather Glassmorphism Badge */}
-            <div className="bg-black/30 backdrop-blur-md border border-white/20 px-2.5 py-1 rounded-lg text-white shadow-xs flex items-center gap-1 font-bold text-xs">
-              <span>24°</span>
-              <CloudSun className="w-3.5 h-3.5 text-amber-300 fill-amber-300/40" />
-            </div>
           </div>
 
           {/* Bottom Floating Transparent Green Next Prayer Card (Aligned Left in RTL) */}
-          <div className="relative z-10 self-end w-[155px] sm:w-[165px] bg-[#0C543A]/55 backdrop-blur-md rounded-lg p-2 text-white shadow-lg border border-emerald-300/30 space-y-1">
-            
-            <div className="space-y-0.5">
-              <p className="text-[9px] font-bold text-emerald-200/90 font-cairo">
+          <div className="relative z-10 self-end w-[155px] sm:w-[165px] bg-slate-900/80 backdrop-blur-md rounded-lg p-2 text-white shadow-lg border border-emerald-300/30 space-y-1 overflow-hidden">
+            <PrayerBackgroundEffect prayerName={nextPrayer.name} className="opacity-95" />
+
+            <div className="relative z-10 space-y-0.5">
+              <p className="text-[9px] font-bold text-amber-100 font-cairo drop-shadow-xs">
                 الصلاة القادمة
               </p>
               
               <div className="flex items-center gap-1">
-                <h2 className="text-base font-black text-white font-cairo">
+                <h2 className="text-base font-black text-white font-cairo drop-shadow-sm">
                   {nextPrayer.name}
                 </h2>
                 <Sun className="w-3.5 h-3.5 text-amber-300 fill-amber-300/40" />
               </div>
 
-              <p className="text-base font-black text-white font-sans tracking-tight">
+              <p className="text-base font-black text-white font-sans tracking-tight drop-shadow-sm">
                 {formatTime12h(nextPrayer.time)}
               </p>
 
-              <p className="text-[9px] font-medium text-emerald-200/90 font-cairo">
+              <p className="text-[9px] font-medium text-emerald-100 font-cairo">
                 بعد {countdownText}
               </p>
             </div>
 
             {/* Date Box */}
-            <div className="pt-1 border-t border-emerald-400/20 flex items-center justify-between text-[8px] text-emerald-100/90 font-cairo">
+            <div className="relative z-10 pt-1 border-t border-white/20 flex items-center justify-between text-[8px] text-emerald-100/90 font-cairo">
               <div className="space-y-0.2">
                 <p className="font-medium text-white/95">{gregorianDateStr}</p>
                 <p className="font-bold text-amber-200">{hijriDate}</p>
               </div>
-              <div className="p-0.5 rounded-md bg-black/30 border border-emerald-400/20 text-amber-300">
+              <div className="p-0.5 rounded-md bg-black/30 border border-white/20 text-amber-300">
                 <Calendar className="w-3 h-3 stroke-[2]" />
               </div>
             </div>
 
           </div>
-        </div>
-
-        {/* DAILY PRAYERS LIST WITH REDUCED FONT SIZE & SMALLER BORDER RADIUS */}
-        <div className="space-y-2 pt-0.5">
-          {prayerList.map((prayer, index) => {
-            const isNext = nextPrayer?.key === prayer.key;
-
-            // Calculate countdown / time diff
-            const [h, m] = prayer.time.split(":").map(Number);
-            const prayerMins = h * 60 + m;
-            const nowMins = time.getHours() * 60 + time.getMinutes();
-            let diffMins = prayerMins - nowMins;
-
-            let countdownBadge = null;
-
-            if (diffMins < 0) {
-              // Passed
-              const pastMins = Math.abs(diffMins);
-              const pastHours = Math.floor(pastMins / 60);
-              const remMins = pastMins % 60;
-              const label = pastHours > 0 ? `مضت منذ ${pastHours}س و ${remMins}د` : `مضت منذ ${remMins}د`;
-              countdownBadge = (
-                <span className="text-[10px] font-medium text-slate-400 bg-slate-100/80 px-2 py-0.5 rounded-md border border-slate-200/60">
-                  {label}
-                </span>
-              );
-            } else if (diffMins === 0) {
-              countdownBadge = (
-                <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300 animate-pulse">
-                  حان الآن
-                </span>
-              );
-            } else {
-              // Future
-              const hoursLeft = Math.floor(diffMins / 60);
-              const minsLeft = diffMins % 60;
-              const secsLeft = 59 - time.getSeconds();
-
-              if (isNext) {
-                const liveLabel = hoursLeft > 0 
-                  ? `متبقي ${hoursLeft}:${minsLeft.toString().padStart(2, "0")}:${secsLeft.toString().padStart(2, "0")}`
-                  : `متبقي ${minsLeft}:${secsLeft.toString().padStart(2, "0")}`;
-
-                countdownBadge = (
-                  <span className="text-[10px] font-black text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-300 font-mono shadow-2xs tracking-tight">
-                    {liveLabel}
-                  </span>
-                );
-              } else {
-                const label = hoursLeft > 0 ? `متبقي ${hoursLeft}س و ${minsLeft}د` : `متبقي ${minsLeft}د`;
-                countdownBadge = (
-                  <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80">
-                    {label}
-                  </span>
-                );
-              }
-            }
-
-            return (
-              <motion.div
-                key={prayer.key}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }}
-                className={`relative rounded-lg p-2.5 transition-all duration-200 flex items-center justify-between shadow-2xs border overflow-hidden ${
-                  isNext
-                    ? "bg-[#F0FDF4] border-emerald-300 ring-1 ring-emerald-500/20"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                }`}
-              >
-                {/* RIGHT VERTICAL ACCENT BAR ON RIGHT EDGE */}
-                <div className={`absolute right-0 top-0 bottom-0 w-1 ${prayer.accentBarColor}`} />
-
-                {/* RIGHT SIDE: PRAYER NAME ONLY (NO ICON BEFORE NAME) */}
-                <div className="flex items-center gap-2 pr-2">
-                  <h3 className={`text-sm sm:text-base font-bold tracking-tight font-cairo ${
-                    isNext ? "text-emerald-900 font-black text-base" : "text-slate-800"
-                  }`}>
-                    {prayer.name}
-                  </h3>
-                </div>
-
-                {/* CENTER: CUSTOM SVG PRAYER ICON */}
-                <div className="flex items-center justify-center shrink-0">
-                  {prayer.badgeIcon}
-                </div>
-
-                {/* LEFT SIDE: REMAINING TIME BADGE + TIME + CHEVRON */}
-                <div className="flex items-center gap-2">
-                  {countdownBadge}
-
-                  <span className={`text-sm sm:text-base font-bold font-sans tracking-tight dir-ltr ${
-                    isNext ? "text-emerald-800 font-black" : "text-slate-900"
-                  }`}>
-                    {formatTime12h(prayer.time)}
-                  </span>
-
-                  <ChevronLeft className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                </div>
-              </motion.div>
-            );
-          })}
         </div>
 
         {/* BOTTOM QURANIC VERSE AYAH QUOTE CARD */}

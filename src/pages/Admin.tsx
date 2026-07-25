@@ -46,6 +46,7 @@ import {
   List,
   Edit,
   AlertTriangle,
+  XCircle,
   Clock,
   User,
   Settings,
@@ -1085,14 +1086,13 @@ function UserProfileView({
 function AdminUrgentNews() {
   const [text, setText] = useState("");
   const [expiryMinutes, setExpiryMinutes] = useState(60); // Default to 1 hour for urgent news
-  const [tickerSpeed, setTickerSpeed] = useState(10); // Default speed in seconds
+  const [tickerSpeed, setTickerSpeed] = useState(25); // Default speed in seconds
   const [saving, setSaving] = useState(false);
   const [urgentItems, setUrgentItems] = useState<any[]>([]);
 
   useEffect(() => {
     const q = query(collection(db, "urgentNews"), orderBy("createdAt", "desc"));
     const unsub = onSnapshot(q, (snap) => {
-      const now = Date.now();
       const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setUrgentItems(items);
     });
@@ -1103,7 +1103,7 @@ function AdminUrgentNews() {
         const docRef = doc(db, "settings", "urgentNews");
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setTickerSpeed(docSnap.data().speed || 10);
+          setTickerSpeed(docSnap.data().speed || 25);
         }
       } catch (e) {
         console.error("Error loading ticker settings:", e);
@@ -1129,6 +1129,7 @@ function AdminUrgentNews() {
     try {
       await addDoc(collection(db, "urgentNews"), {
         text,
+        isActive: true,
         createdAt: Date.now(),
         expiresAt: Date.now() + expiryMinutes * 60000,
       });
@@ -1143,8 +1144,40 @@ function AdminUrgentNews() {
     }
   };
 
+  const toggleCancelItem = async (id: string, currentIsActive: boolean) => {
+    try {
+      if (currentIsActive) {
+        await updateDoc(doc(db, "urgentNews", id), { isActive: false });
+      } else {
+        await updateDoc(doc(db, "urgentNews", id), { 
+          isActive: true, 
+          expiresAt: Date.now() + expiryMinutes * 60000 
+        });
+      }
+    } catch (e) {
+      alert("خطأ في تحديث حالة الخبر العاجل");
+    }
+  };
+
+  const cancelAllActiveNews = async () => {
+    const activeDocs = urgentItems.filter(i => i.isActive !== false && i.expiresAt > Date.now());
+    if (activeDocs.length === 0) {
+      return alert("لا توجد أخبار عاجلة نشطة حالياً لإلغائها.");
+    }
+    if (!confirm(`هل أنت متأكد من إلغاء وإخفاء جميع الأخبار العاجلة النشطة (${activeDocs.length} خبر) فوراً؟`)) return;
+    
+    try {
+      for (const item of activeDocs) {
+        await updateDoc(doc(db, "urgentNews", item.id), { isActive: false });
+      }
+      alert("تم إلغاء عرض جميع الأخبار العاجلة فوراً");
+    } catch (e) {
+      alert("خطأ في إلغاء الأخبار العاجلة");
+    }
+  };
+
   const deleteItem = async (id: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا الخبر العاجل؟")) return;
+    if (!confirm("هل أنت متأكد من حذف هذا الخبر العاجل نهائياً؟")) return;
     try {
       await deleteDoc(doc(db, "urgentNews", id));
     } catch (e) {
@@ -1154,9 +1187,21 @@ function AdminUrgentNews() {
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
-      <div className="flex items-center gap-3 border-b dark:border-gray-700 pb-3">
-        <AlertTriangle className="w-6 h-6 text-red-600" />
-        <h2 className="text-xl font-bold text-red-600">نظام الشريط الإخباري (الأخبار العاجلة)</h2>
+      <div className="flex items-center justify-between border-b dark:border-gray-700 pb-3">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="w-6 h-6 text-red-600" />
+          <h2 className="text-xl font-bold text-red-600">نظام الشريط الإخباري (الأخبار العاجلة)</h2>
+        </div>
+
+        {urgentItems.some(i => i.isActive !== false && i.expiresAt > Date.now()) && (
+          <button
+            onClick={cancelAllActiveNews}
+            className="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 border border-red-300 transition-all shadow-xs"
+          >
+            <XCircle className="w-4 h-4 text-red-600" />
+            <span>إلغاء وإخفاء جميع الأخبار النشطة فوراً</span>
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -1188,7 +1233,7 @@ function AdminUrgentNews() {
                   onChange={(e) => setExpiryMinutes(Number(e.target.value))}
                   min={1}
                 />
-                <p className="text-[10px] text-gray-500 mt-1">سيختفي الخبر تلقائياً من الشريط بعد هذه المدة.</p>
+                <p className="text-[10px] text-gray-500 mt-1">سيختفي الخبر تلقائياً من الشريط بعد هذه المدة أو عند إلغائه يدويًا.</p>
               </div>
 
               <button
@@ -1208,15 +1253,15 @@ function AdminUrgentNews() {
             </h3>
             
             <div>
-              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">سرعة الانتقال / مدة بقاء الخبر (ثانية):</label>
+              <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">سرعة الشريط / مدة الدورة كاملة (ثانية):</label>
               <div className="flex gap-2">
                 <input 
                   type="number"
                   className="flex-1 p-4 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
                   value={tickerSpeed}
                   onChange={(e) => setTickerSpeed(Number(e.target.value))}
-                  min={1}
-                  max={60}
+                  min={5}
+                  max={120}
                 />
                 <button 
                   onClick={saveSpeed}
@@ -1225,7 +1270,7 @@ function AdminUrgentNews() {
                   حفظ
                 </button>
               </div>
-              <p className="text-[10px] text-gray-500 mt-1">المدة الزمنية لكل خبر قبل الانتقال للخبر التالي في الشريط.</p>
+              <p className="text-[10px] text-gray-500 mt-1">سرعة دوران الأخبار العاجلة داخل الشريط المتحرك.</p>
             </div>
           </div>
         </div>
@@ -1234,42 +1279,98 @@ function AdminUrgentNews() {
         <div className="space-y-4">
           <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <List className="w-5 h-5 text-gray-500" />
-            الأخبار النشطة حالياً
+            إدارة الأخبار العاجلة النشطة والسابقة
           </h3>
 
           <div className="space-y-3">
             {urgentItems.length === 0 ? (
               <div className="text-center py-12 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
-                <p className="text-gray-500 font-bold">لا توجد أخبار عاجلة نشطة حالياً</p>
+                <p className="text-gray-500 font-bold">لا توجد أخبار عاجلة مسجلة حالياً</p>
               </div>
             ) : (
               urgentItems.map((item) => {
-                const isExpired = item.expiresAt < Date.now();
+                const isExpired = item.expiresAt <= Date.now();
+                const isCancelled = item.isActive === false;
+                const isActive = !isExpired && !isCancelled;
+
                 return (
                   <div 
                     key={item.id}
-                    className={`bg-white dark:bg-gray-800 p-4 rounded-2xl border ${isExpired ? 'border-gray-200 opacity-50' : 'border-red-100 shadow-sm'} flex gap-4 items-start`}
+                    className={`bg-white dark:bg-gray-800 p-4 rounded-2xl border ${
+                      isActive 
+                        ? 'border-red-300 shadow-sm' 
+                        : isCancelled 
+                        ? 'border-amber-200 bg-amber-50/20' 
+                        : 'border-gray-200 opacity-60'
+                    } flex flex-col gap-3`}
                   >
-                    <div className={`p-2 rounded-lg ${isExpired ? 'bg-gray-100' : 'bg-red-50 text-red-600'}`}>
-                      <AlertTriangle className="w-5 h-5" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-bold text-sm text-gray-900 dark:text-white leading-relaxed">
-                        {item.text}
-                      </p>
-                      <div className="flex items-center gap-3 mt-2 text-[10px] font-bold text-gray-500">
-                        <span>نشر: {new Date(item.createdAt).toLocaleTimeString('ar-YE')}</span>
-                        <span className={isExpired ? 'text-red-500' : 'text-emerald-600'}>
-                          {isExpired ? 'منتهي الصلاحية' : `ينتهي: ${new Date(item.expiresAt).toLocaleTimeString('ar-YE')}`}
-                        </span>
+                    <div className="flex gap-3 items-start">
+                      <div className={`p-2 rounded-lg shrink-0 ${
+                        isActive 
+                          ? 'bg-red-100 text-red-600' 
+                          : isCancelled 
+                          ? 'bg-amber-100 text-amber-700' 
+                          : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm text-gray-900 dark:text-white leading-relaxed">
+                          {item.text}
+                        </p>
+                        
+                        <div className="flex items-center gap-3 mt-2 text-[11px] font-bold">
+                          <span className="text-gray-500">نشر: {new Date(item.createdAt).toLocaleTimeString('ar-YE')}</span>
+                          {isActive && (
+                            <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                              نشط في الشريط
+                            </span>
+                          )}
+                          {isCancelled && (
+                            <span className="text-amber-700 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200">
+                              تم إلغاؤه يدويًا
+                            </span>
+                          )}
+                          {isExpired && !isCancelled && (
+                            <span className="text-gray-500 bg-gray-100 dark:bg-gray-900 px-2 py-0.5 rounded-full">
+                              منتهي الصلاحية
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => deleteItem(item.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+
+                    {/* Action buttons row */}
+                    <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700/60 pt-3 mt-1">
+                      {isActive ? (
+                        <button
+                          onClick={() => toggleCancelItem(item.id, true)}
+                          className="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                        >
+                          <XCircle className="w-3.5 h-3.5 text-amber-600" />
+                          <span>إلغاء وإخفاء العرض الآن</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => toggleCancelItem(item.id, false)}
+                          className="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                        >
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>إعادة تفعيل وتمديد العرض</span>
+                        </button>
+                      )}
+
+                      <button 
+                        onClick={() => deleteItem(item.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all text-xs flex items-center gap-1"
+                        title="حذف الخبر نهائياً"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>حذف نهائي</span>
+                      </button>
+                    </div>
                   </div>
                 );
               })

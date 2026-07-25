@@ -54,8 +54,8 @@ const app = express();
 const PORT = 3000;
 
 // Configure web-push details
-const DEFAULT_VAPID_PUBLIC_KEY = "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
-const DEFAULT_VAPID_PRIVATE_KEY = "btEWHmdPbPg_jgywYnb6z4NujfcN5TeJQDY8JbDTAOQ";
+const DEFAULT_VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "";
+const DEFAULT_VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
 
 function isValidVapidKey(publicKey: string): boolean {
   if (!publicKey || typeof publicKey !== "string") return false;
@@ -142,11 +142,7 @@ app.get("/api/quran-data", (req, res) => {
 app.get("/api/weather", async (req, res) => {
   try {
     const { lat = "13.5795", lon = "44.0203" } = req.query; // Default to Taiz
-    const apiKey = process.env.OPENWEATHER_API_KEY;
-    
-    if (!apiKey) {
-      return res.status(500).json({ error: "OpenWeather API key is not configured" });
-    }
+    const apiKey = process.env.OPENWEATHER_API_KEY || "";
 
     const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather`, {
       params: {
@@ -161,7 +157,8 @@ app.get("/api/weather", async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.error("Error fetching weather data:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch weather data" });
+    // Fallback response if OpenWeather is unreachable
+    res.status(500).json({ error: "Failed to fetch weather data", details: error.message });
   }
 });
 
@@ -169,11 +166,7 @@ app.get("/api/weather", async (req, res) => {
 app.get("/api/forecast", async (req, res) => {
   try {
     const { lat = "13.5795", lon = "44.0203" } = req.query; // Default to Taiz
-    const apiKey = process.env.OPENWEATHER_API_KEY;
-    
-    if (!apiKey) {
-      return res.status(500).json({ error: "OpenWeather API key is not configured" });
-    }
+    const apiKey = process.env.OPENWEATHER_API_KEY || "";
 
     const response = await axios.get(`https://api.openweathermap.org/data/2.5/forecast`, {
       params: {
@@ -188,7 +181,7 @@ app.get("/api/forecast", async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.error("Error fetching forecast data:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch forecast data" });
+    res.status(500).json({ error: "Failed to fetch forecast data", details: error.message });
   }
 });
 
@@ -962,7 +955,6 @@ async function startServer() {
   console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
   console.log(`CWD: ${process.cwd()}`);
 
-  // Vite dev server middleware integration
   if (!isProduction) {
     const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
@@ -972,7 +964,11 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
+    const publicPath = path.join(process.cwd(), "public");
     app.use(express.static(distPath));
+    if (fs.existsSync(publicPath)) {
+      app.use(express.static(publicPath));
+    }
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });

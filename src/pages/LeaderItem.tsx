@@ -283,7 +283,7 @@ export function LeaderItem() {
     }
 
     const quranRegex = /﴿([^﴾]+)﴾/g;
-    const parts = [];
+    const parts: (string | React.ReactNode)[] = [];
     let lastIndex = 0;
     let match;
 
