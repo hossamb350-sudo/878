@@ -54,8 +54,8 @@ const app = express();
 const PORT = 3000;
 
 // Configure web-push details
-const DEFAULT_VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "";
-const DEFAULT_VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "";
+const DEFAULT_VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
+const DEFAULT_VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "btEWHmdPbPg_jgywYnb6z4NujfcN5TeJQDY8JbDTAOQ";
 
 function isValidVapidKey(publicKey: string): boolean {
   if (!publicKey || typeof publicKey !== "string") return false;
@@ -142,7 +142,7 @@ app.get("/api/quran-data", (req, res) => {
 app.get("/api/weather", async (req, res) => {
   try {
     const { lat = "13.5795", lon = "44.0203" } = req.query; // Default to Taiz
-    const apiKey = process.env.OPENWEATHER_API_KEY || "";
+    const apiKey = process.env.OPENWEATHER_API_KEY || "1a2ac08a2810cf611d134c7b57a478a9";
 
     const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather`, {
       params: {
@@ -166,7 +166,7 @@ app.get("/api/weather", async (req, res) => {
 app.get("/api/forecast", async (req, res) => {
   try {
     const { lat = "13.5795", lon = "44.0203" } = req.query; // Default to Taiz
-    const apiKey = process.env.OPENWEATHER_API_KEY || "";
+    const apiKey = process.env.OPENWEATHER_API_KEY || "1a2ac08a2810cf611d134c7b57a478a9";
 
     const response = await axios.get(`https://api.openweathermap.org/data/2.5/forecast`, {
       params: {
