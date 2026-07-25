@@ -103,82 +103,99 @@ export class ImageUploadService {
     if (isNative) {
       const uploadAttemptNative = async (): Promise<UploadResponse> => {
         // Try direct upload first as it is the most robust and bypasses any backend routing/404 issues
-        try {
-          console.log("[ImageUploadService] Attempting direct upload to ImageKit API...");
-          
-          // Generate Basic Auth token using private key from unified configuration
-          const authCredentials = btoa(`${IMAGEKIT_CONFIG.privateKey}:`);
-          
-          const response = await CapacitorHttp.post({
-            url: "https://upload.imagekit.io/api/v1/files/upload",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Basic ${authCredentials}`,
-              "Accept": "application/json"
-            },
-            data: {
-              file: base64Data,
-              fileName: fileName,
-              folder: "/uploads"
-            }
-          });
+        if (IMAGEKIT_CONFIG.privateKey) {
+          try {
+            console.log("[ImageUploadService] Attempting direct upload to ImageKit API...");
+            
+            // Generate Basic Auth token using private key from unified configuration
+            const authCredentials = btoa(`${IMAGEKIT_CONFIG.privateKey}:`);
+            
+            const response = await CapacitorHttp.post({
+              url: "https://upload.imagekit.io/api/v1/files/upload",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Basic ${authCredentials}`,
+                "Accept": "application/json"
+              },
+              data: {
+                file: base64Data,
+                fileName: fileName,
+                useUniqueFileName: true,
+                folder: "/uploads"
+              }
+            });
 
-          console.log("[ImageUploadService] ImageKit direct API response status:", response.status);
+            console.log("[ImageUploadService] ImageKit direct API response status:", response.status);
 
-          if (response.status >= 200 && response.status < 300) {
-            const data = response.data;
-            if (data && data.url) {
-              console.log("[ImageUploadService] Direct ImageKit upload succeeded:", data.url);
-              return {
-                url: data.url,
-                thumbnail: data.thumbnailUrl || data.url,
-                fileId: data.fileId
-              };
+            if (response.status >= 200 && response.status < 300) {
+              const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+              if (data && data.url) {
+                console.log("[ImageUploadService] Direct ImageKit upload succeeded:", data.url);
+                return {
+                  url: data.url,
+                  thumbnail: data.thumbnailUrl || data.url,
+                  fileId: data.fileId
+                };
+              }
             }
+            
+            console.warn("[ImageUploadService] Direct upload returned unsuccessful status:", response.status, response.data);
+          } catch (directErr) {
+            console.error("[ImageUploadService] Direct ImageKit upload failed, trying backend fallback...", directErr);
           }
-          
-          console.warn("[ImageUploadService] Direct upload returned unsuccessful status, trying backend fallback...", response.status);
-        } catch (directErr) {
-          console.error("[ImageUploadService] Direct ImageKit upload failed, trying backend fallback...", directErr);
         }
 
         // Fallback to Backend proxy if direct upload failed
-        try {
-          console.log(`[ImageUploadService] Attempting backend fallback upload to ${API_BASE}/api/upload/imagekit`);
-          
-          const response = await CapacitorHttp.post({
-            url: `${API_BASE}/api/upload/imagekit`,
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            data: {
-              imageBase64: base64Data,
-              fileName: fileName
-            }
-          });
+        // We try multiple candidate URLs (DEV_URL, PROD_URL, etc.) in case one returns 404
+        const candidateBases = [
+          import.meta.env.VITE_API_BASE_URL,
+          DEV_URL,
+          PROD_URL,
+          typeof window !== "undefined" && window.location.origin.startsWith("http") ? window.location.origin : ""
+        ].filter((u): u is string => Boolean(u));
 
-          console.log("[ImageUploadService] Backend fallback response status:", response.status);
+        const uniqueBases = Array.from(new Set(candidateBases));
+        let lastBackendErr = "";
 
-          if (response.status >= 200 && response.status < 300) {
-            const data = response.data;
-            if (data && data.url) {
-              return {
-                url: data.url,
-                thumbnail: data.thumbnail || data.url,
-                fileId: data.fileId
-              };
+        for (const baseUrl of uniqueBases) {
+          try {
+            console.log(`[ImageUploadService] Trying backend upload to ${baseUrl}/api/upload/imagekit`);
+            
+            const response = await CapacitorHttp.post({
+              url: `${baseUrl}/api/upload/imagekit`,
+              headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+              },
+              data: {
+                imageBase64: base64Data,
+                fileName: fileName
+              }
+            });
+
+            console.log(`[ImageUploadService] Backend response status from ${baseUrl}:`, response.status);
+
+            if (response.status >= 200 && response.status < 300) {
+              const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
+              if (data && data.url) {
+                return {
+                  url: data.url,
+                  thumbnail: data.thumbnail || data.url,
+                  fileId: data.fileId
+                };
+              }
             } else {
-              throw new Error(`استجابة غير صالحة من الخادم (رابط الصورة مفقود).`);
+              const errorMsg = response.data?.message || response.data?.error || `كود الخطأ: ${response.status}`;
+              lastBackendErr = `[${baseUrl}] ${errorMsg}`;
+              console.warn(`[ImageUploadService] ${baseUrl} returned error: ${errorMsg}. Trying next candidate...`);
             }
-          } else {
-            const errorMsg = response.data?.message || response.data?.error || `كود الخطأ: ${response.status}`;
-            throw new Error(`فشل الرفع من الخادم: ${errorMsg}`);
+          } catch (err: any) {
+            console.warn(`[ImageUploadService] Failed connecting to ${baseUrl}:`, err);
+            lastBackendErr = `[${baseUrl}] ${err.message || "فشل الاتصال"}`;
           }
-        } catch (backendErr: any) {
-          console.error("[ImageUploadService] Backend fallback upload failed:", backendErr);
-          throw new Error(backendErr.message || "فشلت عملية الرفع من خلال تطبيق أندرويد");
         }
+
+        throw new Error(`فشل الرفع من الخادم: ${lastBackendErr || "جميع نهايات API أرجعت خطأ"}`);
       };
 
       let lastError: any;
