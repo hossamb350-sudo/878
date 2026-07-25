@@ -114,70 +114,37 @@ export class ImageUploadService {
           onProgress(30);
         }
 
-        if (isNative) {
-          // Native Capacitor HTTP bypasses CORS and Webview fetch issues
-          const response = await CapacitorHttp.post({
-            url: "https://upload.imagekit.io/api/v1/files/upload",
-            headers: {
-              "Authorization": `Basic ${authCredentials}`,
-              "Content-Type": "application/json"
-            },
-            data: {
-              file: base64Data,
-              fileName: fileName,
-              useUniqueFileName: true,
-              folder: "/uploads"
-            }
-          });
+        // Web Fetch (Works for both Web and Native since ImageKit allows CORS)
+        const formData = new FormData();
+        formData.append("file", base64Data);
+        formData.append("fileName", fileName);
+        formData.append("useUniqueFileName", "true");
+        formData.append("folder", "/uploads");
 
-          console.log(`[ImageUploadService] ImageKit Native response status:`, response.status);
+        const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
+          method: "POST",
+          headers: {
+            "Authorization": `Basic ${authCredentials}`
+          },
+          body: formData
+        });
 
-          if (response.status >= 200 && response.status < 300) {
-            const data = typeof response.data === "string" ? JSON.parse(response.data) : response.data;
-            if (onProgress) onProgress(100);
-            if (data && data.url) {
-              return {
-                url: data.url,
-                thumbnail: data.thumbnailUrl || data.url,
-                fileId: data.fileId
-              };
-            }
+        console.log(`[ImageUploadService] ImageKit Web response status:`, response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          if (onProgress) onProgress(100);
+          if (data && data.url) {
+            return {
+              url: data.url,
+              thumbnail: data.thumbnailUrl || data.url,
+              fileId: data.fileId
+            };
           }
-          
-          throw new Error(`خطأ من ImageKit: ${response.status} ${JSON.stringify(response.data)}`);
-        } else {
-          // Web Fetch
-          const formData = new FormData();
-          formData.append("file", base64Data);
-          formData.append("fileName", fileName);
-          formData.append("useUniqueFileName", "true");
-          formData.append("folder", "/uploads");
-
-          const response = await fetch("https://upload.imagekit.io/api/v1/files/upload", {
-            method: "POST",
-            headers: {
-              "Authorization": `Basic ${authCredentials}`
-            },
-            body: formData
-          });
-
-          console.log(`[ImageUploadService] ImageKit Web response status:`, response.status);
-
-          if (response.ok) {
-            const data = await response.json();
-            if (onProgress) onProgress(100);
-            if (data && data.url) {
-              return {
-                url: data.url,
-                thumbnail: data.thumbnailUrl || data.url,
-                fileId: data.fileId
-              };
-            }
-          }
-          
-          const errorText = await response.text();
-          throw new Error(`خطأ من ImageKit: ${response.status} ${errorText}`);
         }
+        
+        const errorText = await response.text();
+        throw new Error(`خطأ من ImageKit: ${response.status} ${errorText}`);
       } catch (err: any) {
         console.warn(`[ImageUploadService] Failed connecting to ImageKit:`, err);
         throw new Error(err.message || "فشل الاتصال بخادم الصور");
