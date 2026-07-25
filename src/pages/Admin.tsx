@@ -1275,7 +1275,7 @@ function AdminUrgentNews() {
                               <div className="inline-flex items-center gap-2 px-6 shrink-0 opacity-90">
                                 <div className="flex items-center justify-center p-1">
                                   <img 
-                                    src="/logo3.png" 
+                                    src="/tape.png" 
                                     alt="شعار منصة تعز" 
                                     className="w-8 h-8 object-contain drop-shadow-lg" 
                                   />

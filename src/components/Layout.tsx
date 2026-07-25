@@ -271,7 +271,7 @@ function UrgentNewsBanner() {
                   <div className="inline-flex items-center gap-2 px-6 sm:px-10 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
                     <div className="flex items-center justify-center p-1 sm:p-1.5 group-hover:scale-110 transition-transform">
                       <img 
-                        src="/logo3.png" 
+                        src="/tape.png" 
                         alt="شعار منصة تعز" 
                         className="w-10 h-10 sm:w-12 sm:h-12 object-contain drop-shadow-lg" 
                       />
