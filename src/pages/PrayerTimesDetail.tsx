@@ -308,16 +308,7 @@ export const PrayerTimesDetail: React.FC = () => {
     <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-12 pt-2 px-3 sm:px-5 select-none font-sans" dir="rtl">
       <div className="max-w-md md:max-w-lg mx-auto space-y-3">
         
-        {/* TOP COMPACT BACK NAVIGATION BAR */}
-        <div className="flex items-center justify-between py-1">
-          <button 
-            onClick={() => navigate("/")}
-            className="flex items-center gap-1 text-xs font-bold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-2.5 py-1.5 rounded-lg transition-colors font-cairo"
-          >
-            <ArrowRight className="w-4 h-4" />
-            <span>الرئيسية</span>
-          </button>
-        </div>
+
 
         {/* HERO BANNER CARD WITH MOSQUE.PNG & FLOATING NEXT PRAYER CARD */}
         <div className="relative w-full h-[230px] sm:h-[250px] rounded-xl overflow-hidden shadow-md border border-slate-200/80 p-3.5 flex flex-col justify-between">

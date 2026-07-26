@@ -230,11 +230,9 @@ function UrgentNewsBanner() {
   // Prepare marquee items
   const infoText = "منصة تعز الإعلامية | X.COM/Taizgio11 | t.me/taizgio | t.me/TaizOI | البث الإذاعي لإذاعة تعز على موجة 88.1 FM | خدمة الأخبار النصية عبر رسائل SMS: أرسل كلمة (تعز) في رسالة نصية إلى الرقم 5552 |";
   let baseSequence: any[] = [];
-  if (scrollingItems.length > 0) {
-    const infoItem = { id: 'info-static-text', text: infoText, type: 'scrolling', createdAt: 0 };
-    const reversedNews = [...scrollingItems].reverse();
-    baseSequence = [infoItem, ...reversedNews];
-  }
+  const infoItem = { id: 'info-static-text', text: infoText, type: 'scrolling', createdAt: 0 };
+  const sortedAsc = [...scrollingItems].sort((a, b) => a.createdAt - b.createdAt);
+  baseSequence = [infoItem, ...sortedAsc];
 
   const displayItems = [...baseSequence, ...baseSequence, ...baseSequence, ...baseSequence];
   const baseChars = baseSequence.reduce((acc, item) => acc + (item.text?.length || 0), 0);
@@ -254,7 +252,7 @@ function UrgentNewsBanner() {
         dir="rtl"
       >
         {/* The Scrolling Marquee */}
-        {scrollingItems.length > 0 && (
+        {baseSequence.length > 0 && (
           <div className="bg-gradient-to-r from-red-800 via-red-700 to-red-900 text-white shadow-2xl border-b-2 sm:border-b-4 border-red-900 overflow-hidden w-full">
             <div className="w-full flex flex-col relative pt-0.5 pb-0">
               <div className="flex items-center justify-between px-3 sm:px-5 z-20 shrink-0 font-cairo">

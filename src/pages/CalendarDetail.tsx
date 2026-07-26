@@ -377,45 +377,7 @@ export default function CalendarDetail() {
       {/* Centered Mobile/Tablet Container matching Weather & Events page width */}
       <div className="max-w-md md:max-w-xl mx-auto space-y-3.5 sm:space-y-4">
 
-        {/* 1. TOP HEADER BAR */}
-        <div className="flex items-center justify-between px-1 py-1">
-          {/* Right Location & Page Title */}
-          <div className="flex flex-col items-start">
-            <div className="flex items-center gap-1.5 text-slate-900">
-              <span className="text-xl sm:text-2xl font-black tracking-tight font-cairo text-[#015028]">
-                التقويم الهجري
-              </span>
-              <CalendarIcon className="w-5 h-5 text-[#E5A921]" />
-            </div>
-            <span className="text-xs font-bold text-[#0B6B3D]/80 font-cairo flex items-center gap-1">
-              <span>السنة الهجرية {hijriYear} هـ</span>
-            </span>
-          </div>
 
-          {/* Left Navigation Buttons */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => {
-                setHijriMonth(todayHijri.month);
-                setHijriYear(todayHijri.year);
-                setSelectedDayNumber(todayHijri.day);
-              }}
-              className="px-3 py-1.5 rounded-xl bg-white border border-[#E5A921]/40 text-xs font-extrabold text-[#015028] shadow-xs hover:bg-[#F0FAF4] transition-all font-cairo flex items-center gap-1 cursor-pointer"
-              title="اليوم الحالي"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-[#E5A921]" />
-              <span>اليوم</span>
-            </button>
-
-            <button 
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
-              aria-label="رجوع"
-            >
-              <ArrowRight className="w-5 h-5 stroke-[2]" />
-            </button>
-          </div>
-        </div>
 
         {/* 2. MAIN HERO ISLAMIC CARD */}
         <motion.div 

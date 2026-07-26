@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { 
   MapPin, Eye, Gauge, Wind, Droplets, Calendar, 
-  ArrowUp, ArrowDown, Menu, RefreshCw, AlertCircle, Sparkles, Check, CloudRain
+  ArrowUp, ArrowDown, Menu, RefreshCw, AlertCircle, Sparkles, Check, CloudRain, ArrowRight
 } from "lucide-react";
 
 import { fetchOpenMeteoData } from "../utils/weatherApi";
@@ -1428,52 +1428,19 @@ export const WeatherDetail: React.FC = () => {
     return getWeatherTheme(category, isNight).theme;
   }, [weatherCode, isNight]);
 
+  const restOfDayThemeStr = useMemo(() => {
+    const today = dailyForecasts?.[0];
+    if (!today) return "from-sky-400 to-blue-500";
+    const category = getCategoryFromCode(today.id, false);
+    return getWeatherTheme(category, false).theme;
+  }, [dailyForecasts]);
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-12 pt-2 px-3 sm:px-6 select-none font-sans" dir="rtl">
       {/* Centered Mobile/Tablet Container matching exact reference image width */}
       <div className="max-w-md md:max-w-xl mx-auto space-y-4 sm:space-y-5">
 
-        {/* 1. TOP HEADER WITH LOCATION, UNIT TOGGLE AND LIVE REFRESH */}
-        <div className="flex items-center justify-between px-1 py-1">
-          {/* Menu / Back Action Icon + Interactive Refresh */}
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => navigate(-1)}
-              className="w-10 h-10 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-slate-700 hover:bg-slate-50 transition-colors"
-              aria-label="القائمة / العودة"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
 
-            {/* Interactive Refresh Button */}
-            <button 
-              onClick={fetchWeather}
-              disabled={isRefreshing}
-              className="w-10 h-10 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-95 transition-all"
-              title="تحديث بيانات الطقس الآن"
-            >
-              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-amber-600" : "text-slate-600"}`} />
-            </button>
-
-            {/* C / F Unit Toggle Switch */}
-            <button
-              onClick={() => setUnit(prev => prev === "C" ? "F" : "C")}
-              className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-bold text-slate-700 shadow-xs hover:bg-slate-50 transition-all font-sans"
-              title="تغيير وحدة الحرارة"
-            >
-              °{unit === "C" ? "C" : "F"}
-            </button>
-          </div>
-
-          {/* Right Page Title */}
-          <div className="flex flex-col items-end">
-            <div className="flex items-center gap-1.5 text-slate-900">
-              <span className="text-xl sm:text-2xl font-black tracking-tight font-cairo">
-                الطقس والأحوال الجوية
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* 2. MAIN HERO WEATHER CARD (DYNAMIC BASED ON WEATHER CONDITION & TIME OF DAY) */}
         <motion.div 
@@ -1493,6 +1460,10 @@ export const WeatherDetail: React.FC = () => {
             
             {/* LEFT SIDE (RTL LEFT): Temperature & Condition Info */}
             <div className="flex flex-col items-start space-y-1">
+              <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 text-xs font-bold flex items-center gap-1.5 shadow-sm mb-2 text-white">
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                الطقس الآن
+              </div>
               {/* Huge Temp Number */}
               <div 
                 onClick={() => setUnit(prev => prev === "C" ? "F" : "C")}
@@ -1571,6 +1542,62 @@ export const WeatherDetail: React.FC = () => {
 
           </div>
         </motion.div>
+        {/* EXPECTED WEATHER FOR THE REST OF THE DAY */}
+        {dailyForecasts?.[0] && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.35, delay: 0.1 }}
+            className={`relative rounded-[28px] sm:rounded-[36px] p-4 sm:p-6 text-white shadow-[0_8px_30px_rgba(0,0,0,0.18)] border overflow-hidden transition-all duration-500 bg-gradient-to-br ${restOfDayThemeStr}`}
+          >
+            <WeatherBackgroundEffect weatherCode={dailyForecasts[0].id} isNight={false} />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/15 via-transparent to-black/40 pointer-events-none" />
+            
+            <div className="relative z-10 flex items-start justify-between pt-6 sm:pt-8 pb-4">
+              <div className="flex flex-col items-start space-y-1">
+                <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 text-xs font-bold flex items-center gap-1.5 shadow-sm mb-2 text-white">
+                  بقية اليوم
+                </div>
+                <div className="text-5xl sm:text-6xl font-black tracking-tight leading-none font-sans drop-shadow-sm">
+                  {displayTemp(dailyForecasts[0].tempMax)}°
+                </div>
+                <h2 className="text-lg sm:text-2xl font-bold font-cairo tracking-wide text-amber-50/95 pt-1 max-w-[200px] sm:max-w-xs leading-snug">
+                  {dailyForecasts[0].condition}
+                </h2>
+                <div className="pt-2 flex flex-col items-start gap-2">
+                  <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-full px-3.5 py-1 flex items-center gap-2.5 text-xs font-bold font-sans">
+                    <div className="flex items-center gap-0.5 text-red-300">
+                      <span>{displayTemp(dailyForecasts[0].tempMax)}°</span>
+                      <ArrowUp className="w-3 h-3 stroke-[3]" />
+                    </div>
+                    <span className="text-white/30 text-[10px]">|</span>
+                    <div className="flex items-center gap-0.5 text-sky-300">
+                      <span>{displayTemp(dailyForecasts[0].tempMin)}°</span>
+                      <ArrowDown className="w-3 h-3 stroke-[3]" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <Interactive3DWeatherIllustration 
+                weatherCode={dailyForecasts[0].id} 
+                isNight={false} 
+              />
+            </div>
+            <div className="relative z-10 grid grid-cols-2 gap-1.5 sm:gap-2.5 mt-2 pt-3 border-t border-white/15">
+              <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center text-center space-y-1 hover:bg-black/30 transition-colors">
+                <Wind className="w-4 h-4 sm:w-5 sm:h-5 text-sky-300" />
+                <span className="text-[10px] sm:text-xs text-amber-100/80 font-bold font-cairo">سرعة الرياح</span>
+                <span className="text-xs sm:text-sm font-extrabold font-sans tracking-tight">{dailyForecasts[0].wind} م/ث</span>
+              </div>
+              <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center text-center space-y-1 hover:bg-black/30 transition-colors">
+                <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300" />
+                <span className="text-[10px] sm:text-xs text-amber-100/80 font-bold font-cairo">الرطوبة</span>
+                <span className="text-xs sm:text-sm font-extrabold font-sans tracking-tight">{dailyForecasts[0].humidity}%</span>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
 
         {/* 3. SUNRISE AND SUNSET ROW (2 SIDE-BY-SIDE CARDS MATCHING REFERENCE) */}
         <div className="grid grid-cols-2 gap-2.5 sm:gap-4">

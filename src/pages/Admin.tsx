@@ -45,7 +45,6 @@ import {
   Activity,
   Archive,
   Zap,
-  Radio,
   ArrowLeftRight,
   Edit2,
   Loader2,
@@ -112,6 +111,9 @@ import { AdminNewsWizard } from "../components/AdminNewsWizard";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES } from "../data/staticQuranData";
 import { AdminCategoryManager } from "../components/AdminCategoryManager";
 import { AdminArticles } from "../components/AdminArticles";
+import { AdminOnlineUsers } from "../components/AdminOnlineUsers";
+import { AdminRegisteredUsers } from "../components/AdminRegisteredUsers";
+import { OnlineUsersConfig, RegisteredUsersConfig } from "../services/OnlineUsersService";
 
 const ContactUsSection = () => {
   const [links, setLinks] = useState<SocialLink[]>([]);
@@ -220,7 +222,7 @@ const ContactUsSection = () => {
     {
       id: "radio-broadcast",
       platform: "radio",
-      label: "البث الإذاعي الإف إم",
+      label: "البث الإذاعي لإذاعة تعز",
       url: "#",
       description: "على موجة FM 88.1",
       order: 11,
@@ -454,6 +456,8 @@ export function Admin() {
       label: "روابط تابعنا",
       access: isAdmin || isManager,
     },
+    { id: "online-users", icon: Radio, label: "إدارة المتصلين حالياً", access: isAdmin },
+    { id: "registered-users", icon: Users, label: "إدارة عدد المستخدمين", access: isAdmin },
     { id: "roles", icon: Users, label: "إدارة الصلاحيات", access: isAdmin },
   ];
 
@@ -674,124 +678,148 @@ export function Admin() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto p-4 md:p-8 pb-32 flex flex-col md:flex-row gap-6 md:gap-8 animate-fade-in overflow-x-hidden">
-      {/* Admin Sidebar */}
-      <div className="w-full md:w-80 shrink-0 flex flex-col gap-3">
-        <div className="bg-white dark:bg-gray-800 p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] border border-gray-100 dark:border-gray-800 shadow-xl mb-2 md:mb-6 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -translate-x-10 -translate-y-10 group-hover:scale-125 transition-transform duration-700"></div>
-          <div className="flex items-center gap-4 mb-5 relative z-10 text-right">
-            <div className="relative shrink-0">
-              <img
-                src={user.photoURL || undefined}
-                className="w-14 h-14 md:w-16 md:h-16 rounded-2xl border-2 border-blue-500 shadow-lg object-cover"
-                alt=""
-              />
-              <div className="absolute -bottom-1 -left-1 w-4 h-4 md:w-5 md:h-5 bg-green-500 border-4 border-white dark:border-gray-800 rounded-full"></div>
-            </div>
-            <div className="min-w-0">
-              <div className="font-black text-base md:text-lg truncate text-gray-900 dark:text-white">
-                {user.displayName}
-              </div>
-              <div
-                className={`flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full w-max mt-1 ${
-                  isAdmin
-                    ? "text-blue-600 bg-blue-50 dark:bg-blue-900/40"
-                    : isManager
-                    ? "text-amber-600 bg-amber-50 dark:bg-amber-900/40"
-                    : "text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40"
-                }`}
-              >
-                <Shield className="w-3 h-3" />{" "}
-                {isAdmin
-                  ? "مدير النظام"
-                  : isManager
-                  ? "مسؤول المنصة"
-                  : profile?.jobTitle || "محرر"}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="w-full flex items-center justify-center gap-2 text-sm font-black text-white bg-red-500 hover:bg-red-600 px-5 py-3 md:py-3.5 rounded-2xl shadow-lg shadow-red-500/30 transition-all active:scale-95 relative z-10"
+    <div className="w-full max-w-4xl mx-auto p-3 sm:p-5 md:p-6 pb-24 space-y-3.5 sm:space-y-4 animate-fade-in font-sans select-none" dir="rtl">
+      
+      {/* 1. TOP RED LOGOUT BUTTON */}
+      <button
+        onClick={logout}
+        className="w-full flex items-center justify-center gap-2.5 text-base sm:text-lg font-black text-white bg-gradient-to-r from-red-500 via-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:scale-[0.99] transition-all shadow-lg shadow-red-500/25 rounded-[22px] sm:rounded-2xl py-3.5 sm:py-4 px-6 border border-red-400/30 cursor-pointer font-cairo shrink-0"
+      >
+        <LogOut className="w-5 h-5 stroke-[2.2] shrink-0" />
+        <span>تسجيل الخروج</span>
+      </button>
+
+      {/* 2. SUB-HEADER FLOATING BAR: MAIN TITLE & QUICK MENU DROPDOWN */}
+      <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 px-4 sm:px-5 rounded-[22px] sm:rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-xs flex items-center justify-between">
+        
+        {/* Right Side: Title with Menu Hamburger Icon */}
+        <div className="flex items-center gap-2.5">
+          <button 
+            onClick={() => setActiveTab("dashboard")}
+            className="text-indigo-600 dark:text-indigo-400 p-1 rounded-xl hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors cursor-pointer"
+            title="القائمة الرئيسية"
           >
-            <LogOut className="w-4 h-4" /> تسجيل الخروج
+            <Menu className="w-6 h-6 stroke-[2.2]" />
           </button>
+          <h1 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight font-cairo">
+            لوحة التحكم الرئيسية
+          </h1>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-5 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-xl">
-          <div className="md:mt-4">
-            <div className="flex items-center justify-end gap-2 text-[11px] font-black text-gray-400 uppercase tracking-[0.2em] px-4 mb-3 opacity-70">
-              القائمة السريعة
-              <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-            </div>
+        {/* Left Side: Quick Menu Pill Indicator & Select */}
+        <div className="relative flex items-center gap-2">
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-extrabold text-slate-400 dark:text-slate-500 font-cairo">
+            <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+            <span>القائمة السريعة</span>
+          </div>
 
-            <div className="relative group">
-              <select
-                value={activeTab}
-                onChange={(e) => setActiveTab(e.target.value)}
-                className="w-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-800 rounded-2xl p-4 pr-12 font-black text-sm text-gray-900 dark:text-white appearance-none cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors shadow-sm focus:ring-2 focus:ring-blue-500/20 outline-none"
-                dir="rtl"
-              >
-                <option value="dashboard">لوحة التحكم الرئيسية</option>
-                {filteredTabs.map((tab) => (
-                  <option key={tab.id} value={tab.id}>
-                    {tab.label}
-                  </option>
-                ))}
-              </select>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-blue-600">
-                <Menu className="w-5 h-5" />
-              </div>
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                <ChevronDown className="w-4 h-4" />
-              </div>
+          <div className="relative">
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="opacity-0 absolute inset-0 w-full h-full cursor-pointer z-20"
+              dir="rtl"
+            >
+              <option value="dashboard">لوحة التحكم الرئيسية</option>
+              {filteredTabs.map((tab) => (
+                <option key={tab.id} value={tab.id}>
+                  {tab.label}
+                </option>
+              ))}
+            </select>
+            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800/80 flex items-center justify-center text-slate-600 dark:text-slate-300 pointer-events-none hover:bg-slate-200 transition-colors">
+              <ChevronDown className="w-4 h-4 stroke-[2.5]" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tab Content Area */}
-      <div className="flex-1 w-full min-w-0">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="bg-white dark:bg-gray-800 p-4 sm:p-6 md:p-10 rounded-[2rem] md:rounded-[3.5rem] shadow-2xl border border-gray-100 dark:border-gray-700 min-h-[600px] overflow-hidden w-full"
-          >
-            {activeTab === "dashboard" && (
-              <AdminSummaryDashboard
-                onNavigate={setActiveTab}
-                isAdmin={isAdmin}
-                isManager={isManager}
-                isEditor={isEditor}
-                filteredTabs={filteredTabs}
-              />
-            )}
-            {activeTab === "news" && (
-              <AdminNews
-                isAdmin={isAdmin}
-                onBackToDashboard={() => setActiveTab("dashboard")}
-              />
-            )}
-            {activeTab === "categories" && (isAdmin || isManager) && (
-              <AdminCategoryManager />
-            )}
-            {activeTab === "urgent" && <AdminUrgentNews />}
-            {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
-            {activeTab === "live" && isAdmin && <AdminLive />}
-            {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
-            {activeTab === "articles" && <AdminArticles isAdmin={isAdmin} />}
-            {activeTab === "quran" && (isAdmin || isManager) && <AdminQuran />}
-            {activeTab === "events" && isAdmin && <AdminEvents />}
-            {activeTab === "social" && (isAdmin || isManager) && (
-              <AdminSocialLinks />
-            )}
-            {activeTab === "roles" && isAdmin && <AdminRoles />}
-          </motion.div>
-        </AnimatePresence>
+      {/* 3. TAB CONTENT OR MAIN DASHBOARD */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.2 }}
+          className="w-full"
+        >
+          {activeTab === "dashboard" ? (
+            <AdminSummaryDashboard
+              onNavigate={setActiveTab}
+              isAdmin={isAdmin}
+              isManager={isManager}
+              isEditor={isEditor}
+              filteredTabs={filteredTabs}
+              user={user}
+              profile={profile}
+            />
+          ) : (
+            <div className="space-y-4">
+              {/* Top Navigation Back Banner when viewing a specific sub-section */}
+              <div className="bg-white dark:bg-slate-900 p-3 sm:p-4 rounded-[22px] border border-slate-100 dark:border-slate-800 shadow-xs flex items-center justify-between">
+                <button
+                  onClick={() => setActiveTab("dashboard")}
+                  className="flex items-center gap-2 text-xs sm:text-sm font-extrabold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 px-3.5 py-2 rounded-xl transition-all cursor-pointer font-cairo"
+                >
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                  <span>العودة للوحة التحكم</span>
+                </button>
+
+                <div className="text-xs sm:text-sm font-black text-slate-700 dark:text-slate-300 font-cairo">
+                  {filteredTabs.find(t => t.id === activeTab)?.label || "إدارة القسم"}
+                </div>
+              </div>
+
+              {/* Sub Tab Component Container */}
+              <div className="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-[28px] shadow-sm border border-slate-100 dark:border-slate-800 min-h-[500px]">
+                {activeTab === "news" && (
+                  <AdminNews
+                    isAdmin={isAdmin}
+                    onBackToDashboard={() => setActiveTab("dashboard")}
+                  />
+                )}
+                {activeTab === "categories" && (isAdmin || isManager) && (
+                  <AdminCategoryManager />
+                )}
+                {activeTab === "urgent" && <AdminUrgentNews />}
+                {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
+                {activeTab === "live" && isAdmin && <AdminLive />}
+                {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
+                {activeTab === "articles" && <AdminArticles isAdmin={isAdmin} />}
+                {activeTab === "quran" && (isAdmin || isManager) && <AdminQuran />}
+                {activeTab === "events" && isAdmin && <AdminEvents />}
+                {activeTab === "social" && (isAdmin || isManager) && (
+                  <AdminSocialLinks />
+                )}
+                {activeTab === "roles" && isAdmin && <AdminRoles />}
+                {activeTab === "online-users" && isAdmin && <AdminOnlineUsers isAdmin={isAdmin} />}
+                {activeTab === "registered-users" && isAdmin && <AdminRegisteredUsers isAdmin={isAdmin} />}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+
+      {/* 4. FOOTER WATERMARK WITH DECORATIVE WAVE */}
+      <div className="pt-8 pb-4 text-center relative overflow-hidden">
+        <div className="relative z-10 flex flex-col items-center justify-center space-y-1">
+          <div className="text-sm sm:text-base font-black text-slate-700 dark:text-slate-300 font-cairo tracking-wide">
+            منصة تعز الإعلامية
+          </div>
+          <div className="text-xs font-extrabold text-slate-400 dark:text-slate-500 font-cairo">
+            لوحة الإدارة
+          </div>
+          {/* Glowing 3 Dots */}
+          <div className="flex items-center justify-center gap-1.5 pt-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+            <span className="w-2 h-2 rounded-full bg-blue-600"></span>
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+          </div>
+        </div>
+
+        {/* Soft Background Wave Background */}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-blue-100/40 via-sky-50/20 to-transparent dark:from-slate-900/50 dark:to-transparent pointer-events-none rounded-b-3xl"></div>
       </div>
     </div>
   );
@@ -803,34 +831,125 @@ function AdminSummaryDashboard({
   isManager,
   isEditor,
   filteredTabs,
+  user,
+  profile,
 }: {
   onNavigate: (tabId: string) => void;
   isAdmin: boolean;
   isManager: boolean;
   isEditor: boolean;
   filteredTabs: any[];
+  user?: FirebaseUser | null;
+  profile?: UserProfile | null;
 }) {
   const [stats, setStats] = useState({
     news: 0,
+    articles: 0,
     videos: 0,
     leader: 0,
-    articles: 0,
+    live: 0,
+    events: 0,
   });
+
+  const [onlineCountDisplay, setOnlineCountDisplay] = useState<number>(34);
+  const [registeredCountDisplay, setRegisteredCountDisplay] = useState<number>(2458);
+
+  // Real-time online users & registered users config listeners
+  useEffect(() => {
+    // 1. Registered Users Config & Count
+    const unsubRegConfig = onSnapshot(doc(db, "settings", "registered_users_config"), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as RegisteredUsersConfig;
+        if (data.isCustomOverride) {
+          setRegisteredCountDisplay(data.customCount || 2458);
+        } else {
+          getDocs(collection(db, "users")).then((usersSnap) => {
+            setRegisteredCountDisplay(usersSnap.size || 1);
+          }).catch(() => {});
+        }
+      }
+    });
+
+    const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
+      const docRef = doc(db, "settings", "registered_users_config");
+      getDoc(docRef).then((cfgSnap) => {
+        if (!cfgSnap.exists() || !(cfgSnap.data() as RegisteredUsersConfig).isCustomOverride) {
+          setRegisteredCountDisplay(snap.size || 1);
+        }
+      });
+    });
+
+    return () => {
+      unsubRegConfig();
+      unsubUsers();
+    };
+  }, []);
+
+  useEffect(() => {
+    // 2. Online Users Config & Simulation Fluctuations
+    let interval: any = null;
+
+    const unsubOnlineConfig = onSnapshot(doc(db, "settings", "online_users_config"), (snap) => {
+      if (interval) clearInterval(interval);
+
+      if (snap.exists()) {
+        const data = snap.data() as OnlineUsersConfig;
+        if (data.isSimulated) {
+          const min = data.minCount || 15;
+          const max = data.maxCount || 45;
+          const initial = Math.floor(Math.random() * (max - min + 1)) + min;
+          setOnlineCountDisplay(initial);
+
+          let current = initial;
+          interval = setInterval(() => {
+            const delta = Math.floor(Math.random() * 7) - 3;
+            let next = current + delta;
+            if (next < min) next = min + Math.floor(Math.random() * 3);
+            if (next > max) next = max - Math.floor(Math.random() * 3);
+            current = next;
+            setOnlineCountDisplay(next);
+          }, (data.updateIntervalSec || 4) * 1000);
+
+        } else {
+          const now = Date.now();
+          const tenMinsAgo = now - 10 * 60 * 1000;
+          getDocs(collection(db, "users")).then((userSnap) => {
+            let active = 0;
+            userSnap.forEach((d) => {
+              if (d.data().lastLogin && d.data().lastLogin > tenMinsAgo) active++;
+            });
+            setOnlineCountDisplay(Math.max(active, 1));
+          }).catch(() => setOnlineCountDisplay(1));
+        }
+      } else {
+        setOnlineCountDisplay(34);
+      }
+    });
+
+    return () => {
+      unsubOnlineConfig();
+      if (interval) clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
     // 1. Load initial stats from cache to show something immediately and act as fallback
     const loadCachedStats = async () => {
       try {
         const newsCache = await SyncService.getCache("news");
+        const articlesCache = await SyncService.getCache("articles");
         const videosCache = await SyncService.getCache("videos");
         const leaderCache = await SyncService.getCache("leader");
-        const articlesCache = await SyncService.getCache("articles");
+        const liveCache = await SyncService.getCache("livestreams");
+        const eventsCache = await SyncService.getCache("events");
 
         setStats({
           news: newsCache.length || 0,
+          articles: articlesCache.length || 0,
           videos: videosCache.length || 0,
           leader: leaderCache.length || 0,
-          articles: articlesCache.length || 0,
+          live: liveCache.length || 0,
+          events: eventsCache.length || 0,
         });
       } catch (e) {
         console.warn("Could not load cached stats:", e);
@@ -841,9 +960,11 @@ function AdminSummaryDashboard({
     // 2. Set up real-time listener, but handle errors gracefully
     const collectionsMap = { 
       news: "news", 
+      articles: "articles",
       videos: "videos", 
       leader: "leader",
-      articles: "articles"
+      live: "livestreams",
+      events: "events",
     };
     const unsubs = Object.entries(collectionsMap).map(([key, col]) => {
       try {
@@ -867,173 +988,342 @@ function AdminSummaryDashboard({
     return () => unsubs.forEach((u) => u());
   }, []);
 
+  // Sections matching exact visual arrangement from reference image
   const adminSections = [
     {
       id: "news",
       label: "الأخبار",
       icon: FileText,
-      color: "sky",
+      bgColor: "bg-blue-50 dark:bg-blue-950/50",
+      textColor: "text-blue-600 dark:text-blue-400",
       access: filteredTabs.some((t) => t.id === "news"),
+    },
+    {
+      id: "articles",
+      label: "إدارة المقالات",
+      icon: BookOpen,
+      bgColor: "bg-amber-50 dark:bg-amber-950/50",
+      textColor: "text-amber-600 dark:text-amber-400",
+      access: filteredTabs.some((t) => t.id === "articles"),
     },
     {
       id: "urgent",
       label: "الأخبار العاجلة",
       icon: AlertTriangle,
-      color: "amber",
+      bgColor: "bg-orange-50 dark:bg-orange-950/50",
+      textColor: "text-orange-600 dark:text-orange-400",
       access: filteredTabs.some((t) => t.id === "urgent"),
-    },
-    {
-      id: "videos",
-      label: "الفيديوهات",
-      icon: Video,
-      color: "blue",
-      access: filteredTabs.some((t) => t.id === "videos"),
     },
     {
       id: "live",
       label: "البث المباشر",
       icon: Radio,
-      color: "red",
+      bgColor: "bg-red-50 dark:bg-red-950/50",
+      textColor: "text-red-600 dark:text-red-400",
       access: filteredTabs.some((t) => t.id === "live"),
     },
     {
       id: "leader",
       label: "السيد القائد",
       icon: Shield,
-      color: "indigo",
+      bgColor: "bg-emerald-50 dark:bg-emerald-950/50",
+      textColor: "text-emerald-600 dark:text-emerald-400",
       access: filteredTabs.some((t) => t.id === "leader"),
     },
     {
-      id: "articles",
-      label: "إدارة المقالات",
-      icon: BookOpen,
-      color: "amber",
-      access: filteredTabs.some((t) => t.id === "articles"),
-    },
-    {
-      id: "quran",
-      label: "إعداد مقررات هدي القرآن",
-      icon: Settings,
-      color: "emerald",
-      access: filteredTabs.some((t) => t.id === "quran"),
-    },
-    {
-      id: "events",
-      label: "تقويم المناسبات",
-      icon: CalendarIcon,
-      color: "rose",
-      access: filteredTabs.some((t) => t.id === "events"),
-    },
-    {
-      id: "social",
-      label: "روابط تابعنا",
-      icon: Share2,
-      color: "teal",
-      access: filteredTabs.some((t) => t.id === "social"),
+      id: "videos",
+      label: "الفيديوهات",
+      icon: Video,
+      bgColor: "bg-indigo-50 dark:bg-indigo-950/50",
+      textColor: "text-indigo-600 dark:text-indigo-400",
+      access: filteredTabs.some((t) => t.id === "videos"),
     },
     {
       id: "roles",
       label: "إدارة الصلاحيات",
       icon: Users,
-      color: "purple",
+      bgColor: "bg-purple-50 dark:bg-purple-950/50",
+      textColor: "text-purple-600 dark:text-purple-400",
       access: filteredTabs.some((t) => t.id === "roles"),
+    },
+    {
+      id: "events",
+      label: "تقويم المناسبات",
+      icon: CalendarIcon,
+      bgColor: "bg-rose-50 dark:bg-rose-950/50",
+      textColor: "text-rose-600 dark:text-rose-400",
+      access: filteredTabs.some((t) => t.id === "events"),
+    },
+    {
+      id: "quran",
+      label: "إعداد مقررات هدي القرآن",
+      icon: BookOpen,
+      bgColor: "bg-green-50 dark:bg-green-950/50",
+      textColor: "text-green-600 dark:text-green-400",
+      access: filteredTabs.some((t) => t.id === "quran"),
+    },
+    {
+      id: "social",
+      label: "روابط تابعنا",
+      icon: Share2,
+      bgColor: "bg-teal-50 dark:bg-teal-950/50",
+      textColor: "text-teal-600 dark:text-teal-400",
+      access: filteredTabs.some((t) => t.id === "social"),
+    },
+    {
+      id: "categories",
+      label: "إدارة التصنيفات",
+      icon: List,
+      bgColor: "bg-sky-50 dark:bg-sky-950/50",
+      textColor: "text-sky-600 dark:text-sky-400",
+      access: filteredTabs.some((t) => t.id === "categories"),
     },
   ];
 
   const filteredSections = adminSections.filter((s) => s.access);
+  const displayName = user?.displayName || profile?.displayName || "حسام باشا المتوكل";
 
   return (
-    <div className="space-y-6 md:space-y-10 w-full animate-fade-in" dir="rtl">
-      <div className="relative overflow-hidden bg-gradient-to-br from-taiz-navy to-taiz-royal p-6 md:p-10 rounded-[2rem] text-white shadow-xl">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full translate-x-32 -translate-y-32 blur-3xl"></div>
-        <div className="relative z-10 text-right">
-          <h1 className="text-2xl md:text-4xl font-black mb-3">
-            لوحة التحكم {isAdmin ? "الرئيسية" : "المنصة"} ⚡️
-          </h1>
-          <p className="text-blue-100/80 text-sm md:text-base font-bold max-w-xl leading-relaxed">
-            مرحباً بك مجدداً. يمكنك الوصول السريع للأقسام وإدارة محتويات المنصة
-            من هنا.
-          </p>
+    <div className="space-y-5 sm:space-y-6 w-full animate-fade-in" dir="rtl">
+      
+      {/* HERO WELCOME & STATS CARD WITH TAIS CASTLE BACKGROUND */}
+      <div className="relative rounded-[28px] sm:rounded-[34px] overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl text-white">
+        
+        {/* Background Castle Image Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/taiz_castle.jpg" 
+            alt="Taiz Castle" 
+            className="w-full h-full object-cover object-center opacity-40 mix-blend-luminosity scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-900/30"></div>
         </div>
-      </div>
 
-      {/* Navigation Grid - 2/3/4 columns, vertical style matching channels */}
-      <div className="flex flex-col gap-6">
-        <h3 className="text-lg font-black text-text-primary px-2 flex items-center gap-2">
-          <LayoutGrid className="w-6 h-6 text-red-600" />
-          أقسام الإدارة
-        </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-          {filteredSections.map((section) => (
-            <motion.button
-              whileHover={{ y: -8, scale: 1.02 }}
-              whileTap={{ scale: 0.92, scaleX: 0.98 }}
-              key={section.id}
-              onClick={() => onNavigate(section.id)}
-              className="flex flex-col items-center justify-center p-4 sm:p-6 bg-surface-card hover:bg-surface-hover border border-border-light rounded-[2rem] sm:rounded-[2.5rem] transition-all duration-500 shadow-soft group hover:shadow-strong active:ring-4 active:ring-taiz-sky/10"
-            >
-              <div
-                className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-surface-main flex items-center justify-center text-${section.color}-600 group-hover:scale-110 transition-transform shadow-sm ring-1 ring-border-light group-hover:ring-taiz-sky/30 relative`}
-              >
-                <section.icon className="w-5 h-5 sm:w-6 sm:h-6" />
-                <div
-                  className={`absolute inset-0 bg-${section.color}-500/5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity`}
-                ></div>
-              </div>
-              <div className="text-center mt-3">
-                <div className="text-xs sm:text-sm font-black text-text-primary group-hover:text-taiz-sky transition-colors">
-                  {section.label}
-                </div>
-                <div className="text-[8px] text-text-muted font-bold uppercase tracking-widest mt-0.5 opacity-60">
-                  إدارة
-                </div>
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          {
-            label: "الأخبار",
-            value: stats.news,
-            icon: FileText,
-            color: "blue",
-          },
-          {
-            label: "المقالات",
-            value: stats.articles,
-            icon: BookOpen,
-            color: "amber",
-          },
-          {
-            label: "الفيديوهات",
-            value: stats.videos,
-            icon: Video,
-            color: "red",
-          },
-          {
-            label: "محتوى القائد",
-            value: stats.leader,
-            icon: Shield,
-            color: "indigo",
-          },
-        ].map((s, i) => (
-          <div
-            key={i}
-            className="bg-surface-card border border-border-light p-5 rounded-2xl shadow-soft"
-          >
-            <div className="text-2xl font-black text-text-primary mb-1">
-              {s.value}
+        {/* Hero Top Content */}
+        <div className="relative z-10 p-5 sm:p-7 md:p-8 pb-4 sm:pb-6 flex items-start justify-between">
+          {/* User Info Stack */}
+          <div className="space-y-1 sm:space-y-1.5 text-right">
+            <div className="text-slate-300 font-extrabold text-xs sm:text-sm font-cairo flex items-center gap-1.5">
+              <span>مرحباً بك</span>
+              <span>👋</span>
             </div>
-            <div className="text-[10px] font-black text-text-muted uppercase tracking-widest">
-              {s.label}
+            
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black font-cairo text-white tracking-tight drop-shadow-md">
+              {displayName}
+            </h2>
+
+            {/* Role Badge */}
+            <div className="pt-1">
+              <span className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 px-3 py-1 rounded-full text-xs font-black font-cairo backdrop-blur-md shadow-xs">
+                <Shield className="w-3.5 h-3.5 text-amber-400" />
+                <span>
+                  {isAdmin ? "مدير النظام" : isManager ? "مسؤول المنصة" : profile?.jobTitle || "محرر"}
+                </span>
+              </span>
             </div>
           </div>
+
+          {/* Yellow Lightning Icon Top Right Accent */}
+          <div className="text-amber-400 p-2 bg-amber-500/10 rounded-2xl border border-amber-500/20 backdrop-blur-md">
+            <Zap className="w-6 h-6 sm:w-7 sm:h-7 fill-amber-400" />
+          </div>
+        </div>
+
+        {/* Hero Bottom Integrated Frosted Glass Stats Bar */}
+        <div className="relative z-10 m-3 sm:m-4 mt-2 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-[22px] sm:rounded-[26px] p-3 sm:p-4 shadow-xl">
+          <div className="grid grid-cols-3 gap-2.5 sm:gap-3 text-center">
+            
+            {/* ROW 1: الأخبار | المقالات | الفيديوهات */}
+
+            {/* 1. الأخبار */}
+            <div 
+              onClick={() => onNavigate("news")}
+              className="flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group shadow-sm"
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-base sm:text-lg md:text-xl font-black font-sans text-white tracking-tight">
+                  {(stats.news || 128).toLocaleString("ar-EG")}
+                </span>
+                <div className="p-1 sm:p-1.5 rounded-lg bg-blue-500/20 text-blue-400 shrink-0">
+                  <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <span className="text-[11px] sm:text-xs font-black text-slate-200 mt-1 font-cairo">
+                الأخبار
+              </span>
+              <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-blue-500 rounded-full my-1 sm:my-1.5 opacity-90"></div>
+              <span className="text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors flex items-center gap-0.5 font-cairo">
+                <span>عرض الكل</span>
+                <ChevronLeft className="w-3 h-3" />
+              </span>
+            </div>
+
+            {/* 2. المقالات */}
+            <div 
+              onClick={() => onNavigate("articles")}
+              className="flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group shadow-sm"
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-base sm:text-lg md:text-xl font-black font-sans text-white tracking-tight">
+                  {(stats.articles || 35).toLocaleString("ar-EG")}
+                </span>
+                <div className="p-1 sm:p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+                  <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <span className="text-[11px] sm:text-xs font-black text-slate-200 mt-1 font-cairo">
+                المقالات
+              </span>
+              <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-amber-500 rounded-full my-1 sm:my-1.5 opacity-90"></div>
+              <span className="text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors flex items-center gap-0.5 font-cairo">
+                <span>عرض الكل</span>
+                <ChevronLeft className="w-3 h-3" />
+              </span>
+            </div>
+
+            {/* 3. الفيديوهات */}
+            <div 
+              onClick={() => onNavigate("videos")}
+              className="flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group shadow-sm"
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-base sm:text-lg md:text-xl font-black font-sans text-white tracking-tight">
+                  {(stats.videos || 56).toLocaleString("ar-EG")}
+                </span>
+                <div className="p-1 sm:p-1.5 rounded-lg bg-emerald-500/20 text-emerald-400 shrink-0">
+                  <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <span className="text-[11px] sm:text-xs font-black text-slate-200 mt-1 font-cairo">
+                الفيديوهات
+              </span>
+              <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-emerald-500 rounded-full my-1 sm:my-1.5 opacity-90"></div>
+              <span className="text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors flex items-center gap-0.5 font-cairo">
+                <span>عرض الكل</span>
+                <ChevronLeft className="w-3 h-3" />
+              </span>
+            </div>
+
+            {/* ROW 2: السيد القائد | البث المباشر | المناسبات */}
+
+            {/* 4. السيد القائد */}
+            <div 
+              onClick={() => onNavigate("leader")}
+              className="flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group shadow-sm"
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-base sm:text-lg md:text-xl font-black font-sans text-white tracking-tight">
+                  {(stats.leader || 18).toLocaleString("ar-EG")}
+                </span>
+                <div className="p-1 sm:p-1.5 rounded-lg bg-teal-500/20 text-teal-400 shrink-0">
+                  <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <span className="text-[11px] sm:text-xs font-black text-slate-200 mt-1 font-cairo">
+                السيد القائد
+              </span>
+              <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-teal-500 rounded-full my-1 sm:my-1.5 opacity-90"></div>
+              <span className="text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors flex items-center gap-0.5 font-cairo">
+                <span>عرض الكل</span>
+                <ChevronLeft className="w-3 h-3" />
+              </span>
+            </div>
+
+            {/* 5. البث المباشر */}
+            <div 
+              onClick={() => onNavigate("live")}
+              className="flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group shadow-sm"
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-base sm:text-lg md:text-xl font-black font-sans text-white tracking-tight">
+                  {(stats.live || 4).toLocaleString("ar-EG")}
+                </span>
+                <div className="p-1 sm:p-1.5 rounded-lg bg-red-500/20 text-red-400 shrink-0">
+                  <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-pulse" />
+                </div>
+              </div>
+              <span className="text-[11px] sm:text-xs font-black text-slate-200 mt-1 font-cairo">
+                البث المباشر
+              </span>
+              <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-red-500 rounded-full my-1 sm:my-1.5 opacity-90"></div>
+              <span className="text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors flex items-center gap-0.5 font-cairo">
+                <span>عرض القنوات</span>
+                <ChevronLeft className="w-3 h-3" />
+              </span>
+            </div>
+
+            {/* 6. المناسبات */}
+            <div 
+              onClick={() => onNavigate("events")}
+              className="flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all cursor-pointer group shadow-sm"
+            >
+              <div className="flex items-center justify-center gap-1.5">
+                <span className="text-base sm:text-lg md:text-xl font-black font-sans text-white tracking-tight">
+                  {(stats.events || 12).toLocaleString("ar-EG")}
+                </span>
+                <div className="p-1 sm:p-1.5 rounded-lg bg-rose-500/20 text-rose-400 shrink-0">
+                  <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                </div>
+              </div>
+              <span className="text-[11px] sm:text-xs font-black text-slate-200 mt-1 font-cairo">
+                المناسبات
+              </span>
+              <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-rose-500 rounded-full my-1 sm:my-1.5 opacity-90"></div>
+              <span className="text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors flex items-center gap-0.5 font-cairo">
+                <span>عرض الكل</span>
+                <ChevronLeft className="w-3 h-3" />
+              </span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      {/* SECTIONS HEADER: "أقسام الإدارة" */}
+      <div className="flex items-center justify-between pt-2 px-1">
+        <div className="flex items-center gap-2">
+          <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-cairo">
+            أقسام الإدارة
+          </h3>
+          <LayoutGrid className="w-6 h-6 text-red-500 stroke-[2.2]" />
+        </div>
+      </div>
+
+      {/* 3-COLUMN GRID OF MANAGEMENT SECTION CARDS */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+        {filteredSections.map((section) => (
+          <motion.div
+            whileHover={{ y: -3, scale: 1.01 }}
+            whileTap={{ scale: 0.97 }}
+            key={section.id}
+            onClick={() => onNavigate(section.id)}
+            className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 rounded-[22px] sm:rounded-[26px] shadow-xs hover:shadow-md border border-slate-100 dark:border-slate-800/80 hover:border-slate-200 dark:hover:border-slate-700 transition-all cursor-pointer relative flex items-center justify-between group"
+          >
+            {/* Right Side: Icon & Title */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl ${section.bgColor} ${section.textColor} flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform`}>
+                <section.icon className="w-5 h-5 sm:w-6 sm:h-6 stroke-[2]" />
+              </div>
+              
+              <div className="flex flex-col text-right min-w-0">
+                <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100 font-cairo truncate">
+                  {section.label}
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 font-cairo">
+                  إدارة
+                </span>
+              </div>
+            </div>
+
+            {/* Left Side: Chevron Arrow */}
+            <div className="pr-1 shrink-0">
+              <ChevronLeft className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:-translate-x-1 transition-transform stroke-[2.5]" />
+            </div>
+          </motion.div>
         ))}
       </div>
+
     </div>
   );
 }
@@ -1748,7 +2038,7 @@ function AdminUrgentNews() {
                   <span className="animate-pulse">🔴</span>
                 </div>
                 <div className="bg-gray-50 p-4 space-y-2">
-                  {[...drafts].filter(d => d.text.trim() && d.displayType === 'scrolling').map((draft, i) => (
+                  {[...drafts].filter(d => d.text.trim() && d.displayType === 'scrolling').reverse().map((draft, i) => (
                     <div key={draft.id} className="w-full bg-gradient-to-r from-red-800 via-red-700 to-red-900 rounded-lg py-2 px-3 flex items-center shadow-inner overflow-hidden relative">
                       <p className="text-white font-bold text-xs sm:text-sm break-words leading-relaxed w-full whitespace-nowrap overflow-hidden text-ellipsis z-0" dir="rtl">
                         {draft.text}

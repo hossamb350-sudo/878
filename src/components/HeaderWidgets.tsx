@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { MapPin, Droplets, Sunrise, Sun, SunMedium, Sunset, MoonStar, CloudRain } from "lucide-react";
+import { MapPin, Droplets, Sunrise, Sun, SunMedium, Sunset, MoonStar, CloudRain, Calendar } from "lucide-react";
 
 // Red Calendar Icon Badge for Date Card
 const RedCalendarIcon = () => (
@@ -428,6 +428,9 @@ export const HeaderWidgets: React.FC = () => {
           >
             {/* Center Date Information */}
             <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center py-1 sm:py-2">
+              {/* Calendar Icon Top Center */}
+              <Calendar className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7 text-emerald-600 dark:text-emerald-400 mb-1 sm:mb-2 shrink-0" strokeWidth={1.8} />
+
               {/* Day Name */}
               <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-slate-900 dark:text-white tracking-tight leading-none font-cairo">
                 {dayName}
