@@ -35,7 +35,7 @@ export const AdminRegisteredUsers: React.FC<AdminRegisteredUsersProps> = ({ isAd
 
   // Form states
   const [isCustomOverride, setIsCustomOverride] = useState<boolean>(config.isCustomOverride);
-  const [customCount, setCustomCount] = useState<number>(config.customCount || 2458);
+  const [customCount, setCustomCount] = useState<number>(config.customCount || 14);
 
   // 1. Listen to actual registered users count in Firestore
   useEffect(() => {
@@ -60,12 +60,14 @@ export const AdminRegisteredUsers: React.FC<AdminRegisteredUsersProps> = ({ isAd
           const data = snap.data() as RegisteredUsersConfig;
           const merged: RegisteredUsersConfig = {
             isCustomOverride: data.isCustomOverride ?? false,
-            customCount: data.customCount ?? 2458,
+            customCount: data.customCount ?? 14,
           };
           setConfig(merged);
           setIsCustomOverride(merged.isCustomOverride);
           setCustomCount(merged.customCount);
           localStorage.setItem("registered_users_config", JSON.stringify(merged));
+          const dispCount = merged.isCustomOverride ? merged.customCount : realUsersCount;
+          localStorage.setItem("registered_users_display_count", String(dispCount));
         }
       },
       (err) => {
@@ -73,7 +75,7 @@ export const AdminRegisteredUsers: React.FC<AdminRegisteredUsersProps> = ({ isAd
       }
     );
     return () => unsub();
-  }, []);
+  }, [realUsersCount]);
 
   if (!isAdmin) {
     return (
@@ -101,6 +103,8 @@ export const AdminRegisteredUsers: React.FC<AdminRegisteredUsersProps> = ({ isAd
     try {
       await setDoc(doc(db, "settings", "registered_users_config"), newConfig, { merge: true });
       localStorage.setItem("registered_users_config", JSON.stringify(newConfig));
+      const dispVal = isCustomOverride ? Number(customCount) : realUsersCount;
+      localStorage.setItem("registered_users_display_count", String(dispVal));
       setConfig(newConfig);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);

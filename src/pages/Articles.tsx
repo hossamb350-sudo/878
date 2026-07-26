@@ -156,6 +156,45 @@ export function Articles() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [savedArticleIds, setSavedArticleIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("favorite_items");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const ids = parsed.map((item: any) => (typeof item === "string" ? item : item.id));
+        setSavedArticleIds(ids);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, []);
+
+  const toggleBookmark = (e: React.MouseEvent, article: Article) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const saved = localStorage.getItem("favorite_items");
+    let favs: any[] = saved ? JSON.parse(saved) : [];
+    const isFav = favs.some((item: any) => item.id === article.id);
+
+    if (isFav) {
+      favs = favs.filter((item: any) => item.id !== article.id);
+      setSavedArticleIds((prev) => prev.filter((fid) => fid !== article.id));
+    } else {
+      favs.push({
+        id: article.id,
+        type: "article",
+        title: article.title,
+        imageUrl: article.imageUrl || article.authorPhoto,
+        savedAt: Date.now(),
+      });
+      setSavedArticleIds((prev) => [...prev, article.id]);
+    }
+
+    localStorage.setItem("favorite_items", JSON.stringify(favs));
+  };
 
   useEffect(() => {
     const q = query(
@@ -352,8 +391,16 @@ export function Articles() {
                         />
                         
                         {/* Bookmark Button top-left of image */}
-                        <button className="absolute top-[8px] left-[8px] bg-black/40 backdrop-blur-md w-[24px] h-[24px] rounded-[6px] flex items-center justify-center text-white hover:bg-black/60 transition-colors z-10">
-                          <Bookmark className="w-[12px] h-[12px]" />
+                        <button 
+                          onClick={(e) => toggleBookmark(e, article)}
+                          title={savedArticleIds.includes(article.id) ? "إزالة من المفضلة" : "حفظ في المفضلة"}
+                          className={`absolute top-[8px] left-[8px] backdrop-blur-md w-[26px] h-[26px] rounded-[7px] flex items-center justify-center transition-all z-10 shadow-sm active:scale-90 ${
+                            savedArticleIds.includes(article.id)
+                              ? "bg-red-600 text-white"
+                              : "bg-black/40 text-white hover:bg-black/60"
+                          }`}
+                        >
+                          <Bookmark className={`w-[13px] h-[13px] ${savedArticleIds.includes(article.id) ? "fill-current" : ""}`} />
                         </button>
                       </div>
 

@@ -21,5 +21,5 @@ export interface RegisteredUsersConfig {
 
 export const DEFAULT_REGISTERED_CONFIG: RegisteredUsersConfig = {
   isCustomOverride: false,
-  customCount: 2458,
+  customCount: 14,
 };

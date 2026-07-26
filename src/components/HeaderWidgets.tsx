@@ -424,31 +424,37 @@ export const HeaderWidgets: React.FC = () => {
         >
           <Link 
             to="/calendar" 
-            className="relative bg-transparent rounded-[14px] sm:rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-emerald-500/50 p-1.5 sm:p-3.5 md:p-5 flex flex-col items-center justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-md transition-all duration-300 overflow-hidden group h-full block"
+            className="relative bg-transparent rounded-[14px] sm:rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-emerald-500/50 p-2 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-md transition-all duration-300 overflow-hidden group h-full block"
           >
-            {/* Center Date Information */}
-            <div className="relative z-10 flex flex-col items-center justify-center w-full my-auto text-center py-1 sm:py-2">
-              {/* Calendar Icon Top Center */}
-              <Calendar className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7 text-emerald-600 dark:text-emerald-400 mb-1 sm:mb-2 shrink-0" strokeWidth={1.8} />
+            {/* Top Section */}
+            <div className="relative z-10 flex items-start justify-between w-full">
+              <span className="text-[10px] sm:text-[12px] md:text-[14px] font-bold text-emerald-700 dark:text-emerald-400 leading-none tracking-wide font-cairo">
+                التقويم الهجري
+              </span>
+              <div className="p-1 sm:p-2 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-all duration-300 shadow-xs">
+                <Calendar className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
+              </div>
+            </div>
 
-              {/* Day Name */}
-              <h3 className="text-[12px] xs:text-[14px] sm:text-[21px] md:text-[25px] font-black text-slate-900 dark:text-white tracking-tight leading-none font-cairo">
+            {/* Middle Section: Day Name & Hijri Date */}
+            <div className="relative z-10 flex flex-col justify-center my-auto text-right py-1 sm:py-2">
+              <h3 className="text-[15px] xs:text-[18px] sm:text-[24px] md:text-[28px] font-black text-slate-900 dark:text-white tracking-tight leading-none font-cairo">
                 {dayName}
               </h3>
-
-              {/* Hijri Date */}
-              <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[17px] font-extrabold text-emerald-700 dark:text-emerald-400 leading-none mt-1.5 sm:mt-2.5 whitespace-nowrap font-cairo">
+              <p className="text-[10.5px] xs:text-[12.5px] sm:text-[15px] md:text-[17px] font-extrabold text-emerald-700 dark:text-emerald-400 leading-tight mt-1.5 sm:mt-2.5 whitespace-nowrap font-cairo">
                 {hijriDate}
-              </p>
-
-              {/* Gregorian Date */}
-              <p className="text-[8.5px] xs:text-[9.5px] sm:text-[13px] md:text-[14px] font-bold text-slate-500 dark:text-slate-400 leading-none mt-1 sm:mt-2 whitespace-nowrap">
-                {gregorianDate}
               </p>
             </div>
 
-            {/* Bottom Center Subtle Accent Bar */}
-            <div className="relative z-10 w-6 sm:w-12 h-[2px] sm:h-[3px] bg-emerald-500/60 rounded-full mt-0.5 sm:mt-1.5 group-hover:w-10 sm:group-hover:w-16 transition-all duration-300" />
+            {/* Bottom Row: Calendar Navigation Indicator */}
+            <div className="relative z-10 flex items-center justify-between mt-auto pt-1 sm:pt-2 border-t border-emerald-100/60 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-400">
+              <span className="text-[9px] sm:text-[11px] md:text-[12px] font-bold font-cairo">
+                جدول المناسبات
+              </span>
+              <span className="text-[10px] sm:text-[12px] font-bold group-hover:-translate-x-1 transition-transform duration-200">
+                ←
+              </span>
+            </div>
           </Link>
         </motion.div>
 

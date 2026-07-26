@@ -403,8 +403,15 @@ export function Admin() {
   const isManager = profile?.role === "manager";
   const isAdmin = profile?.role === "admin";
   const isEditor = profile?.role === "editor";
-  const hasPermission = (sectionId: string) =>
-    profile?.permissions?.includes(sectionId);
+  const hasPermission = (sectionId: string) => {
+    if (!profile?.permissions || !Array.isArray(profile.permissions)) return false;
+    if (profile.permissions.includes("all")) return true;
+    if (profile.permissions.includes(sectionId)) return true;
+    if (sectionId === "urgent" && profile.permissions.includes("urgentNews")) return true;
+    if (sectionId === "urgentNews" && profile.permissions.includes("urgent")) return true;
+    if (sectionId === "live" && profile.permissions.includes("livestreams")) return true;
+    return false;
+  };
 
   const sidebarTabs = [
     {
@@ -417,7 +424,7 @@ export function Admin() {
       id: "urgent",
       icon: AlertTriangle,
       label: "الأخبار العاجلة",
-      access: isAdmin || isManager || (isEditor && hasPermission("urgentNews")),
+      access: isAdmin || isManager || (isEditor && hasPermission("urgent")),
     },
     {
       id: "videos",
@@ -425,7 +432,12 @@ export function Admin() {
       label: "الفيديوهات",
       access: isAdmin || isManager || (isEditor && hasPermission("videos")),
     },
-    { id: "live", icon: Radio, label: "البث المباشر", access: isAdmin },
+    {
+      id: "live",
+      icon: Radio,
+      label: "البث المباشر",
+      access: isAdmin || isManager || (isEditor && hasPermission("live")),
+    },
     {
       id: "leader",
       icon: Shield,
@@ -436,7 +448,7 @@ export function Admin() {
       id: "quran",
       icon: Settings,
       label: "إعداد مقررات هدي القرآن",
-      access: isAdmin || isManager,
+      access: isAdmin || isManager || (isEditor && hasPermission("quran")),
     },
     {
       id: "articles",
@@ -448,15 +460,20 @@ export function Admin() {
       id: "events",
       icon: CalendarIcon,
       label: "تقويم المناسبات",
-      access: isAdmin,
+      access: isAdmin || isManager || (isEditor && hasPermission("events")),
     },
     {
       id: "social",
       icon: Share2,
       label: "روابط تابعنا",
-      access: isAdmin || isManager,
+      access: isAdmin || isManager || (isEditor && hasPermission("social")),
     },
-    { id: "online-users", icon: Radio, label: "إدارة المتصلين حالياً", access: isAdmin },
+    {
+      id: "categories",
+      icon: List,
+      label: "إدارة التصنيفات",
+      access: isAdmin || isManager || (isEditor && hasPermission("categories")),
+    },
     { id: "registered-users", icon: Users, label: "إدارة عدد المستخدمين", access: isAdmin },
     { id: "roles", icon: Users, label: "إدارة الصلاحيات", access: isAdmin },
   ];
@@ -465,13 +482,21 @@ export function Admin() {
 
   // Set default tab if current is not allowed
   useEffect(() => {
+    const isStaff = isAdmin || isManager || isEditor;
     const currentTabAllowed =
-      (isAdmin && activeTab === "dashboard") ||
+      (isStaff && activeTab === "dashboard") ||
       filteredTabs.some((t) => t.id === activeTab);
-    if (!currentTabAllowed && filteredTabs.length > 0) {
-      setActiveTab(filteredTabs[0].id);
+    if (!currentTabAllowed) {
+      setActiveTab("dashboard");
     }
-  }, [isAdmin, activeTab, filteredTabs]);
+  }, [isAdmin, isManager, isEditor, activeTab, filteredTabs]);
+
+  // Ensure login for Admin, Manager, or Editor always opens the main Control Panel dashboard
+  useEffect(() => {
+    if (user && (isAdmin || isManager || isEditor)) {
+      setActiveTab("dashboard");
+    }
+  }, [user?.uid, profile?.role]);
 
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
@@ -779,21 +804,16 @@ export function Admin() {
                     onBackToDashboard={() => setActiveTab("dashboard")}
                   />
                 )}
-                {activeTab === "categories" && (isAdmin || isManager) && (
-                  <AdminCategoryManager />
-                )}
+                {activeTab === "categories" && <AdminCategoryManager />}
                 {activeTab === "urgent" && <AdminUrgentNews />}
                 {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
-                {activeTab === "live" && isAdmin && <AdminLive />}
+                {activeTab === "live" && <AdminLive />}
                 {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
                 {activeTab === "articles" && <AdminArticles isAdmin={isAdmin} />}
-                {activeTab === "quran" && (isAdmin || isManager) && <AdminQuran />}
-                {activeTab === "events" && isAdmin && <AdminEvents />}
-                {activeTab === "social" && (isAdmin || isManager) && (
-                  <AdminSocialLinks />
-                )}
+                {activeTab === "quran" && <AdminQuran />}
+                {activeTab === "events" && <AdminEvents />}
+                {activeTab === "social" && <AdminSocialLinks />}
                 {activeTab === "roles" && isAdmin && <AdminRoles />}
-                {activeTab === "online-users" && isAdmin && <AdminOnlineUsers isAdmin={isAdmin} />}
                 {activeTab === "registered-users" && isAdmin && <AdminRegisteredUsers isAdmin={isAdmin} />}
               </div>
             </div>
@@ -852,7 +872,22 @@ function AdminSummaryDashboard({
   });
 
   const [onlineCountDisplay, setOnlineCountDisplay] = useState<number>(34);
-  const [registeredCountDisplay, setRegisteredCountDisplay] = useState<number>(2458);
+  const [registeredCountDisplay, setRegisteredCountDisplay] = useState<number>(() => {
+    const savedDisplay = localStorage.getItem("registered_users_display_count");
+    if (savedDisplay && !isNaN(Number(savedDisplay))) {
+      return Number(savedDisplay);
+    }
+    const savedCfg = localStorage.getItem("registered_users_config");
+    if (savedCfg) {
+      try {
+        const parsed = JSON.parse(savedCfg);
+        if (parsed.isCustomOverride && parsed.customCount != null) {
+          return Number(parsed.customCount);
+        }
+      } catch {}
+    }
+    return 14;
+  });
 
   // Real-time online users & registered users config listeners
   useEffect(() => {
@@ -860,11 +895,16 @@ function AdminSummaryDashboard({
     const unsubRegConfig = onSnapshot(doc(db, "settings", "registered_users_config"), (snap) => {
       if (snap.exists()) {
         const data = snap.data() as RegisteredUsersConfig;
+        localStorage.setItem("registered_users_config", JSON.stringify(data));
         if (data.isCustomOverride) {
-          setRegisteredCountDisplay(data.customCount || 2458);
+          const cnt = data.customCount ?? 14;
+          setRegisteredCountDisplay(cnt);
+          localStorage.setItem("registered_users_display_count", String(cnt));
         } else {
           getDocs(collection(db, "users")).then((usersSnap) => {
-            setRegisteredCountDisplay(usersSnap.size || 1);
+            const cnt = usersSnap.size || 1;
+            setRegisteredCountDisplay(cnt);
+            localStorage.setItem("registered_users_display_count", String(cnt));
           }).catch(() => {});
         }
       }
@@ -874,7 +914,9 @@ function AdminSummaryDashboard({
       const docRef = doc(db, "settings", "registered_users_config");
       getDoc(docRef).then((cfgSnap) => {
         if (!cfgSnap.exists() || !(cfgSnap.data() as RegisteredUsersConfig).isCustomOverride) {
-          setRegisteredCountDisplay(snap.size || 1);
+          const cnt = snap.size || 1;
+          setRegisteredCountDisplay(cnt);
+          localStorage.setItem("registered_users_display_count", String(cnt));
         }
       });
     });
@@ -1273,6 +1315,39 @@ function AdminSummaryDashboard({
                 <span>عرض الكل</span>
                 <ChevronLeft className="w-3 h-3" />
               </span>
+            </div>
+
+            {/* ROW 3: 7. المستخدمين المسجلين (في المنتصف) */}
+            <div className="col-span-3 flex justify-center pt-1">
+              <div 
+                onClick={isAdmin ? () => onNavigate("registered-users") : undefined}
+                className={`w-full sm:w-1/2 md:w-1/3 flex flex-col items-center justify-between p-2.5 sm:p-3.5 rounded-2xl bg-white/5 border border-amber-500/30 transition-all ${
+                  isAdmin ? "hover:bg-white/10 hover:border-amber-500/60 cursor-pointer group shadow-sm" : "cursor-default"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-1.5">
+                  <span className="text-base sm:text-lg md:text-xl font-black font-sans text-white tracking-tight">
+                    {registeredCountDisplay.toLocaleString("ar-EG")}
+                  </span>
+                  <div className="p-1 sm:p-1.5 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+                    <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  </div>
+                </div>
+                <span className="text-[11px] sm:text-xs font-black text-slate-200 mt-1 font-cairo">
+                  المستخدمون المسجلون
+                </span>
+                <div className="h-0.5 sm:h-1 w-8 sm:w-12 bg-amber-500 rounded-full my-1 sm:my-1.5 opacity-90"></div>
+                {isAdmin ? (
+                  <span className="text-[9px] sm:text-[11px] font-bold text-slate-400 group-hover:text-white transition-colors flex items-center gap-0.5 font-cairo">
+                    <span>إدارة العدد</span>
+                    <ChevronLeft className="w-3 h-3" />
+                  </span>
+                ) : (
+                  <span className="text-[9px] sm:text-[11px] font-bold text-amber-400/80 font-cairo">
+                    <span>عدد المسجلين</span>
+                  </span>
+                )}
+              </div>
             </div>
 
           </div>
@@ -6097,10 +6172,15 @@ function AdminRoles() {
 
   const SECTIONS = [
     { id: "news", label: "الأخبار" },
+    { id: "articles", label: "المقالات" },
     { id: "urgent", label: "الأخبار العاجلة" },
     { id: "videos", label: "الفيديوهات" },
+    { id: "live", label: "البث المباشر" },
     { id: "leader", label: "السيد القائد" },
     { id: "quran", label: "هدى القرآن" },
+    { id: "events", label: "تقويم المناسبات" },
+    { id: "social", label: "روابط تابعنا" },
+    { id: "categories", label: "إدارة التصنيفات" },
   ];
 
   useEffect(() => {

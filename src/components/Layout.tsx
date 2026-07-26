@@ -283,17 +283,18 @@ function UrgentNewsBanner() {
                 >
                   {displayItems.map((newsItem, index) => (
                     <React.Fragment key={`${newsItem.id}-${index}`}>
-                      <span className="font-bold text-sm sm:text-base md:text-lg lg:text-xl text-white tracking-wide leading-relaxed font-cairo whitespace-nowrap px-2 sm:px-3 drop-shadow-md" dir="rtl">
+                      <span className="font-bold text-sm sm:text-base text-white tracking-wide font-cairo whitespace-nowrap px-2 sm:px-3 drop-shadow-sm" dir="rtl">
                         {newsItem.text}
                       </span>
-                      <div className="inline-flex items-center px-1 sm:px-2 shrink-0 opacity-90 group-hover:opacity-100 transition-opacity">
-                        <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
-                          <img 
-                            src="/tape.png" 
-                            alt="شعار منصة تعز" 
-                            className="w-6 h-6 sm:w-7 sm:h-7 object-contain drop-shadow-lg mx-0.5 sm:mx-1" 
-                          />
-                        </div>
+                      <div className="inline-flex items-center px-1.5 sm:px-2 shrink-0">
+                        <img 
+                          src="/tape.png" 
+                          onError={(e) => {
+                            (e.target as HTMLElement).setAttribute("src", "/logo3.png");
+                          }}
+                          alt="شعار منصة تعز" 
+                          className="w-7 h-7 sm:w-9 sm:h-9 object-contain drop-shadow-lg mx-1" 
+                        />
                       </div>
                     </React.Fragment>
                   ))}

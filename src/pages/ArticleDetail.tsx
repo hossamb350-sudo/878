@@ -80,8 +80,51 @@ export function ArticleDetail() {
     localStorage.setItem("article_font_size", fontSize.toString());
   }, [fontSize]);
 
+  const [savedArticleIds, setSavedArticleIds] = useState<string[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("favorite_items");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        const ids = parsed.map((item: any) => (typeof item === "string" ? item : item.id));
+        setSavedArticleIds(ids);
+        if (id) {
+          setIsBookmarked(ids.includes(id));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  }, [id]);
+
+  const toggleBookmark = () => {
+    if (!article) return;
+
+    const saved = localStorage.getItem("favorite_items");
+    let favs: any[] = saved ? JSON.parse(saved) : [];
+    const isFav = favs.some((item: any) => item.id === article.id);
+
+    if (isFav) {
+      favs = favs.filter((item: any) => item.id !== article.id);
+      setSavedArticleIds((prev) => prev.filter((fid) => fid !== article.id));
+      setIsBookmarked(false);
+    } else {
+      favs.push({
+        id: article.id,
+        type: "article",
+        title: article.title,
+        imageUrl: article.imageUrl || article.authorPhoto,
+        savedAt: Date.now(),
+      });
+      setSavedArticleIds((prev) => [...prev, article.id]);
+      setIsBookmarked(true);
+    }
+
+    localStorage.setItem("favorite_items", JSON.stringify(favs));
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -173,7 +216,8 @@ export function ArticleDetail() {
         </button>
         <div className="flex items-center gap-2">
           <button 
-            onClick={() => setIsBookmarked(!isBookmarked)}
+            onClick={toggleBookmark}
+            title={isBookmarked ? "إزالة من المفضلة" : "حفظ في المفضلة"}
             className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-[#D32027] bg-[#D32027]/10" : "hover:bg-slate-200/50 text-text-primary"}`}
           >
             <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />

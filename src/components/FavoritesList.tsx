@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Bookmark, FileText, User, Trash2, Video, X, Menu } from "lucide-react";
+import { Bookmark, FileText, User, Trash2, Video, X, Menu, BookOpen } from "lucide-react";
 import { FavoriteItem } from "../types";
 
 export function FavoritesList() {
@@ -34,6 +34,7 @@ export function FavoritesList() {
 
   const groupedFavorites = {
     news: favorites.filter(f => f.type === "news"),
+    article: favorites.filter(f => f.type === "article"),
     leader: favorites.filter(f => f.type === "leader"),
     watch: favorites.filter(f => f.type === "watch"),
   };
@@ -73,9 +74,18 @@ export function FavoritesList() {
                   {groupedFavorites.news.length > 0 && (
                     <div className="space-y-3">
                       <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
-                        <FileText className="w-4 h-4 text-red-600" /> الأخبار والمقالات
+                        <FileText className="w-4 h-4 text-red-600" /> الأخبار المحفوظة
                       </h4>
                       {groupedFavorites.news.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
+                    </div>
+                  )}
+
+                  {groupedFavorites.article.length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
+                        <BookOpen className="w-4 h-4 text-red-600" /> المقالات المحفوظة
+                      </h4>
+                      {groupedFavorites.article.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
                     </div>
                   )}
 
@@ -107,7 +117,7 @@ export function FavoritesList() {
 }
 
 function FavoriteCard({ item, onRemove, onClick }: { item: FavoriteItem; onRemove: (id: string) => void; onClick: () => void; key?: React.Key }) {
-  const linkTo = item.type === "news" ? `/news/${item.id}` : item.type === "watch" ? `/watch/${item.id}` : `/leader/${item.id}`;
+  const linkTo = item.type === "news" ? `/news/${item.id}` : item.type === "article" ? `/articles/${item.id}` : item.type === "watch" ? `/watch/${item.id}` : `/leader/${item.id}`;
   return (
     <div className="bg-surface-main rounded-xl border border-border-light p-2 flex gap-3 relative group">
       {item.imageUrl ? (
