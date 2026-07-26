@@ -35,6 +35,8 @@ export interface UrgentNews {
   createdAt: number;
   expiresAt: number;
   isActive?: boolean;
+  staticExpiresAt?: number;
+  scrollingExpiresAt?: number;
 }
 
 export interface VideoItem {

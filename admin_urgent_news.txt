@@ -1,0 +1,363 @@
+function AdminUrgentNews() {
+  const [text, setText] = useState("");
+  const [expiryMinutes, setExpiryMinutes] = useState(60); // Default to 1 hour for urgent news
+  const [tickerSpeed, setTickerSpeed] = useState(25); // Default speed in seconds
+  const [tickerTitle, setTickerTitle] = useState("خبر عاجل"); // Default title
+  const [saving, setSaving] = useState(false);
+  const [urgentItems, setUrgentItems] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, "urgentNews"), orderBy("createdAt", "desc"));
+    const unsub = onSnapshot(q, (snap) => {
+      const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setUrgentItems(items);
+    });
+
+    // Load global settings
+    const loadSettings = async () => {
+      try {
+        const docRef = doc(db, "settings", "urgentNews");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setTickerSpeed(docSnap.data().speed || 25);
+          setTickerTitle(docSnap.data().title || "خبر عاجل");
+        }
+      } catch (e) {
+        console.error("Error loading ticker settings:", e);
+      }
+    };
+    loadSettings();
+
+    return () => unsub();
+  }, []);
+
+  const saveSettings = async () => {
+    try {
+      await setDoc(doc(db, "settings", "urgentNews"), { speed: tickerSpeed, title: tickerTitle }, { merge: true });
+      alert("تم حفظ إعدادات الشريط بنجاح");
+    } catch (e) {
+      alert("خطأ في الحفظ");
+    }
+  };
+
+  const saveNews = async () => {
+    if (!text) return alert("يرجى إدخال نص الخبر العاجل");
+    setSaving(true);
+    try {
+      await addDoc(collection(db, "urgentNews"), {
+        text,
+        isActive: true,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + expiryMinutes * 60000,
+      });
+      
+      alert(`تم إضافة الخبر العاجل بنجاح (سيبقى صالحاً لمدة ${expiryMinutes} دقيقة)`);
+      setText("");
+    } catch (e) {
+      console.error(e);
+      alert("حدث خطأ أثناء النشر");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const toggleCancelItem = async (id: string, currentIsActive: boolean) => {
+    try {
+      if (currentIsActive) {
+        await updateDoc(doc(db, "urgentNews", id), { isActive: false });
+      } else {
+        await updateDoc(doc(db, "urgentNews", id), { 
+          isActive: true, 
+          expiresAt: Date.now() + expiryMinutes * 60000 
+        });
+      }
+    } catch (e) {
+      alert("خطأ في تحديث حالة الخبر العاجل");
+    }
+  };
+
+  const cancelAllActiveNews = async () => {
+    const activeDocs = urgentItems.filter(i => i.isActive !== false && i.expiresAt > Date.now());
+    if (activeDocs.length === 0) {
+      return alert("لا توجد أخبار عاجلة نشطة حالياً لإلغائها.");
+    }
+    if (!confirm(`هل أنت متأكد من إلغاء وإخفاء جميع الأخبار العاجلة النشطة (${activeDocs.length} خبر) فوراً؟`)) return;
+    
+    try {
+      for (const item of activeDocs) {
+        await updateDoc(doc(db, "urgentNews", item.id), { isActive: false });
+      }
+      alert("تم إلغاء عرض جميع الأخبار العاجلة فوراً");
+    } catch (e) {
+      alert("خطأ في إلغاء الأخبار العاجلة");
+    }
+  };
+
+  const deleteItem = async (id: string) => {
+    if (!confirm("هل أنت متأكد من حذف هذا الخبر العاجل نهائياً؟")) return;
+    try {
+      await deleteDoc(doc(db, "urgentNews", id));
+    } catch (e) {
+      alert("خطأ في الحذف");
+    }
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in max-w-4xl">
+      <div className="flex items-center justify-between border-b dark:border-gray-700 pb-3">
+        <div className="flex items-center gap-3">
+          <AlertTriangle className="w-6 h-6 text-red-600" />
+          <h2 className="text-xl font-bold text-red-600">نظام الشريط الإخباري (الأخبار العاجلة)</h2>
+        </div>
+
+        {urgentItems.some(i => i.isActive !== false && i.expiresAt > Date.now()) && (
+          <button
+            onClick={cancelAllActiveNews}
+            className="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-4 py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 border border-red-300 transition-all shadow-xs"
+          >
+            <XCircle className="w-4 h-4 text-red-600" />
+            <span>إلغاء وإخفاء جميع الأخبار النشطة فوراً</span>
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* News Entry Form */}
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+            <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Plus className="w-5 h-5 text-red-600" />
+              إضافة خبر عاجل جديد
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">نص الخبر العاجل:</label>
+                <textarea
+                  className="w-full p-4 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl h-32 focus:ring-2 focus:ring-red-500 transition-all"
+                  placeholder="اكتب نص الخبر العاجل هنا..."
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">صلاحية الخبر (بالدقائق):</label>
+                <input 
+                  type="number"
+                  className="w-full p-4 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
+                  value={expiryMinutes}
+                  onChange={(e) => setExpiryMinutes(Number(e.target.value))}
+                  min={1}
+                />
+                <p className="text-[10px] text-gray-500 mt-1">سيختفي الخبر تلقائياً من الشريط بعد هذه المدة أو عند إلغائه يدويًا.</p>
+              </div>
+
+              {text && (
+                <div className="border border-red-200 dark:border-red-900 rounded-xl overflow-hidden mt-4">
+                  <div className="bg-red-50 dark:bg-red-900/20 p-2 text-center text-xs font-bold text-red-600 dark:text-red-400 border-b border-red-200 dark:border-red-900">
+                    معاينة الشريط المتحرك بالسرعة الحالية ({tickerSpeed})
+                  </div>
+                  <div className="bg-gradient-to-r from-red-800 via-red-700 to-red-900 text-white relative w-full overflow-hidden select-none" dir="rtl">
+                    <div className="w-full flex flex-col relative pt-0.5 pb-0">
+                      <div className="flex items-center justify-between px-3 z-20 shrink-0 font-cairo">
+                        <div className="flex items-center">
+                          <span className="font-black text-sm text-amber-400 uppercase tracking-wider whitespace-nowrap drop-shadow-md">
+                            {tickerTitle}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="w-full overflow-hidden relative flex items-center group px-0 -mt-2 mb-1" dir="ltr">
+                        <motion.div
+                          className="flex items-center whitespace-nowrap min-w-max"
+                          animate={{ x: ["-50%", "0%"] }}
+                          transition={{
+                            repeat: Infinity,
+                            ease: "linear",
+                            duration: Math.max(5, (2 * ((text.length) + 20) / 100) * tickerSpeed),
+                          }}
+                        >
+                          {Array(4).fill(text).map((newsText, index) => (
+                            <React.Fragment key={index}>
+                              <span className="font-bold text-sm md:text-base text-white tracking-wide leading-relaxed font-cairo whitespace-nowrap px-2 sm:px-3 drop-shadow-md" dir="rtl">
+                                {newsText}
+                              </span>
+                              <div className="inline-flex items-center px-1 sm:px-2 shrink-0 opacity-90">
+                                <div className="flex items-center justify-center">
+                                  <img 
+                                    src="/tape.png" 
+                                    alt="شعار منصة تعز" 
+                                    className="w-6 h-6 sm:w-7 sm:h-7 object-contain drop-shadow-lg mx-0.5 sm:mx-1" 
+                                  />
+                                </div>
+                              </div>
+                            </React.Fragment>
+                          ))}
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <button
+                onClick={saveNews}
+                disabled={saving || !text}
+                className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-black py-4 rounded-xl shadow-lg shadow-red-500/20 transition-all"
+              >
+                {saving ? "جاري النشر..." : "نشر الخبر الآن"}
+              </button>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm space-y-4">
+                        <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Settings className="w-5 h-5 text-gray-500" />
+              إعدادات الشريط المتحرك
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">عنوان / نوع الشريط (الافتراضي: خبر عاجل):</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text"
+                    className="flex-1 p-4 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
+                    value={tickerTitle}
+                    onChange={(e) => setTickerTitle(e.target.value)}
+                    placeholder="مثل: خبر عاجل، بيان، إعلان..."
+                  />
+                </div>
+                <p className="text-[10px] text-gray-500 mt-1">يظهر هذا العنوان في أعلى الشريط المتحرك بشكل بارز.</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">معامل سرعة الشريط (الافتراضي: 25):</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="number"
+                    className="flex-1 p-4 text-lg font-bold bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl"
+                    value={tickerSpeed}
+                    onChange={(e) => setTickerSpeed(Number(e.target.value))}
+                    min={5}
+                    max={120}
+                  />
+                  <button 
+                    onClick={saveSettings}
+                    className="bg-gray-900 dark:bg-gray-700 text-white px-6 rounded-xl font-bold hover:bg-black transition-all"
+                  >
+                    حفظ الإعدادات
+                  </button>
+                </div>
+                <p className="text-[10px] text-gray-500 mt-1">يُستخدم هذا الرقم كمعامل لتحديد السرعة بناءً على طول النص تلقائياً (كلما زاد الرقم، أصبح الشريط أبطأ). القيمة 25 توفر سرعة قراءة مناسبة.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Active News List */}
+        <div className="space-y-4">
+          <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+            <List className="w-5 h-5 text-gray-500" />
+            إدارة الأخبار العاجلة النشطة والسابقة
+          </h3>
+
+          <div className="space-y-3">
+            {urgentItems.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 dark:bg-gray-900/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800">
+                <p className="text-gray-500 font-bold">لا توجد أخبار عاجلة مسجلة حالياً</p>
+              </div>
+            ) : (
+              urgentItems.map((item) => {
+                const isExpired = item.expiresAt <= Date.now();
+                const isCancelled = item.isActive === false;
+                const isActive = !isExpired && !isCancelled;
+
+                return (
+                  <div 
+                    key={item.id}
+                    className={`bg-white dark:bg-gray-800 p-4 rounded-2xl border ${
+                      isActive 
+                        ? 'border-red-300 shadow-sm' 
+                        : isCancelled 
+                        ? 'border-amber-200 bg-amber-50/20' 
+                        : 'border-gray-200 opacity-60'
+                    } flex flex-col gap-3`}
+                  >
+                    <div className="flex gap-3 items-start">
+                      <div className={`p-2 rounded-lg shrink-0 ${
+                        isActive 
+                          ? 'bg-red-100 text-red-600' 
+                          : isCancelled 
+                          ? 'bg-amber-100 text-amber-700' 
+                          : 'bg-gray-100 text-gray-500'
+                      }`}>
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm text-gray-900 dark:text-white leading-relaxed">
+                          {item.text}
+                        </p>
+                        
+                        <div className="flex items-center gap-3 mt-2 text-[11px] font-bold">
+                          <span className="text-gray-500">نشر: {new Date(item.createdAt).toLocaleTimeString('ar-YE')}</span>
+                          {isActive && (
+                            <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                              نشط في الشريط
+                            </span>
+                          )}
+                          {isCancelled && (
+                            <span className="text-amber-700 bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded-full border border-amber-200">
+                              تم إلغاؤه يدويًا
+                            </span>
+                          )}
+                          {isExpired && !isCancelled && (
+                            <span className="text-gray-500 bg-gray-100 dark:bg-gray-900 px-2 py-0.5 rounded-full">
+                              منتهي الصلاحية
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action buttons row */}
+                    <div className="flex items-center justify-between border-t border-gray-100 dark:border-gray-700/60 pt-3 mt-1">
+                      {isActive ? (
+                        <button
+                          onClick={() => toggleCancelItem(item.id, true)}
+                          className="bg-amber-100 hover:bg-amber-200 text-amber-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                        >
+                          <XCircle className="w-3.5 h-3.5 text-amber-600" />
+                          <span>إلغاء وإخفاء العرض الآن</span>
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => toggleCancelItem(item.id, false)}
+                          className="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors"
+                        >
+                          <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>إعادة تفعيل وتمديد العرض</span>
+                        </button>
+                      )}
+
+                      <button 
+                        onClick={() => deleteItem(item.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all text-xs flex items-center gap-1"
+                        title="حذف الخبر نهائياً"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>حذف نهائي</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
