@@ -211,46 +211,61 @@ export function WatchItem() {
 
       {/* 2. Unified Content Section (Directly after player) */}
       <div className="max-w-[800px] mx-auto">
-        <div className="px-5 py-6 sm:px-8">
+        <div className="px-5 sm:px-8 pb-6 pt-6 border-b border-stone-100 dark:border-stone-800">
           {/* Back Button Above Title */}
           <button 
             onClick={() => navigate(-1)}
-            className="mb-4 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-ibm"
+            className="mb-4 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-cairo"
           >
             <ArrowRight className="w-4 h-4" /> العودة لقسم شاهد مرئي
           </button>
+          
+          <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
+            عرض مرئي
+          </span>
+          
+          <h1 className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo text-xl sm:text-2xl">
+            {video.title}
+          </h1>
 
-          {/* Title with Vertical Line */}
-          <div className="flex gap-4 mb-5">
-            <h1 className="text-lg sm:text-xl font-black text-slate-900 leading-[1.3] font-ibm flex-1">
-              {video.title}
-            </h1>
-            <div className="w-1.5 bg-red-600 rounded-full shrink-0 h-6 mt-1.5"></div>
-          </div>
-          
-          {/* Description Block - Only show if exists */}
-          {video.description && (
-            <p className="text-slate-400 text-[13px] sm:text-sm leading-[1.8] font-bold mb-8 text-right font-ibm opacity-80 line-clamp-3">
-              {video.description}
-            </p>
-          )}
-          
-          {/* Separator Line */}
-          <div className="h-px bg-slate-100 w-full mb-6"></div>
-          
-          {/* Metadata Row: Date (Right), Views (Left) */}
-          <div className="flex items-center justify-between text-slate-400 font-bold text-[10px] sm:text-[11px] font-ibm mb-8">
-            <div className="flex items-center gap-2">
-               <Eye className="w-3.5 h-3.5 opacity-60 text-red-600" />
-               <span>{(video.views || 2568).toLocaleString('ar-EG')} مشاهدة</span>
-            </div>
-            <div className="flex items-center gap-2">
-               <span>{format(video.createdAt, "dd MMMM yyyy", { locale: ar })}</span>
-               <Calendar className="w-3.5 h-3.5 opacity-60" />
-            </div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
+            <span>{format(video.createdAt, "dd MMMM yyyy", { locale: ar })}</span>
+            <span className="text-stone-200 dark:text-stone-700">|</span>
+            <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
+              <Eye className="w-3 h-3 text-red-600 shrink-0" />
+              <span>{(video.views || 2568).toLocaleString('ar-EG')} مشاهدة</span>
+            </span>
           </div>
         </div>
 
+        <div className="px-5 sm:px-8 py-8">
+          {/* Description Block - Only show if exists */}
+          {video.description && (
+            <div className="bg-stone-50 dark:bg-stone-800/30 p-6 rounded-2xl border border-stone-100 dark:border-stone-800/40 mb-6">
+              <p className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed font-bold font-ibm whitespace-pre-line">
+                {video.description}
+              </p>
+            </div>
+          )}
+          
+          <div className="flex gap-3">
+            <button 
+              onClick={handleShare}
+              className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs shadow-lg shadow-red-600/20 font-ibm"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>مشاركة المحتوى</span>
+            </button>
+            <button 
+              onClick={toggleBookmark}
+              className={`flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-ibm ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
+              <span>حفظ</span>
+            </button>
+          </div>
+        </div>
+        
         {/* 3. Horizontal Carousel: "See Also" */}
         <div className="pb-12">
           <div className="flex gap-3 mb-6 px-5 sm:px-8">
