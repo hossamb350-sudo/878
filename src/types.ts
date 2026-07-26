@@ -125,6 +125,19 @@ export interface UserProfile {
   role: 'admin' | 'manager' | 'user' | 'editor';
   permissions?: string[];
   jobTitle?: string;
+  bio?: string;
+  phone?: string;
+  city?: string;
+  preferredCategories?: string[];
+  notificationSettings?: {
+    urgent?: boolean;
+    dailyEvents?: boolean;
+    prayerTimes?: boolean;
+    quranAudio?: boolean;
+    articles?: boolean;
+  };
+  themePreference?: 'light' | 'dark' | 'system';
+  fontSizePreference?: 'small' | 'medium' | 'large' | 'xlarge';
   createdAt: number;
   lastLogin?: number;
 }

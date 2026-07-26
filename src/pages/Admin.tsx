@@ -106,6 +106,7 @@ import { PushNotificationService } from "../services/PushNotificationService";
 import { AuthModals } from "../components/AuthModals";
 
 import { FavoritesList } from "../components/FavoritesList";
+import { UserProfileSection } from "../components/UserProfileSection";
 
 import { AdminNewsWizard } from "../components/AdminNewsWizard";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES } from "../data/staticQuranData";
@@ -114,8 +115,9 @@ import { AdminArticles } from "../components/AdminArticles";
 import { AdminOnlineUsers } from "../components/AdminOnlineUsers";
 import { AdminRegisteredUsers } from "../components/AdminRegisteredUsers";
 import { OnlineUsersConfig, RegisteredUsersConfig } from "../services/OnlineUsersService";
+import { ContactUsSection } from "../components/ContactUsSection";
 
-const ContactUsSection = () => {
+const OldContactUsSection = () => {
   const [links, setLinks] = useState<SocialLink[]>([]);
   const [imageError, setImageError] = useState(false);
   const [footerImage, setFooterImage] = useState<string>(() => {
@@ -699,7 +701,14 @@ export function Admin() {
 
   // If user is logged in but not an admin
   if (profile?.role === "user") {
-    return <UserProfileView user={user} profile={profile} logout={logout} />;
+    return (
+      <UserProfileSection
+        user={user}
+        profile={profile}
+        logout={logout}
+        onProfileUpdated={(updated) => setProfile(updated)}
+      />
+    );
   }
 
   return (
@@ -1412,48 +1421,7 @@ function UserProfileView({
   profile: UserProfile;
   logout: () => void;
 }) {
-  return (
-    <div className="max-w-4xl mx-auto p-4 py-12 animate-fade-in">
-      <div className="bg-white dark:bg-gray-800 rounded-3xl border border-gray-100 dark:border-gray-700 overflow-hidden shadow-xl shadow-gray-200/50 dark:shadow-none">
-        <div className="h-32 bg-gradient-to-r from-blue-600 to-blue-400"></div>
-        <div className="px-6 pb-10">
-          <div className="relative -mt-16 mb-6 flex justify-between items-end">
-            <img
-              src={user.photoURL || undefined}
-              className="w-32 h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover bg-gray-100"
-              alt=""
-            />
-            <button
-              onClick={logout}
-              className="mb-2 flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-red-600 transition-colors"
-            >
-              <LogOut className="w-4 h-4" /> تسجيل الخروج
-            </button>
-          </div>
-
-          <div>
-            <h2 className="text-3xl font-black text-gray-900 dark:text-white mb-1">
-              {profile.displayName}
-            </h2>
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-xs font-bold text-gray-400 dark:text-gray-500">
-                {profile.email}
-              </span>
-              <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
-              <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full inline-block">
-                حساب قارئ
-              </span>
-            </div>
-
-            <div className="mt-12">
-              <FavoritesList />
-              <ContactUsSection />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <UserProfileSection user={user} profile={profile} logout={logout} />;
 }
 
 function AdminUrgentNews() {

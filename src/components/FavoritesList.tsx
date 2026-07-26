@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Bookmark, FileText, User, Trash2, Video, X, Menu, BookOpen } from "lucide-react";
+import { Bookmark, FileText, User, Trash2, Video, BookOpen, Layers } from "lucide-react";
 import { FavoriteItem } from "../types";
 
 export function FavoritesList() {
   const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
-    if (isOpen) {
-      loadFavorites();
-    }
-  }, [isOpen]);
+    loadFavorites();
+  }, []);
 
   const loadFavorites = () => {
     const saved = localStorage.getItem("favorite_items");
@@ -35,113 +33,165 @@ export function FavoritesList() {
   const groupedFavorites = {
     news: favorites.filter(f => f.type === "news"),
     article: favorites.filter(f => f.type === "article"),
-    leader: favorites.filter(f => f.type === "leader"),
     watch: favorites.filter(f => f.type === "watch"),
+    leader: favorites.filter(f => f.type === "leader"),
   };
 
+  const filteredFavorites = selectedCategory === "all" 
+    ? favorites 
+    : favorites.filter(f => f.type === selectedCategory);
+
   return (
-    <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="fixed top-2.5 left-4 z-[60] p-2 bg-white/50 hover:bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-border-light transition-all active:scale-95"
-        title="المفضلة"
-      >
-        <Menu className="w-6 h-6 text-red-600 dark:text-white" />
-      </button>
-
-      {isOpen && (
-        <>
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] animate-fade-in" onClick={() => setIsOpen(false)}></div>
-          <div className="fixed top-0 bottom-0 left-0 w-80 max-w-[85vw] bg-surface-card z-[70] shadow-2xl flex flex-col transform transition-transform duration-300 translate-x-0" dir="rtl">
-            <div className="p-4 border-b border-border-light flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bookmark className="w-5 h-5 text-red-600" />
-                <h3 className="text-xl font-bold text-text-primary">مفضلتي</h3>
-              </div>
-              <button onClick={() => setIsOpen(false)} className="p-2 bg-surface-main hover:bg-surface-hover rounded-full transition-colors">
-                <X className="w-5 h-5 text-text-muted" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
-              {favorites.length === 0 ? (
-                <div className="text-center text-text-muted mt-10">
-                  <Bookmark className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                  <p>لا توجد عناصر في المفضلة بعد.</p>
-                </div>
-              ) : (
-                <>
-                  {groupedFavorites.news.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
-                        <FileText className="w-4 h-4 text-red-600" /> الأخبار المحفوظة
-                      </h4>
-                      {groupedFavorites.news.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
-                    </div>
-                  )}
-
-                  {groupedFavorites.article.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
-                        <BookOpen className="w-4 h-4 text-red-600" /> المقالات المحفوظة
-                      </h4>
-                      {groupedFavorites.article.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
-                    </div>
-                  )}
-
-                  {groupedFavorites.watch.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
-                        <Video className="w-4 h-4 text-red-600" /> شاهد
-                      </h4>
-                      {groupedFavorites.watch.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
-                    </div>
-                  )}
-
-                  {groupedFavorites.leader.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-taiz-navy flex items-center gap-2 border-b border-border-light pb-2">
-                        <User className="w-4 h-4 text-red-600" /> السيد القائد
-                      </h4>
-                      {groupedFavorites.leader.map(item => <FavoriteCard key={item.id} item={item} onRemove={removeFavorite} onClick={() => setIsOpen(false)} />)}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+    <div className="w-full space-y-6" dir="rtl">
+      
+      {/* 1. Header with Red Bookmark Icon and Title "مفضلتي" */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800 gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex items-center justify-center shrink-0">
+            <Bookmark className="w-5 h-5 text-red-600 fill-red-600" />
           </div>
-        </>
+          <div>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-cairo flex items-center gap-2">
+              <span>مفضلتي</span>
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              الأخبار، المقالات، المحاضرات، والفيديوهات التي قمت بحفظها للوصول السريع
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200/80 dark:border-slate-700">
+          <Bookmark className="w-3.5 h-3.5 text-red-600" />
+          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            {favorites.length} {favorites.length === 1 ? "عنصر محفوظ" : "عناصر محفوظة"}
+          </span>
+        </div>
+      </div>
+
+      {/* 2. Category Filter Tabs */}
+      {favorites.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          {[
+            { id: "all", label: "الكل", count: favorites.length, icon: Layers },
+            { id: "news", label: "الأخبار", count: groupedFavorites.news.length, icon: FileText },
+            { id: "article", label: "المقالات", count: groupedFavorites.article.length, icon: BookOpen },
+            { id: "watch", label: "الفيديوهات (شاهد)", count: groupedFavorites.watch.length, icon: Video },
+            { id: "leader", label: "السيد القائد", count: groupedFavorites.leader.length, icon: User },
+          ].map((tab) => {
+            if (tab.id !== "all" && tab.count === 0) return null;
+            const Icon = tab.icon;
+            const isActive = selectedCategory === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedCategory(tab.id)}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-red-600 text-white shadow-md shadow-red-600/20"
+                    : "bg-slate-100 dark:bg-slate-800/70 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"
+                }`}
+              >
+                <Icon className={`w-3.5 h-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
+                <span>{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300"}`}>
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       )}
-    </>
+
+      {/* 3. Favorite Items Grid */}
+      {filteredFavorites.length === 0 ? (
+        <div className="p-12 text-center bg-slate-50 dark:bg-slate-800/40 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 space-y-3">
+          <div className="w-16 h-16 mx-auto rounded-full bg-red-50 dark:bg-red-950/30 flex items-center justify-center text-red-500">
+            <Bookmark className="w-8 h-8 opacity-60" />
+          </div>
+          <h4 className="text-base font-bold text-slate-800 dark:text-slate-200 font-cairo">
+            لا توجد عناصر محفوظة في مفضلتك
+          </h4>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+            يمكنك حفظ الأخبار، المقالات، الفيديوهات والدروس أثناء تصفحك بالضغط على زر الإشارة المرجعية لتظهر لك هنا في أي وقت.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredFavorites.map((item) => (
+            <FavoriteItemCard key={item.id} item={item} onRemove={removeFavorite} />
+          ))}
+        </div>
+      )}
+
+    </div>
   );
 }
 
-function FavoriteCard({ item, onRemove, onClick }: { item: FavoriteItem; onRemove: (id: string) => void; onClick: () => void; key?: React.Key }) {
-  const linkTo = item.type === "news" ? `/news/${item.id}` : item.type === "article" ? `/articles/${item.id}` : item.type === "watch" ? `/watch/${item.id}` : `/leader/${item.id}`;
+function FavoriteItemCard({ item, onRemove }: { item: FavoriteItem; onRemove: (id: string) => void }) {
+  const linkTo = 
+    item.type === "news" ? `/news/${item.id}` 
+    : item.type === "article" ? `/articles/${item.id}` 
+    : item.type === "watch" ? `/watch/${item.id}` 
+    : `/leader/${item.id}`;
+
+  const badgeConfig = {
+    news: { label: "خبر", bg: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800", icon: FileText },
+    article: { label: "مقال", bg: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-800", icon: BookOpen },
+    watch: { label: "فيديو", bg: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800", icon: Video },
+    leader: { label: "محاضرة", bg: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800", icon: User },
+  }[item.type] || { label: "مادة", bg: "bg-slate-100 text-slate-700 border-slate-200", icon: Bookmark };
+
+  const TypeIcon = badgeConfig.icon;
+
+  const dateFormatted = item.savedAt ? new Date(item.savedAt).toLocaleDateString("ar-EG", {
+    month: "short",
+    day: "numeric",
+  }) : "";
+
   return (
-    <div className="bg-surface-main rounded-xl border border-border-light p-2 flex gap-3 relative group">
-      {item.imageUrl ? (
-        <img src={item.imageUrl} alt={item.title} className="w-14 h-14 object-cover rounded-lg shrink-0" />
-      ) : (
-        <div className="w-14 h-14 bg-taiz-royal/5 rounded-lg flex items-center justify-center shrink-0">
-          <Bookmark className="w-6 h-6 text-red-600/50" />
+    <div className="group relative bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-3.5 hover:border-red-500/50 dark:hover:border-red-500/50 transition-all duration-300 shadow-xs hover:shadow-md flex gap-3.5 items-center">
+      {/* Thumbnail */}
+      <Link to={linkTo} className="relative w-20 h-20 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 group-hover:scale-102 transition-transform">
+        {item.imageUrl ? (
+          <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-slate-400">
+            <TypeIcon className="w-8 h-8 opacity-40" />
+          </div>
+        )}
+      </Link>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border flex items-center gap-1 ${badgeConfig.bg}`}>
+            <TypeIcon className="w-3 h-3" />
+            <span>{badgeConfig.label}</span>
+          </span>
+
+          {dateFormatted && (
+            <span className="text-[10px] font-medium text-slate-400">
+              {dateFormatted}
+            </span>
+          )}
         </div>
-      )}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <Link to={linkTo} onClick={onClick} className="font-bold text-xs text-text-primary line-clamp-2 hover:text-taiz-royal transition-colors before:absolute before:inset-0">
+
+        <Link to={linkTo} className="block text-xs sm:text-sm font-bold text-slate-900 dark:text-white line-clamp-2 hover:text-red-600 dark:hover:text-red-400 transition-colors font-cairo leading-snug">
           {item.title}
         </Link>
       </div>
-      <button 
+
+      {/* Delete button */}
+      <button
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           onRemove(item.id);
         }}
-        className="absolute top-1 left-1 p-1.5 rounded-md text-text-muted hover:text-status-danger hover:bg-status-danger/10 z-10"
+        className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 cursor-pointer"
         title="إزالة من المفضلة"
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <Trash2 className="w-4 h-4" />
       </button>
     </div>
   );
