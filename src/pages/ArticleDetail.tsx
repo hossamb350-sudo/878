@@ -50,11 +50,34 @@ export function ArticleDetail() {
     return () => clearInterval(interval);
   }, [allImages.length]);
 
+  const openGallery = (index: number) => {
+    setImgGalleryIndex(index);
+    window.history.pushState({ galleryOpen: true }, "");
+  };
+
+  const closeGallery = () => {
+    setImgGalleryIndex(null);
+    if (window.history.state?.galleryOpen) {
+      window.history.back();
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (imgGalleryIndex !== null) {
+        setImgGalleryIndex(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [imgGalleryIndex]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (imgGalleryIndex === null || allImages.length === 0) return;      
       if (e.key === "Escape") {
-        setImgGalleryIndex(null);
+        closeGallery();
       } else if (e.key === "ArrowLeft") {
         if (imgGalleryIndex < allImages.length - 1) {
           setImgGalleryIndex(imgGalleryIndex + 1);
@@ -238,7 +261,7 @@ export function ArticleDetail() {
           {/* Sliding Background Images Layer */}
           <div 
             className="absolute inset-0 w-full h-full cursor-zoom-in"
-            onClick={() => setImgGalleryIndex(currentSlide)}
+            onClick={() => openGallery(currentSlide)}
             title="انقر لتكبير الصورة"
           >
             {allImages.length > 0 ? (
@@ -394,13 +417,13 @@ export function ArticleDetail() {
         {imgGalleryIndex !== null && allImages.length > 0 && (
           <div 
             className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
-            onClick={() => setImgGalleryIndex(null)}
+            onClick={closeGallery}
           >
                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-[210]" onClick={(e) => e.stopPropagation()}>
                   <span className="text-white/70 font-bold text-sm drop-shadow-md font-ibm">
                     {imgGalleryIndex + 1} / {allImages.length}
                   </span>
-                  <button onClick={() => setImgGalleryIndex(null)} className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer">
+                  <button onClick={closeGallery} className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer">
                     <X className="w-6 h-6" />
                   </button>
                </div>

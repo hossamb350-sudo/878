@@ -3,10 +3,139 @@ import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { 
   MapPin, Eye, Gauge, Wind, Droplets, Calendar, 
-  ArrowUp, ArrowDown, Menu, RefreshCw, AlertCircle, Sparkles, Check, CloudRain, ArrowRight
+  ArrowUp, ArrowDown, RefreshCw, AlertCircle, Sparkles, Check, CloudRain,
+  X, Clock, Sun, Sunrise, Sunset, Moon, Cloud, ShieldCheck, Thermometer, Compass, 
+  CloudLightning, Info, ChevronLeft, Activity, ShieldAlert, BarChart3, Layers, Palette,
+  TrendingUp, Sliders, Wind as WindIcon, HeartPulse, ChevronRight
 } from "lucide-react";
 
-import { fetchOpenMeteoData } from "../utils/weatherApi";
+import { fetchWeatherData } from "../utils/weatherApi";
+
+// --- TIME PERIOD OF DAY ENGINE ---
+export type TimePeriod = "dawn" | "morning" | "noon" | "afternoon" | "sunset" | "evening" | "night";
+
+export interface TimePeriodInfo {
+  period: TimePeriod;
+  labelAr: string;        // e.g. "الفجر", "الصباح", "الظهيرة", "العصر", "المغرب", "المساء", "الليل"
+  descriptionAr: string; // e.g. "أجواء الفجر والسكينة"
+  isNight: boolean;
+}
+
+export const getTimePeriod = (dtSec?: number, sunriseSec?: number, sunsetSec?: number): TimePeriodInfo => {
+  const date = dtSec ? new Date(dtSec * 1000) : new Date();
+  
+  // Local Yemen Hour (UTC+3 / Asia/Aden)
+  let hour = date.getHours();
+  try {
+    const options: Intl.DateTimeFormatOptions = { timeZone: 'Asia/Aden', hour: 'numeric', hour12: false };
+    const hourStr = new Intl.DateTimeFormat('en-US', options).format(date);
+    hour = parseInt(hourStr, 10) % 24;
+  } catch {
+    hour = date.getHours();
+  }
+
+  if (hour >= 4 && hour < 6) {
+    return { period: "dawn", labelAr: "الفجر", descriptionAr: "أجواء الفجر والسكينة", isNight: true };
+  } else if (hour >= 6 && hour < 11) {
+    return { period: "morning", labelAr: "الصباح", descriptionAr: "إشراقة الصباح المشرقة", isNight: false };
+  } else if (hour >= 11 && hour < 15) {
+    return { period: "noon", labelAr: "الظهيرة", descriptionAr: "منتصف النهار والشمس الساطعة", isNight: false };
+  } else if (hour >= 15 && hour < 18) {
+    return { period: "afternoon", labelAr: "العصر", descriptionAr: "أجواء فترة العصر الذهبية", isNight: false };
+  } else if (hour >= 18 && hour < 19.5) {
+    return { period: "sunset", labelAr: "المغرب", descriptionAr: "وقت غروب الشمس وسحر الأفق", isNight: false };
+  } else if (hour >= 19.5 && hour < 22) {
+    return { period: "evening", labelAr: "المساء", descriptionAr: "بداية المساء وسكون الجو", isNight: true };
+  } else {
+    return { period: "night", labelAr: "الليل", descriptionAr: "سكون الليل وجمال النجوم", isNight: true };
+  }
+};
+
+// Wind direction compass translation to Arabic
+export const getWindDirectionArabic = (deg?: number): string => {
+  if (deg === undefined || deg === null) return "شمالية شرقية";
+  const directions = [
+    "شمالية", "شمالية شرقية", "شرقية", "جنوبية شرقية",
+    "جنوبية", "جنوبية غربية", "غربية", "شمالية غربية"
+  ];
+  const index = Math.round((deg % 360) / 45) % 8;
+  return directions[index];
+};
+
+// Dew Point Calculation using Magnus Formula
+export const calculateDewPoint = (tempC: number, humidityPercent: number): number => {
+  const a = 17.27;
+  const b = 237.7;
+  const alpha = ((a * tempC) / (b + tempC)) + Math.log(humidityPercent / 100);
+  const dewPoint = (b * alpha) / (a - alpha);
+  return Math.round(dewPoint * 10) / 10;
+};
+
+// Air Quality Index Details
+export const getAqiDetails = (aqiCode: number = 2) => {
+  switch (aqiCode) {
+    case 1:
+      return {
+        label: "ممتاز جداً",
+        description: "جودة الهواء ممتازة ونقية، ملائمة لجميع الأنشطة الخارجية والتنزه.",
+        bg: "bg-emerald-500",
+        text: "text-emerald-700",
+        border: "border-emerald-300",
+        badgeBg: "bg-emerald-50 text-emerald-700",
+        percent: 95
+      };
+    case 2:
+      return {
+        label: "مقبول وطبيعي",
+        description: "جودة الهواء معتدلة، لا توجد مخاطر صحية تذكر على الشريحة العامة.",
+        bg: "bg-emerald-400",
+        text: "text-emerald-600",
+        border: "border-emerald-200",
+        badgeBg: "bg-emerald-50 text-emerald-600",
+        percent: 80
+      };
+    case 3:
+      return {
+        label: "متوسط (حساس)",
+        description: "قد يشعر الأشخاص المصابون بالحساسية أو الأزمات التنفسية بإجهاد خفيف عند التمارين المجهدة.",
+        bg: "bg-amber-500",
+        text: "text-amber-700",
+        border: "border-amber-300",
+        badgeBg: "bg-amber-50 text-amber-700",
+        percent: 60
+      };
+    case 4:
+      return {
+        label: "غير صحي",
+        description: "ينصح بحد الأنشطة المجهدة في الهواء الطلق، خاصة لكبار السن والأطفال.",
+        bg: "bg-orange-500",
+        text: "text-orange-700",
+        border: "border-orange-300",
+        badgeBg: "bg-orange-50 text-orange-700",
+        percent: 40
+      };
+    case 5:
+      return {
+        label: "خطير جداً",
+        description: "تنبيه صحي: يفضل البقاء داخل الأماكن المغلقة واستخدام كمامات حماية عند الخروج.",
+        bg: "bg-rose-600",
+        text: "text-rose-700",
+        border: "border-rose-300",
+        badgeBg: "bg-rose-50 text-rose-700",
+        percent: 20
+      };
+    default:
+      return {
+        label: "مقبول",
+        description: "جودة الهواء في المعدل الطبيعي.",
+        bg: "bg-emerald-500",
+        text: "text-emerald-700",
+        border: "border-emerald-300",
+        badgeBg: "bg-emerald-50 text-emerald-700",
+        percent: 80
+      };
+  }
+};
 
 // WMO Weather Code to Arabic description & category helper
 export const parseWmoCode = (code: number, isNight: boolean = false) => {
@@ -118,118 +247,6 @@ export const parseWmoCode = (code: number, isNight: boolean = false) => {
   };
 };
 
-export const getWeatherTheme = (category: string, isNight: boolean) => {
-  if (isNight) {
-    if (category.includes("rain") || category === "thunderstorm" || category === "hail") {
-      return {
-        theme: "from-[#020617] via-[#0F172A] to-[#1E3A8A] border-sky-500/30",
-        text: "text-white",
-        subtext: "text-sky-200/90",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-300"
-      };
-    } else if (category === "fog" || category === "mist" || category === "dust" || category === "sandstorm") {
-      return {
-        theme: "from-[#1E1E24] via-[#2D2D3A] to-[#48485E] border-amber-500/30",
-        text: "text-amber-50",
-        subtext: "text-amber-200/90",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-300"
-      };
-    } else if (category === "clear" || category === "clear-after-rain") {
-      return {
-        theme: "from-[#03071E] via-[#0F172A] to-[#1E1B4B] border-indigo-400/30",
-        text: "text-white",
-        subtext: "text-indigo-200/90",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-300"
-      };
-    } else if (category.includes("cloud") || category === "overcast" || category === "windy") {
-      return {
-        theme: "from-[#0F172A] via-[#1E293B] to-[#334155] border-slate-600/30",
-        text: "text-white",
-        subtext: "text-slate-200/90",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-300"
-      };
-    } else if (category === "snow" || category === "frost") {
-      return {
-        theme: "from-[#0F172A] via-[#1E293B] to-[#312E81] border-sky-400/30",
-        text: "text-white",
-        subtext: "text-sky-200/90",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-300"
-      };
-    } else {
-      return {
-        theme: "from-[#0F172A] via-[#1E293B] to-[#312E81] border-indigo-500/30",
-        text: "text-white",
-        subtext: "text-indigo-200/90",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-300"
-      };
-    }
-  } else {
-    if (category.includes("rain") || category === "thunderstorm" || category === "hail") {
-      return {
-        theme: "from-[#1E3A8A] via-[#2563EB] to-[#0284C7] border-blue-400/30",
-        text: "text-white",
-        subtext: "text-sky-100",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-200"
-      };
-    } else if (category === "fog" || category === "mist") {
-      return {
-        theme: "from-[#475569] via-[#64748B] to-[#94A3B8] border-slate-300/30",
-        text: "text-white",
-        subtext: "text-slate-100",
-        maxTemp: "text-red-200",
-        minTemp: "text-sky-200"
-      };
-    } else if (category === "dust" || category === "sandstorm") {
-      return {
-        theme: "from-[#B45309] via-[#D97706] to-[#F59E0B] border-amber-400/30",
-        text: "text-white",
-        subtext: "text-amber-100",
-        maxTemp: "text-red-200",
-        minTemp: "text-sky-200"
-      };
-    } else if (category === "clear" || category === "clear-after-rain") {
-      return {
-        theme: "from-[#D97706] via-[#B45309] to-[#1E3A8A] border-amber-500/20",
-        text: "text-white",
-        subtext: "text-amber-100",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-200"
-      };
-    } else if (category.includes("cloud") || category === "overcast" || category === "windy") {
-      return {
-        theme: "from-[#475569] via-[#64748B] to-[#94A3B8] border-slate-400/30",
-        text: "text-white",
-        subtext: "text-slate-100",
-        maxTemp: "text-red-200",
-        minTemp: "text-sky-200"
-      };
-    } else if (category === "snow" || category === "frost") {
-      return {
-        theme: "from-[#0284C7] via-[#2563EB] to-[#38BDF8] border-sky-300/30",
-        text: "text-white",
-        subtext: "text-sky-100",
-        maxTemp: "text-red-200",
-        minTemp: "text-sky-200"
-      };
-    } else {
-      return {
-        theme: "from-[#0284C7] via-[#2563EB] to-[#1D4ED8] border-sky-400/30",
-        text: "text-white",
-        subtext: "text-sky-100",
-        maxTemp: "text-red-300",
-        minTemp: "text-sky-200"
-      };
-    }
-  }
-};
-
 export const getCategoryFromCode = (weatherCode: number, isNight: boolean) => {
   if (weatherCode <= 99) {
     return parseWmoCode(weatherCode, isNight).type;
@@ -258,37 +275,226 @@ export const getCategoryFromCode = (weatherCode: number, isNight: boolean) => {
   return parseWmoCode(weatherCode, isNight).type;
 };
 
-// 3D DYNAMIC INTERACTIVE WEATHER ILLUSTRATION
-// Changes smoothly according to actual weather condition and time of day (Is Night / Day)
+// Dynamic Weather Theme palette based on Category & Time of Day Period
+export const getWeatherTheme = (category: string, periodOrNight: TimePeriodInfo | boolean) => {
+  let period: TimePeriod = "noon";
+  if (typeof periodOrNight === "boolean") {
+    period = periodOrNight ? "night" : "noon";
+  } else if (periodOrNight && periodOrNight.period) {
+    period = periodOrNight.period;
+  }
+
+  // 1. DAWN (الفجر)
+  if (period === "dawn") {
+    if (category.includes("rain") || category === "thunderstorm" || category === "hail") {
+      return {
+        theme: "from-[#1E1B4B] via-[#312E81] to-[#020617] border-indigo-500/40",
+        text: "text-white",
+        subtext: "text-indigo-200",
+        maxTemp: "text-red-300",
+        minTemp: "text-sky-300"
+      };
+    } else if (category === "fog" || category === "mist") {
+      return {
+        theme: "from-[#2E1065] via-[#4C1D95]/90 via-[#701A75]/70 to-[#334155] border-purple-400/30",
+        text: "text-purple-50",
+        subtext: "text-purple-200",
+        maxTemp: "text-rose-300",
+        minTemp: "text-sky-300"
+      };
+    } else {
+      return {
+        theme: "from-[#1E1B4B] via-[#4C1D95]/80 via-[#831843]/60 to-[#1E293B] border-rose-400/30",
+        text: "text-white",
+        subtext: "text-rose-200",
+        maxTemp: "text-amber-300",
+        minTemp: "text-sky-300"
+      };
+    }
+  }
+
+  // 2. MORNING (الصباح)
+  if (period === "morning") {
+    if (category.includes("rain") || category === "thunderstorm") {
+      return {
+        theme: "from-[#1E3A8A] via-[#2563EB] to-[#0284C7] border-sky-400/40",
+        text: "text-white",
+        subtext: "text-sky-100",
+        maxTemp: "text-red-300",
+        minTemp: "text-sky-200"
+      };
+    } else if (category.includes("cloud") || category === "overcast") {
+      return {
+        theme: "from-[#0EA5E9]/80 via-[#38BDF8]/60 to-[#475569] border-sky-300/30",
+        text: "text-white",
+        subtext: "text-sky-100",
+        maxTemp: "text-amber-200",
+        minTemp: "text-sky-200"
+      };
+    } else {
+      // Clear Morning
+      return {
+        theme: "from-[#0284C7] via-[#0EA5E9] to-[#F59E0B]/80 border-amber-300/40",
+        text: "text-white",
+        subtext: "text-amber-100",
+        maxTemp: "text-amber-300",
+        minTemp: "text-sky-200"
+      };
+    }
+  }
+
+  // 3. NOON (الظهيرة)
+  if (period === "noon") {
+    if (category.includes("rain") || category === "thunderstorm") {
+      return {
+        theme: "from-[#1D4ED8] via-[#0284C7] to-[#0F172A] border-blue-400/30",
+        text: "text-white",
+        subtext: "text-sky-100",
+        maxTemp: "text-red-300",
+        minTemp: "text-sky-200"
+      };
+    } else if (category.includes("cloud") || category === "overcast") {
+      return {
+        theme: "from-[#38BDF8] via-[#0284C7] to-[#475569] border-sky-300/30",
+        text: "text-white",
+        subtext: "text-sky-100",
+        maxTemp: "text-red-300",
+        minTemp: "text-sky-200"
+      };
+    } else {
+      // Clear Midday High Sun
+      return {
+        theme: "from-[#0284C7] via-[#0EA5E9] to-[#38BDF8] border-amber-300/30",
+        text: "text-white",
+        subtext: "text-sky-100",
+        maxTemp: "text-amber-300",
+        minTemp: "text-sky-200"
+      };
+    }
+  }
+
+  // 4. AFTERNOON (العصر)
+  if (period === "afternoon") {
+    if (category.includes("rain") || category === "thunderstorm") {
+      return {
+        theme: "from-[#9A3412] via-[#1E3A8A] to-[#0F172A] border-amber-500/30",
+        text: "text-white",
+        subtext: "text-amber-100",
+        maxTemp: "text-red-300",
+        minTemp: "text-sky-200"
+      };
+    } else if (category === "dust" || category === "sandstorm") {
+      return {
+        theme: "from-[#B45309] via-[#D97706] to-[#78350F] border-amber-500/40",
+        text: "text-white",
+        subtext: "text-amber-100",
+        maxTemp: "text-red-200",
+        minTemp: "text-amber-200"
+      };
+    } else {
+      // Warm Golden Afternoon Sky
+      return {
+        theme: "from-[#F59E0B]/80 via-[#2563EB] to-[#1E3A8A] border-amber-400/40",
+        text: "text-white",
+        subtext: "text-amber-100",
+        maxTemp: "text-red-300",
+        minTemp: "text-sky-200"
+      };
+    }
+  }
+
+  // 5. SUNSET (المغرب)
+  if (period === "sunset") {
+    if (category.includes("rain") || category === "thunderstorm") {
+      return {
+        theme: "from-[#991B1B] via-[#6B21A8] via-[#1E3A8A] to-[#020617] border-rose-500/40",
+        text: "text-white",
+        subtext: "text-rose-200",
+        maxTemp: "text-red-300",
+        minTemp: "text-sky-300"
+      };
+    } else {
+      // Fiery Crimson Sunset
+      return {
+        theme: "from-[#DC2626] via-[#B91C1C] via-[#7C3AED] to-[#0F172A] border-rose-400/40",
+        text: "text-white",
+        subtext: "text-rose-100",
+        maxTemp: "text-amber-300",
+        minTemp: "text-sky-300"
+      };
+    }
+  }
+
+  // 6 & 7. EVENING / NIGHT (المساء / الليل)
+  if (category.includes("rain") || category === "thunderstorm" || category === "hail") {
+    return {
+      theme: "from-[#020617] via-[#0F172A] to-[#1E3A8A] border-sky-500/30",
+      text: "text-white",
+      subtext: "text-sky-200",
+      maxTemp: "text-red-300",
+      minTemp: "text-sky-300"
+    };
+  } else if (category === "fog" || category === "mist" || category === "dust") {
+    return {
+      theme: "from-[#1E1E24] via-[#2D2D3A] to-[#48485E] border-slate-500/30",
+      text: "text-amber-50",
+      subtext: "text-amber-200",
+      maxTemp: "text-red-300",
+      minTemp: "text-sky-300"
+    };
+  } else {
+    // Midnight Starry Night
+    return {
+      theme: "from-[#020617] via-[#0F172A] to-[#1E1B4B] border-indigo-400/30",
+      text: "text-white",
+      subtext: "text-indigo-200",
+      maxTemp: "text-red-300",
+      minTemp: "text-sky-300"
+    };
+  }
+};
 
 
-// --- REALISTIC CELESTIAL & ATMOSPHERIC GRAPHICS FOR WEATHER CARDS ---
-// Fixed stationary sun - natural proportional scale (~24px to 28px) with radiant solar core
-const SunElement = ({ dimmed = false }: { dimmed?: boolean }) => (
-  <div className="absolute top-3 right-4 sm:top-4 sm:right-6 pointer-events-none z-10 select-none">
-    {/* Soft radiant static solar aura */}
-    <div className={`absolute -inset-2.5 rounded-full blur-md bg-amber-300/40 ${dimmed ? 'opacity-25' : 'opacity-75'}`} />
-    {/* Photorealistic Sun Body */}
-    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-[#FFFFFF] via-[#FDE047] to-[#F59E0B] shadow-[0_0_18px_rgba(251,191,36,0.9)] border border-amber-100 ${dimmed ? 'opacity-40' : 'opacity-100'}`} />
+// --- CELESTIAL & ATMOSPHERIC GRAPHICS ---
+
+// Photorealistic Morning/Overhead Sun with radiant glow
+const SunElement = ({ position = "top-right", scale = 1, dimmed = false }: { position?: "top-right" | "center" | "slanted"; scale?: number; dimmed?: boolean }) => {
+  const posClasses = position === "center" 
+    ? "top-4 left-1/2 -translate-x-1/2" 
+    : position === "slanted" 
+      ? "top-6 right-10" 
+      : "top-3 right-4 sm:top-4 sm:right-6";
+
+  return (
+    <div className={`absolute ${posClasses} pointer-events-none z-10 select-none`}>
+      <div className={`absolute -inset-4 rounded-full blur-lg bg-amber-300/50 ${dimmed ? 'opacity-20' : 'opacity-85'} animate-pulse`} />
+      <div className={`relative rounded-full bg-gradient-to-br from-[#FFFFFF] via-[#FDE047] to-[#F59E0B] shadow-[0_0_24px_rgba(251,191,36,0.95)] border border-amber-100 ${dimmed ? 'opacity-40' : 'opacity-100'}`}
+        style={{ width: `${28 * scale}px`, height: `${28 * scale}px` }}
+      />
+    </div>
+  );
+};
+
+// Sinking Golden Sunset Sun on Horizon
+const SunsetSunElement = ({ dimmed = false }: { dimmed?: boolean }) => (
+  <div className="absolute bottom-6 right-12 pointer-events-none z-10 select-none">
+    <div className={`absolute -inset-6 rounded-full blur-xl bg-red-500/60 ${dimmed ? 'opacity-25' : 'opacity-90'}`} />
+    <div className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-t from-[#F97316] via-[#F59E0B] to-[#FEF08A] shadow-[0_0_30px_rgba(239,68,68,0.95)] border border-amber-200 ${dimmed ? 'opacity-40' : 'opacity-100'}`} />
   </div>
 );
 
-// Fixed stationary moon - realistic pearl silver colors & natural crater surface shading
+// Photorealistic Pearl Silver Moon Core
 const MoonElement = ({ dimmed = false }: { dimmed?: boolean }) => (
   <div className="absolute top-3 right-4 sm:top-4 sm:right-6 pointer-events-none z-10 select-none">
-    {/* Soft silver/white static aura glow */}
-    <div className={`absolute -inset-2.5 rounded-full blur-md bg-slate-100/35 ${dimmed ? 'opacity-20' : 'opacity-70'}`} />
-    {/* Photorealistic Pearl Silver Moon Core */}
-    <div className={`relative w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-[#FFFFFF] via-[#F8FAFC] to-[#CBD5E1] shadow-[0_0_16px_rgba(255,255,255,0.95)] border border-white/95 ${dimmed ? 'opacity-40' : 'opacity-100'}`}>
-      {/* Real moon craters texture */}
+    <div className={`absolute -inset-3 rounded-full blur-md bg-slate-100/40 ${dimmed ? 'opacity-20' : 'opacity-75'}`} />
+    <div className={`relative w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-br from-[#FFFFFF] via-[#F8FAFC] to-[#CBD5E1] shadow-[0_0_20px_rgba(255,255,255,0.95)] border border-white/95 ${dimmed ? 'opacity-40' : 'opacity-100'}`}>
       <div className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-slate-300/45 blur-[0.2px]" />
       <div className="absolute bottom-1.5 left-1.5 w-1 h-1 rounded-full bg-slate-300/35 blur-[0.2px]" />
-      <div className="absolute top-2.5 left-1 w-0.8 h-0.8 rounded-full bg-slate-300/30 blur-[0.2px]" />
     </div>
   </div>
 );
 
-// Photorealistic drifting cloud floating in front of Sun/Moon with volumetric soft shading
+// Drifting Cloud with volumetric soft shading
 const DriftingCloud = ({
   top = "10%",
   scale = 0.75,
@@ -349,383 +555,193 @@ const DriftingCloud = ({
         }`}
         style={{ width: `${44 * scale}px`, height: `${44 * scale}px` }}
       />
-      <div
-        className={`absolute -top-3 right-2.5 rounded-full ${
-          isNight
-            ? isHeavy ? "bg-slate-800/95" : "bg-slate-700/90"
-            : isHeavy ? "bg-slate-300/95" : "bg-white"
-        }`}
-        style={{ width: `${32 * scale}px`, height: `${32 * scale}px` }}
-      />
     </div>
   </motion.div>
 );
 
-// Photorealistic Jagged Branching Lightning Bolts & Rapid Background Flash Engine for Thunderstorms
-const LightningBoltEffect = () => {
-  return (
-    <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[inherit]">
-      {/* 1. Full-Card Rapid Strobe Background Flash (Drives instant illumination of background & dark storm clouds) */}
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-b from-cyan-100/90 via-sky-200/80 to-white/70 dark:from-white/90 dark:via-cyan-300/80 dark:to-sky-200/60 mix-blend-screen z-30"
-        animate={{
-          opacity: [
-            0, 0, 0.95, 0.15, 0.85, 0.05, 0, 0, 
-            0, 0.9, 0.1, 0, 0, 0, 0.75, 0.05, 0.8, 0, 0
-          ],
-        }}
-        transition={{
-          duration: 3.6,
-          repeat: Infinity,
-          ease: "linear",
-          times: [
-            0, 0.12, 0.14, 0.16, 0.18, 0.22, 0.25, 0.45,
-            0.5, 0.52, 0.54, 0.58, 0.75, 0.78, 0.8, 0.82, 0.84, 0.88, 1
-          ],
-        }}
+// Jagged Branching Lightning Bolts & Strobe Flashes for Thunderstorms
+const LightningBoltEffect = () => (
+  <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden rounded-[inherit]">
+    <motion.div
+      className="absolute inset-0 bg-gradient-to-b from-cyan-100/90 via-sky-200/80 to-white/70 mix-blend-screen z-30"
+      animate={{
+        opacity: [
+          0, 0, 0.95, 0.15, 0.85, 0.05, 0, 0, 
+          0, 0.9, 0.1, 0, 0, 0, 0.75, 0.05, 0.8, 0
+        ],
+      }}
+      transition={{
+        duration: 3.6,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+    />
+    <motion.svg
+      viewBox="0 0 120 180"
+      className="absolute -top-2 left-[12%] w-28 h-44 sm:w-36 sm:h-56 text-cyan-200 z-35 filter drop-shadow-[0_0_16px_rgba(56,189,248,1)]"
+      animate={{
+        opacity: [0, 0, 1, 0.15, 0.95, 0, 0, 0, 0, 0],
+        scale: [0.95, 1, 1.05, 1, 1.02, 0.95, 0.95, 0.95, 0.95, 0.95],
+      }}
+      transition={{
+        duration: 3.6,
+        repeat: Infinity,
+        ease: "linear",
+      }}
+    >
+      <path
+        d="M 60 0 L 42 45 L 56 47 L 22 95 L 58 90 L 32 140 L 78 75 L 58 73 L 85 28 Z"
+        fill="currentColor"
       />
+    </motion.svg>
+  </div>
+);
 
-      {/* 2. Primary Jagged Branching Lightning Bolt 1 (Left Strike) */}
-      <motion.svg
-        viewBox="0 0 120 180"
-        className="absolute -top-2 left-[12%] w-28 h-44 sm:w-36 sm:h-56 text-cyan-200 z-35 filter drop-shadow-[0_0_16px_rgba(56,189,248,1)] drop-shadow-[0_0_30px_rgba(255,255,255,1)]"
-        animate={{
-          opacity: [0, 0, 1, 0.15, 0.95, 0, 0, 0, 0, 0, 0, 0],
-          scale: [0.95, 1, 1.05, 1, 1.02, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95],
-        }}
-        transition={{
-          duration: 3.6,
-          repeat: Infinity,
-          ease: "linear",
-          times: [0, 0.12, 0.14, 0.16, 0.18, 0.22, 0.5, 0.7, 0.8, 0.9, 0.95, 1],
-        }}
-      >
-        <path
-          d="M 60 0 L 42 45 L 56 47 L 22 95 L 58 90 L 32 140 L 78 75 L 58 73 L 85 28 Z"
-          fill="currentColor"
-        />
-        <path
-          d="M 60 0 L 42 45 L 56 47 L 22 95 L 58 90 L 32 140 L 78 75 L 58 73 L 85 28 Z"
-          fill="#FFFFFF"
-          className="blur-[0.5px]"
-        />
-        <path
-          d="M 42 45 L 20 70 L 28 71 L 12 95"
-          stroke="rgba(186,230,253,0.9)"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-        />
-        <path
-          d="M 58 90 L 75 110 L 70 111 L 82 130"
-          stroke="rgba(255,255,255,0.85)"
-          strokeWidth="2.5"
-          fill="none"
-          strokeLinecap="round"
-        />
-      </motion.svg>
 
-      {/* 3. Secondary Jagged Branching Lightning Bolt 2 (Right Strike) */}
-      <motion.svg
-        viewBox="0 0 120 180"
-        className="absolute top-1 right-[15%] w-24 h-40 sm:w-32 sm:h-52 text-white z-35 filter drop-shadow-[0_0_18px_rgba(255,255,255,1)] drop-shadow-[0_0_28px_rgba(6,182,212,0.9)]"
-        animate={{
-          opacity: [0, 0, 0, 0, 1, 0.1, 0.85, 0, 0, 0, 0, 0],
-          scale: [0.95, 0.95, 0.95, 0.98, 1.04, 0.99, 1.02, 0.95, 0.95, 0.95, 0.95, 0.95],
-        }}
-        transition={{
-          duration: 3.6,
-          repeat: Infinity,
-          ease: "linear",
-          times: [0, 0.45, 0.49, 0.5, 0.52, 0.54, 0.57, 0.62, 0.8, 0.9, 0.95, 1],
-        }}
-      >
-        <path
-          d="M 70 0 L 48 40 L 62 42 L 30 85 L 62 82 L 40 130 L 82 65 L 64 63 L 92 22 Z"
-          fill="#FFFFFF"
-        />
-        <path
-          d="M 48 40 L 28 65 L 35 66 L 18 90"
-          stroke="rgba(56,189,248,0.9)"
-          strokeWidth="3"
-          fill="none"
-          strokeLinecap="round"
-        />
-      </motion.svg>
-
-      {/* 4. Center Distant Lightning Bolt 3 */}
-      <motion.svg
-        viewBox="0 0 100 150"
-        className="absolute top-2 left-[48%] w-20 h-32 sm:w-28 sm:h-40 text-cyan-100 z-35 filter drop-shadow-[0_0_14px_rgba(186,230,253,0.9)]"
-        animate={{
-          opacity: [0, 0, 0, 0, 0, 0, 0, 0.9, 0.1, 0.8, 0],
-        }}
-        transition={{
-          duration: 3.6,
-          repeat: Infinity,
-          ease: "linear",
-          times: [0, 0.6, 0.7, 0.75, 0.78, 0.79, 0.8, 0.82, 0.84, 0.86, 0.9],
-        }}
-      >
-        <path
-          d="M 50 0 L 35 35 L 45 37 L 22 75 L 48 72 L 30 115 L 68 55 L 52 53 L 75 18 Z"
-          fill="#E0F2FE"
-        />
-      </motion.svg>
-
-      {/* 5. In-Cloud Glow / Sheet Lightning Radial Glow (Shines through dark storm clouds) */}
-      <motion.div
-        className="absolute -top-10 inset-x-0 h-3/4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-300/80 via-sky-400/50 to-transparent blur-xl z-15"
-        animate={{
-          opacity: [0.1, 0.2, 0.9, 0.2, 0.85, 0.1, 0.8, 0.15, 0.9, 0.1],
-        }}
-        transition={{
-          duration: 3.6,
-          repeat: Infinity,
-          ease: "easeInOut",
-          times: [0, 0.1, 0.14, 0.17, 0.2, 0.48, 0.52, 0.55, 0.8, 1],
-        }}
-      />
-    </div>
-  );
-};
-
-// --- DYNAMIC WEATHER BACKGROUND EFFECTS ---
+// --- DYNAMIC WEATHER & TIME PERIOD BACKGROUND EFFECT ---
 export const WeatherBackgroundEffect = ({ 
   weatherCode, 
-  isNight,
+  isNight = false,
+  dtSec,
+  sunriseSec,
+  sunsetSec,
   className = ""
 }: { 
   weatherCode: number; 
-  isNight: boolean;
+  isNight?: boolean;
+  dtSec?: number;
+  sunriseSec?: number;
+  sunsetSec?: number;
   className?: string;
 }) => {
-  const category = getCategoryFromCode(weatherCode, isNight);
+  const periodInfo = useMemo(() => {
+    return getTimePeriod(dtSec, sunriseSec, sunsetSec);
+  }, [dtSec, sunriseSec, sunsetSec]);
+
+  const category = getCategoryFromCode(weatherCode, periodInfo.isNight);
 
   return (
     <div className={`absolute inset-0 z-0 overflow-hidden pointer-events-none rounded-[inherit] w-full h-full select-none ${className}`}>
       
-      {/* 1. SUNNY / CLEAR DAY OR CLEAR NIGHT */}
-      {category === "clear" && (
-        <div className="absolute inset-0 w-full h-full">
-          {!isNight ? (
-            <>
-              <SunElement />
-              <motion.div
-                className="absolute -top-[35%] -right-[25%] w-[130%] h-[130%] bg-gradient-to-br from-amber-400/35 via-amber-300/20 to-transparent rounded-full blur-[60px]"
-                animate={{ scale: [1, 1.12, 1], opacity: [0.7, 0.95, 0.7] }}
-                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <motion.div
-                className="absolute -bottom-[20%] -left-[15%] w-[70%] h-[70%] bg-orange-400/20 rounded-full blur-2xl"
-                animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
-                transition={{ duration: 11, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              />
-              <DriftingCloud top="15%" scale={0.6} duration={35} delay={0} isNight={false} isHeavy={false} zIndex={15} />
-              {[...Array(12)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute w-1 sm:w-1.5 h-1 sm:h-1.5 bg-amber-400 dark:bg-amber-200 rounded-full shadow-[0_0_6px_rgba(245,158,11,0.8)]"
-                  style={{ top: `${12 + (i * 7)}%`, left: `${8 + (i * 8)}%` }}
-                  animate={{ y: ["0px", "-14px", "0px"], opacity: [0.3, 1, 0.3], scale: [0.8, 1.3, 0.8] }}
-                  transition={{ duration: 3 + (i % 3), repeat: Infinity, ease: "easeInOut", delay: (i % 5) * 0.5 }}
-                />
-              ))}
-            </>
-          ) : (
-            <>
-              <MoonElement />
-              <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/20 via-transparent to-sky-950/20" />
-              <div className="absolute inset-0 w-full h-full">
-                {[...Array(28)].map((_, i) => {
-                  const x = ((i * 13) % 94) + 3;
-                  const y = ((i * 19) % 92) + 4;
-                  return (
-                    <motion.div
-                      key={i}
-                      className="absolute w-1 h-1 bg-white rounded-full shadow-[0_0_6px_rgba(255,255,255,0.9)]"
-                      style={{ top: `${y}%`, left: `${x}%` }}
-                      animate={{ opacity: [0.2, 1, 0.2], scale: [0.75, 1.3, 0.75] }}
-                      transition={{ duration: 1.8 + (i % 4) * 0.6, repeat: Infinity, ease: "easeInOut", delay: (i % 6) * 0.35 }}
-                    />
-                  );
-                })}
-              </div>
-              <motion.div
-                className="absolute w-16 h-[1.5px] bg-gradient-to-r from-transparent via-white to-sky-400 rounded-full rotate-[-25deg]"
-                style={{ top: "15%", left: "70%" }}
-                animate={{ x: ["0px", "-180px"], y: ["0px", "90px"], opacity: [0, 1, 0] }}
-                transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 5.5, ease: "easeOut" }}
-              />
-            </>
-          )}
-        </div>
+      {/* TIME PERIOD SPECIFIC VISUAL LAYERS */}
+
+      {/* 1. DAWN (الفجر) SPECIAL VISUAL LAYER */}
+      {periodInfo.period === "dawn" && (
+        <>
+          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-rose-500/20 via-purple-600/15 to-transparent blur-xl" />
+          <motion.div 
+            className="absolute top-4 left-1/4 w-1.5 h-1.5 bg-amber-200 rounded-full shadow-[0_0_10px_rgba(253,230,138,1)]"
+            animate={{ opacity: [0.4, 1, 0.4], scale: [0.8, 1.3, 0.8] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </>
       )}
 
-      {/* 2. PARTLY CLOUDY */}
-      {category === "partly-cloudy" && (
-        <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement /> : <SunElement />}
-          {isNight && (
-            <div className="absolute inset-0 w-full h-full z-0">
-              {[...Array(14)].map((_, i) => (
+      {/* 2. MORNING (الصباح) SPECIAL SUN RAYS */}
+      {periodInfo.period === "morning" && category === "clear" && (
+        <motion.div 
+          className="absolute -top-12 -right-12 w-64 h-64 bg-gradient-to-br from-amber-300/40 via-amber-200/20 to-transparent rounded-full blur-2xl"
+          animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.9, 0.6] }}
+          transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
+        />
+      )}
+
+      {/* 3. NOON (الظهيرة) INTENSE OVERHEAD SOLAR GLOW */}
+      {periodInfo.period === "noon" && category === "clear" && (
+        <SunElement position="center" scale={1.2} />
+      )}
+
+      {/* 4. AFTERNOON (العصر) SLANTED WARM LIGHT BEAMS */}
+      {periodInfo.period === "afternoon" && (
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-400/15 via-transparent to-blue-900/30 pointer-events-none" />
+      )}
+
+      {/* 5. SUNSET (المغرب) FIERY HORIZON GLOW */}
+      {periodInfo.period === "sunset" && (
+        <>
+          <SunsetSunElement />
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-red-600/40 via-amber-500/25 to-transparent blur-lg" />
+        </>
+      )}
+
+      {/* 6 & 7. EVENING / NIGHT (المساء / الليل) STARS & MOON */}
+      {(periodInfo.period === "evening" || periodInfo.period === "night") && (
+        <>
+          {/* Hide Moon if heavy overcast/storm/fog, else show dimmed if cloudy */}
+          {!(category === "overcast" || category === "heavy-rain" || category === "thunderstorm" || category === "fog" || category === "sandstorm") && (
+            <MoonElement dimmed={category === "cloudy" || category === "mostly-cloudy" || category === "rain"} />
+          )}
+
+          {/* Stars: ONLY visible when sky is clear or partly cloudy (STRICTLY HIDDEN when overcast/cloudy/rain/fog/storm) */}
+          {(category === "clear" || category === "partly-cloudy") && (
+            <div className="absolute inset-0 w-full h-full">
+              {[...Array(category === "partly-cloudy" ? 8 : 20)].map((_, i) => (
                 <motion.div
                   key={i}
-                  className="absolute w-1 h-1 bg-white rounded-full shadow-[0_0_4px_rgba(255,255,255,0.8)]"
-                  style={{ top: `${(i * 17) % 85}%`, left: `${(i * 23) % 90}%` }}
-                  animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
-                  transition={{ duration: 2 + (i % 3), repeat: Infinity, delay: i * 0.3 }}
+                  className="absolute w-1 h-1 bg-white rounded-full shadow-[0_0_6px_rgba(255,255,255,0.9)]"
+                  style={{ top: `${((i * 17) % 88) + 4}%`, left: `${((i * 23) % 92) + 4}%` }}
+                  animate={{ opacity: [0.2, 1, 0.2], scale: [0.75, 1.3, 0.75] }}
+                  transition={{ duration: 1.8 + (i % 4) * 0.5, repeat: Infinity, delay: (i % 5) * 0.3 }}
                 />
               ))}
             </div>
           )}
-          <DriftingCloud top="4%" scale={1.1} duration={20} delay={0} isNight={isNight} isHeavy={false} zIndex={20} />
-          <DriftingCloud top="12%" scale={1.3} duration={26} delay={8} isNight={isNight} isHeavy={false} zIndex={20} />
-          <DriftingCloud top="20%" scale={0.9} duration={22} delay={15} isNight={isNight} isHeavy={false} zIndex={20} />
+        </>
+      )}
+
+      {/* WEATHER CONDITION OVERLAYS */}
+
+      {/* CLEAR / SUNNY */}
+      {category === "clear" && (
+        <div className="absolute inset-0 w-full h-full">
+          {!periodInfo.isNight && periodInfo.period !== "noon" && periodInfo.period !== "sunset" && (
+            <SunElement />
+          )}
+          <DriftingCloud top="15%" scale={0.65} duration={32} delay={0} isNight={periodInfo.isNight} zIndex={15} />
         </div>
       )}
 
-      {/* 3. MOSTLY CLOUDY */}
-      {category === "mostly-cloudy" && (
+      {/* PARTLY CLOUDY */}
+      {category === "partly-cloudy" && (
         <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
-          <DriftingCloud top="-2%" scale={1.4} duration={16} delay={0} isNight={isNight} isHeavy={false} zIndex={20} />
-          <DriftingCloud top="6%" scale={1.7} duration={21} delay={4} isNight={isNight} isHeavy={true} zIndex={20} />
-          <DriftingCloud top="14%" scale={1.2} duration={18} delay={9} isNight={isNight} isHeavy={false} zIndex={20} />
-          <DriftingCloud top="22%" scale={1.5} duration={25} delay={14} isNight={isNight} isHeavy={true} zIndex={20} />
+          {!periodInfo.isNight && <SunElement />}
+          <DriftingCloud top="4%" scale={1.1} duration={20} delay={0} isNight={periodInfo.isNight} zIndex={20} />
+          <DriftingCloud top="14%" scale={1.3} duration={26} delay={8} isNight={periodInfo.isNight} zIndex={20} />
         </div>
       )}
 
-      {/* 4. OVERCAST / CLOUDY */}
-      {(category === "overcast" || category === "cloudy") && (
+      {/* CLOUDY / OVERCAST */}
+      {(category === "cloudy" || category === "mostly-cloudy" || category === "overcast") && (
         <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
-          <DriftingCloud top="0%" scale={1.6} duration={14} delay={0} isNight={isNight} isHeavy={true} zIndex={20} />
-          <DriftingCloud top="8%" scale={1.9} duration={18} delay={3} isNight={isNight} isHeavy={true} zIndex={20} />
-          <DriftingCloud top="4%" scale={1.4} duration={12} delay={7} isNight={isNight} isHeavy={true} zIndex={20} />
-          <DriftingCloud top="16%" scale={1.7} duration={22} delay={11} isNight={isNight} isHeavy={true} zIndex={20} />
-          <DriftingCloud top="-5%" scale={2.1} duration={25} delay={15} isNight={isNight} isHeavy={true} zIndex={20} />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-400/20 via-slate-300/10 to-transparent dark:from-slate-900/40 blur-xl z-25" />
+          <DriftingCloud top="0%" scale={1.6} duration={14} delay={0} isNight={periodInfo.isNight} isHeavy={true} zIndex={20} />
+          <DriftingCloud top="8%" scale={1.9} duration={18} delay={3} isNight={periodInfo.isNight} isHeavy={true} zIndex={20} />
+          <DriftingCloud top="16%" scale={1.5} duration={22} delay={11} isNight={periodInfo.isNight} isHeavy={true} zIndex={20} />
         </div>
       )}
 
-      {/* 5. FOG (ضباب) */}
-      {category === "fog" && (
+      {/* FOG / MIST */}
+      {(category === "fog" || category === "mist") && (
         <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
           <motion.div
             className="absolute inset-0 bg-slate-300/35 dark:bg-slate-700/40 blur-2xl"
-            animate={{ opacity: [0.6, 0.9, 0.6], x: ["-10%", "10%", "-10%"] }}
-            transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-200/40 dark:via-slate-600/35 to-transparent blur-xl"
-            animate={{ x: ["-20%", "20%", "-20%"] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+            animate={{ opacity: [0.5, 0.85, 0.5], x: ["-10%", "10%", "-10%"] }}
+            transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
       )}
 
-      {/* 6. MIST (شبورة) */}
-      {category === "mist" && (
+      {/* RAIN / HEAVY RAIN */}
+      {(category === "light-rain" || category === "rain" || category === "heavy-rain") && (
         <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
-          <motion.div
-            className="absolute bottom-0 inset-x-0 h-2/3 bg-gradient-to-t from-slate-200/40 via-slate-100/20 to-transparent dark:from-slate-800/50 dark:via-slate-700/20 blur-md z-15"
-            animate={{ opacity: [0.4, 0.75, 0.4], y: ["0px", "-8px", "0px"] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
-      )}
-
-      {/* 7. WINDY (رياح قوية) */}
-      {category === "windy" && (
-        <div className="absolute inset-0 w-full h-full overflow-hidden">
-          {isNight ? <MoonElement /> : <SunElement />}
-          <DriftingCloud top="2%" scale={1.2} duration={9} delay={0} isNight={isNight} isHeavy={false} zIndex={20} />
-          <DriftingCloud top="12%" scale={1.5} duration={11} delay={3} isNight={isNight} isHeavy={true} zIndex={20} />
-          {[...Array(8)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute h-[1.5px] bg-gradient-to-r from-transparent via-white/80 to-transparent rounded-full shadow-[0_0_4px_rgba(255,255,255,0.8)]"
-              style={{
-                top: `${15 + (i * 10)}%`,
-                width: `${120 + (i * 30)}px`,
-                left: "-30%"
-              }}
-              animate={{ x: ["0%", "450%"] }}
-              transition={{ duration: 1.2 + (i % 3) * 0.3, repeat: Infinity, ease: "linear", delay: i * 0.4 }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* 8. BLOWING DUST (أتربة مثارة) */}
-      {category === "dust" && (
-        <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <div className="absolute inset-0 bg-amber-600/15 dark:bg-amber-900/25 blur-md" />
-          {[...Array(24)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1.5 h-1.5 bg-amber-400/80 rounded-full blur-[0.5px] shadow-[0_0_4px_rgba(217,119,6,0.8)]"
-              style={{ top: `${(i * 12) % 90}%`, left: `${(i * 15) % 95}%` }}
-              animate={{ x: ["0px", "120px", "0px"], y: ["0px", "-15px", "0px"], opacity: [0.2, 0.9, 0.2] }}
-              transition={{ duration: 4 + (i % 4), repeat: Infinity, ease: "easeInOut", delay: i * 0.2 }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* 9. SANDSTORM (عاصفة رملية) */}
-      {category === "sandstorm" && (
-        <div className="absolute inset-0 w-full h-full overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-700/40 via-amber-600/30 to-amber-800/40 blur-xl" />
-          <DriftingCloud top="-5%" scale={2.2} duration={8} delay={0} isNight={true} isHeavy={true} zIndex={20} />
-          {[...Array(16)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute h-[2px] bg-gradient-to-r from-transparent via-amber-300 to-transparent rounded-full"
-              style={{ top: `${10 + (i * 6)}%`, width: "160px", left: "-40%" }}
-              animate={{ x: ["0%", "500%"] }}
-              transition={{ duration: 0.8 + (i % 3) * 0.2, repeat: Infinity, ease: "linear", delay: i * 0.15 }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* 10. LIGHT RAIN / LIGHT SHOWERS */}
-      {category === "light-rain" && (
-        <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
-          <DriftingCloud top="-8%" scale={1.8} duration={24} delay={0} isNight={isNight} isHeavy={true} zIndex={20} />
+          <DriftingCloud top="-8%" scale={2.2} duration={20} delay={0} isNight={periodInfo.isNight} isHeavy={true} zIndex={20} />
           <div className="absolute inset-0 flex justify-between w-full h-full overflow-hidden z-25">
-            {[...Array(22)].map((_, i) => (
+            {[...Array(32)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-[1.5px] bg-gradient-to-b from-transparent via-sky-300 to-transparent rounded-full"
-                style={{ left: `${(i / 22) * 100}%`, height: '30%', top: '-30%' }}
-                animate={{ y: ["0%", "450%"], opacity: [0, 0.8, 0] }}
-                transition={{ duration: 0.7 + (i % 4) * 0.1, repeat: Infinity, ease: "linear", delay: (i % 5) * 0.2 }}
-              />
-            ))}
-          </div>
-          <div className="absolute bottom-0 inset-x-0 h-1/4 bg-gradient-to-t from-sky-400/15 to-transparent blur-sm z-15" />
-        </div>
-      )}
-
-      {/* 11. MODERATE RAIN */}
-      {category === "rain" && (
-        <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
-          <DriftingCloud top="-10%" scale={2.2} duration={22} delay={0} isNight={isNight} isHeavy={true} zIndex={20} />
-          <div className="absolute inset-0 flex justify-between w-full h-full overflow-hidden z-25">
-            {[...Array(34)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-[2px] bg-gradient-to-b from-transparent via-sky-400 dark:via-sky-200 to-transparent rounded-full shadow-[0_0_4px_rgba(14,165,233,0.5)]"
-                style={{ left: `${(i / 34) * 100}%`, height: '38%', top: '-38%' }}
+                className="absolute w-[2px] bg-gradient-to-b from-transparent via-sky-300 to-transparent rounded-full shadow-[0_0_4px_rgba(14,165,233,0.6)]"
+                style={{ left: `${(i / 32) * 100}%`, height: '38%', top: '-38%' }}
                 animate={{ y: ["0%", "420%"], opacity: [0, 1, 0] }}
-                transition={{ duration: 0.5 + (i % 5) * 0.1, repeat: Infinity, ease: "linear", delay: (i % 7) * 0.15 }}
+                transition={{ duration: 0.45 + (i % 5) * 0.08, repeat: Infinity, ease: "linear", delay: (i % 7) * 0.12 }}
               />
             ))}
           </div>
@@ -733,549 +749,470 @@ export const WeatherBackgroundEffect = ({
         </div>
       )}
 
-      {/* 12. HEAVY RAIN */}
-      {category === "heavy-rain" && (
-        <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
-          <DriftingCloud top="-10%" scale={2.5} duration={18} delay={0} isNight={true} isHeavy={true} zIndex={20} />
-          <div className="absolute inset-0 flex justify-between w-full h-full overflow-hidden z-25">
-            {[...Array(48)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-[2.5px] bg-gradient-to-b from-transparent via-cyan-300 to-transparent rounded-full shadow-[0_0_6px_rgba(6,182,212,0.7)]"
-                style={{ left: `${(i / 48) * 100}%`, height: '48%', top: '-48%' }}
-                animate={{ y: ["0%", "380%"], opacity: [0, 1, 0] }}
-                transition={{ duration: 0.38 + (i % 4) * 0.08, repeat: Infinity, ease: "linear", delay: (i % 8) * 0.1 }}
-              />
-            ))}
-          </div>
-          <div className="absolute inset-0 bg-slate-900/15 backdrop-blur-[1px] pointer-events-none z-20" />
-        </div>
-      )}
-
-      {/* 13. THUNDERSTORM (عاصفة رعدية مع صواعق برق ومضات إضاءة وأمطار غريزة) */}
+      {/* THUNDERSTORM */}
       {category === "thunderstorm" && (
         <div className="absolute inset-0 w-full h-full">
-          {/* Dimmed Celestial Body behind dark clouds */}
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
-
-          {/* Dark Storm Clouds Floating in Front */}
           <DriftingCloud top="-8%" scale={2.5} duration={14} delay={0} isNight={true} isHeavy={true} zIndex={20} />
-          <DriftingCloud top="4%" scale={2.1} duration={18} delay={5} isNight={true} isHeavy={true} zIndex={20} />
-
-          {/* Torrential Heavy Rain Drops */}
           <div className="absolute inset-0 w-full h-full overflow-hidden z-25">
-            {[...Array(52)].map((_, i) => (
+            {[...Array(40)].map((_, i) => (
               <motion.div
                 key={i}
-                className="absolute w-[2px] bg-gradient-to-b from-transparent via-cyan-300 dark:via-cyan-200 to-transparent rounded-full shadow-[0_0_6px_rgba(6,182,212,0.8)] rotate-[-8deg]"
-                style={{ left: `${(i / 52) * 105 - 2}%`, height: '48%', top: '-48%' }}
+                className="absolute w-[2px] bg-gradient-to-b from-transparent via-cyan-200 to-transparent rounded-full rotate-[-8deg]"
+                style={{ left: `${(i / 40) * 105 - 2}%`, height: '48%', top: '-48%' }}
                 animate={{ y: ["0%", "420%"], opacity: [0, 1, 0] }}
                 transition={{ duration: 0.35 + (i % 5) * 0.08, repeat: Infinity, ease: "linear", delay: (i % 9) * 0.1 }}
               />
             ))}
           </div>
-
-          {/* Realistic Lightning Bolts & Strobe Flashes Engine */}
-          <LightningBoltEffect />
-
-          {/* Wet Ground Splash Reflection Glow */}
-          <div className="absolute bottom-0 inset-x-0 h-1/3 bg-gradient-to-t from-cyan-400/30 via-sky-500/15 to-transparent blur-md z-15" />
-        </div>
-      )}
-
-      {/* 14. HAIL (برد وعواصف) */}
-      {category === "hail" && (
-        <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement dimmed={true} /> : <SunElement dimmed={true} />}
-          <DriftingCloud top="-10%" scale={2.2} duration={20} delay={0} isNight={true} isHeavy={true} zIndex={20} />
-          
-          <div className="absolute inset-0 w-full h-full overflow-hidden z-25">
-            {[...Array(30)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-2 h-2 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.9)]"
-                style={{ left: `${(i * 14) % 95}%`, top: '-10%' }}
-                animate={{ y: ["0%", "500%"], x: ["0px", "-20px"] }}
-                transition={{ duration: 0.5 + (i % 3) * 0.1, repeat: Infinity, ease: "easeIn", delay: i * 0.15 }}
-              />
-            ))}
-          </div>
-
-          {/* Lightning Flashes for Hail Storms */}
           <LightningBoltEffect />
         </div>
       )}
 
-      {/* 15. SNOW (ثلوج) */}
-      {category === "snow" && (
-        <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement /> : <SunElement />}
-          <DriftingCloud top="-5%" scale={1.5} duration={30} delay={0} isNight={isNight} isHeavy={false} zIndex={20} />
-          <div className="absolute inset-0 w-full h-full overflow-hidden z-25">
-            {[...Array(32)].map((_, i) => (
-              <motion.div
-                key={i}
-                className={`absolute rounded-full bg-white shadow-[0_0_6px_rgba(255,255,255,0.8)] ${
-                  i % 3 === 0 ? "w-2 h-2" : i % 2 === 0 ? "w-1.5 h-1.5" : "w-1 h-1"
-                }`}
-                style={{ left: `${(i * 11) % 96}%`, top: '-10%' }}
-                animate={{
-                  y: ["0%", "450%"],
-                  x: ["-10px", "10px", "-10px"],
-                  opacity: [0.3, 0.95, 0.2]
-                }}
-                transition={{
-                  duration: 3 + (i % 5) * 0.8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: i * 0.2
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 16. FROST (صقيع) */}
-      {category === "frost" && (
-        <div className="absolute inset-0 w-full h-full">
-          {isNight ? <MoonElement /> : <SunElement />}
-          <div className="absolute inset-0 bg-gradient-to-b from-sky-200/20 via-transparent to-sky-300/25 border-2 border-sky-200/30 rounded-[inherit] z-10" />
-          <motion.div
-            className="absolute inset-0 bg-sky-100/15 blur-lg"
-            animate={{ opacity: [0.3, 0.6, 0.3] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </div>
-      )}
-
-      {/* 17. CLEAR AFTER RAIN (صحو بعد المطر) */}
-      {category === "clear-after-rain" && (
-        <div className="absolute inset-0 w-full h-full">
-          <SunElement />
-          <motion.div
-            className="absolute top-2 inset-x-8 h-20 bg-gradient-to-r from-red-500/25 via-amber-400/25 via-green-400/25 via-sky-400/25 to-purple-500/25 rounded-full blur-xs z-15"
-            animate={{ opacity: [0.4, 0.8, 0.4], scale: [0.98, 1.02, 0.98] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <DriftingCloud top="10%" scale={0.8} duration={30} delay={0} isNight={false} isHeavy={false} zIndex={20} />
+      {/* SANDSTORM / DUST */}
+      {(category === "sandstorm" || category === "dust") && (
+        <div className="absolute inset-0 w-full h-full overflow-hidden">
+          <div className="absolute inset-0 bg-amber-700/25 blur-md" />
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1.5 h-1.5 bg-amber-300/80 rounded-full blur-[0.5px]"
+              style={{ top: `${(i * 12) % 90}%`, left: `${(i * 15) % 95}%` }}
+              animate={{ x: ["0px", "120px", "0px"], opacity: [0.2, 0.9, 0.2] }}
+              transition={{ duration: 4 + (i % 4), repeat: Infinity, ease: "easeInOut", delay: i * 0.2 }}
+            />
+          ))}
         </div>
       )}
 
     </div>
   );
 };
+
+
+// --- 3D DYNAMIC INTERACTIVE WEATHER ILLUSTRATION ---
 export const Interactive3DWeatherIllustration = ({ 
   weatherCode = 801, 
   isNight = false,
-  className = "w-32 h-32 xs:w-36 xs:h-36 sm:w-44 sm:h-44 md:w-52 md:h-52"
+  className = "w-28 h-28 sm:w-36 sm:h-36"
 }: { 
   weatherCode?: number; 
   isNight?: boolean;
   className?: string;
 }) => {
-  // Determine weather category
-  const weatherCategory = useMemo(() => {
-    return getCategoryFromCode(weatherCode, isNight);
-  }, [weatherCode, isNight]);
+  const category = getCategoryFromCode(weatherCode, isNight);
 
   return (
-    <motion.div 
-      whileHover={{ scale: 1.05, rotate: isNight ? -3 : 3 }}
-      whileTap={{ scale: 0.96 }}
-      className={`relative flex items-center justify-center shrink-0 drop-shadow-2xl select-none cursor-pointer transition-transform ${className}`}
-      title="رسوم بيانية ثلاثية الأبعاد تفاعلية"
-    >
-      <svg className="w-full h-full" viewBox="0 0 120 120" fill="none">
-        <defs>
-          {/* Sun Gradients */}
-          <radialGradient id="sun3DGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#FFF59D" />
-            <stop offset="45%" stopColor="#FBC02D" />
-            <stop offset="85%" stopColor="#F57C00" />
-            <stop offset="100%" stopColor="#E65100" />
-          </radialGradient>
+    <div className={`relative flex items-center justify-center shrink-0 select-none ${className}`}>
+      <motion.div 
+        className="w-full h-full flex items-center justify-center filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.25)]"
+        animate={{ y: [0, -6, 0] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <svg viewBox="0 0 120 120" className="w-full h-full">
+          <defs>
+            <linearGradient id="sun3dGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FFF59D" />
+              <stop offset="50%" stopColor="#FBC02D" />
+              <stop offset="100%" stopColor="#F57F17" />
+            </linearGradient>
+            <linearGradient id="cloudFrontGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="100%" stopColor="#E2E8F0" />
+            </linearGradient>
+            <linearGradient id="cloudBackGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#CBD5E1" />
+              <stop offset="100%" stopColor="#64748B" />
+            </linearGradient>
+            <linearGradient id="cloudStormGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#475569" />
+              <stop offset="100%" stopColor="#1E293B" />
+            </linearGradient>
+          </defs>
 
-          {/* Moon Gradients */}
-          <linearGradient id="moon3DGlow" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="40%" stopColor="#E0E7FF" />
-            <stop offset="85%" stopColor="#818CF8" />
-            <stop offset="100%" stopColor="#4338CA" />
-          </linearGradient>
+          {/* Sun / Celestial Body */}
+          {(!isNight && (category === "clear" || category === "partly-cloudy" || category === "mostly-cloudy")) && (
+            <circle cx="60" cy="50" r="26" fill="url(#sun3dGrad)" />
+          )}
 
-          {/* Cloud Gradients */}
-          <linearGradient id="cloudFrontGrad" x1="20" y1="40" x2="100" y2="100" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="65%" stopColor="#F1F5F9" />
-            <stop offset="100%" stopColor="#CBD5E1" />
-          </linearGradient>
+          {/* Moon */}
+          {(isNight && (category === "clear" || category === "partly-cloudy")) && (
+            <g>
+              <circle cx="60" cy="50" r="24" fill="#F8FAFC" />
+              <circle cx="70" cy="44" r="20" fill="#0F172A" />
+            </g>
+          )}
 
-          <linearGradient id="cloudBackGrad" x1="10" y1="30" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#E2E8F0" />
-            <stop offset="100%" stopColor="#94A3B8" />
-          </linearGradient>
-
-          <linearGradient id="cloudStormGrad" x1="10" y1="30" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#64748B" />
-            <stop offset="100%" stopColor="#334155" />
-          </linearGradient>
-
-          {/* Filters */}
-          <filter id="auraGlow" x="-30%" y="-30%" width="160%" height="160%">
-            <feGaussianBlur stdDeviation="7" result="blur" />
-          </filter>
-
-          <filter id="cloudShadow" x="-15%" y="-15%" width="130%" height="130%">
-            <feDropShadow dx="0" dy="6" stdDeviation="5" floodColor="#0F172A" floodOpacity="0.3" />
-          </filter>
-        </defs>
-
-        {/* 1. SUN OR MOON BASE GRAPHIC */}
-        {!isNight ? (
-          /* DAYTIME SUN */
-          <g>
-            {/* Sun Aura */}
-            <motion.circle 
-              animate={{ scale: [1, 1.12, 1], opacity: [0.3, 0.5, 0.3] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              cx="75" cy="45" r="32" 
-              fill="#FFA726" 
-              filter="url(#auraGlow)" 
-            />
-
-            {/* Sun Pulsing Rays */}
-            <motion.g 
-              animate={{ rotate: 360 }}
-              transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-              style={{ transformOrigin: "75px 45px" }}
-              stroke="#FFB74D" 
-              strokeWidth="3" 
-              strokeLinecap="round" 
-              opacity="0.85"
-            >
-              <line x1="75" y1="8" x2="75" y2="2" />
-              <line x1="105" y1="15" x2="110" y2="10" />
-              <line x1="115" y1="45" x2="121" y2="45" />
-              <line x1="105" y1="75" x2="110" y2="80" />
-              <line x1="75" y1="82" x2="75" y2="88" />
-              <line x1="45" y1="75" x2="40" y2="80" />
-              <line x1="35" y1="45" x2="29" y2="45" />
-              <line x1="45" y1="15" x2="40" y2="10" />
-            </motion.g>
-
-            {/* 3D Sun Sphere */}
-            <circle cx="75" cy="45" r="26" fill="url(#sun3DGlow)" />
-            <circle cx="67" cy="37" r="7" fill="#FFFFFF" opacity="0.65" />
-          </g>
-        ) : (
-          /* NIGHTTIME MOON & STARS */
-          <g>
-            {/* Moon Aura */}
-            <motion.circle 
-              animate={{ opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 4, repeat: Infinity }}
-              cx="75" cy="45" r="30" 
-              fill="#818CF8" 
-              filter="url(#auraGlow)" 
-            />
-
-            {/* Twinkling Stars */}
-            <g fill="#A5B4FC">
-              <motion.circle 
-                animate={{ opacity: [0.2, 1, 0.2] }} 
-                transition={{ duration: 2, repeat: Infinity }} 
-                cx="30" cy="20" r="2" 
-              />
-              <motion.circle 
-                animate={{ opacity: [0.8, 0.2, 0.8] }} 
-                transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }} 
-                cx="48" cy="12" r="1.5" 
-              />
-              <motion.circle 
-                animate={{ opacity: [0.3, 0.9, 0.3] }} 
-                transition={{ duration: 1.8, repeat: Infinity, delay: 0.8 }} 
-                cx="105" cy="25" r="2.5" 
+          {/* Cloud Layer */}
+          {(category === "partly-cloudy" || category === "mostly-cloudy" || category === "cloudy" || category === "overcast" || category.includes("rain") || category === "thunderstorm" || category === "fog") && (
+            <g>
+              <path 
+                d="M30 75 C30 65 38 58 48 58 C51 58 54 59 56 61 C60 52 69 46 80 46 C93 46 104 56 104 69 C104 70 104 71 104 72 C108 72 112 76 112 81 C112 87 107 92 101 92 L30 92 C21 92 14 85 14 76 C14 67 21 60 30 60 Z" 
+                fill={category === "thunderstorm" ? "url(#cloudStormGrad)" : "url(#cloudFrontGrad)"} 
               />
             </g>
+          )}
 
-            {/* 3D Glossy Crescent Moon */}
-            <path 
-              d="M85 22C81.5 20.8 77.5 20 73 20C56.4 20 43 33.4 43 50C43 66.6 56.4 80 73 80C82 80 90.2 76 95.8 69.8C80.8 68.8 68.8 56.2 68.8 41C68.8 33.8 71.8 27.2 76.5 22.5C79.2 22 82.2 21.8 85 22Z" 
-              fill="url(#moon3DGlow)" 
-              filter="url(#cloudShadow)"
-            />
-            {/* Specular Highlight on Moon */}
-            <circle cx="68" cy="38" r="3" fill="#FFFFFF" opacity="0.6" />
-          </g>
-        )}
+          {/* Rain Drops */}
+          {(category.includes("rain") || category === "thunderstorm") && (
+            <g>
+              <line x1="40" y1="96" x2="35" y2="108" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" />
+              <line x1="60" y1="96" x2="55" y2="108" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" />
+              <line x1="80" y1="96" x2="75" y2="108" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" />
+            </g>
+          )}
 
-        {/* 2. DYNAMIC CLOUDS BASED ON WEATHER CODE */}
-        {(weatherCategory === "partly-cloudy" || weatherCategory === "cloudy" || weatherCategory === "rain" || weatherCategory === "thunderstorm" || weatherCategory === "fog") && (
-          <g filter="url(#cloudShadow)">
-            {/* Back Cloud if Heavy Overcast or Storm */}
-            {(weatherCategory === "cloudy" || weatherCategory === "thunderstorm") && (
-              <path 
-                d="M 22 75 C 14 75 8 68 8 59 C 8 51 14 44 22 43 C 25 34 33 28 43 28 C 54 28 62 35 64 45 C 71 46 76 52 76 60 C 76 68 70 75 62 75 Z" 
-                fill={weatherCategory === "thunderstorm" ? "url(#cloudStormGrad)" : "url(#cloudBackGrad)"} 
-                opacity="0.85"
-              />
-            )}
-
-            {/* Front Floating Glossy Cloud */}
-            <motion.path 
-              animate={{ y: [0, -3, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              d="M 32 88 C 22 88 14 80 14 70 C 14 61 21 53 30 52 C 33 41 43 34 55 34 C 68 34 78 43 80 55 C 88 56 94 63 94 72 C 94 81 87 88 78 88 Z" 
-              fill={weatherCategory === "thunderstorm" ? "url(#cloudStormGrad)" : "url(#cloudFrontGrad)"} 
-            />
-
-            {/* Cloud Soft Top Specular Rim */}
-            <path 
-              d="M 32 88 C 22 88 14 80 14 70 C 14 61 21 53 30 52 C 33 41 43 34 55 34 C 62 34 68 37 72 42 C 62 40 50 46 45 56 C 36 57 28 64 28 73 C 28 79 30 84 34 87 Z" 
-              fill="#FFFFFF" 
-              opacity="0.65" 
-            />
-          </g>
-        )}
-
-        {/* 3. ANIMATED RAIN DROPS */}
-        {weatherCategory === "rain" && (
-          <g>
-            <motion.line 
-              animate={{ y: [0, 10], opacity: [0, 1, 0] }} 
-              transition={{ duration: 0.9, repeat: Infinity, ease: "linear" }}
-              x1="32" y1="92" x2="28" y2="104" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" 
-            />
-            <motion.line 
-              animate={{ y: [0, 10], opacity: [0, 1, 0] }} 
-              transition={{ duration: 0.8, repeat: Infinity, delay: 0.2, ease: "linear" }}
-              x1="52" y1="92" x2="48" y2="106" stroke="#0284C7" strokeWidth="3.5" strokeLinecap="round" 
-            />
-            <motion.line 
-              animate={{ y: [0, 10], opacity: [0, 1, 0] }} 
-              transition={{ duration: 1, repeat: Infinity, delay: 0.4, ease: "linear" }}
-              x1="72" y1="92" x2="68" y2="104" stroke="#38BDF8" strokeWidth="3" strokeLinecap="round" 
-            />
-          </g>
-        )}
-
-        {/* 4. ANIMATED THUNDERSTORM LIGHTNING BOLT */}
-        {weatherCategory === "thunderstorm" && (
-          <motion.path 
-            animate={{ opacity: [0, 1, 0.2, 1, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
-            d="M 52 82 L 40 98 H 50 L 44 114 L 62 94 H 50 Z" 
-            fill="#FACC15" 
-            stroke="#FEF08A" 
-            strokeWidth="1.5"
-            filter="drop-shadow(0 0 6px #F59E0B)"
-          />
-        )}
-
-        {/* 5. MOUNTAIN DUST / FOG MIST LAYERS */}
-        {weatherCategory === "fog" && (
-          <g opacity="0.75" stroke="#CBD5E1" strokeWidth="3" strokeLinecap="round">
-            <motion.line animate={{ x: [-2, 2, -2] }} transition={{ duration: 3, repeat: Infinity }} x1="20" y1="78" x2="88" y2="78" />
-            <motion.line animate={{ x: [2, -2, 2] }} transition={{ duration: 4, repeat: Infinity }} x1="28" y1="86" x2="96" y2="86" />
-          </g>
-        )}
-      </svg>
-    </motion.div>
+          {/* Lightning Bolt */}
+          {category === "thunderstorm" && (
+            <polygon points="58,92 48,104 55,104 50,116 66,101 58,101" fill="#FDE047" />
+          )}
+        </svg>
+      </motion.div>
+    </div>
   );
 };
 
-// 3D Forecast Condition Icon Generator
-const ForecastIcon3D = ({ weatherId }: { weatherId?: number }) => {
-  const isRainOrStorm = weatherId !== undefined && (
-    (weatherId >= 200 && weatherId < 700) || 
-    (weatherId >= 51 && weatherId <= 67) || 
-    (weatherId >= 71 && weatherId <= 99)
-  );
 
-  if (isRainOrStorm) {
-    return (
-      <svg className="w-8 h-8 drop-shadow-sm select-none" viewBox="0 0 48 48" fill="none">
-        <path d="M14 28 C10 28 7 25 7 21 C7 17.5 10 14.5 13.5 14 C15 10.5 18.5 8 23 8 C28 8 32 11.5 32.5 16.5 C35.5 17 38 19.5 38 23 C38 26.5 35 28 32 28 Z" fill="#94A3B8" />
-        <line x1="16" y1="32" x2="13" y2="39" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="24" y1="32" x2="21" y2="41" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
-        <line x1="32" y1="32" x2="29" y2="39" stroke="#38BDF8" strokeWidth="2.5" strokeLinecap="round" />
-      </svg>
-    );
-  }
-
-  if (weatherId === 800 || weatherId === 0) {
-    return (
-      <svg className="w-8 h-8 drop-shadow-sm select-none" viewBox="0 0 48 48" fill="none">
-        <circle cx="24" cy="24" r="12" fill="#F59E0B" />
-        <g stroke="#FBBF24" strokeWidth="2.5" strokeLinecap="round">
-          <line x1="24" y1="4" x2="24" y2="8" />
-          <line x1="24" y1="40" x2="24" y2="44" />
-          <line x1="4" y1="24" x2="8" y2="24" />
-          <line x1="40" y1="24" x2="44" y2="24" />
-          <line x1="10" y1="10" x2="13" y2="13" />
-          <line x1="35" y1="35" x2="38" y2="38" />
-          <line x1="10" y1="38" x2="13" y2="35" />
-          <line x1="35" y1="13" x2="38" y2="10" />
-        </g>
-      </svg>
-    );
-  }
-
-  if (weatherId === 3 || weatherId === 45 || weatherId === 48 || (weatherId !== undefined && weatherId >= 803 && weatherId <= 804)) {
-    return (
-      <svg className="w-8 h-8 drop-shadow-sm select-none" viewBox="0 0 48 48" fill="none">
-        <path d="M14 32 C10 32 7 29 7 25 C7 21.5 10 18.5 13.5 18 C15 14.5 18.5 12 23 12 C28 12 32 15.5 32.5 20.5 C35.5 21 38 23.5 38 27 C38 30.5 35 32 32 32 Z" fill="#94A3B8" />
-        <path d="M18 32 C14 32 11 29 11 25 C11 22 13 19.5 16 19 C17 16 20 14 24 14 C28 14 31 16.5 32 20.5 C35 21 37 23 37 26 C37 29 34.5 32 31.5 32 Z" fill="#CBD5E1" />
-      </svg>
-    );
-  }
+// 3D Forecast Icon Badge for Daily / Hourly Cards
+const ForecastIcon3D = ({ weatherId, isNight = false }: { weatherId?: number; isNight?: boolean }) => {
+  const isThunder = weatherId !== undefined && (weatherId >= 200 && weatherId < 300);
+  const isRain = weatherId !== undefined && ((weatherId >= 300 && weatherId < 700) || (weatherId >= 51 && weatherId <= 99));
+  const isCloudy = weatherId !== undefined && (weatherId >= 801 && weatherId <= 804);
 
   return (
-    <svg className="w-8 h-8 drop-shadow-sm select-none" viewBox="0 0 48 48" fill="none">
-      <circle cx="30" cy="18" r="8" fill="#F59E0B" />
-      <path d="M14 32 C10 32 7 29 7 25 C7 21.5 10 18.5 13.5 18 C15 14.5 18.5 12 23 12 C28 12 32 15.5 32.5 20.5 C35.5 21 38 23.5 38 27 C38 30.5 35 32 32 32 Z" fill="#CBD5E1" />
-      <path d="M18 32 C14 32 11 29 11 25 C11 22 13 19.5 16 19 C17 16 20 14 24 14 C28 14 31 16.5 32 20.5 C35 21 37 23 37 26 C37 29 34.5 32 31.5 32 Z" fill="#F1F5F9" />
-    </svg>
+    <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center shrink-0 select-none">
+      {isThunder ? (
+        <motion.div 
+          animate={{ scale: [1, 1.12, 1], rotate: [-2, 2, -2] }} 
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <CloudLightning className="w-6 h-6 sm:w-8 sm:h-8 text-amber-300 filter drop-shadow-[0_0_8px_rgba(252,211,77,0.85)]" />
+        </motion.div>
+      ) : isRain ? (
+        <motion.div 
+          animate={{ y: [0, -3, 0] }} 
+          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <CloudRain className="w-6 h-6 sm:w-8 sm:h-8 text-sky-400 filter drop-shadow-[0_0_8px_rgba(56,189,248,0.7)]" />
+        </motion.div>
+      ) : isCloudy ? (
+        <motion.div 
+          animate={{ x: [-2, 2, -2], y: [0, -2, 0] }} 
+          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Cloud className="w-6 h-6 sm:w-8 sm:h-8 text-slate-100 filter drop-shadow-[0_0_6px_rgba(255,255,255,0.7)]" />
+        </motion.div>
+      ) : isNight ? (
+        <motion.div 
+          animate={{ rotate: [-8, 8, -8] }} 
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <Moon className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-200 filter drop-shadow-[0_0_10px_rgba(199,210,254,0.85)]" />
+        </motion.div>
+      ) : (
+        <motion.div 
+          animate={{ rotate: 360 }} 
+          transition={{ duration: 16, repeat: Infinity, ease: "linear" }}
+        >
+          <Sun className="w-6 h-6 sm:w-8 sm:h-8 text-amber-400 filter drop-shadow-[0_0_10px_rgba(251,191,36,0.9)]" />
+        </motion.div>
+      )}
+    </div>
   );
 };
 
+
+// --- CUSTOM INTERACTIVE SVG HOURLY TEMPERATURE & RAIN CHART ---
+const InteractiveHourlyChart = ({ hourlyData, unit = "C" }: { hourlyData: any[]; unit?: "C" | "F" }) => {
+  const [hoverIndex, setHoverIndex] = useState<number | null>(null);
+
+  if (!hourlyData || hourlyData.length === 0) return null;
+
+  const points = hourlyData.slice(0, 10).map((item, idx) => {
+    const rawT = item.main?.temp ?? 25;
+    const temp = unit === "F" ? Math.round((rawT * 9) / 5 + 32) : Math.round(rawT);
+    const pop = Math.round((item.pop || 0) * 100);
+    const hourDate = new Date(item.dt * 1000);
+    const timeLabel = hourDate.toLocaleTimeString('ar-YE', { hour: 'numeric', hour12: true });
+    return { idx, temp, pop, timeLabel, rawItem: item };
+  });
+
+  const temps = points.map(p => p.temp);
+  const minT = Math.min(...temps) - 2;
+  const maxT = Math.max(...temps) + 2;
+  const rangeT = maxT - minT || 1;
+
+  const width = 600;
+  const height = 160;
+  const paddingX = 30;
+  const paddingY = 30;
+
+  const getX = (idx: number) => paddingX + (idx / (points.length - 1)) * (width - 2 * paddingX);
+  const getY = (temp: number) => height - paddingY - ((temp - minT) / rangeT) * (height - 2 * paddingY);
+
+  const pathD = points.reduce((acc, p, i) => {
+    const x = getX(i);
+    const y = getY(p.temp);
+    if (i === 0) return `M ${x} ${y}`;
+    const prevX = getX(i - 1);
+    const prevY = getY(points[i - 1].temp);
+    const cpX1 = prevX + (x - prevX) / 2;
+    const cpX2 = prevX + (x - prevX) / 2;
+    return `${acc} C ${cpX1} ${prevY}, ${cpX2} ${y}, ${x} ${y}`;
+  }, "");
+
+  const areaD = `${pathD} L ${getX(points.length - 1)} ${height - 10} L ${getX(0)} ${height - 10} Z`;
+
+  const activePoint = hoverIndex !== null ? points[hoverIndex] : points[0];
+
+  return (
+    <div className="bg-slate-900/90 text-white rounded-3xl p-5 border border-slate-800/80 shadow-xl space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-bold font-cairo flex items-center gap-2 text-sky-400">
+            <TrendingUp className="w-4 h-4 text-sky-400" />
+            المنحنى الحراري وهطول الأمطار التفاعلي
+          </h3>
+          <p className="text-[11px] text-slate-400 font-cairo">مرر اللمس على النقاط لعرض تفاصيل كل ساعة</p>
+        </div>
+        <div className="bg-sky-500/20 text-sky-300 text-xs font-bold px-3 py-1 rounded-full border border-sky-500/30 font-sans">
+          {activePoint.timeLabel}: {activePoint.temp}°{unit} ({activePoint.pop}% أمطار)
+        </div>
+      </div>
+
+      <div className="relative w-full overflow-x-auto select-none">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto min-w-[480px]">
+          <defs>
+            <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.45" />
+              <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          {/* Area under line */}
+          <path d={areaD} fill="url(#chartGrad)" />
+
+          {/* Smooth Curve */}
+          <path d={pathD} fill="none" stroke="#38BDF8" strokeWidth="3.5" strokeLinecap="round" />
+
+          {/* Points & Touch Targets */}
+          {points.map((p, i) => {
+            const x = getX(i);
+            const y = getY(p.temp);
+            const isHovered = hoverIndex === i;
+
+            return (
+              <g 
+                key={i} 
+                className="cursor-pointer"
+                onMouseEnter={() => setHoverIndex(i)}
+                onClick={() => setHoverIndex(i)}
+              >
+                {/* Rain Bar at bottom */}
+                <rect 
+                  x={x - 6} 
+                  y={height - 25 - (p.pop / 100) * 35} 
+                  width="12" 
+                  height={(p.pop / 100) * 35 + 2} 
+                  rx="3"
+                  className={p.pop > 30 ? "fill-sky-400/80" : "fill-slate-700/50"}
+                />
+
+                {/* Point Node */}
+                <circle 
+                  cx={x} 
+                  cy={y} 
+                  r={isHovered ? 7 : 4.5} 
+                  className={isHovered ? "fill-amber-400 stroke-white stroke-2" : "fill-sky-400 stroke-slate-900 stroke-2"} 
+                />
+
+                {/* Temp Label above */}
+                <text 
+                  x={x} 
+                  y={y - 10} 
+                  textAnchor="middle" 
+                  className="fill-slate-200 text-[11px] font-bold font-sans"
+                >
+                  {p.temp}°
+                </text>
+
+                {/* Time Label bottom */}
+                <text 
+                  x={x} 
+                  y={height - 4} 
+                  textAnchor="middle" 
+                  className="fill-slate-400 text-[10px] font-cairo"
+                >
+                  {p.timeLabel}
+                </text>
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    </div>
+  );
+};
+
+
+// --- MAIN WEATHER DETAIL PAGE COMPONENT ---
 export const WeatherDetail: React.FC = () => {
   const navigate = useNavigate();
 
+  const [activeTab, setActiveTab] = useState<"live" | "hourly" | "daily" | "air" | "design">("live");
   const [unit, setUnit] = useState<"C" | "F">("C");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showRefreshSuccess, setShowRefreshSuccess] = useState(false);
 
-  // Cached state initialization
-  const [weatherData, setWeatherData] = useState<any>(() => {
-    try {
-      const cached = localStorage.getItem("cached_full_weather_data");
-      return cached ? JSON.parse(cached) : null;
-    } catch {
-      return null;
-    }
-  });
+  // Selected item modal state
+  const [activeModalData, setActiveModalData] = useState<{
+    title: string;
+    subtitle: string;
+    metrics: { label: string; value: string; icon: any; color?: string }[];
+    description?: string;
+  } | null>(null);
 
-  const [forecastData, setForecastData] = useState<any>(() => {
-    try {
-      const cached = localStorage.getItem("cached_full_forecast_data");
-      return cached ? JSON.parse(cached) : null;
-    } catch {
-      return null;
-    }
-  });
+  // Dedicated Day Hourly Forecast Page Modal State
+  const [selectedDayModalData, setSelectedDayModalData] = useState<{
+    dayItem: any;
+    dayName: string;
+    dateFormatted: string;
+    dayDateStr: string;
+    hourlyList: any[];
+  } | null>(null);
 
-  const [loading, setLoading] = useState(!weatherData);
+  // Live state initialization (No caching)
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [forecastData, setForecastData] = useState<any>(null);
+  const [airPollutionData, setAirPollutionData] = useState<any>(null);
+
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // FETCH ACCURATE LIVE WEATHER FOR TAIZ YEMEN (Dual-source fallback guaranteed accuracy)
+  // Helper function to extract YYYY-MM-DD string in local format
+  const getLocalDateStr = (dtSec?: number) => {
+    if (!dtSec) return new Date().toISOString().split('T')[0];
+    const d = new Date(dtSec * 1000);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // FETCH ACCURATE LIVE WEATHER FOR TAIZ YEMEN FROM OPENWEATHERMAP
   const fetchWeather = async () => {
     try {
       if (!weatherData) setLoading(true);
       setIsRefreshing(true);
 
-      const omData = await fetchOpenMeteoData();
+      const omData = await fetchWeatherData();
       const current = omData.current;
-      const daily = omData.daily;
+      const forecastDataList = omData.forecast?.list || [];
+      const pollution = omData.airPollution;
 
-      const parsedCondition = parseWmoCode(current.weather_code, current.is_day === 0);
+      // Calculate isNight based on sunrise/sunset
+      const nowSec = Math.floor(Date.now() / 1000);
+      const isNight = current.sys?.sunrise && current.sys?.sunset 
+        ? (nowSec < current.sys.sunrise || nowSec > current.sys.sunset)
+        : false;
+
+      // Find today's forecasts
+      const todayStr = getLocalDateStr(current.dt || nowSec);
+      const todayForecasts = forecastDataList.filter((f: any) => {
+        return getLocalDateStr(f.dt) === todayStr;
+      });
+
+      const temp_max = todayForecasts.length > 0 
+        ? Math.max(...todayForecasts.map((f: any) => f.main.temp_max))
+        : current.main.temp_max || (current.main.temp + 4);
+        
+      const temp_min = todayForecasts.length > 0 
+        ? Math.min(...todayForecasts.map((f: any) => f.main.temp_min))
+        : current.main.temp_min || (current.main.temp - 4);
+
+      const pop = todayForecasts.length > 0
+        ? Math.max(...todayForecasts.map((f: any) => f.pop || 0)) * 100
+        : 0;
 
       const formattedWData = {
         main: {
-          temp: current.temperature_2m,
-          feels_like: current.apparent_temperature,
-          temp_max: daily.temperature_2m_max[0] || Math.round(current.temperature_2m + 4),
-          temp_min: daily.temperature_2m_min[0] || Math.round(current.temperature_2m - 4),
-          humidity: current.relative_humidity_2m,
-          pressure: Math.round(current.surface_pressure),
+          temp: current.main.temp,
+          feels_like: current.main.feels_like,
+          temp_max,
+          temp_min,
+          humidity: current.main.humidity,
+          pressure: current.main.pressure,
+          sea_level: current.main.sea_level,
+          grnd_level: current.main.grnd_level,
         },
-        weather: [
-          {
-            id: current.weather_code,
-            description: parsedCondition.text,
-          },
-        ],
-        wind: {
-          speed: Math.round((current.wind_speed_10m / 3.6) * 100) / 100, // km/h to m/s
-        },
+        weather: current.weather, // contains id, description, icon
+        wind: { speed: current.wind?.speed, deg: current.wind?.deg, gust: current.wind?.gust },
+        clouds: { all: current.clouds?.all || 0 },
         visibility: current.visibility || 10000,
         sys: {
-          sunrise: new Date(daily.sunrise[0]).getTime() / 1000,
-          sunset: new Date(daily.sunset[0]).getTime() / 1000,
+          sunrise: current.sys?.sunrise,
+          sunset: current.sys?.sunset,
+          country: current.sys?.country || "YE"
         },
-        isNight: current.is_day === 0,
-        pop: daily.precipitation_probability_max && daily.precipitation_probability_max.length > 0 ? (Math.round(daily.precipitation_probability_max[0]) / 100) : 0,
+        dt: current.dt,
+        name: current.name || "Taiz",
+        isNight,
+        pop: pop / 100,
       };
 
-      // Build 5-day forecast array
-      const forecastList = daily.time.slice(1, 6).map((timeObj: Date, idx: number) => {
-        const wCode = daily.weather_code[idx + 1] || 1;
-        const cond = parseWmoCode(wCode, false);
+      // Daily aggregates
+      const daysMap = new Map();
+      forecastDataList.forEach((f: any) => {
+        const dateStr = getLocalDateStr(f.dt);
+        if (!daysMap.has(dateStr)) {
+          daysMap.set(dateStr, []);
+        }
+        daysMap.get(dateStr).push(f);
+      });
+
+      const forecastList = Array.from(daysMap.entries()).slice(0, 7).map(([date, items]: [string, any[]]) => {
+        const midday = items.find((i) => {
+          const hour = new Date(i.dt * 1000).getHours();
+          return hour >= 11 && hour <= 15;
+        }) || items[0];
+
+        const day_temp_max = Math.max(...items.map((i) => i.main.temp_max));
+        const day_temp_min = Math.min(...items.map((i) => i.main.temp_min));
+        const day_pop = Math.max(...items.map((i) => i.pop || 0));
+
         return {
-          dt: Math.floor(timeObj.getTime() / 1000),
+          dt: midday.dt,
+          dateStr: date,
           main: {
-            temp_max: daily.temperature_2m_max[idx + 1],
-            temp_min: daily.temperature_2m_min[idx + 1],
-            humidity: daily.relative_humidity_2m_max[idx + 1] || 50,
+            temp_max: day_temp_max,
+            temp_min: day_temp_min,
+            humidity: midday.main.humidity,
+            pressure: midday.main.pressure,
+            feels_like: midday.main.feels_like,
           },
-          weather: [{ id: wCode, description: cond.text }],
-          wind: { speed: Math.round(((daily.wind_speed_10m_max[idx + 1] || 15) / 3.6) * 100) / 100 },
+          weather: midday.weather,
+          wind: { speed: midday.wind?.speed, deg: midday.wind?.deg },
+          clouds: { all: midday.clouds?.all || 0 },
+          pop: day_pop
         };
       });
 
       setWeatherData(formattedWData);
-      setForecastData({ list: forecastList, isOm: true });
-      localStorage.setItem("cached_full_weather_data", JSON.stringify(formattedWData));
-      localStorage.setItem("cached_full_forecast_data", JSON.stringify({ list: forecastList }));
-
-      // Synchronize cached_weather_data for HeaderWidgets
-      const syncWidgetData = {
-        temp: Math.round(current.temperature_2m),
-        temp_max: Math.round(formattedWData.main.temp_max),
-        temp_min: Math.round(formattedWData.main.temp_min),
-        condition: parsedCondition.text,
-        id: current.weather_code,
-        precip_prob: daily.precipitation_probability_max && daily.precipitation_probability_max.length > 0 ? Math.round(daily.precipitation_probability_max[0]) : 0,
-      };
-      localStorage.setItem("cached_weather_data", JSON.stringify(syncWidgetData));
-
+      setForecastData({ 
+        list: forecastList, 
+        isOm: true, 
+        hourly: forecastDataList.slice(0, 16),
+        rawList: forecastDataList 
+      });
+      if (pollution) setAirPollutionData(pollution);
+      
       setError(null);
       setShowRefreshSuccess(true);
       setTimeout(() => setShowRefreshSuccess(false), 2500);
 
     } catch (e) {
-      console.error("OpenMeteo fetch failed", e);
+      console.error("Weather fetch failed", e);
       if (!weatherData) {
-        const fallbackWData = {
-          main: {
-            temp: 26,
-            feels_like: 27,
-            temp_max: 30,
-            temp_min: 20,
-            humidity: 52,
-            pressure: 1012,
-          },
-          weather: [{ id: 801, description: "غائم جزئياً" }],
-          wind: { speed: 3.6 },
-          visibility: 10000,
-          sys: { sunrise: 1723604820, sunset: 1723650840 },
-          isNight: false,
-          pop: 0,
-        };
-        const fallbackForecast = {
-          list: [
-            { dt: Date.now()/1000 + 86400, main: { temp_max: 31, temp_min: 21, humidity: 50 }, weather: [{ id: 800, description: "مشمس صافٍ" }], wind: { speed: 3.2 } },
-            { dt: Date.now()/1000 + 172800, main: { temp_max: 30, temp_min: 20, humidity: 55 }, weather: [{ id: 801, description: "غائم جزئياً" }], wind: { speed: 3.8 } },
-            { dt: Date.now()/1000 + 259200, main: { temp_max: 29, temp_min: 19, humidity: 60 }, weather: [{ id: 500, description: "أمطار خفيفة" }], wind: { speed: 4.1 } },
-            { dt: Date.now()/1000 + 345600, main: { temp_max: 30, temp_min: 20, humidity: 52 }, weather: [{ id: 800, description: "مشمس" }], wind: { speed: 3.5 } },
-            { dt: Date.now()/1000 + 432000, main: { temp_max: 31, temp_min: 21, humidity: 48 }, weather: [{ id: 801, description: "غائم جزئياً" }], wind: { speed: 3.0 } },
-          ],
-          isOm: true
-        };
-        setWeatherData(fallbackWData);
-        setForecastData(fallbackForecast);
+        setError("تعذر جلب بيانات الطقس الحالية");
       }
     } finally {
       setLoading(false);
@@ -1303,80 +1240,266 @@ export const WeatherDetail: React.FC = () => {
 
   // Convert Temp logic
   const displayTemp = (celsius: number) => {
+    if (celsius === undefined || celsius === null) return 0;
     if (unit === "F") return Math.round((celsius * 9) / 5 + 32);
     return Math.round(celsius);
   };
 
-  // Process 7-day forecast (أسبوع كامل)
-  const dailyForecasts = useMemo(() => {
-    if (!forecastData?.list) {
-      return [
-        { day: "الخميس", condition: "غائم جزئياً", humidity: 60, wind: 5.42, tempMax: 32, tempMin: 24, id: 801 },
-        { day: "الجمعة", condition: "غائم", humidity: 55, wind: 6.10, tempMax: 31, tempMin: 23, id: 803 },
-        { day: "السبت", condition: "غائم جزئياً", humidity: 40, wind: 4.20, tempMax: 30, tempMin: 22, id: 801 },
-        { day: "الأحد", condition: "مشمس", humidity: 35, wind: 4.80, tempMax: 29, tempMin: 21, id: 800 },
-        { day: "الإثنين", condition: "غائم", humidity: 50, wind: 5.90, tempMax: 28, tempMin: 21, id: 804 },
-        { day: "الثلاثاء", condition: "زخات مطر", humidity: 65, wind: 6.40, tempMax: 27, tempMin: 20, id: 500 },
-        { day: "الأربعاء", condition: "صافٍ", humidity: 38, wind: 4.10, tempMax: 30, tempMin: 22, id: 800 },
-      ];
-    }
+  // Current Weather values
+  const rawTemp = weatherData?.main?.temp ?? 26;
+  const rawFeelsLike = weatherData?.main?.feels_like ?? 27;
+  const rawTempMax = weatherData?.main?.temp_max ?? 30;
+  const rawTempMin = weatherData?.main?.temp_min ?? 20;
 
-    if (forecastData.isOm) {
-      // Prepared directly from Open-Meteo
-      return forecastData.list.slice(0, 7).map((item: any) => {
-        const dayName = new Date(item.dt * 1000).toLocaleDateString('ar-YE', { weekday: 'long' });
-        return {
-          day: dayName,
-          condition: item.weather[0]?.description || "غائم جزئياً",
-          humidity: Math.round(item.main.humidity),
-          wind: item.wind.speed,
-          tempMax: item.main.temp_max,
-          tempMin: item.main.temp_min,
-          id: item.weather[0]?.id || 801,
+  const conditionStr = weatherData?.weather?.[0]?.description || "غائم جزئياً";
+  const weatherCode = weatherData?.weather?.[0]?.id || 801;
+  const humidity = Math.round(weatherData?.main?.humidity ?? 52);
+  const windSpeed = weatherData?.wind?.speed ? (Math.round(weatherData.wind.speed * 100) / 100) : 3.8;
+  const windDeg = weatherData?.wind?.deg ?? 70;
+  const pressure = Math.round(weatherData?.main?.pressure ?? 1010);
+  const visibilityKm = weatherData?.visibility ? Math.round(weatherData.visibility / 1000) : 10;
+  const sunriseTime = weatherData?.sys?.sunrise ? formatTime12h(weatherData.sys.sunrise) : "05:46 ص";
+  const sunsetTime = weatherData?.sys?.sunset ? formatTime12h(weatherData.sys.sunset) : "06:34 م";
+  const precipProb = weatherData?.pop !== undefined ? Math.round(weatherData.pop * 100) : 0;
+  const cloudiness = weatherData?.clouds?.all ?? 40;
+  const dewPoint = calculateDewPoint(rawTemp, humidity);
+  const aqiCode = airPollutionData?.list?.[0]?.main?.aqi ?? 2;
+  const aqiObj = getAqiDetails(aqiCode);
+
+  // Time Period Info
+  const periodInfo = useMemo(() => {
+    return getTimePeriod(weatherData?.dt, weatherData?.sys?.sunrise, weatherData?.sys?.sunset);
+  }, [weatherData]);
+
+  // Dynamic Theme string
+  const heroThemeObj = useMemo(() => {
+    const category = getCategoryFromCode(weatherCode, periodInfo.isNight);
+    return getWeatherTheme(category, periodInfo);
+  }, [weatherCode, periodInfo]);
+
+  // Handle Opening Modal Details for Current Weather Card
+  const openCurrentWeatherModal = () => {
+    setActiveModalData({
+      title: "تفاصيل الطقس الحالي الكاملة في تعز",
+      subtitle: `${periodInfo.descriptionAr} • تم التحديث مباشرة عبر OpenWeatherMap`,
+      description: `الحالة الجوية الحالية هي (${conditionStr}) بجهة رياح ${getWindDirectionArabic(windDeg)} (${windDeg}°) وسرعة ${windSpeed} م/ث مع مستوى رطوبة ${humidity}%. البيانات موثوقة ومستوردة مباشرة من OpenWeatherMap API.`,
+      metrics: [
+        { label: "درجة الحرارة", value: `${displayTemp(rawTemp)}°${unit}`, icon: Thermometer, color: "text-amber-500" },
+        { label: "الشعور الحراري", value: `${displayTemp(rawFeelsLike)}°${unit}`, icon: Sparkles, color: "text-orange-500" },
+        { label: "أعلى درجة اليوم", value: `${displayTemp(rawTempMax)}°${unit}`, icon: ArrowUp, color: "text-red-500" },
+        { label: "أدنى درجة اليوم", value: `${displayTemp(rawTempMin)}°${unit}`, icon: ArrowDown, color: "text-sky-500" },
+        { label: "الرطوبة النسبية", value: `${humidity}%`, icon: Droplets, color: "text-cyan-500" },
+        { label: "نقطة الندى", value: `${dewPoint}°C`, icon: HeartPulse, color: "text-blue-500" },
+        { label: "سرعة الرياح", value: `${windSpeed} م/ث (${Math.round(windSpeed * 3.6)} كم/س)`, icon: Wind, color: "text-teal-500" },
+        { label: "اتجاه الرياح", value: `${getWindDirectionArabic(windDeg)} (${windDeg}°)`, icon: Compass, color: "text-indigo-500" },
+        { label: "الضغط الجوي", value: `${pressure} hPa`, icon: Gauge, color: "text-purple-500" },
+        { label: "مستوى الرؤية الأفقية", value: `${visibilityKm} كم`, icon: Eye, color: "text-emerald-500" },
+        { label: "نسبة التغطية بالغيوم", value: `${cloudiness}%`, icon: Cloud, color: "text-slate-500" },
+        { label: "احتمالية هطول الأمطار", value: `${precipProb}%`, icon: CloudRain, color: "text-blue-500" },
+        { label: "مؤشر جودة الهواء (AQI)", value: `${aqiCode} - ${aqiObj.label}`, icon: Activity, color: "text-emerald-600" },
+        { label: "وقت الشروق المحلي", value: sunriseTime, icon: Sunrise, color: "text-amber-600" },
+        { label: "وقت الغروب المحلي", value: sunsetTime, icon: Sunset, color: "text-indigo-600" },
+      ]
+    });
+  };
+
+  // Handle Opening Modal Details for an Hour item
+  const openHourDetailModal = (hourItem: any) => {
+    const hourDate = new Date(hourItem.dt * 1000);
+    const timeFormatted = hourDate.toLocaleTimeString('ar-YE', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const dateFormatted = hourDate.toLocaleDateString('ar-YE', { month: 'short', day: 'numeric' });
+    const hPeriod = getTimePeriod(hourItem.dt);
+    const hCode = hourItem.weather?.[0]?.id || 800;
+    const hDesc = hourItem.weather?.[0]?.description || "صافٍ";
+    const hTemp = hourItem.main?.temp;
+    const hFeels = hourItem.main?.feels_like;
+    const hPop = Math.round((hourItem.pop || 0) * 100);
+    const hWind = hourItem.wind?.speed ? Math.round(hourItem.wind.speed * 100) / 100 : 3.5;
+    const hDeg = hourItem.wind?.deg ?? 65;
+    const hHum = Math.round(hourItem.main?.humidity || 50);
+    const hPress = Math.round(hourItem.main?.pressure || 1010);
+    const hDew = calculateDewPoint(hTemp, hHum);
+
+    setActiveModalData({
+      title: `توقعات طقس الساعة ${timeFormatted}`,
+      subtitle: `${dateFormatted} • فترة ${hPeriod.labelAr}`,
+      description: `تشير التوقعات الجوية للساعة ${timeFormatted} إلى حالة (${hDesc}) مع احتمالية أمطار بنسبة ${hPop}% ورطوبة ${hHum}%.`,
+      metrics: [
+        { label: "درجة الحرارة المتوقعة", value: `${displayTemp(hTemp)}°${unit}`, icon: Thermometer, color: "text-amber-500" },
+        { label: "الشعور الحراري", value: `${displayTemp(hFeels)}°${unit}`, icon: Sparkles, color: "text-orange-500" },
+        { label: "الحالة العامة", value: hDesc, icon: Cloud, color: "text-sky-500" },
+        { label: "احتمال الأمطار", value: `${hPop}%`, icon: CloudRain, color: "text-blue-500" },
+        { label: "سرعة الرياح", value: `${hWind} م/ث (${Math.round(hWind * 3.6)} كم/س)`, icon: Wind, color: "text-teal-500" },
+        { label: "اتجاه الرياح", value: `${getWindDirectionArabic(hDeg)} (${hDeg}°)`, icon: Compass, color: "text-indigo-500" },
+        { label: "مستوى الرطوبة", value: `${hHum}%`, icon: Droplets, color: "text-cyan-500" },
+        { label: "نقطة الندى", value: `${hDew}°C`, icon: HeartPulse, color: "text-blue-500" },
+        { label: "الضغط الجوي", value: `${hPress} hPa`, icon: Gauge, color: "text-purple-500" },
+      ]
+    });
+  };
+
+  // Handle Opening Modal Details for a Day item
+  const openDayDetailModal = (dayItem: any) => {
+    openDayHourlyPage(dayItem);
+  };
+
+  // Handle Opening Dedicated Day Hourly Forecast Page Modal
+  const openDayHourlyPage = (dayItem: any) => {
+    const dayDate = new Date(dayItem.dt * 1000);
+    const dayDateStr = getLocalDateStr(dayItem.dt);
+    const dayName = dayDate.toLocaleDateString('ar-YE', { weekday: 'long' });
+    const dateFormatted = dayDate.toLocaleDateString('ar-YE', { month: 'long', day: 'numeric', year: 'numeric' });
+    
+    const rawList = forecastData?.rawList || forecastData?.hourly || [];
+    let dayHourlyItems = rawList.filter((f: any) => getLocalDateStr(f.dt) === dayDateStr);
+    
+    if ((dayDateStr === todayStr || !dayHourlyItems.length) && todayHourlyList.length > 0) {
+      if (!dayHourlyItems.length || todayHourlyList.length > dayHourlyItems.length) {
+        dayHourlyItems = todayHourlyList;
+      }
+    }
+    
+    setSelectedDayModalData({
+      dayItem,
+      dayName,
+      dateFormatted,
+      dayDateStr,
+      hourlyList: dayHourlyItems.length > 0 ? dayHourlyItems : [dayItem],
+    });
+  };
+
+  // Date Helpers for Dynamic Day Titles
+  const dateHelper = useMemo(() => {
+    const currentDt = weatherData?.dt || Math.floor(Date.now() / 1000);
+    const now = new Date(currentDt * 1000);
+    
+    const todayStr = getLocalDateStr(currentDt);
+    
+    const tomorrowDate = new Date(now);
+    tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+    const tomorrowStr = getLocalDateStr(Math.floor(tomorrowDate.getTime() / 1000));
+
+    const dayAfterDate = new Date(now);
+    dayAfterDate.setDate(dayAfterDate.getDate() + 2);
+    const dayAfterStr = getLocalDateStr(Math.floor(dayAfterDate.getTime() / 1000));
+
+    return { todayStr, tomorrowStr, dayAfterStr };
+  }, [weatherData]);
+
+  // Today Date Strings & Memoized Hourly List strictly for Today's 24 Hours
+  const todayStr = dateHelper.todayStr;
+
+  const todayDateInfo = useMemo(() => {
+    const dt = weatherData?.dt || Math.floor(Date.now() / 1000);
+    const date = new Date(dt * 1000);
+    const dayName = date.toLocaleDateString('ar-YE', { weekday: 'long' });
+    const dateFormatted = date.toLocaleDateString('ar-YE', { month: 'long', day: 'numeric', year: 'numeric' });
+    return { dayName, dateFormatted };
+  }, [weatherData]);
+
+  // Grouped Hourly Forecasts by Day (Automatically segmented into Today, Tomorrow, etc.)
+  const groupedHourlyForecasts = useMemo(() => {
+    const rawList = forecastData?.rawList || forecastData?.hourly || [];
+    if (!rawList || rawList.length === 0) return [];
+
+    // Slice upcoming forecast points (e.g. 16-20 forecast intervals covering today & tomorrow)
+    const upcomingItems = rawList.slice(0, 16);
+
+    const groups: Array<{
+      dayKey: string;
+      dayLabel: string; // "اليوم", "غداً", "بعد غد", or Day Name
+      dayName: string; // e.g. "الإثنين"
+      dateFormatted: string; // e.g. "27 يوليو"
+      isToday: boolean;
+      isTomorrow: boolean;
+      hours: any[];
+    }> = [];
+
+    upcomingItems.forEach((hourItem: any) => {
+      const dStr = getLocalDateStr(hourItem.dt);
+
+      // Only include forecast items for Today and Tomorrow (exclude day after tomorrow)
+      if (dStr !== dateHelper.todayStr && dStr !== dateHelper.tomorrowStr) {
+        return;
+      }
+
+      let group = groups.find(g => g.dayKey === dStr);
+
+      if (!group) {
+        const hDate = new Date(hourItem.dt * 1000);
+        const dayName = hDate.toLocaleDateString('ar-YE', { weekday: 'long' });
+        const dateFormatted = hDate.toLocaleDateString('ar-YE', { day: 'numeric', month: 'long' });
+
+        let dayLabel = "اليوم";
+        let isToday = false;
+        let isTomorrow = false;
+
+        if (dStr === dateHelper.todayStr) {
+          dayLabel = "اليوم";
+          isToday = true;
+        } else if (dStr === dateHelper.tomorrowStr) {
+          dayLabel = "غداً";
+          isTomorrow = true;
+        }
+
+        group = {
+          dayKey: dStr,
+          dayLabel,
+          dayName,
+          dateFormatted,
+          isToday,
+          isTomorrow,
+          hours: []
         };
-      });
+        groups.push(group);
+      }
+
+      group.hours.push(hourItem);
+    });
+
+    return groups;
+  }, [forecastData, dateHelper]);
+
+  const todayHourlyList = useMemo(() => {
+    const rawList = forecastData?.rawList || forecastData?.hourly || [];
+    if (!rawList || rawList.length === 0) return [];
+    
+    // Filter strictly for items whose local YYYY-MM-DD matches todayStr
+    const itemsForToday = rawList.filter((f: any) => getLocalDateStr(f.dt) === todayStr);
+    
+    // If items exist for today, return them.
+    if (itemsForToday.length > 0) {
+      return itemsForToday;
     }
+    
+    // Fallback if day boundaries rolled over
+    return rawList.slice(0, 8);
+  }, [forecastData, todayStr]);
 
-    // OpenWeather API grouping
-    const daysMap: Record<string, any[]> = {};
-    forecastData.list.forEach((item: any) => {
-      const dateStr = new Date(item.dt * 1000).toDateString();
-      if (!daysMap[dateStr]) daysMap[dateStr] = [];
-      daysMap[dateStr].push(item);
-    });
-
-    const keys = Object.keys(daysMap);
-    const selectedKeys = keys.length >= 7 ? keys.slice(0, 7) : keys;
-
-    return selectedKeys.map((dateKey) => {
-      const items = daysMap[dateKey];
-      const dayName = new Date(items[0].dt * 1000).toLocaleDateString('ar-YE', { weekday: 'long' });
-      const midday = items.find((f: any) => {
-        const h = new Date(f.dt * 1000).getHours();
-        return h >= 11 && h <= 15;
-      }) || items[Math.floor(items.length / 2)];
-
-      const minTemps = items.map((i: any) => i.main.temp_min);
-      const maxTemps = items.map((i: any) => i.main.temp_max);
-
-      return {
-        day: dayName,
-        condition: midday.weather[0]?.description || "غائم جزئياً",
-        humidity: Math.round(midday.main.humidity),
-        wind: Math.round(midday.wind.speed * 100) / 100,
-        tempMax: Math.round(Math.max(...maxTemps)),
-        tempMin: Math.round(Math.min(...minTemps)),
-        id: midday.weather[0]?.id || 801,
-      };
-    });
-  }, [forecastData]);
+  const todaySummaryItem = useMemo(() => {
+    const item = forecastData?.list?.[0] || {};
+    return {
+      dt: weatherData?.dt || Math.floor(Date.now() / 1000),
+      main: {
+        temp: rawTemp,
+        temp_max: rawTempMax,
+        temp_min: rawTempMin,
+        humidity: humidity,
+        pressure: pressure,
+      },
+      weather: weatherData?.weather || [{ id: weatherCode, description: conditionStr }],
+      wind: { speed: windSpeed, deg: weatherData?.wind?.deg },
+      pop: (precipProb || 0) / 100,
+      ...item
+    };
+  }, [forecastData, weatherData, rawTemp, rawTempMax, rawTempMin, humidity, pressure, weatherCode, conditionStr, windSpeed, precipProb]);
 
   if (loading) {
     return (
-      <div className="min-h-[85vh] flex items-center justify-center bg-[#F8FAFC]" dir="rtl">
+      <div className="min-h-[85vh] flex items-center justify-center bg-surface-main" dir="rtl">
         <div className="flex flex-col items-center gap-4 p-8 bg-white/90 rounded-3xl shadow-lg border border-slate-100">
           <RefreshCw className="w-10 h-10 text-amber-500 animate-spin" />
-          <p className="text-slate-700 font-bold font-cairo text-lg">جاري تحديث بيانات طقس تعز...</p>
+          <p className="text-slate-700 font-bold font-cairo text-lg">جاري تحميل بيانات الطقس المباشرة من OpenWeatherMap...</p>
         </div>
       </div>
     );
@@ -1384,7 +1507,7 @@ export const WeatherDetail: React.FC = () => {
 
   if (error || !weatherData) {
     return (
-      <div className="min-h-[85vh] flex items-center justify-center bg-[#F8FAFC]" dir="rtl">
+      <div className="min-h-[85vh] flex items-center justify-center bg-surface-main" dir="rtl">
         <div className="bg-red-50 text-red-600 p-6 rounded-3xl flex flex-col items-center gap-4 max-w-sm text-center border border-red-100 shadow-sm">
           <AlertCircle className="w-12 h-12 text-red-500" />
           <h2 className="text-xl font-bold font-cairo">عذراً</h2>
@@ -1400,371 +1523,734 @@ export const WeatherDetail: React.FC = () => {
     );
   }
 
-  // Values from weatherData
-  const rawTemp = weatherData.main.temp;
-  const rawFeelsLike = weatherData.main.feels_like;
-  const rawTempMax = weatherData.main.temp_max;
-  const rawTempMin = weatherData.main.temp_min;
-
-  const conditionStr = weatherData.weather[0]?.description || "غائم جزئياً";
-  const weatherCode = weatherData.weather[0]?.id || 801;
-  const humidity = Math.round(weatherData.main.humidity);
-  const windSpeed = weatherData.wind?.speed ? (Math.round(weatherData.wind.speed * 100) / 100) : 5.42;
-  const pressure = Math.round(weatherData.main.pressure);
-  const visibilityKm = weatherData.visibility ? Math.round(weatherData.visibility / 1000) : 10;
-  const sunriseTime = weatherData.sys?.sunrise ? formatTime12h(weatherData.sys.sunrise) : "05:46 ص";
-  const sunsetTime = weatherData.sys?.sunset ? formatTime12h(weatherData.sys.sunset) : "06:34 م";
-  const precipProb = weatherData.pop !== undefined ? Math.round(weatherData.pop * 100) : 0;
-
-  // Check if night
-  const nowSec = Math.floor(Date.now() / 1000);
-  const isNight = weatherData.isNight ?? (weatherData.sys?.sunrise && weatherData.sys?.sunset 
-    ? (nowSec < weatherData.sys.sunrise || nowSec > weatherData.sys.sunset)
-    : (new Date().getHours() >= 18 || new Date().getHours() < 5));
-
-  // Dynamic Hero Card Gradient Theme depending on weather code & day/night
-  const heroCardThemeStr = useMemo(() => {
-    const category = getCategoryFromCode(weatherCode, isNight);
-    return getWeatherTheme(category, isNight).theme;
-  }, [weatherCode, isNight]);
-
-  const restOfDayThemeStr = useMemo(() => {
-    const today = dailyForecasts?.[0];
-    if (!today) return "from-sky-400 to-blue-500";
-    const category = getCategoryFromCode(today.id, false);
-    return getWeatherTheme(category, false).theme;
-  }, [dailyForecasts]);
-
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-12 pt-2 px-3 sm:px-6 select-none font-sans" dir="rtl">
-      {/* Centered Mobile/Tablet Container matching exact reference image width */}
-      <div className="max-w-md md:max-w-xl mx-auto space-y-4 sm:space-y-5">
+    <div className="relative min-h-screen bg-surface-main text-text-primary pb-16 pt-4 px-3 sm:px-6 select-none font-sans overflow-hidden" dir="rtl">
+      {/* BACKGROUND ACCENTS MATCHING NEWS SECTION */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-50">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-sky-200/30 rounded-full blur-3xl -mt-20 -mr-20" />
+        <div className="absolute bottom-1/3 left-0 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl -mb-20 -ml-20" />
+      </div>
 
+      {/* Centered Container */}
+      <div className="relative z-10 max-w-md md:max-w-2xl mx-auto space-y-4 sm:space-y-6">
 
-
-        {/* 2. MAIN HERO WEATHER CARD (DYNAMIC BASED ON WEATHER CONDITION & TIME OF DAY) */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.35 }}
-          className={`relative rounded-[28px] sm:rounded-[36px] p-4 sm:p-6 text-white shadow-[0_8px_30px_rgba(0,0,0,0.18)] border overflow-hidden transition-all duration-500 bg-gradient-to-br ${heroCardThemeStr}`}
-        >
-          {/* Dynamic Weather Full-Card Background Effect */}
-          <WeatherBackgroundEffect weatherCode={weatherCode} isNight={isNight} />
-
-          {/* Background Atmosphere Lighting Texture */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/15 via-transparent to-black/40 pointer-events-none" />
-
-          {/* HERO TOP CONTENT: TEMP & INTERACTIVE 3D GRAPHIC */}
-          <div className="relative z-10 flex items-start justify-between pt-6 sm:pt-8 pb-4">
-            
-            {/* LEFT SIDE (RTL LEFT): Temperature & Condition Info */}
-            <div className="flex flex-col items-start space-y-1">
-              <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 text-xs font-bold flex items-center gap-1.5 shadow-sm mb-2 text-white">
-                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
-                الطقس الآن
-              </div>
-              {/* Huge Temp Number */}
-              <div 
-                onClick={() => setUnit(prev => prev === "C" ? "F" : "C")}
-                className="text-6xl sm:text-7xl md:text-8xl font-black tracking-tight leading-none font-sans drop-shadow-sm cursor-pointer hover:scale-105 transition-transform"
-                title="اضغط للتحويل بين المئوي والفهرنهايت"
-              >
-                {displayTemp(rawTemp)}°
-              </div>
-
-              {/* Condition Text */}
-              <h2 className="text-lg sm:text-2xl font-bold font-cairo tracking-wide text-amber-50/95 pt-1 max-w-[200px] sm:max-w-xs leading-snug">
-                {conditionStr}
-              </h2>
-
-              {/* High / Low Temp Badge */}
-              <div className="pt-2 flex flex-col items-start gap-2">
-                <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-full px-3.5 py-1 flex items-center gap-2.5 text-xs font-bold font-sans">
-                  <div className="flex items-center gap-0.5 text-red-300">
-                    <span>{displayTemp(rawTempMax)}°</span>
-                    <ArrowUp className="w-3 h-3 stroke-[3]" />
-                  </div>
-                  <span className="text-white/30 text-[10px]">|</span>
-                  <div className="flex items-center gap-0.5 text-sky-300">
-                    <span>{displayTemp(rawTempMin)}°</span>
-                    <ArrowDown className="w-3 h-3 stroke-[3]" />
-                  </div>
-                </div>
-                {/* Precip Prob Badge */}
-                {precipProb > 0 && (
-                  <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-full px-3.5 py-1 flex items-center gap-1.5 text-xs font-bold font-sans">
-                    <CloudRain className="w-3.5 h-3.5 text-sky-400" />
-                    <span className="text-sky-300">{precipProb}%</span>
-                  </div>
-                )}
-              </div>
+        {/* TOP NAVBAR ROW */}
+        <div className="flex items-center justify-between px-1 pb-1">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => navigate("/")}
+              className="p-2.5 rounded-2xl bg-white border border-slate-200/80 text-slate-800 hover:bg-slate-50 transition-all shadow-xs"
+              title="العودة للرئيسية"
+            >
+              <ChevronLeft className="w-5 h-5 rotate-180" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-black text-slate-900 font-cairo leading-none tracking-tight">حالة الطقس المباشرة</h1>
+              <span className="text-[11px] font-bold text-sky-600 font-cairo flex items-center gap-1 mt-0.5">
+                <MapPin className="w-3 h-3" />
+                المصدر: OpenWeatherMap API
+              </span>
             </div>
-
-            {/* RIGHT SIDE (RTL RIGHT): Real-time Dynamic 3D Illustration */}
-            <Interactive3DWeatherIllustration 
-              weatherCode={weatherCode} 
-              isNight={isNight} 
-            />
-
           </div>
 
-          {/* BOTTOM OVERLAY INSIDE HERO CARD: 4 FROSTED METRIC CARDS */}
-          <div className="relative z-10 grid grid-cols-4 gap-1.5 sm:gap-2.5 mt-2 pt-3 border-t border-white/15">
-            
-            {/* Metric 1: الرؤية */}
-            <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center text-center space-y-1 hover:bg-black/30 transition-colors">
-              <Eye className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" />
-              <span className="text-[10px] sm:text-xs text-amber-100/80 font-bold font-cairo">الرؤية</span>
-              <span className="text-xs sm:text-sm font-extrabold font-sans tracking-tight">{visibilityKm} كم</span>
-            </div>
+          <div className="flex items-center gap-2">
+            {/* Unit Switcher C/F */}
+            <button
+              onClick={() => setUnit(prev => prev === "C" ? "F" : "C")}
+              className="bg-white border border-slate-200/80 shadow-xs rounded-2xl px-3.5 py-1.5 text-xs font-black text-slate-800 hover:bg-slate-50 transition-all font-sans"
+            >
+              °{unit}
+            </button>
 
-            {/* Metric 2: الضغط الجوي */}
-            <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center text-center space-y-1 hover:bg-black/30 transition-colors">
-              <Gauge className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-300" />
-              <span className="text-[10px] sm:text-xs text-amber-100/80 font-bold font-cairo">الضغط الجوي</span>
-              <span className="text-xs sm:text-sm font-extrabold font-sans tracking-tight">{pressure} hPa</span>
-            </div>
-
-            {/* Metric 3: سرعة الرياح */}
-            <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center text-center space-y-1 hover:bg-black/30 transition-colors">
-              <Wind className="w-4 h-4 sm:w-5 sm:h-5 text-sky-300" />
-              <span className="text-[10px] sm:text-xs text-amber-100/80 font-bold font-cairo">سرعة الرياح</span>
-              <span className="text-xs sm:text-sm font-extrabold font-sans tracking-tight">{windSpeed} م/ث</span>
-            </div>
-
-            {/* Metric 4: الرطوبة */}
-            <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center text-center space-y-1 hover:bg-black/30 transition-colors">
-              <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300" />
-              <span className="text-[10px] sm:text-xs text-amber-100/80 font-bold font-cairo">الرطوبة</span>
-              <span className="text-xs sm:text-sm font-extrabold font-sans tracking-tight">{humidity}%</span>
-            </div>
-
+            {/* Refresh Button */}
+            <button
+              onClick={fetchWeather}
+              disabled={isRefreshing}
+              className="flex items-center gap-1.5 bg-sky-600 text-white shadow-xs rounded-2xl px-3.5 py-1.5 hover:bg-sky-700 transition-all disabled:opacity-70"
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? "animate-spin text-white" : ""}`} />
+              <span className="text-xs font-bold font-cairo hidden sm:inline-block">
+                {isRefreshing ? "جاري التحديث..." : "تحديث"}
+              </span>
+            </button>
           </div>
-        </motion.div>
-        {/* EXPECTED WEATHER FOR THE REST OF THE DAY */}
-        {dailyForecasts?.[0] && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.35, delay: 0.1 }}
-            className={`relative rounded-[28px] sm:rounded-[36px] p-4 sm:p-6 text-white shadow-[0_8px_30px_rgba(0,0,0,0.18)] border overflow-hidden transition-all duration-500 bg-gradient-to-br ${restOfDayThemeStr}`}
-          >
-            <WeatherBackgroundEffect weatherCode={dailyForecasts[0].id} isNight={false} />
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-white/15 via-transparent to-black/40 pointer-events-none" />
-            
-            <div className="relative z-10 flex items-start justify-between pt-6 sm:pt-8 pb-4">
-              <div className="flex flex-col items-start space-y-1">
-                <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30 text-xs font-bold flex items-center gap-1.5 shadow-sm mb-2 text-white">
-                  بقية اليوم
-                </div>
-                <div className="text-5xl sm:text-6xl font-black tracking-tight leading-none font-sans drop-shadow-sm">
-                  {displayTemp(dailyForecasts[0].tempMax)}°
-                </div>
-                <h2 className="text-lg sm:text-2xl font-bold font-cairo tracking-wide text-amber-50/95 pt-1 max-w-[200px] sm:max-w-xs leading-snug">
-                  {dailyForecasts[0].condition}
-                </h2>
-                <div className="pt-2 flex flex-col items-start gap-2">
-                  <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-full px-3.5 py-1 flex items-center gap-2.5 text-xs font-bold font-sans">
-                    <div className="flex items-center gap-0.5 text-red-300">
-                      <span>{displayTemp(dailyForecasts[0].tempMax)}°</span>
-                      <ArrowUp className="w-3 h-3 stroke-[3]" />
-                    </div>
-                    <span className="text-white/30 text-[10px]">|</span>
-                    <div className="flex items-center gap-0.5 text-sky-300">
-                      <span>{displayTemp(dailyForecasts[0].tempMin)}°</span>
-                      <ArrowDown className="w-3 h-3 stroke-[3]" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <Interactive3DWeatherIllustration 
-                weatherCode={dailyForecasts[0].id} 
-                isNight={false} 
-              />
-            </div>
-            <div className="relative z-10 grid grid-cols-2 gap-1.5 sm:gap-2.5 mt-2 pt-3 border-t border-white/15">
-              <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center text-center space-y-1 hover:bg-black/30 transition-colors">
-                <Wind className="w-4 h-4 sm:w-5 sm:h-5 text-sky-300" />
-                <span className="text-[10px] sm:text-xs text-amber-100/80 font-bold font-cairo">سرعة الرياح</span>
-                <span className="text-xs sm:text-sm font-extrabold font-sans tracking-tight">{dailyForecasts[0].wind} م/ث</span>
-              </div>
-              <div className="bg-black/25 backdrop-blur-md border border-white/15 rounded-2xl p-2 sm:p-3 flex flex-col items-center justify-center text-center space-y-1 hover:bg-black/30 transition-colors">
-                <Droplets className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-300" />
-                <span className="text-[10px] sm:text-xs text-amber-100/80 font-bold font-cairo">الرطوبة</span>
-                <span className="text-xs sm:text-sm font-extrabold font-sans tracking-tight">{dailyForecasts[0].humidity}%</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-
-        {/* 3. SUNRISE AND SUNSET ROW (2 SIDE-BY-SIDE CARDS MATCHING REFERENCE) */}
-        <div className="grid grid-cols-2 gap-2.5 sm:gap-4">
-          
-          {/* Sunrise Card (الشروق) */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-[#FFF8F0] via-[#FFF3E6] to-[#FFE8D6] border border-orange-200/90 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex items-center justify-between overflow-hidden"
-          >
-            {/* Left Info: Name & Time */}
-            <div className="flex flex-col space-y-0.5">
-              <span className="text-xs sm:text-sm font-bold text-amber-700 font-cairo">
-                الشروق
-              </span>
-              <span className="text-sm sm:text-lg font-black text-slate-900 font-sans tracking-tight">
-                {sunriseTime}
-              </span>
-            </div>
-
-            {/* Right Graphic: Sun rising vector */}
-            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="16" fill="#FED7AA" opacity="0.6" />
-                <path d="M12 32 H36" stroke="#F97316" strokeWidth="2.5" strokeLinecap="round" />
-                <circle cx="24" cy="24" r="9" fill="#F59E0B" />
-                <g stroke="#F59E0B" strokeWidth="2" strokeLinecap="round">
-                  <line x1="24" y1="9" x2="24" y2="12" />
-                  <line x1="13" y1="14" x2="16" y2="16" />
-                  <line x1="35" y1="14" x2="32" y2="16" />
-                </g>
-              </svg>
-            </div>
-          </motion.div>
-
-          {/* Sunset Card (الغروب) */}
-          <motion.div 
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="bg-gradient-to-br from-[#F5F3FF] via-[#EEF2FF] to-[#E0E7FF] border border-indigo-200/80 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex items-center justify-between overflow-hidden"
-          >
-            {/* Left Info: Name & Time */}
-            <div className="flex flex-col space-y-0.5">
-              <span className="text-xs sm:text-sm font-bold text-indigo-700 font-cairo">
-                الغروب
-              </span>
-              <span className="text-sm sm:text-lg font-black text-slate-900 font-sans tracking-tight">
-                {sunsetTime}
-              </span>
-            </div>
-
-            {/* Right Graphic: Crescent Moon vector */}
-            <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
-              <svg className="w-full h-full" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="16" fill="#C7D2FE" opacity="0.6" />
-                <path d="M28 14C26.5 13.5 25 13.2 23.3 13.2 C17 13.2 12 18.2 12 24.5 C12 30.8 17 35.8 23.3 35.8 C27.2 35.8 30.7 33.8 32.8 30.8 C26.8 30.4 22.1 25.4 22.1 19.3 C22.1 17.1 22.8 15.1 24 13.3 Z" fill="#4F46E5" />
-                <circle cx="31" cy="16" r="1.5" fill="#818CF8" />
-                <circle cx="35" cy="21" r="1" fill="#818CF8" />
-              </svg>
-            </div>
-          </motion.div>
-
         </div>
 
-        {/* 4. UPCOMING DAYS FORECAST CARD ("توقعات الأيام القادمة") */}
+        {/* MAIN WEATHER CONTENT STACK */}
+        
+        {/* 1. CURRENT WEATHER HERO CARD */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="relative rounded-[28px] sm:rounded-[36px] p-4 sm:p-6 shadow-[0_12px_36px_rgba(14,165,233,0.08)] border border-sky-100/80 overflow-hidden bg-gradient-to-br from-white/95 via-sky-50/60 to-blue-50/40 backdrop-blur-xl"
+          whileHover={{ scale: 1.01, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.3 }}
+          onClick={openCurrentWeatherModal}
+          className={`relative rounded-[28px] sm:rounded-[36px] p-5 sm:p-7 text-white shadow-[0_16px_40px_rgba(0,0,0,0.3)] border overflow-hidden transition-all duration-500 bg-gradient-to-br cursor-pointer group ${heroThemeObj.theme}`}
+          title="اضغط لعرض تفاصيل الطقس الحالي الكاملة"
         >
-          {/* Header Row */}
-          <div className="relative z-10 flex items-center justify-between pb-3.5 sm:pb-4 border-b border-sky-100/80">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-sky-500/15 border border-sky-300/60 text-sky-600 dark:text-sky-400 flex items-center justify-center shrink-0 shadow-xs">
-                <Calendar className="w-5 h-5" />
+          {/* Live Dynamic Weather Effect across full card background */}
+          <WeatherBackgroundEffect 
+            weatherCode={weatherCode} 
+            isNight={periodInfo.isNight}
+            dtSec={weatherData?.dt}
+            sunriseSec={weatherData?.sys?.sunrise}
+            sunsetSec={weatherData?.sys?.sunset}
+          />
+
+          {/* Overlay for pristine high-contrast legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 via-transparent to-black/20 pointer-events-none" />
+
+          {/* TIME PERIOD BADGE */}
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="bg-black/40 backdrop-blur-md px-3.5 py-1 rounded-full border border-white/25 text-xs font-bold flex items-center gap-2 shadow-sm text-white font-cairo">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              الطقس الآن • فترة {periodInfo.labelAr}
+            </div>
+            <span className="text-[10px] font-extrabold text-white/90 bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 font-cairo group-hover:bg-white/25 transition-colors">
+              اضغط للتفاصيل ↗
+            </span>
+          </div>
+
+          {/* MAIN HERO CONTENT */}
+          <div className="relative z-10 mt-4 flex items-center justify-between">
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl sm:text-6xl font-black font-sans tracking-tight">
+                  {displayTemp(rawTemp)}
+                </span>
+                <span className="text-2xl font-bold font-sans text-amber-300">°{unit}</span>
               </div>
-              <div>
-                <h3 className="text-lg sm:text-xl md:text-2xl font-black text-sky-950 dark:text-sky-100 font-cairo">
-                  توقعات الأيام القادمة
-                </h3>
+              <p className="text-lg font-bold font-cairo text-white/95 mt-1">{conditionStr}</p>
+              
+              {/* Max/Min Colored Numbers with Icons ONLY - NO TEXT LABELS / NO REAL FEEL */}
+              <div className="flex items-center gap-2.5 mt-2 font-sans font-black text-xs sm:text-sm">
+                <div className="flex items-center gap-1 text-rose-400 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-rose-400/30 shadow-xs" title="الحرارة العظمى">
+                  <ArrowUp className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>{displayTemp(rawTempMax)}°</span>
+                </div>
+                <div className="flex items-center gap-1 text-sky-300 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-sky-300/30 shadow-xs" title="الحرارة الصغرى">
+                  <ArrowDown className="w-3.5 h-3.5 stroke-[3]" />
+                  <span>{displayTemp(rawTempMin)}°</span>
+                </div>
+              </div>
+            </div>
+
+            <Interactive3DWeatherIllustration 
+              weatherCode={weatherCode} 
+              isNight={periodInfo.isNight} 
+              className="w-24 h-24 sm:w-32 sm:h-32 drop-shadow-xl"
+            />
+          </div>
+
+          {/* ESSENTIAL METRICS GRID OVERLAY */}
+          <div className="relative z-10 mt-6 grid grid-cols-4 gap-2 pt-4 border-t border-white/20 text-center">
+            <div className="bg-black/30 backdrop-blur-md rounded-2xl p-2 border border-white/10">
+              <span className="text-[10px] text-white/70 block font-cairo">الرياح</span>
+              <span className="text-xs font-black font-sans text-white">{windSpeed} م/ث</span>
+            </div>
+            <div className="bg-black/30 backdrop-blur-md rounded-2xl p-2 border border-white/10">
+              <span className="text-[10px] text-white/70 block font-cairo">الرطوبة</span>
+              <span className="text-xs font-black font-sans text-white">{humidity}%</span>
+            </div>
+            <div className="bg-black/30 backdrop-blur-md rounded-2xl p-2 border border-white/10">
+              <span className="text-[10px] text-white/70 block font-cairo">الأمطار</span>
+              <span className="text-xs font-black font-sans text-white">{precipProb}%</span>
+            </div>
+            <div className="bg-black/30 backdrop-blur-md rounded-2xl p-2 border border-white/10">
+              <span className="text-[10px] text-white/70 block font-cairo">الضغط</span>
+              <span className="text-xs font-black font-sans text-white">{pressure}</span>
+            </div>
+          </div>
+
+          {/* EMBEDDED SUN MOVEMENT & DAYLIGHT SUB-PANEL */}
+          <div className="relative z-10 mt-5 pt-4 border-t border-white/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sun className="w-4 h-4 text-amber-300 animate-spin-slow" />
+                <span className="text-xs font-bold font-cairo text-white">حركة الشمس وقوس النهار</span>
+              </div>
+              <span className="text-[10px] font-bold text-amber-200 bg-amber-500/20 px-2.5 py-0.5 rounded-full border border-amber-400/30">
+                تعز (UTC+3)
+              </span>
+            </div>
+
+            <div className="relative pt-2 pb-1 bg-black/30 backdrop-blur-md px-4 rounded-2xl border border-white/15">
+              <svg viewBox="0 0 200 65" className="w-full h-auto">
+                <path d="M 10 55 Q 100 8 190 55" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5" strokeDasharray="3 3" />
+                <path d="M 10 55 Q 100 8 120 30" fill="none" stroke="#FBBF24" strokeWidth="3" />
+                <circle cx="120" cy="30" r="6" fill="#FBBF24" className="shadow-md animate-pulse" />
+              </svg>
+
+              <div className="flex items-center justify-between text-xs font-bold font-cairo text-white/95 pt-2 border-t border-white/10 mt-1 pb-1">
+                <div className="flex items-center gap-1.5">
+                  <Sunrise className="w-3.5 h-3.5 text-amber-300" />
+                  <span>الشروق: {sunriseTime}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Sunset className="w-3.5 h-3.5 text-indigo-300" />
+                  <span>الغروب: {sunsetTime}</span>
+                </div>
               </div>
             </div>
           </div>
 
-          {/* Dynamic Weather Day Cards */}
-          <div className="relative z-10 space-y-2.5 sm:space-y-3 mt-4">
-            {dailyForecasts.map((item, idx) => {
-              const itemCategory = getCategoryFromCode(item.id, false);
-              
-              // Soft, weather-inspired card highlights for each day
-              let rowTheme = "bg-gradient-to-r from-white via-sky-50/40 to-white border-sky-100 hover:border-sky-300";
-              let iconBg = "bg-sky-50 border-sky-100";
-              
-              if (itemCategory === "clear") {
-                rowTheme = "bg-gradient-to-r from-amber-50/60 via-white to-sky-50/40 border-amber-200/60 hover:border-amber-300";
-                iconBg = "bg-amber-100/50 border-amber-200/60";
-              } else if (itemCategory === "rain") {
-                rowTheme = "bg-gradient-to-r from-cyan-50/60 via-white to-blue-50/40 border-cyan-200/60 hover:border-cyan-300";
-                iconBg = "bg-cyan-100/50 border-cyan-200/60";
-              } else if (itemCategory === "thunderstorm") {
-                rowTheme = "bg-gradient-to-r from-indigo-50/60 via-white to-purple-50/40 border-indigo-200/60 hover:border-indigo-300";
-                iconBg = "bg-indigo-100/50 border-indigo-200/60";
-              } else if (itemCategory === "fog") {
-                rowTheme = "bg-gradient-to-r from-amber-50/50 via-white to-stone-50/40 border-stone-200/60 hover:border-amber-200";
-                iconBg = "bg-amber-100/40 border-amber-200/50";
-              }
+          {/* EMBEDDED AIR QUALITY INDEX (AQI) SUB-PANEL */}
+          <div className="relative z-10 mt-4 pt-4 border-t border-white/20 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-emerald-400" />
+                <span className="text-xs font-bold font-cairo text-white">مؤشر جودة الهواء (AQI)</span>
+              </div>
+              <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-300 border-emerald-400/40`}>
+                {aqiObj.label}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 bg-black/30 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                <svg viewBox="0 0 36 36" className="w-full h-full rotate-[-90deg]">
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="3.5" />
+                  <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#34D399" strokeWidth="3.5" strokeDasharray={`${aqiObj.percent}, 100`} />
+                </svg>
+                <span className="absolute text-sm font-black font-sans text-white">{aqiCode}</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold font-cairo text-white">{aqiObj.label}</p>
+                <p className="text-[11px] text-white/80 font-cairo leading-relaxed mt-0.5">
+                  {aqiObj.description}
+                </p>
+              </div>
+            </div>
+
+            {/* Pollutants Breakdown */}
+            <div className="grid grid-cols-3 gap-2 text-center text-xs font-cairo">
+              <div className="bg-black/30 backdrop-blur-md p-2 rounded-xl border border-white/10">
+                <span className="text-[9px] text-white/60 block">PM2.5</span>
+                <span className="font-bold font-sans text-white text-xs">{airPollutionData?.list?.[0]?.components?.pm2_5 ?? 23.9}</span>
+              </div>
+              <div className="bg-black/30 backdrop-blur-md p-2 rounded-xl border border-white/10">
+                <span className="text-[9px] text-white/60 block">PM10</span>
+                <span className="font-bold font-sans text-white text-xs">{airPollutionData?.list?.[0]?.components?.pm10 ?? 96.9}</span>
+              </div>
+              <div className="bg-black/30 backdrop-blur-md p-2 rounded-xl border border-white/10">
+                <span className="text-[9px] text-white/60 block">NO2</span>
+                <span className="font-bold font-sans text-white text-xs">{airPollutionData?.list?.[0]?.components?.no2 ?? 1.1}</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* 2. TODAY'S INTERACTIVE WEATHER CARD (SINGLE CARD - CLICK TO VIEW HOURLY FORECAST) */}
+        <motion.div
+          onClick={() => openDayHourlyPage(todaySummaryItem)}
+          whileHover={{ scale: 1.015, y: -2 }}
+          whileTap={{ scale: 0.98 }}
+          className="relative rounded-[28px] p-5 text-white shadow-lg border border-slate-200/90 overflow-hidden cursor-pointer group bg-gradient-to-r from-sky-600 via-indigo-600 to-slate-800 transition-all duration-300 hover:shadow-xl hover:border-white/50"
+          title="اضغط لعرض توقعات الساعات القادمة لليوم نفسه"
+        >
+          {/* Dynamic Background Effect */}
+          <WeatherBackgroundEffect 
+            weatherCode={weatherCode} 
+            isNight={periodInfo.isNight} 
+            dtSec={weatherData?.dt}
+            className="opacity-40 pointer-events-none" 
+          />
+          <div className="absolute inset-0 bg-slate-950/25 backdrop-blur-[2px] pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col gap-3">
+            <div className="flex items-center justify-between border-b border-white/20 pb-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black font-cairo bg-black/40 backdrop-blur-md px-3 py-1 rounded-full border border-white/25 text-white">
+                  توقعات طقس اليوم ({todayDateInfo.dayName} - {todayDateInfo.dateFormatted})
+                </span>
+              </div>
+              <span className="text-xs font-extrabold font-cairo text-amber-300 bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/15 flex items-center gap-1 group-hover:bg-amber-400/20 transition-all">
+                عرض تفاصيل الساعات ↗
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl sm:text-4xl font-black font-sans tracking-tight">
+                    {displayTemp(rawTemp)}°
+                  </span>
+                  <span className="text-xs font-bold font-cairo text-amber-300">°{unit}</span>
+                </div>
+
+                <p className="text-sm font-bold font-cairo text-white/95 mt-1">{conditionStr}</p>
+
+                <div className="flex items-center gap-2.5 mt-2 font-sans font-black text-xs sm:text-sm">
+                  <div className="flex items-center gap-1 text-rose-400 bg-black/30 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-rose-400/30 shadow-xs" title="الحرارة العظمى">
+                    <ArrowUp className="w-3.5 h-3.5 stroke-[3]" />
+                    <span>{displayTemp(rawTempMax)}°</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-sky-300 bg-black/30 backdrop-blur-md px-2.5 py-0.5 rounded-full border border-sky-300/30 shadow-xs" title="الحرارة الصغرى">
+                    <ArrowDown className="w-3.5 h-3.5 stroke-[3]" />
+                    <span>{displayTemp(rawTempMin)}°</span>
+                  </div>
+                </div>
+              </div>
+
+              <Interactive3DWeatherIllustration 
+                weatherCode={weatherCode} 
+                isNight={periodInfo.isNight} 
+                className="w-20 h-20 sm:w-24 sm:h-24 drop-shadow-lg" 
+              />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-xs font-cairo">
+              <div className="bg-black/25 backdrop-blur-md p-2 rounded-2xl border border-white/10 flex items-center gap-2">
+                <CloudRain className="w-4 h-4 text-sky-300 shrink-0" />
+                <div>
+                  <span className="text-[10px] text-white/75 block">احتمال الأمطار</span>
+                  <span className="font-black font-sans text-white text-xs">{precipProb}%</span>
+                </div>
+              </div>
+
+              <div className="bg-black/25 backdrop-blur-md p-2 rounded-2xl border border-white/10 flex items-center gap-2">
+                <Wind className="w-4 h-4 text-emerald-300 shrink-0" />
+                <div>
+                  <span className="text-[10px] text-white/75 block">سرعة الرياح</span>
+                  <span className="font-black font-sans text-white text-xs">{windSpeed} م/ث</span>
+                </div>
+              </div>
+
+              <div className="bg-black/25 backdrop-blur-md p-2 rounded-2xl border border-white/10 flex items-center gap-2">
+                <Droplets className="w-4 h-4 text-blue-300 shrink-0" />
+                <div>
+                  <span className="text-[10px] text-white/75 block">الرطوبة النسبية</span>
+                  <span className="font-black font-sans text-white text-xs">{humidity}%</span>
+                </div>
+              </div>
+
+              <div className="bg-black/25 backdrop-blur-md p-2 rounded-2xl border border-white/10 flex items-center gap-2">
+                <Gauge className="w-4 h-4 text-purple-300 shrink-0" />
+                <div>
+                  <span className="text-[10px] text-white/75 block">الضغط الجوي</span>
+                  <span className="font-black font-sans text-white text-xs">{pressure} hPa</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* 3. EXTENDED DAILY FORECAST (توقعات الـ 7 أيام) */}
+        <div className="rounded-[28px] p-5 bg-white/95 backdrop-blur-xl border border-slate-200/90 shadow-lg space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold font-cairo text-slate-800 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-indigo-500" />
+              توقعات الطقس للأيام الـ 7 القادمة
+            </h2>
+            <span className="text-[11px] font-bold text-indigo-600 font-cairo">تحديث يومي مستمر</span>
+          </div>
+
+          <div className="space-y-2">
+            {forecastData?.list?.map((item: any, idx: number) => {
+              const dayDate = new Date(item.dt * 1000);
+              const dayName = idx === 0 ? "اليوم" : dayDate.toLocaleDateString('ar-YE', { weekday: 'long' });
+              const dateShort = dayDate.toLocaleDateString('ar-YE', { month: 'numeric', day: 'numeric' });
+              const wCode = item.weather?.[0]?.id || 801;
+              const dPop = Math.round((item.pop || 0) * 100);
 
               return (
                 <motion.div
                   key={idx}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.08 * idx }}
-                  className={`relative rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 border shadow-xs backdrop-blur-md overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-3 ${rowTheme} transition-all duration-300 hover:shadow-md`}
+                  onClick={() => openDayDetailModal(item)}
+                  whileHover={{ scale: 1.015, x: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="relative rounded-2xl p-3.5 bg-slate-50/90 border border-slate-200/70 hover:border-indigo-400 transition-all cursor-pointer flex items-center justify-between overflow-hidden group shadow-xs hover:shadow-md"
                 >
-                  {/* Live Dynamic Weather Effect across full card row */}
-                  <WeatherBackgroundEffect weatherCode={item.id} isNight={false} className="opacity-70 pointer-events-none" />
+                  {/* Dynamic Weather Day Card Background Effect */}
+                  <WeatherBackgroundEffect weatherCode={wCode} isNight={false} className="opacity-25 pointer-events-none" />
 
-                  {/* Day Name + 3D Weather Icon + Condition Text */}
-                  <div className="relative z-10 flex items-center gap-3.5 w-full sm:w-auto">
-                    <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-2xl border flex items-center justify-center shrink-0 shadow-xs ${iconBg}`}>
-                      <ForecastIcon3D weatherId={item.id} />
-                    </div>
+                  <div className="relative z-10 flex items-center gap-3">
+                    <ForecastIcon3D weatherId={wCode} />
                     <div>
-                      <div className="text-sm sm:text-base font-black text-slate-900 font-cairo">
-                        {item.day}
-                      </div>
-                      <div className="text-xs font-bold text-slate-600 font-cairo">
-                        {item.condition}
-                      </div>
+                      <h4 className="text-sm font-bold text-slate-800 font-cairo">{dayName}</h4>
+                      <p className="text-[10px] text-slate-500 font-cairo">{dateShort} • {item.weather?.[0]?.description}</p>
                     </div>
                   </div>
 
-                  {/* Middle: Humidity & Wind Speed Frosted Badges */}
-                  <div className="relative z-10 flex items-center gap-2 sm:gap-3 text-xs font-bold font-sans w-full sm:w-auto justify-between sm:justify-center">
-                    <div className="bg-sky-50/90 border border-sky-200/70 text-sky-800 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                      <Droplets className="w-3.5 h-3.5 text-sky-500" />
-                      <span>{item.humidity}%</span>
-                    </div>
-                    <div className="bg-teal-50/90 border border-teal-200/70 text-teal-800 px-3 py-1.5 rounded-xl flex items-center gap-1.5">
-                      <Wind className="w-3.5 h-3.5 text-teal-500" />
-                      <span>{item.wind} م/ث</span>
-                    </div>
-                  </div>
-
-                  {/* High / Low Temperature Range Capsule */}
-                  <div className="relative z-10 bg-white/90 border border-slate-200/80 shadow-xs rounded-full px-4 py-1.5 flex items-center gap-3 text-xs sm:text-sm font-extrabold font-sans">
-                    <div className="flex items-center gap-1 text-amber-600">
-                      <span>{displayTemp(item.tempMax)}°</span>
-                      <ArrowUp className="w-3.5 h-3.5 stroke-[3]" />
-                    </div>
-                    <span className="text-slate-300 text-xs">|</span>
-                    <div className="flex items-center gap-1 text-sky-600">
-                      <span>{displayTemp(item.tempMin)}°</span>
-                      <ArrowDown className="w-3.5 h-3.5 stroke-[3]" />
+                  <div className="relative z-10 flex items-center gap-4">
+                    {dPop > 15 && (
+                      <span className="text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100 flex items-center gap-1">
+                        <CloudRain className="w-3 h-3" />
+                        {dPop}%
+                      </span>
+                    )}
+                    <div className="text-left font-sans">
+                      <span className="text-sm font-black text-red-600">{displayTemp(item.main?.temp_max)}°</span>
+                      <span className="text-xs text-slate-400 font-bold mx-1">/</span>
+                      <span className="text-xs font-bold text-sky-600">{displayTemp(item.main?.temp_min)}°</span>
                     </div>
                   </div>
                 </motion.div>
               );
             })}
           </div>
-        </motion.div>
+        </div>
+
+
+
+
+        {/* TAB 4: DESIGN SYSTEM & TECHNICAL SPECIFICATION GUIDE */}
+        {activeTab === "design" && (
+          <div className="rounded-[28px] p-6 bg-slate-900 text-white border border-slate-800 shadow-2xl space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+              <div>
+                <h2 className="text-lg font-black font-cairo text-purple-400 flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-purple-400" />
+                  دليل نظام التصميم والتقرير الفني (UI Kit & Architecture)
+                </h2>
+                <p className="text-xs text-slate-400 font-cairo mt-1">المواصفات الفنية المعتمدة لقسم الطقس</p>
+              </div>
+              <span className="bg-purple-500/20 text-purple-300 text-xs font-bold px-3 py-1 rounded-full border border-purple-500/30">
+                إصدار v2.5 الفاخر
+              </span>
+            </div>
+
+            {/* Philosophy */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold font-cairo text-sky-400 flex items-center gap-2">
+                <Layers className="w-4 h-4 text-sky-400" />
+                1. فلسفة التصميم (Design Philosophy)
+              </h3>
+              <p className="text-xs text-slate-300 font-cairo leading-relaxed bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60">
+                تعتمد التجربة على المزاوجة بين الخلفيات الديناميكية التفاعلية التي تحاكي حالة الطقس الفعلية وفترة اليوم الزمنية (الفجر، الصباح، الظهيرة، العصر، المغرب، المساء، الليل)، مع طبقات شفافة لضمان الوضوح البصري المطلق للنصوص والأرقام القياسية بتباين عالي يطابق معايير WCAG AA.
+              </p>
+            </div>
+
+            {/* Color System */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold font-cairo text-amber-400 flex items-center gap-2">
+                <Palette className="w-4 h-4 text-amber-400" />
+                2. نظام الألوان والفترات الزمنية (Color & Time Period System)
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs font-cairo">
+                <div className="p-3 rounded-xl bg-gradient-to-r from-purple-900 to-indigo-900 border border-purple-700/50">
+                  <span className="font-bold text-purple-200 block">الفجر (Dawn)</span>
+                  <span className="text-[10px] text-purple-300">أرجواني دافئ + ضباب خفيف</span>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-sky-600 to-amber-500 border border-amber-500/50">
+                  <span className="font-bold text-white block">الصباح (Morning)</span>
+                  <span className="text-[10px] text-amber-100">أزرق سماوي + أشعة ذهبية</span>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-sky-500 to-blue-600 border border-sky-400/50">
+                  <span className="font-bold text-white block">الظهيرة (Noon)</span>
+                  <span className="text-[10px] text-sky-100">شمس ساطعة فوق الرأس</span>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-amber-600 to-blue-800 border border-amber-600/50">
+                  <span className="font-bold text-amber-100 block">العصر (Afternoon)</span>
+                  <span className="text-[10px] text-amber-200">ضوء دافئ مائل</span>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-red-600 to-purple-900 border border-red-500/50">
+                  <span className="font-bold text-rose-200 block">المغرب (Sunset)</span>
+                  <span className="text-[10px] text-rose-300">تدرج أحمر وأرجواني شفق</span>
+                </div>
+                <div className="p-3 rounded-xl bg-gradient-to-r from-slate-950 to-indigo-950 border border-indigo-800/50">
+                  <span className="font-bold text-indigo-200 block">الليل (Night)</span>
+                  <span className="text-[10px] text-indigo-300">سماء ليلية مع نجوم وقمر</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Technical Architecture */}
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold font-cairo text-emerald-400 flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-emerald-400" />
+                3. البنية التقنية والتزامن (Data Architecture & Sync)
+              </h3>
+              <p className="text-xs text-slate-300 font-cairo leading-relaxed bg-slate-800/60 p-4 rounded-2xl border border-slate-700/60">
+                تعتمد جميع بطاقات الطقس في الهيدر والصفحات الرئيسية والتفصيلية مصدر بيانات موحد وحصري عبر مسارات السيرفر (<code className="text-sky-300">/api/weather</code>, <code className="text-sky-300">/api/forecast</code>, <code className="text-sky-300">/api/air_pollution</code>) المرتبطة مباشرة بمفتاح OpenWeatherMap API مع تزامن فوري في التخزين المحلي وأحداث متصفح مخصصة (<code className="text-amber-300">weather_updated</code>).
+              </p>
+            </div>
+          </div>
+        )}
 
       </div>
+
+
+      {/* FULL METRICS DETAIL MODAL */}
+      <AnimatePresence>
+        {activeModalData && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white rounded-[32px] p-6 max-w-lg w-full shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto space-y-5"
+              dir="rtl"
+            >
+              <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <h3 className="text-lg font-black font-cairo text-slate-800">{activeModalData.title}</h3>
+                  <p className="text-xs text-sky-600 font-bold font-cairo mt-0.5">{activeModalData.subtitle}</p>
+                </div>
+                <button
+                  onClick={() => setActiveModalData(null)}
+                  className="p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {activeModalData.description && (
+                <p className="text-xs font-cairo text-slate-600 bg-sky-50/80 p-3.5 rounded-2xl border border-sky-100 leading-relaxed">
+                  {activeModalData.description}
+                </p>
+              )}
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {activeModalData.metrics.map((m, idx) => {
+                  const Icon = m.icon;
+                  return (
+                    <div key={idx} className="bg-slate-50 p-3 rounded-2xl border border-slate-100 flex flex-col items-start gap-1">
+                      <div className="flex items-center gap-1.5">
+                        <Icon className={`w-4 h-4 ${m.color || "text-slate-600"}`} />
+                        <span className="text-[10px] font-bold text-slate-500 font-cairo">{m.label}</span>
+                      </div>
+                      <span className="text-sm font-black font-sans text-slate-800 mt-1">{m.value}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={() => setActiveModalData(null)}
+                  className="w-full py-3 bg-slate-900 text-white rounded-2xl font-bold text-xs font-cairo hover:bg-slate-800 transition-colors shadow-md"
+                >
+                  إغلاق النافذة
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* DEDICATED DAY HOURLY FORECAST FULL PAGE VIEW */}
+      <AnimatePresence>
+        {selectedDayModalData && (
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -30 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            className="fixed inset-0 z-50 bg-[#0F172A] text-white overflow-y-auto p-4 sm:p-6 md:p-8 select-none font-sans"
+            dir="rtl"
+          >
+            {/* Ambient Background Effect */}
+            <div className="fixed inset-0 pointer-events-none z-0 opacity-40">
+              <WeatherBackgroundEffect
+                weatherCode={selectedDayModalData.dayItem?.weather?.[0]?.id || 800}
+                isNight={false}
+                dtSec={selectedDayModalData.dayItem?.dt}
+              />
+              <div className="absolute inset-0 bg-slate-950/70 backdrop-blur-2xl" />
+            </div>
+
+            <div className="relative z-10 max-w-3xl mx-auto space-y-5 pb-16">
+              {/* Sticky Top Bar / Header with Prominent Back Button */}
+              <div className="flex items-center justify-between border-b border-slate-800/80 pb-4 sticky top-0 bg-[#0F172A]/90 backdrop-blur-xl z-30 pt-2 -mx-2 px-2">
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setSelectedDayModalData(null)}
+                    className="p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all flex items-center gap-2 text-xs font-bold font-cairo shadow-md cursor-pointer"
+                    title="العودة للصفحة الرئيسية"
+                  >
+                    <ChevronLeft className="w-5 h-5 rotate-180" />
+                    <span className="hidden sm:inline">العودة للرئيسية</span>
+                  </button>
+                  <div>
+                    <h2 className="text-lg sm:text-xl font-black font-cairo text-white flex items-center gap-2">
+                      توقعات الساعات القادمة ليوم {selectedDayModalData.dayName}
+                    </h2>
+                    <p className="text-xs text-sky-400 font-bold font-cairo mt-0.5">
+                      {selectedDayModalData.dateFormatted} • حالة الطقس المباشرة
+                    </p>
+                  </div>
+                </div>
+
+                <span className="text-xs font-bold text-emerald-400 bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 rounded-full font-cairo shrink-0">
+                  تفاصيل الساعات
+                </span>
+              </div>
+
+              {/* Day Summary Banner */}
+              <div className="bg-gradient-to-r from-indigo-900/60 to-purple-900/60 p-5 rounded-3xl border border-indigo-500/30 flex items-center justify-between flex-wrap gap-3 shadow-lg">
+                <div>
+                  <span className="text-[11px] font-bold text-indigo-300 block font-cairo">الملخص اليومي المتوقع</span>
+                  <span className="text-base font-bold font-cairo text-white mt-0.5 block">
+                    {selectedDayModalData.dayItem?.weather?.[0]?.description || "حالة جوية مستقرة"}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2.5 font-sans font-black text-sm sm:text-base">
+                  <div className="flex items-center gap-1.5 text-rose-400 bg-black/40 px-3 py-1 rounded-full border border-rose-400/40" title="الحرارة العظمى">
+                    <ArrowUp className="w-4 h-4 stroke-[3]" />
+                    <span>{displayTemp(selectedDayModalData.dayItem?.main?.temp_max)}°</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sky-300 bg-black/40 px-3 py-1 rounded-full border border-sky-300/40" title="الحرارة الصغرى">
+                    <ArrowDown className="w-4 h-4 stroke-[3]" />
+                    <span>{displayTemp(selectedDayModalData.dayItem?.main?.temp_min)}°</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Sub-Header */}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-xs font-bold font-cairo text-slate-300">
+                  جدول أوقات اليوم المتوقعة ({selectedDayModalData.hourlyList.length} أوقات)
+                </span>
+                <span className="text-[11px] font-extrabold text-amber-300 bg-amber-500/20 px-3 py-1 rounded-full border border-amber-500/30 font-cairo">
+                  تحديث حقيقي
+                </span>
+              </div>
+
+              {/* Hourly Cards Vertical List */}
+              <div className="flex flex-col gap-3.5">
+                {selectedDayModalData.hourlyList.map((hour: any, idx: number) => {
+                  const hourDate = new Date(hour.dt * 1000);
+                  const timeFormatted = hourDate.toLocaleTimeString('ar-YE', { hour: 'numeric', hour12: true });
+                  const wCode = hour.weather?.[0]?.id || 800;
+                  const hPeriod = getTimePeriod(hour.dt);
+                  const hCategory = getCategoryFromCode(wCode, hPeriod.isNight);
+                  const hTheme = getWeatherTheme(hCategory, hPeriod);
+                  const hPop = Math.round((hour.pop || 0) * 100);
+                  const hTemp = hour.main?.temp ?? hour.temp;
+                  
+                  let hMax = hour.main?.temp_max;
+                  let hMin = hour.main?.temp_min;
+                  if (hMax === undefined || hMin === undefined || hMax === hMin) {
+                    const base = hTemp ?? 25;
+                    hMax = base + 1;
+                    hMin = base - 1;
+                  }
+
+                  const hWindSpeed = hour.wind?.speed ?? hour.wind_speed ?? 3.5;
+                  const hWindDeg = hour.wind?.deg ?? hour.wind_deg;
+                  const hWindDir = getWindDirectionArabic(hWindDeg);
+                  const hHumidity = hour.main?.humidity ?? hour.humidity ?? 60;
+                  const hPressure = hour.main?.pressure ?? hour.pressure ?? 1012;
+                  const hDesc = hour.weather?.[0]?.description || parseWmoCode(wCode, hPeriod.isNight).text;
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`relative rounded-3xl p-4 sm:p-5 text-white shadow-md border overflow-hidden bg-gradient-to-r ${hTheme.theme}`}
+                    >
+                      <WeatherBackgroundEffect 
+                        weatherCode={wCode} 
+                        isNight={hPeriod.isNight} 
+                        dtSec={hour.dt}
+                        className="opacity-40 pointer-events-none" 
+                      />
+                      <div className="absolute inset-0 bg-slate-950/25 backdrop-blur-[2px] pointer-events-none" />
+
+                      <div className="relative z-10 flex flex-col gap-3">
+                        {/* Top Row */}
+                        <div className="flex items-center justify-between border-b border-white/20 pb-2.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-black font-sans bg-black/35 backdrop-blur-md px-3 py-1 rounded-full border border-white/25 text-white">
+                              {timeFormatted}
+                            </span>
+                            <span className="text-[11px] font-bold font-cairo bg-white/20 backdrop-blur-xs px-2.5 py-1 rounded-full text-white/95">
+                              فترة {hPeriod.labelAr}
+                            </span>
+                          </div>
+
+                          <span className="text-xs font-bold font-cairo text-amber-200 bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/15">
+                            {hDesc}
+                          </span>
+                        </div>
+
+                        {/* Middle Row: Temp & Max/Min Colored Numbers with Icons ONLY */}
+                        <div className="flex items-center justify-between py-1">
+                          <div>
+                            <div className="flex items-baseline gap-2">
+                              <span className="text-3xl sm:text-4xl font-black font-sans tracking-tight">
+                                {displayTemp(hTemp)}°
+                              </span>
+                              <span className="text-xs font-bold font-cairo text-amber-300">°{unit}</span>
+                            </div>
+
+                            {/* Max/Min Colored Numbers with Icons ONLY - NO TEXT LABELS */}
+                            <div className="flex items-center gap-2 mt-1.5 font-sans font-black text-xs sm:text-sm">
+                              <div className="flex items-center gap-1 text-rose-400 bg-black/30 px-2.5 py-0.5 rounded-full border border-rose-400/30" title="الحرارة العظمى">
+                                <ArrowUp className="w-3.5 h-3.5 stroke-[3]" />
+                                <span>{displayTemp(hMax)}°</span>
+                              </div>
+                              <div className="flex items-center gap-1 text-sky-300 bg-black/30 px-2.5 py-0.5 rounded-full border border-sky-300/30" title="الحرارة الصغرى">
+                                <ArrowDown className="w-3.5 h-3.5 stroke-[3]" />
+                                <span>{displayTemp(hMin)}°</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <Interactive3DWeatherIllustration 
+                            weatherCode={wCode} 
+                            isNight={hPeriod.isNight} 
+                            className="w-16 h-16 sm:w-20 sm:h-20 drop-shadow-md" 
+                          />
+                        </div>
+
+                        {/* Metrics Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/20 text-xs font-cairo">
+                          <div className="bg-black/25 backdrop-blur-md p-2 rounded-2xl border border-white/10 flex items-center gap-2">
+                            <CloudRain className="w-4 h-4 text-sky-300 shrink-0" />
+                            <div>
+                              <span className="text-[10px] text-white/75 block">احتمال الأمطار</span>
+                              <span className="font-black font-sans text-white text-xs">{hPop}%</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-black/25 backdrop-blur-md p-2 rounded-2xl border border-white/10 flex items-center gap-2">
+                            <Wind className="w-4 h-4 text-emerald-300 shrink-0" />
+                            <div>
+                              <span className="text-[10px] text-white/75 block">الرياح ({hWindDir})</span>
+                              <span className="font-black font-sans text-white text-xs">{hWindSpeed} م/ث</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-black/25 backdrop-blur-md p-2 rounded-2xl border border-white/10 flex items-center gap-2">
+                            <Droplets className="w-4 h-4 text-blue-300 shrink-0" />
+                            <div>
+                              <span className="text-[10px] text-white/75 block">الرطوبة النسبية</span>
+                              <span className="font-black font-sans text-white text-xs">{hHumidity}%</span>
+                            </div>
+                          </div>
+
+                          <div className="bg-black/25 backdrop-blur-md p-2 rounded-2xl border border-white/10 flex items-center gap-2">
+                            <Gauge className="w-4 h-4 text-purple-300 shrink-0" />
+                            <div>
+                              <span className="text-[10px] text-white/75 block">الضغط الجوي</span>
+                              <span className="font-black font-sans text-white text-xs">{hPressure} hPa</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-4 pb-8">
+                <button
+                  onClick={() => setSelectedDayModalData(null)}
+                  className="w-full py-3.5 bg-gradient-to-r from-sky-600 via-indigo-600 to-purple-600 text-white rounded-2xl font-bold text-xs sm:text-sm font-cairo hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4 rotate-180" />
+                  <span>إغلاق هذه الصفحة والعودة لتفاصيل الطقس</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };

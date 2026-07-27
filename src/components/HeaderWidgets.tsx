@@ -19,7 +19,7 @@ const RedCalendarIcon = () => (
   </svg>
 );
 
-import { fetchOpenMeteoData } from "../utils/weatherApi";
+import { fetchWeatherData } from "../utils/weatherApi";
 import { Interactive3DWeatherIllustration, parseWmoCode, getCategoryFromCode, getWeatherTheme, WeatherBackgroundEffect } from "../pages/WeatherDetail";
 import { PrayerBackgroundEffect } from "./PrayerBackgroundEffect";
 
@@ -49,14 +49,7 @@ const MosqueDomeIllustration = () => (
 export const HeaderWidgets: React.FC = () => {
   const [time, setTime] = useState(new Date());
   
-  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max: number; temp_min: number; condition: string; id: number; precip_prob?: number } | null>(() => {
-    try {
-      const cached = localStorage.getItem("cached_weather_data");
-      return cached ? JSON.parse(cached) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [weatherData, setWeatherData] = useState<{ temp: number; temp_max: number; temp_min: number; condition: string; id: number; precip_prob?: number } | null>(null);
 
   const [prayerTimes, setPrayerTimes] = useState<{ name: string; time: string }[] | null>(() => {
     try {
@@ -81,28 +74,82 @@ export const HeaderWidgets: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const omData = await fetchOpenMeteoData();
-        const current = omData.current;
-        const daily = omData.daily;
+    const handleWeatherUpdate = (e: any) => {
+      if (e?.detail?.current) {
+        const current = e.detail.current;
+        const forecastList = e.detail.forecast?.list || [];
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayForecasts = forecastList.filter((f: any) => {
+          const dateStr = new Date(f.dt * 1000).toISOString().split('T')[0];
+          return dateStr === todayStr;
+        });
 
-        const wCode = current.weather_code;
-        const isNightTime = current.is_day === 0;
-        const parsedCondition = parseWmoCode(wCode, isNightTime);
-        const conditionText = parsedCondition.text;
+        const temp_max = todayForecasts.length > 0 
+          ? Math.max(...todayForecasts.map((f: any) => f.main.temp_max))
+          : current.main.temp_max || (current.main.temp + 4);
+          
+        const temp_min = todayForecasts.length > 0 
+          ? Math.min(...todayForecasts.map((f: any) => f.main.temp_min))
+          : current.main.temp_min || (current.main.temp - 4);
 
-        const newWeatherData = {
-          temp: Math.round(current.temperature_2m),
-          temp_max: Math.round(daily.temperature_2m_max[0]),
-          temp_min: Math.round(daily.temperature_2m_min[0]),
+        const pop = todayForecasts.length > 0
+          ? Math.max(...todayForecasts.map((f: any) => f.pop || 0)) * 100
+          : 0;
+
+        const wCode = current.weather?.[0]?.id || 801;
+        const conditionText = current.weather?.[0]?.description || "غائم جزئياً";
+
+        setWeatherData({
+          temp: Math.round(current.main.temp),
+          temp_max: Math.round(temp_max),
+          temp_min: Math.round(temp_min),
           condition: conditionText,
           id: wCode,
-          precip_prob: daily.precipitation_probability_max && daily.precipitation_probability_max.length > 0 ? Math.round(daily.precipitation_probability_max[0]) : 0,
+          precip_prob: Math.round(pop),
+        });
+      }
+    };
+
+    window.addEventListener("weather_updated", handleWeatherUpdate);
+
+    const fetchWeather = async () => {
+      try {
+        const omData = await fetchWeatherData();
+        const current = omData.current;
+        const forecastList = omData.forecast?.list || [];
+        
+        // Find max and min temp for today from forecast list
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todayForecasts = forecastList.filter((f: any) => {
+          const dateStr = new Date(f.dt * 1000).toISOString().split('T')[0];
+          return dateStr === todayStr;
+        });
+
+        const temp_max = todayForecasts.length > 0 
+          ? Math.max(...todayForecasts.map((f: any) => f.main.temp_max))
+          : current.main.temp_max || (current.main.temp + 4);
+          
+        const temp_min = todayForecasts.length > 0 
+          ? Math.min(...todayForecasts.map((f: any) => f.main.temp_min))
+          : current.main.temp_min || (current.main.temp - 4);
+
+        const pop = todayForecasts.length > 0
+          ? Math.max(...todayForecasts.map((f: any) => f.pop || 0)) * 100
+          : 0;
+
+        const wCode = current.weather[0]?.id || 801;
+        const conditionText = current.weather[0]?.description || "غائم جزئياً";
+
+        const newWeatherData = {
+          temp: Math.round(current.main.temp),
+          temp_max: Math.round(temp_max),
+          temp_min: Math.round(temp_min),
+          condition: conditionText,
+          id: wCode,
+          precip_prob: Math.round(pop),
         };
 
         setWeatherData(newWeatherData);
-        localStorage.setItem("cached_weather_data", JSON.stringify(newWeatherData));
       } catch (e) {
         if (!weatherData) {
           const fallbackData = {

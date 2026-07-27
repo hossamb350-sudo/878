@@ -141,8 +141,13 @@ app.get("/api/quran-data", (req, res) => {
 // Weather API
 app.get("/api/weather", async (req, res) => {
   try {
-    const { lat = "13.5795", lon = "44.0203" } = req.query; // Default to Taiz
+    const { lat = "13.660174", lon = "44.131802" } = req.query; // Exact location coordinates
     const apiKey = process.env.OPENWEATHER_API_KEY || "1a2ac08a2810cf611d134c7b57a478a9";
+
+    // Disable caching headers for live real-time updates
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather`, {
       params: {
@@ -157,7 +162,6 @@ app.get("/api/weather", async (req, res) => {
     res.json(response.data);
   } catch (error: any) {
     console.error("Error fetching weather data:", error.response?.data || error.message);
-    // Fallback response if OpenWeather is unreachable
     res.status(500).json({ error: "Failed to fetch weather data", details: error.message });
   }
 });
@@ -165,8 +169,13 @@ app.get("/api/weather", async (req, res) => {
 // Forecast API
 app.get("/api/forecast", async (req, res) => {
   try {
-    const { lat = "13.5795", lon = "44.0203" } = req.query; // Default to Taiz
+    const { lat = "13.660174", lon = "44.131802" } = req.query; // Exact location coordinates
     const apiKey = process.env.OPENWEATHER_API_KEY || "1a2ac08a2810cf611d134c7b57a478a9";
+
+    // Disable caching headers for live real-time updates
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
 
     const response = await axios.get(`https://api.openweathermap.org/data/2.5/forecast`, {
       params: {
@@ -182,6 +191,32 @@ app.get("/api/forecast", async (req, res) => {
   } catch (error: any) {
     console.error("Error fetching forecast data:", error.response?.data || error.message);
     res.status(500).json({ error: "Failed to fetch forecast data", details: error.message });
+  }
+});
+
+// Air Pollution API (OpenWeatherMap)
+app.get("/api/air_pollution", async (req, res) => {
+  try {
+    const { lat = "13.660174", lon = "44.131802" } = req.query; // Exact location coordinates
+    const apiKey = process.env.OPENWEATHER_API_KEY || "1a2ac08a2810cf611d134c7b57a478a9";
+
+    // Disable caching headers for live real-time updates
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    const response = await axios.get(`https://api.openweathermap.org/data/2.5/air_pollution`, {
+      params: {
+        lat,
+        lon,
+        appid: apiKey
+      }
+    });
+
+    res.json(response.data);
+  } catch (error: any) {
+    console.error("Error fetching air pollution data:", error.response?.data || error.message);
+    res.status(500).json({ error: "Failed to fetch air pollution data", details: error.message });
   }
 });
 
@@ -824,6 +859,7 @@ function saveStoredSubscriptions(subs: any[]) {
 
 // Subscribe route
 app.post("/api/push/subscribe", (req, res) => {
+
   const subscription = req.body;
   
   if (!subscription || !subscription.endpoint) {

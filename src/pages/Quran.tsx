@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { auth, db } from "../firebase";
 import { useSearchParams } from "react-router-dom";
 import {
   QuranSeries,
@@ -455,8 +456,12 @@ const SyllabusesView = ({
           </p>
         ) : (
           activeSyllabuses.map((item: any) => {
-            const lesson = lessonsList.find((l: any) => l.id === item.lessonId);
-            if (!lesson) return null;
+            const lesson = lessonsList.find((l: any) => l.id === item.lessonId) || {
+              id: item.lessonId,
+              title: item.lessonTitle || "درس مقرر",
+              seriesId: item.seriesId || "",
+              seriesTitle: item.seriesTitle || "",
+            };
             return (
               <button
                 key={item.id}
@@ -1350,8 +1355,26 @@ export function Quran() {
       if (active) setLoading(false);
     });
 
+    // 4. Listen to live syllabuses from Firestore collection quran_syllabuses
+    const unsubSyllabuses = onSnapshot(
+      query(collection(db, "quran_syllabuses"), orderBy("createdAt", "desc")),
+      (snap) => {
+        if (!active) return;
+        if (!snap.empty) {
+          const fsSyllabuses = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+          const now = Date.now();
+          const activeSyllabuses = fsSyllabuses.filter((s: any) => !s.expiresAt || now <= s.expiresAt);
+          setSyllabusesList(activeSyllabuses as any);
+        }
+      },
+      (err) => {
+        console.warn("Could not subscribe to live quran_syllabuses:", err);
+      }
+    );
+
     return () => {
       unsubAuth();
+      unsubSyllabuses();
       active = false;
     };
   }, []);
