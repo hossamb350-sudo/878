@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { FavoritesList } from "./FavoritesList";
 import { ContactUsSection } from "./ContactUsSection";
+import { getShareableUrl } from "../config/apiConfig";
 
 interface UserProfileSectionProps {
   user: FirebaseUser;
@@ -168,7 +169,7 @@ export function UserProfileSection({ profile, logout }: UserProfileSectionProps)
             <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(window.location.href);
+                  navigator.clipboard.writeText(getShareableUrl());
                   showToast("تم نسخ رابط الحساب الشخصي 📋");
                 }}
                 className="flex items-center justify-center gap-2 text-xs sm:text-sm font-bold bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl transition-all cursor-pointer shadow-xs active:scale-95"

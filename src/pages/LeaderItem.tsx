@@ -26,6 +26,7 @@ import {
   Clock
 } from "lucide-react";
 import { motion } from "motion/react";
+import { getShareableUrl } from "../config/apiConfig";
 
 // Helper function to translate standard video links into embeddable URLs
 const getEmbedUrl = (url: string) => {
@@ -205,11 +206,12 @@ export function LeaderItem() {
 
   const shareText = () => {
     if (!content) return;
+    const shareableUrl = getShareableUrl(`/leader/${id || content.id}`);
     if (navigator.share) {
       navigator.share({
         title: content.title,
         text: `بشأن: ${content.title}\nمن السيد القائد حفظه الله`,
-        url: window.location.href,
+        url: shareableUrl,
       }).catch(err => console.debug("Share failed", err));
     } else {
       handleCopyText();

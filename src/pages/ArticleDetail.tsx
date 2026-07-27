@@ -25,6 +25,7 @@ import {
   ChevronLeft
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { getShareableUrl } from "../config/apiConfig";
 
 export function ArticleDetail() {
   const { id } = useParams();
@@ -187,7 +188,7 @@ export function ArticleDetail() {
   }, [id]);
 
   const handleShare = async (platform: string) => {
-    const url = window.location.href;
+    const url = getShareableUrl(`/articles/${id || article?.id}`);
     const text = article?.title || "";
 
     if (platform === "copy") {

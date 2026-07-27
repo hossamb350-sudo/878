@@ -11,6 +11,7 @@ import {
   Maximize, Monitor, Volume2, Settings, Video as VideoIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { getShareableUrl } from "../config/apiConfig";
 
 export function WatchItem() {
   const { id } = useParams();
@@ -126,14 +127,15 @@ export function WatchItem() {
 
   const handleShare = () => {
     if (!video) return;
+    const shareableUrl = getShareableUrl(`/watch/${id || video.id}`);
     if (navigator.share) {
       navigator.share({
         title: video.title,
         text: `شاهد: ${video.title}\nعبر منصة تغذية شاهد الإعلامية`,
-        url: window.location.href
+        url: shareableUrl
       }).catch(err => console.debug("Share failed", err));
     } else {
-      navigator.clipboard.writeText(window.location.href);
+      navigator.clipboard.writeText(shareableUrl);
       setShareSuccess(true);
       setTimeout(() => setShareSuccess(false), 2000);
     }

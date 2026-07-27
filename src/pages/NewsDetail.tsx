@@ -27,6 +27,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { getShareableUrl } from "../config/apiConfig";
 
 export function NewsDetail() {
   const { id } = useParams();
@@ -208,7 +209,7 @@ export function NewsDetail() {
   };
 
   const handleShare = async (platform: string) => {
-    const url = window.location.href;
+    const url = getShareableUrl(`/news/${id || news?.id}`);
     const text = news?.title || "";
 
     if (platform === "copy") {

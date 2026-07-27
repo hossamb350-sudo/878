@@ -6,6 +6,19 @@ export const PROD_URL = "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.eur
 
 export const API_BASE = Capacitor.isNativePlatform() ? (isProd ? PROD_URL : DEV_URL) : "";
 
+// Generate a public, shareable URL for mobile and web platforms
+export function getShareableUrl(currentPath?: string): string {
+  const envUrl = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env.VITE_PUBLIC_SITE_URL : undefined;
+  const siteBase = (envUrl && envUrl.trim() !== "")
+    ? envUrl.trim().replace(/\/+$/, "")
+    : "https://taiz-media-ye.vercel.app";
+
+  const path = currentPath || (typeof window !== "undefined" ? window.location.pathname + window.location.search : "");
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+  return `${siteBase}${cleanPath}`;
+}
+
 // A robust fetch that handles cold-starts, retries, and environment URL fallbacks on mobile
 export async function fetchWithFallback(path: string, options?: RequestInit, retries = 3, delay = 2000): Promise<Response> {
   const isNative = Capacitor.isNativePlatform();
