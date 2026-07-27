@@ -3,11 +3,11 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app/api/:path*"
     },
     {
-      "source": "/((?!api/).*)",
+      "source": "/:path*",
       "destination": "/index.html"
     }
   ]
