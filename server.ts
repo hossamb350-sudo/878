@@ -142,7 +142,7 @@ app.get("/api/quran-data", (req, res) => {
 app.get("/api/weather", async (req, res) => {
   try {
     const { lat = "13.660174", lon = "44.131802" } = req.query; // Exact location coordinates
-    const apiKey = process.env.OPENWEATHER_API_KEY || "1a2ac08a2810cf611d134c7b57a478a9";
+    const apiKey = process.env.OPENWEATHER_API_KEY || "";
 
     // Disable caching headers for live real-time updates
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
@@ -170,7 +170,7 @@ app.get("/api/weather", async (req, res) => {
 app.get("/api/forecast", async (req, res) => {
   try {
     const { lat = "13.660174", lon = "44.131802" } = req.query; // Exact location coordinates
-    const apiKey = process.env.OPENWEATHER_API_KEY || "1a2ac08a2810cf611d134c7b57a478a9";
+    const apiKey = process.env.OPENWEATHER_API_KEY || "";
 
     // Disable caching headers for live real-time updates
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
@@ -198,7 +198,7 @@ app.get("/api/forecast", async (req, res) => {
 app.get("/api/air_pollution", async (req, res) => {
   try {
     const { lat = "13.660174", lon = "44.131802" } = req.query; // Exact location coordinates
-    const apiKey = process.env.OPENWEATHER_API_KEY || "1a2ac08a2810cf611d134c7b57a478a9";
+    const apiKey = process.env.OPENWEATHER_API_KEY || "";
 
     // Disable caching headers for live real-time updates
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");

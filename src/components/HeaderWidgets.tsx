@@ -137,8 +137,8 @@ export const HeaderWidgets: React.FC = () => {
           ? Math.max(...todayForecasts.map((f: any) => f.pop || 0)) * 100
           : 0;
 
-        const wCode = current.weather[0]?.id || 801;
-        const conditionText = current.weather[0]?.description || "غائم جزئياً";
+        const wCode = current?.weather?.[0]?.id || 801;
+        const conditionText = current?.weather?.[0]?.description || "غائم جزئياً";
 
         const newWeatherData = {
           temp: Math.round(current.main.temp),
