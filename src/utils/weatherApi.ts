@@ -1,3 +1,5 @@
+import { fetchWithFallback } from "../config/apiConfig";
+
 export interface WeatherDataPayload {
   current: any;
   forecast: any;
@@ -11,20 +13,21 @@ export async function fetchWeatherData(): Promise<WeatherDataPayload> {
   const ts = Date.now();
 
   try {
-    // Direct live request without caching (cache: 'no-store')
+    // Live requests using robust mobile fallback fetcher
     const [weatherRes, forecastRes, pollutionRes] = await Promise.all([
-      fetch(`/api/weather?lat=${lat}&lon=${lon}&_t=${ts}`, { cache: "no-store" }),
-      fetch(`/api/forecast?lat=${lat}&lon=${lon}&_t=${ts}`, { cache: "no-store" }),
-      fetch(`/api/air_pollution?lat=${lat}&lon=${lon}&_t=${ts}`, { cache: "no-store" }).catch(() => null)
+      fetchWithFallback(`/api/weather?lat=${lat}&lon=${lon}&_t=${ts}`, { cache: "no-store" }),
+      fetchWithFallback(`/api/forecast?lat=${lat}&lon=${lon}&_t=${ts}`, { cache: "no-store" }),
+      fetchWithFallback(`/api/air_pollution?lat=${lat}&lon=${lon}&_t=${ts}`, { cache: "no-store" }).catch(() => null)
     ]);
 
-    if (!weatherRes.ok || !forecastRes.ok) {
+    if (!weatherRes || !forecastRes || !weatherRes.ok || !forecastRes.ok) {
       throw new Error("Failed to fetch weather data from API");
     }
 
     const current = await weatherRes.json();
     const forecast = await forecastRes.json();
     const airPollution = pollutionRes && pollutionRes.ok ? await pollutionRes.json() : null;
+
 
     const payload: WeatherDataPayload = {
       current,
