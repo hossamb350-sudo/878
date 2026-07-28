@@ -50,19 +50,6 @@ export class ImageUploadService {
         });
       };
 
-      // Try arrayBuffer if available (modern browsers, more robust)
-      try {
-        if (typeof f.arrayBuffer === 'function') {
-          const buffer = await f.arrayBuffer();
-          // Still use FileReader to convert to DataURL because it's efficient for large files
-          // and usually works fine with an in-memory buffer
-          const blob = new Blob([buffer], { type: f.type });
-          return await readWithFileReader(blob);
-        }
-      } catch (e) {
-        console.warn("[ImageUploadService] arrayBuffer read failed, trying standard FileReader", e);
-      }
-
       // Standard fallback with retry
       let lastErr: any;
       for (let i = 0; i < retries; i++) {

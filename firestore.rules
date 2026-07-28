@@ -169,6 +169,16 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isManager();
     }
+
+    match /newspapers/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    match /newspaper_logs/{id} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
   }
 }
 

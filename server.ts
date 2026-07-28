@@ -424,7 +424,7 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
       try {
         console.log(`Calling Gemini for series ${s.id}...`);
         const response = await ai.models.generateContent({
-          model: "gemini-1.5-flash",
+          model: "gemini-2.5-flash",
           contents: prompt,
         });
 
@@ -947,6 +947,137 @@ app.post("/api/push/send", async (req, res) => {
   } catch (err: any) {
     console.error("Error broadcasting push notifications:", err);
     res.status(500).json({ error: "Failed to broadcast some notifications.", message: err.message });
+  }
+});
+
+// AI Newspaper Assistant Route
+app.post("/api/newspaper/ai-assist", async (req, res) => {
+  try {
+    const { task, issueData, selectedItems } = req.body;
+    const ai = getAiClient();
+
+    if (task === "generate_editorial") {
+      const prompt = `أنت رئيس تحرير صحيفة إلكترونية يمنية احترافية باسم "${issueData?.title || 'صحيفة تعز الإعلامية'}".
+يرجى كتابة افتتاحية عدد برصانة وبلاغة صحفية عالية تحت عنوان رئيسي أو موضوع العدد: "${issueData?.mainHeadline || 'الأحداث والتطورات الجارية'}".
+المطلوب:
+1. عنوان للافتتاحية (مثال: كلمة العدد / رؤية إعلامية).
+2. نص الافتتاحية في فقرات متناسقة (حوالي 150 - 250 كلمة) تغطي أهمية الرسالة الإعلامية وتستعرض التطورات بأسلوب صحفي راقٍ.
+أعد النتيجة بصيغة JSON كالتالي:
+{
+  "title": "عنوان الافتتاحية",
+  "content": "نص الافتتاحية الكامل هنا..."
+}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const text = response.text || "{}";
+      return res.json(JSON.parse(text));
+    }
+
+    if (task === "auto_layout") {
+      const prompt = `أنت مخرج صحفي احترافي (Art Director) لصحيفة كبرى بمهارة عالمية. 
+مطلوب منك إنشاء تخطيط متكامل (Layout) لإصدار صحيفة مطبوعة/إلكترونية بناءً على المواد التالية:
+${JSON.stringify((selectedItems || []).slice(0, 15).map((item: any) => ({
+  id: item.id,
+  title: item.title,
+  category: item.category || 'عام',
+  sourceType: item.sourceType || 'news',
+  summary: item.summary || item.shortDescription || item.content?.substring(0, 100),
+  hasImage: !!(item.imageUrl || item.image)
+})))}
+
+المعايير الفنية والطباعية الصارمة:
+1. **مقاسات الصفحات:** الصحيفة تعتمد بشكل افتراضي مقاس "Broadsheet" أو يمكن تغييرها.
+2. **الشبكة الإخراجية (Grid):** 6 إلى 8 أعمدة للصفحات الداخلية، و4 إلى 6 أعمدة للغلاف. المسافة بين الأعمدة 4-6 مم.
+3. **أحجام الخطوط والتسلسل البصري:**
+   - اسم الصحيفة: 80-130pt
+   - عنوان الصفحة: 24-34pt
+   - العنوان الرئيسي (الغلاف): 42-72pt
+   - العنوان الداخلي: 30-48pt
+   - العناوين الفرعية: 18-26pt
+   - متن الأخبار: 9.5-11pt
+4. **الصور:** حدد حجم الصورة (full, half, quarter, inline, square, rect, pano).
+5. **التخطيطات (Templates):** لا تعتمد قالباً ثابتاً، ابتكر توزيعاً ديناميكياً يوازن المساحات البيضاء، وأعمدة النصوص، والإعلانات، والاقتباسات.
+6. **الذكاء الاصطناعي الإخراجي:** حلل أهمية الخبر وحدد (importance: high/medium/low) ليتم تخصيص عدد الأعمدة (colSpan) و(rowSpan).
+
+أعد النتيجة حصراً بصيغة JSON متوافقة مع هذا الهيكل:
+{
+  "theme": "classic",
+  "pageSize": "broadsheet",
+  "fontFamily": "IBM Plex Sans Arabic",
+  "marginTop": 20, "marginBottom": 20, "marginLeft": 15, "marginRight": 15, "safeArea": 12,
+  "pages": [
+    {
+      "pageNumber": 1,
+      "pageType": "cover",
+      "title": "الغلاف الرئيسي",
+      "gridColumns": 6,
+      "columnGap": 5,
+      "layoutTemplate": "dynamic-cover-v1",
+      "items": [
+        {
+          "id": "item_id_here",
+          "importance": "high",
+          "imageSize": "pano",
+          "columns": 4,
+          "colSpan": 4,
+          "rowSpan": 2,
+          "featuredBox": false
+        }
+        // ... (توزيع باقي المواد أو إعلانات id="ad-1" مثلاً)
+      ],
+      "notes": "تعليمات للمخرج حول توازن الغلاف"
+    }
+  ],
+  "editorialSuggestions": "نصائح إخراجية لضمان التوازن البصري والجاذبية"
+}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const text = response.text || "{}";
+      return res.json(JSON.parse(text));
+    }
+
+    if (task === "enhance_subheadings") {
+      const { title, content } = req.body;
+      const prompt = `أنت محرر صحفي متمرس. قم بإنشاء 3 عناوين فرعية شارحة وموجزة (Deck / Subheadlines) واقتباس بارز (Pull Quote) للعنوان التالي:
+العنوان: "${title}"
+النص المختصر: "${(content || '').substring(0, 300)}"
+
+أعد النتيجة بصيغة JSON:
+{
+  "subtitles": ["عنوان فرعي 1", "عنوان فرعي 2"],
+  "pullQuote": "نص الاقتباس البارز لاستخدامه في كادر إخراجي"
+}`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json"
+        }
+      });
+
+      const text = response.text || "{}";
+      return res.json(JSON.parse(text));
+    }
+
+    return res.status(400).json({ error: "المهام المتاحة: generate_editorial, auto_layout, enhance_subheadings" });
+  } catch (error: any) {
+    console.error("AI Newspaper Assist Error:", error);
+    res.status(500).json({ error: error.message || "فشل معالجة طلب الذكاء الاصطناعي للصحيفة" });
   }
 });
 

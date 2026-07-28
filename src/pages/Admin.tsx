@@ -56,6 +56,7 @@ import {
   XCircle,
   Clock,
   User,
+  Newspaper,
   Settings,
   Heart,
   LayoutGrid,
@@ -114,6 +115,7 @@ import { AdminCategoryManager } from "../components/AdminCategoryManager";
 import { AdminArticles } from "../components/AdminArticles";
 import { AdminOnlineUsers } from "../components/AdminOnlineUsers";
 import { AdminRegisteredUsers } from "../components/AdminRegisteredUsers";
+import { AdminNewspaperManager } from "../components/AdminNewspaperManager";
 import { OnlineUsersConfig, RegisteredUsersConfig } from "../services/OnlineUsersService";
 import { ContactUsSection } from "../components/ContactUsSection";
 
@@ -457,6 +459,12 @@ export function Admin() {
       icon: BookOpen,
       label: "إدارة المقالات",
       access: isAdmin || isManager || (isEditor && hasPermission("articles")),
+    },
+    {
+      id: "newspaper",
+      icon: Newspaper,
+      label: "الصحيفة الإلكترونية (الإصدارات)",
+      access: isAdmin || isManager || (isEditor && hasPermission("newspaper")),
     },
     {
       id: "events",
@@ -819,6 +827,7 @@ export function Admin() {
                 {activeTab === "live" && <AdminLive />}
                 {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
                 {activeTab === "articles" && <AdminArticles isAdmin={isAdmin} />}
+                {activeTab === "newspaper" && <AdminNewspaperManager userProfile={profile} />}
                 {activeTab === "quran" && <AdminQuran />}
                 {activeTab === "events" && <AdminEvents />}
                 {activeTab === "social" && <AdminSocialLinks />}

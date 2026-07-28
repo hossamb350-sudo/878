@@ -255,3 +255,92 @@ export interface Author {
   bio?: string;
   createdAt: number;
 }
+
+export interface NewspaperArticleRef {
+  id: string;
+  sourceType: 'news' | 'article' | 'custom' | 'ad';
+  sourceId?: string;
+  title: string;
+  subtitle?: string;
+  content: string;
+  summary?: string;
+  imageUrl?: string;
+  caption?: string;
+  authorName?: string;
+  authorPhoto?: string;
+  category?: string;
+  // Advanced Layout
+  importance?: 'high' | 'medium' | 'low'; // used by AI to allocate space
+  imageSize?: 'full' | 'half' | 'quarter' | 'inline' | 'square' | 'rect' | 'pano';
+  columns?: number;
+  rowSpan?: number;
+  colSpan?: number;
+  featuredBox?: boolean;
+  quote?: string;
+  infographicUrl?: string;
+  order: number;
+}
+
+export interface NewspaperPage {
+  id: string;
+  pageNumber: number;
+  pageType: 'cover' | 'editorial' | 'index' | 'news' | 'articles' | 'reports' | 'custom' | 'ad';
+  title: string;
+  subtitle?: string;
+  gridColumns: number; // 4 to 8
+  columnGap?: number; // in mm
+  items: NewspaperArticleRef[];
+  notes?: string;
+  layoutTemplate?: string; // identifier for the AI-generated layout structure
+}
+
+export interface NewspaperIssue {
+  id: string;
+  issueNumber: string;
+  title: string;
+  subTitle?: string;
+  publishDate: string;
+  hijriDate?: string;
+  coverImage?: string;
+  mainHeadline?: string;
+  mainHeadlineSummary?: string;
+  chiefEditorName?: string;
+  chiefEditorTitle?: string;
+  editorNoteTitle?: string;
+  editorNoteContent?: string;
+  theme?: string;
+  accentColor?: string;
+  
+  // Advanced Print Settings
+  pageSize?: 'broadsheet' | 'berliner' | 'tabloid' | 'a3' | 'a4';
+  fontFamily?: string;
+  marginTop?: number; // in mm
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  safeArea?: number;
+
+  status: 'draft' | 'review' | 'published';
+  createdAt: number;
+  updatedAt: number;
+  publishedAt?: number;
+  createdBy: string;
+  createdByName?: string;
+  pages: NewspaperPage[];
+  // Extras from original
+  logoUrl?: string;
+  pdfUrl?: string;
+  views?: number;
+}
+
+export interface NewspaperAuditLog {
+  id: string;
+  issueId: string;
+  issueNumber: string;
+  action: 'create' | 'edit' | 'review' | 'publish' | 'archive' | 'delete';
+  userId: string;
+  userName: string;
+  userRole: string;
+  details: string;
+  timestamp: number;
+}
