@@ -11,13 +11,13 @@ export const app = initializeApp(firebaseConfig);
 let dbInstance;
 try {
   dbInstance = initializeFirestore(app, {
-    experimentalForceLongPolling: true,
+    experimentalAutoDetectLongPolling: true,
     localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
   }, firebaseConfig.firestoreDatabaseId);
 } catch (error) {
   console.warn("Firestore initialization with persistent local cache failed (possibly sandboxed iframe):", error);
   dbInstance = initializeFirestore(app, {
-    experimentalForceLongPolling: true
+    experimentalAutoDetectLongPolling: true
   }, firebaseConfig.firestoreDatabaseId);
 }
 

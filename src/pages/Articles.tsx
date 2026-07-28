@@ -210,6 +210,9 @@ export function Articles() {
       })) as Article[];
       setArticles(data);
       setLoading(false);
+    }, (err) => {
+      console.warn("Firestore articles snapshot error/offline:", err);
+      setLoading(false);
     });
 
     return () => unsub();
