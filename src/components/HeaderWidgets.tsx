@@ -341,45 +341,45 @@ export const HeaderWidgets: React.FC = () => {
   }, [weather.id, isNight]);
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-1.5 sm:px-4 py-1.5 sm:py-3 select-none" dir="rtl">
+    <div className="w-full max-w-[1400px] mx-auto px-1.5 sm:px-4 py-2 sm:py-4 select-none" dir="rtl">
       {/* 4 Columns Horizontal Grid - Compact & Responsive for Mobile */}
-      <div className="grid grid-cols-4 gap-1.5 sm:gap-3 md:gap-4 items-stretch">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3 md:gap-5 items-stretch">
         
         {/* 1. Far Right Item: Platform Logo (شعار المنصة بدون خلفية بيضاء) */}
         <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.35 }}
-          whileHover={{ scale: 1.02, y: -2 }}
-          whileTap={{ scale: 0.98 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ scale: 1.03, y: -2 }}
+          whileTap={{ scale: 0.97 }}
           className="flex items-center justify-center min-h-[105px] sm:min-h-[160px] md:min-h-[185px] w-full h-full overflow-hidden"
         >
           <img 
             src="/logo3.png" 
             alt="منصة تعز الإعلامية" 
-            className="w-full h-full max-h-[105px] sm:max-h-[160px] md:max-h-[185px] object-contain select-none drop-shadow-xs transition-all duration-300 hover:drop-shadow-md" 
+            className="w-full h-full max-h-[105px] sm:max-h-[160px] md:max-h-[185px] object-contain select-none drop-shadow-xs transition-all duration-500 hover:drop-shadow-lg" 
           />
         </motion.div>
 
         {/* 2. Second Item from Right: Prayer Times Card (كارت مواقيت الصلاة) */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.08 }}
-          whileHover={{ scale: 1.02, y: -2 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ y: -4 }}
           whileTap={{ scale: 0.98 }}
           className="w-full h-full"
         >
           <Link 
             to="/prayer-times" 
-            className="relative bg-transparent rounded-[14px] sm:rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-emerald-500/50 p-2 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-md transition-all duration-300 overflow-hidden group h-full block"
+            className="relative bg-white/40 dark:bg-[#111111]/40 backdrop-blur-xl bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
           >
             {/* Top Section */}
             <div className="relative z-10 flex items-start justify-between w-full">
-              <span className="text-[10px] sm:text-[12px] md:text-[14px] font-bold text-emerald-700 dark:text-emerald-400 leading-none tracking-wide font-cairo">
+              <span className="text-[10px] sm:text-[12px] md:text-[14px] font-medium text-emerald-800 dark:text-emerald-300 leading-none tracking-wide font-[Tajawal]">
                 الصلاة القادمة
               </span>
-              <div className="p-1 sm:p-2 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <div className="p-1 sm:p-2 rounded-xl sm:rounded-2xl bg-white/60 dark:bg-black/30 backdrop-blur-md border border-white/50 dark:border-white/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-500 shadow-sm">
                 {formattedPrayer.name === "الفجر" && <MoonStar className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-amber-500 dark:text-amber-300" strokeWidth={1.5} />}
                 {formattedPrayer.name === "الظهر" && <Sun className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-amber-500 dark:text-amber-300" strokeWidth={1.5} />}
                 {formattedPrayer.name === "العصر" && <SunMedium className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-amber-600 dark:text-amber-200" strokeWidth={1.5} />}
@@ -390,14 +390,14 @@ export const HeaderWidgets: React.FC = () => {
 
             {/* Middle Prayer Name */}
             <div className="relative z-10 mt-1 sm:mt-1.5 mb-auto text-right">
-              <h3 className="text-[15px] xs:text-[17px] sm:text-[22px] md:text-[26px] font-black text-slate-900 dark:text-white tracking-tight leading-none font-cairo">
+              <h3 className="text-[15px] xs:text-[17px] sm:text-[22px] md:text-[26px] font-medium text-slate-900 dark:text-white tracking-tight leading-none font-[Tajawal]">
                 {formattedPrayer.name}
               </h3>
             </div>
 
             {/* Bottom Row: Countdown */}
-            <div className="relative z-10 flex items-center justify-center mt-1 sm:mt-2 bg-emerald-50/80 dark:bg-emerald-950/40 rounded-lg sm:rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 border border-emerald-200/80 dark:border-emerald-800/60">
-               <span className="text-[11px] xs:text-[13px] sm:text-[16px] md:text-[18px] font-bold text-emerald-800 dark:text-emerald-300 font-sans tracking-wide flex items-center gap-1.5 sm:gap-2">
+            <div className="relative z-10 flex items-center justify-center mt-1 sm:mt-2 bg-white/50 dark:bg-black/30 backdrop-blur-md rounded-lg sm:rounded-xl px-2 sm:px-3 py-1 sm:py-1.5 border border-white/60 dark:border-white/10 shadow-sm">
+               <span className="text-[11px] xs:text-[13px] sm:text-[16px] md:text-[18px] font-medium text-emerald-900 dark:text-emerald-200 font-sans tracking-wide flex items-center gap-1.5 sm:gap-2">
                 <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-500"></span>
@@ -410,50 +410,50 @@ export const HeaderWidgets: React.FC = () => {
 
         {/* 3. Third Item from Right: Weather Card (كارت الطقس) */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.16 }}
-          whileHover={{ scale: 1.02, y: -2 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ y: -4 }}
           whileTap={{ scale: 0.98 }}
           className="w-full h-full"
         >
           <Link 
             to="/weather" 
-            className="relative bg-transparent rounded-[14px] sm:rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-sky-400/50 p-1.5 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-md transition-all duration-300 overflow-hidden group h-full block"
+            className="relative bg-white/40 dark:bg-[#111111]/40 backdrop-blur-xl bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
           >
             {/* Top Section: Temp + Dynamic 3D Weather Icon */}
             <div className="relative z-10 flex items-start justify-between w-full">
-              <span className="text-[18px] xs:text-[22px] sm:text-[34px] md:text-[42px] font-black text-slate-900 dark:text-white leading-none tracking-tight font-sans">
+              <span className="text-[18px] xs:text-[22px] sm:text-[34px] md:text-[42px] font-medium text-slate-900 dark:text-white leading-none tracking-tight font-[Tajawal]">
                 {weather.temp}°
               </span>
-              <div className="group-hover:scale-105 transition-transform duration-300">
-                <Interactive3DWeatherIllustration weatherCode={weather.id} isNight={isNight} className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20" />
+              <div className="group-hover:scale-110 transition-transform duration-500">
+                <Interactive3DWeatherIllustration weatherCode={weather.id} isNight={isNight} className="w-10 h-10 sm:w-16 sm:h-16 md:w-20 md:h-20 drop-shadow-sm" />
               </div>
             </div>
 
             {/* Middle Weather Condition Description */}
             <div className="relative z-10 mb-auto mt-0.5 sm:mt-1">
-              <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[16px] font-bold text-slate-700 dark:text-slate-300 tracking-wide leading-snug font-cairo">
+              <p className="text-[9.5px] xs:text-[11px] sm:text-[15px] md:text-[16px] font-medium text-slate-800 dark:text-slate-200 tracking-wide leading-snug font-[Tajawal]">
                 {weather.condition}
               </p>
             </div>
 
             {/* Bottom Row: Max/Min Temp & Precip */}
             <div className="relative z-10 flex flex-col gap-1 sm:gap-1.5 mt-auto w-full">
-              <div className="flex items-center gap-1.5 sm:gap-3">
-                <div className="flex items-center gap-0.5 text-amber-600 dark:text-amber-400 font-extrabold text-[9px] xs:text-[11px] sm:text-[14px]">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-0.5 text-amber-700 dark:text-amber-400 font-medium text-[9px] xs:text-[11px] sm:text-[14px]">
                   <span className="text-[8px] sm:text-[10px] leading-none inline-block">▲</span>
-                  <span className="font-sans">{weather.tempMax}°</span>
+                  <span className="font-[Tajawal]">{weather.tempMax}°</span>
                 </div>
-                <div className="flex items-center gap-0.5 text-sky-600 dark:text-sky-400 font-extrabold text-[9px] xs:text-[11px] sm:text-[14px]">
+                <div className="flex items-center gap-0.5 text-sky-700 dark:text-sky-400 font-medium text-[9px] xs:text-[11px] sm:text-[14px]">
                   <span className="text-[8px] sm:text-[10px] leading-none inline-block">▼</span>
-                  <span className="font-sans">{weather.tempMin}°</span>
+                  <span className="font-[Tajawal]">{weather.tempMin}°</span>
                 </div>
               </div>
               {weather.precip_prob !== undefined && (
-                <div className="flex items-center gap-1 text-sky-700 dark:text-sky-300 font-bold text-[9px] xs:text-[11px] sm:text-[13px]">
-                  <CloudRain size={12} className="sm:w-3.5 sm:h-3.5 text-sky-500" />
-                  <span className="font-sans">{weather.precip_prob}%</span>
+                <div className="flex items-center gap-1 text-sky-800 dark:text-sky-300 font-medium text-[9px] xs:text-[11px] sm:text-[13px]">
+                  <CloudRain size={12} className="sm:w-3.5 sm:h-3.5 text-sky-600 dark:text-sky-400" />
+                  <span className="font-[Tajawal]">{weather.precip_prob}%</span>
                 </div>
               )}
             </div>
@@ -462,43 +462,43 @@ export const HeaderWidgets: React.FC = () => {
 
         {/* 4. Leftmost Item: Date Card (كارت التاريخ الهجري) */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.24 }}
-          whileHover={{ scale: 1.02, y: -2 }}
+          transition={{ duration: 0.6, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ y: -4 }}
           whileTap={{ scale: 0.98 }}
           className="w-full h-full"
         >
           <Link 
             to="/calendar" 
-            className="relative bg-transparent rounded-[14px] sm:rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:border-emerald-500/50 p-2 sm:p-3.5 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] hover:shadow-md transition-all duration-300 overflow-hidden group h-full block"
+            className="relative bg-white/40 dark:bg-[#111111]/40 backdrop-blur-xl bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
           >
             {/* Top Section */}
             <div className="relative z-10 flex items-start justify-between w-full">
-              <span className="text-[10px] sm:text-[12px] md:text-[14px] font-bold text-emerald-700 dark:text-emerald-400 leading-none tracking-wide font-cairo">
+              <span className="text-[10px] sm:text-[12px] md:text-[14px] font-medium text-emerald-800 dark:text-emerald-300 leading-none tracking-wide font-[Tajawal]">
                 التقويم الهجري
               </span>
-              <div className="p-1 sm:p-2 rounded-xl sm:rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-all duration-300 shadow-xs">
+              <div className="p-1 sm:p-2 rounded-xl sm:rounded-2xl bg-white/60 dark:bg-black/30 backdrop-blur-md border border-white/50 dark:border-white/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-500 shadow-sm">
                 <Calendar className="w-5 h-5 sm:w-8 sm:h-8 md:w-10 md:h-10 text-emerald-600 dark:text-emerald-400" strokeWidth={1.5} />
               </div>
             </div>
 
             {/* Middle Section: Day Name & Hijri Date */}
             <div className="relative z-10 flex flex-col justify-center my-auto text-right py-1 sm:py-2">
-              <h3 className="text-[15px] xs:text-[18px] sm:text-[24px] md:text-[28px] font-black text-slate-900 dark:text-white tracking-tight leading-none font-cairo">
+              <h3 className="text-[15px] xs:text-[18px] sm:text-[24px] md:text-[28px] font-medium text-slate-900 dark:text-white tracking-tight leading-none font-[Tajawal]">
                 {dayName}
               </h3>
-              <p className="text-[10.5px] xs:text-[12.5px] sm:text-[15px] md:text-[17px] font-extrabold text-emerald-700 dark:text-emerald-400 leading-tight mt-1.5 sm:mt-2.5 whitespace-nowrap font-cairo">
+              <p className="text-[10.5px] xs:text-[12.5px] sm:text-[15px] md:text-[17px] font-medium text-emerald-800 dark:text-emerald-300 leading-tight mt-1.5 sm:mt-2.5 whitespace-nowrap font-[Tajawal]">
                 {hijriDate}
               </p>
             </div>
 
             {/* Bottom Row: Calendar Navigation Indicator */}
-            <div className="relative z-10 flex items-center justify-between mt-auto pt-1 sm:pt-2 border-t border-emerald-100/60 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-400">
-              <span className="text-[9px] sm:text-[11px] md:text-[12px] font-bold font-cairo">
+            <div className="relative z-10 flex items-center justify-between mt-auto pt-1 sm:pt-2 border-t border-emerald-900/10 dark:border-white/10 text-emerald-800 dark:text-emerald-300">
+              <span className="text-[9px] sm:text-[11px] md:text-[12px] font-medium font-[Tajawal]">
                 جدول المناسبات
               </span>
-              <span className="text-[10px] sm:text-[12px] font-bold group-hover:-translate-x-1 transition-transform duration-200">
+              <span className="text-[10px] sm:text-[12px] font-bold group-hover:-translate-x-1.5 transition-transform duration-300">
                 ←
               </span>
             </div>
