@@ -53,26 +53,42 @@ export function ArticleDetail() {
 
   const openGallery = (index: number) => {
     setImgGalleryIndex(index);
-    window.history.pushState({ galleryOpen: true }, "");
+    if (!window.location.hash.includes("gallery")) {
+      const currentState = window.history.state || {};
+      window.history.pushState({ ...currentState, galleryOpen: true }, "", "#gallery");
+    }
   };
 
   const closeGallery = () => {
     setImgGalleryIndex(null);
-    if (window.history.state?.galleryOpen) {
+    if (window.location.hash.includes("gallery") || window.history.state?.galleryOpen) {
       window.history.back();
     }
   };
 
   useEffect(() => {
     const handlePopState = () => {
-      if (imgGalleryIndex !== null) {
+      if (!window.location.hash.includes("gallery")) {
         setImgGalleryIndex(null);
       }
     };
 
+    const handleCustomClose = () => {
+      setImgGalleryIndex(null);
+      if (window.location.hash.includes("gallery")) {
+        window.history.back();
+      }
+    };
+
     window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [imgGalleryIndex]);
+    window.addEventListener("hashchange", handlePopState);
+    window.addEventListener("close-modal-gallery", handleCustomClose);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("hashchange", handlePopState);
+      window.removeEventListener("close-modal-gallery", handleCustomClose);
+    };
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -417,6 +433,7 @@ export function ArticleDetail() {
         {/* Full Screen Image Gallery Modal */}
         {imgGalleryIndex !== null && allImages.length > 0 && (
           <div 
+            data-gallery-open="true"
             className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
             onClick={closeGallery}
           >

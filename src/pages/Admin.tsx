@@ -110,12 +110,11 @@ import { FavoritesList } from "../components/FavoritesList";
 import { UserProfileSection } from "../components/UserProfileSection";
 
 import { AdminNewsWizard } from "../components/AdminNewsWizard";
-import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES } from "../data/staticQuranData";
+import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES, sortQuranLessons } from "../data/staticQuranData";
 import { AdminCategoryManager } from "../components/AdminCategoryManager";
 import { AdminArticles } from "../components/AdminArticles";
 import { AdminOnlineUsers } from "../components/AdminOnlineUsers";
 import { AdminRegisteredUsers } from "../components/AdminRegisteredUsers";
-import { AdminNewspaperManager } from "../components/AdminNewspaperManager";
 import { OnlineUsersConfig, RegisteredUsersConfig } from "../services/OnlineUsersService";
 import { ContactUsSection } from "../components/ContactUsSection";
 
@@ -459,12 +458,6 @@ export function Admin() {
       icon: BookOpen,
       label: "إدارة المقالات",
       access: isAdmin || isManager || (isEditor && hasPermission("articles")),
-    },
-    {
-      id: "newspaper",
-      icon: Newspaper,
-      label: "الصحيفة الإلكترونية (الإصدارات)",
-      access: isAdmin || isManager || (isEditor && hasPermission("newspaper")),
     },
     {
       id: "events",
@@ -827,7 +820,6 @@ export function Admin() {
                 {activeTab === "live" && <AdminLive />}
                 {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
                 {activeTab === "articles" && <AdminArticles isAdmin={isAdmin} />}
-                {activeTab === "newspaper" && <AdminNewspaperManager userProfile={profile} />}
                 {activeTab === "quran" && <AdminQuran />}
                 {activeTab === "events" && <AdminEvents />}
                 {activeTab === "social" && <AdminSocialLinks />}
@@ -4538,7 +4530,8 @@ function AdminQuranLessons() {
     const unsubLessons = onSnapshot(
       query(collection(db, "quran_lessons"), orderBy("order", "asc")),
       (snap) => {
-        setList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranLesson)));
+        const lessons = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranLesson));
+        setList(sortQuranLessons(lessons));
         setLoading(false);
       }
     );

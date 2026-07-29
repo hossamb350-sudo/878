@@ -35,11 +35,29 @@ export function NavigationController() {
         listener = await CapacitorApp.addListener("backButton", (info) => {
           if (!active) return;
 
+          const historyState = window.history.state;
+
+          // Check if an image gallery or lightbox modal is currently open
+          const hasGalleryHash = window.location.hash.includes("gallery");
+          const isGalleryOpen = Boolean(
+            hasGalleryHash || 
+            historyState?.galleryOpen || 
+            document.querySelector('[data-gallery-open="true"]')
+          );
+
+          if (isGalleryOpen) {
+            if (hasGalleryHash || historyState?.galleryOpen) {
+              window.history.back();
+            } else {
+              window.dispatchEvent(new CustomEvent("close-modal-gallery"));
+            }
+            return;
+          }
+
           const currentPath = locationRef.current;
           
           // Check if we can navigate back using React Router's history index
           // React Router v6+ stores an 'idx' in history.state
-          const historyState = window.history.state;
           const historyIdx = historyState && typeof historyState.idx === 'number' ? historyState.idx : 0;
 
           if (historyIdx > 0) {
@@ -47,11 +65,8 @@ export function NavigationController() {
             navigate(-1);
           } else {
             // No history to go back to
-            if (currentPath === "/") {
-              const confirmExit = window.confirm("هل ترغب في الخروج من التطبيق؟");
-              if (confirmExit) {
-                CapacitorApp.exitApp();
-              }
+            if (currentPath === "/" || currentPath === "/news" || currentPath === "/articles") {
+              CapacitorApp.minimizeApp();
             } else {
               // We are not on the root page but no history? Navigate to root just in case
               navigate("/", { replace: true });

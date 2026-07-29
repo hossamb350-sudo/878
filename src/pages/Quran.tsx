@@ -43,7 +43,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { QuranReader } from "../components/QuranReader";
 import { QuranStats } from "../components/QuranStats";
 import { QuranKareem } from "../components/QuranKareem";
-import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData } from "../data/staticQuranData";
+import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData, sortQuranLessons } from "../data/staticQuranData";
 import { loadQuranMetadata, loadLessonContent } from "../data/importedQuranData";
 
 enum OperationType {
@@ -306,8 +306,8 @@ const LessonsView = ({
   onNavigateToLesson,
   scrollRef,
 }: any) => {
-  const seriesLessons = lessonsList.filter(
-    (l: any) => l.seriesId === selectedSeries?.id
+  const seriesLessons = sortQuranLessons(
+    lessonsList.filter((l: any) => l.seriesId === selectedSeries?.id)
   );
   
   return (

@@ -21,7 +21,6 @@ import { Search } from "./pages/Search";
 import { WeatherDetail } from "./pages/WeatherDetail";
 import { PrayerTimesDetail } from "./pages/PrayerTimesDetail";
 import CalendarDetail from "./pages/CalendarDetail";
-import { NewspaperPage } from "./pages/NewspaperPage";
 import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
@@ -53,8 +52,6 @@ function AnimatedRoutes() {
         <Route path="prayer-times" element={<PrayerTimesDetail />} />
         <Route path="calendar" element={<CalendarDetail />} />
         <Route path="calendar/:month/:year" element={<CalendarDetail />} />
-        <Route path="newspaper" element={<NewspaperPage />} />
-        <Route path="newspaper/:id" element={<NewspaperPage />} />
         <Route path="admin" element={<Admin />} />
       </Routes>
     </AnimatePresence>
