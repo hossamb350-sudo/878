@@ -54,8 +54,8 @@ const app = express();
 const PORT = 3000;
 
 // Configure web-push details
-const DEFAULT_VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
-const DEFAULT_VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "btEWHmdPbPg_jgywYnb6z4NujfcN5TeJQDY8JbDTAOQ";
+const DEFAULT_VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BP-mdJPBsY8fOoRU1b2l9WiVZNVHEBe_F1txe6Yo9BxR_t-QqAs3fyO1gaxjjD2SAfsZjG6jS03jgvoCkUNRuaY";
+const DEFAULT_VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "LLxDI_IGtPhEcYi4LPTaNq4jmM9aoGITSzaVKLfUri0";
 
 function isValidVapidKey(publicKey: string): boolean {
   if (!publicKey || typeof publicKey !== "string") return false;
