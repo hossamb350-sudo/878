@@ -1,24 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'screens/home_screen.dart';
+import 'screens/splash_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() {
-  runApp(const TaizPlatformApp());
+  runApp(const TaizMediaApp());
 }
 
-class TaizPlatformApp extends StatelessWidget {
-  const TaizPlatformApp({super.key});
+class TaizMediaApp extends StatelessWidget {
+  const TaizMediaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'منصة تعز',
+      title: 'Taiz Media',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        fontFamily: 'Tajawal',
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF50C878)),
+        textTheme: GoogleFonts.tajawalTextTheme(
+          Theme.of(context).textTheme,
+        ),
       ),
-      home: const HomeScreen(),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ar', 'SA'),
+      ],
+      locale: const Locale('ar', 'SA'),
+      initialRoute: '/splash',
+      routes: {
+        '/splash': (context) => const SplashScreen(),
+        '/': (context) => const HomeScreen(),
+      },
     );
   }
 }

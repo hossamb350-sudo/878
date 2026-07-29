@@ -41,7 +41,7 @@ function getDb() {
       } else {
         adminApp = getApps()[0];
       }
-      dbInstance = getFirestore(adminApp);
+      dbInstance = getFirestore(adminApp, firebaseConfig.firestoreDatabaseId || "(default)");
     } catch (err) {
       console.error("Failed to initialize Firebase Admin / Firestore:", err);
       return null;
@@ -54,8 +54,8 @@ const app = express();
 const PORT = 3000;
 
 // Configure web-push details
-const DEFAULT_VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BP-mdJPBsY8fOoRU1b2l9WiVZNVHEBe_F1txe6Yo9BxR_t-QqAs3fyO1gaxjjD2SAfsZjG6jS03jgvoCkUNRuaY";
-const DEFAULT_VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "LLxDI_IGtPhEcYi4LPTaNq4jmM9aoGITSzaVKLfUri0";
+const FALLBACK_VAPID_PUBLIC_KEY = "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
+const FALLBACK_VAPID_PRIVATE_KEY = "btEWHmdPbPg_jgywYnb6z4NujfcN5TeJQDY8JbDTAOQ";
 
 function isValidVapidKey(publicKey: string): boolean {
   if (!publicKey || typeof publicKey !== "string") return false;
@@ -76,7 +76,7 @@ function getVapidKeys() {
     return { publicKey: envPub, privateKey: envPriv };
   } else {
     console.warn("Using fallback/default stable VAPID keypair since the environment configured keys are invalid or not 65 bytes when decoded.");
-    return { publicKey: DEFAULT_VAPID_PUBLIC_KEY, privateKey: DEFAULT_VAPID_PRIVATE_KEY };
+    return { publicKey: FALLBACK_VAPID_PUBLIC_KEY, privateKey: FALLBACK_VAPID_PRIVATE_KEY };
   }
 }
 
@@ -84,6 +84,7 @@ const { publicKey: VAPID_PUBLIC_KEY, privateKey: VAPID_PRIVATE_KEY } = getVapidK
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:hossamb350@gmail.com";
 
 try {
+  console.log("Setting VAPID details with:", { pubLength: VAPID_PUBLIC_KEY?.length, privLength: VAPID_PRIVATE_KEY?.length });
   webPush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
   console.log("Web-Push VAPID details configured successfully.");
 } catch (e) {
