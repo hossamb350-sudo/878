@@ -1,11 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'screens/home_screen.dart';
-import 'screens/splash_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'providers/news_provider.dart';
+import 'providers/quran_provider.dart';
+import 'providers/theme_provider.dart';
+import 'screens/splash_screen.dart';
+import 'screens/home_screen.dart';
+
 void main() {
-  runApp(const TaizMediaApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => NewsProvider()),
+        ChangeNotifierProvider(create: (_) => QuranProvider()),
+      ],
+      child: const TaizMediaApp(),
+    ),
+  );
 }
 
 class TaizMediaApp extends StatelessWidget {
@@ -13,14 +27,35 @@ class TaizMediaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
-      title: 'Taiz Media',
+      title: 'منصة تعز الإعلامية',
       debugShowCheckedModeBanner: false,
+      themeMode: themeProvider.themeMode,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          primary: Colors.teal.shade800,
+        ),
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
         textTheme: GoogleFonts.tajawalTextTheme(
           Theme.of(context).textTheme,
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.teal.shade800,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+      ),
+      darkTheme: ThemeData.dark().copyWith(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          brightness: Brightness.dark,
+        ),
+        textTheme: GoogleFonts.tajawalTextTheme(
+          ThemeData.dark().textTheme,
         ),
       ),
       localizationsDelegates: const [

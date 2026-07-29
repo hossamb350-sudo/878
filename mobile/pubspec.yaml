@@ -1,5 +1,5 @@
 name: taiz_media_platform
-description: Taiz Media Platform - Flutter App
+description: منصة تعز الإعلامية - تطبيق فلاتر الشامل (Taiz Media Platform Flutter App)
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -17,6 +17,12 @@ dependencies:
   http: ^1.2.0
   shared_preferences: ^2.2.2
   google_fonts: ^6.1.0
+  cached_network_image: ^3.3.1
+  audioplayers: ^6.0.0
+  intl: ^0.19.0
+  url_launcher: ^6.2.4
+  share_plus: ^8.0.2
+  lucide_icons: ^0.257.0
 
 dev_dependencies:
   flutter_test:
