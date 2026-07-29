@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { MapPin, Droplets, Sunrise, Sun, SunMedium, Sunset, MoonStar, CloudRain, Calendar } from "lucide-react";
+import { PrayerBackground, WeatherBackground, HijriBackground } from './CardAnimatedBackgrounds';
 
 // Red Calendar Icon Badge for Date Card
 const RedCalendarIcon = () => (
@@ -372,8 +373,10 @@ export const HeaderWidgets: React.FC = () => {
         >
           <Link 
             to="/prayer-times" 
-            className="relative bg-white/40 dark:bg-[#111111]/40 backdrop-blur-xl bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
+            className="relative rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
           >
+            <PrayerBackground prayerName={formattedPrayer.name} />
+            <div className="absolute inset-0 bg-white/40 dark:bg-[#111111]/60 backdrop-blur-[4px] bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent z-[-5] pointer-events-none rounded-[inherit]" />
             {/* Top Section */}
             <div className="relative z-10 flex items-start justify-between w-full">
               <span className="text-[10px] sm:text-[12px] md:text-[14px] font-medium text-emerald-800 dark:text-emerald-300 leading-none tracking-wide font-[Tajawal]">
@@ -419,8 +422,10 @@ export const HeaderWidgets: React.FC = () => {
         >
           <Link 
             to="/weather" 
-            className="relative bg-white/40 dark:bg-[#111111]/40 backdrop-blur-xl bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
+            className="relative rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
           >
+            <WeatherBackground weatherCode={weather.id} isNight={isNight} />
+            <div className="absolute inset-0 bg-white/40 dark:bg-[#111111]/60 backdrop-blur-[4px] bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent z-[-5] pointer-events-none rounded-[inherit]" />
             {/* Top Section: Temp + Dynamic 3D Weather Icon */}
             <div className="relative z-10 flex items-start justify-between w-full">
               <span className="text-[18px] xs:text-[22px] sm:text-[34px] md:text-[42px] font-medium text-slate-900 dark:text-white leading-none tracking-tight font-[Tajawal]">
@@ -471,8 +476,10 @@ export const HeaderWidgets: React.FC = () => {
         >
           <Link 
             to="/calendar" 
-            className="relative bg-white/40 dark:bg-[#111111]/40 backdrop-blur-xl bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
+            className="relative rounded-[14px] sm:rounded-[22px] border border-white/50 dark:border-white/10 ring-1 ring-white/40 dark:ring-white/5 shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_30px_rgba(255,255,255,0.04)] hover:border-white/70 dark:hover:border-white/20 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between min-h-[105px] sm:min-h-[160px] md:min-h-[185px] transition-all duration-500 overflow-hidden group h-full block"
           >
+            <HijriBackground />
+            <div className="absolute inset-0 bg-white/40 dark:bg-[#111111]/60 backdrop-blur-[4px] bg-gradient-to-br from-white/60 to-white/10 dark:from-white/10 dark:to-transparent z-[-5] pointer-events-none rounded-[inherit]" />
             {/* Top Section */}
             <div className="relative z-10 flex items-start justify-between w-full">
               <span className="text-[10px] sm:text-[12px] md:text-[14px] font-medium text-emerald-800 dark:text-emerald-300 leading-none tracking-wide font-[Tajawal]">

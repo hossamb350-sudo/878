@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'animated_card_backgrounds.dart';
 
 class HeaderWidgets extends StatelessWidget {
   const HeaderWidgets({super.key});
@@ -25,27 +26,40 @@ class HeaderWidgets extends StatelessWidget {
     );
   }
 
-  Widget _buildGlassCard({required Widget child}) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          height: 160,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.4),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 30,
-                offset: const Offset(0, 8),
-              )
-            ],
-          ),
-          child: child,
+  Widget _buildGlassCard({required Widget child, Widget? background}) {
+    return Container(
+      height: 160,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 30,
+            offset: const Offset(0, 8),
+          )
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (background != null) background,
+            if (background != null)
+              Container(color: Colors.black.withOpacity(0.3)), // Contrast overlay
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: background != null ? Colors.white.withOpacity(0.1) : Colors.white.withOpacity(0.4),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                ),
+                child: child,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -65,6 +79,7 @@ class HeaderWidgets extends StatelessWidget {
 
   Widget _buildPrayerCard() {
     return _buildGlassCard(
+      background: const PrayerAnimatedBackground(prayerName: 'الفجر'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -72,18 +87,18 @@ class HeaderWidgets extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
-              Text('الصلاة القادمة', style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
+              Text('الصلاة القادمة', style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.bold)),
               Icon(Icons.mosque, color: Colors.amber, size: 24),
             ],
           ),
-          const Text('الفجر', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+          const Text('الفجر', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.black.withOpacity(0.3),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Text('02:45:10', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+            child: const Text('02:45:10', style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -92,6 +107,7 @@ class HeaderWidgets extends StatelessWidget {
 
   Widget _buildWeatherCard() {
     return _buildGlassCard(
+      background: const WeatherAnimatedBackground(weatherCode: 2), // Example: partly cloudy
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -99,16 +115,16 @@ class HeaderWidgets extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
-              Text('24°', style: TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
-              Icon(Icons.cloud, color: Colors.blue, size: 24),
+              Text('24°', style: TextStyle(fontSize: 34, color: Colors.white, fontWeight: FontWeight.bold)),
+              Icon(Icons.cloud, color: Colors.white, size: 24),
             ],
           ),
-          const Text('غائم جزئياً', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          const Text('غائم جزئياً', style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold)),
           Row(
             children: const [
-              Text('▲ 28°', style: TextStyle(fontSize: 12, color: Colors.orange)),
+              Text('▲ 28°', style: TextStyle(fontSize: 12, color: Colors.orangeAccent)),
               SizedBox(width: 8),
-              Text('▼ 18°', style: TextStyle(fontSize: 12, color: Colors.blue)),
+              Text('▼ 18°', style: TextStyle(fontSize: 12, color: Colors.lightBlueAccent)),
             ],
           ),
         ],
@@ -118,6 +134,7 @@ class HeaderWidgets extends StatelessWidget {
 
   Widget _buildDateCard() {
     return _buildGlassCard(
+      background: const HijriAnimatedBackground(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -125,12 +142,12 @@ class HeaderWidgets extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: const [
-              Text('التقويم الهجري', style: TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold)),
-              Icon(Icons.calendar_today, color: Colors.green, size: 24),
+              Text('التقويم الهجري', style: TextStyle(fontSize: 12, color: Colors.amberAccent, fontWeight: FontWeight.bold)),
+              Icon(Icons.calendar_today, color: Colors.amber, size: 24),
             ],
           ),
-          const Text('الخميس', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-          const Text('14 رمضان 1445', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          const Text('الخميس', style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
+          const Text('14 رمضان 1445', style: TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.bold)),
         ],
       ),
     );
