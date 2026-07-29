@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'admin_news_wizard_screen.dart';
+import 'admin_urgent_news_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -21,7 +22,7 @@ class AdminDashboardScreen extends StatelessWidget {
           _buildAdminCard(
             context,
             icon: Icons.article,
-            title: 'إضافة خبر جديد',
+            title: 'معالج الأخبار (AI)',
             color: Colors.blue,
             onTap: () {
               Navigator.push(
@@ -38,24 +39,35 @@ class AdminDashboardScreen extends StatelessWidget {
             title: 'إدارة الشريط العاجل',
             color: Colors.red,
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('شاشة إدارة الشريط العاجل جاهزة')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AdminUrgentNewsScreen(),
+                ),
               );
             },
           ),
           _buildAdminCard(
             context,
             icon: Icons.menu_book,
-            title: 'إدارة دروس القرآن',
+            title: 'إدارة المحتوى والدروس',
             color: Colors.amber.shade800,
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('قسم إدارة المحتوى والدروس القرآنية جاهز')),
+              );
+            },
           ),
           _buildAdminCard(
             context,
             icon: Icons.people,
-            title: 'إدارة المستخدمين',
+            title: 'المستخدمون والإحصائيات',
             color: Colors.purple,
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('إحصائيات المستخدمين والمتابعين النشطين')),
+              );
+            },
           ),
         ],
       ),
