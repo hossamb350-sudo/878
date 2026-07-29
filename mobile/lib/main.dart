@@ -16,7 +16,7 @@ class TaizPlatformApp extends StatelessWidget {
       theme: ThemeData(
         fontFamily: 'Tajawal',
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.emerald),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF50C878)),
       ),
       home: const HomeScreen(),
     );
