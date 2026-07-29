@@ -25,6 +25,10 @@ jobs:
       with:
         channel: 'stable'
 
+    - name: Create platform folders
+      working-directory: ./mobile
+      run: flutter create .
+
     - name: Install dependencies
       working-directory: ./mobile
       run: flutter pub get
