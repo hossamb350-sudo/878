@@ -19,10 +19,9 @@ import {
   Clock,
   User,
   Star,
-  X,
+  Printer,
   ChevronRight,
-  ChevronLeft,
-  Newspaper
+  ChevronLeft
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
@@ -35,20 +34,10 @@ export function NewsDetail() {
   const [news, setNews] = useState<NewsItem | null>(null);
   const [related, setRelated] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  const [fontSize, setFontSize] = useState<number>(() => {
-    const saved = localStorage.getItem("news_font_size");
-    return saved ? parseInt(saved, 10) : 16;
-  });
-
-  useEffect(() => {
-    localStorage.setItem("news_font_size", fontSize.toString());
-  }, [fontSize]);
-
+  const [fontSize, setFontSize] = useState(18);
   const [savedArticles, setSavedArticles] = useState<string[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [imgGalleryIndex, setImgGalleryIndex] = useState<number | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -57,15 +46,6 @@ export function NewsDetail() {
     ...(news.imageUrl ? [news.imageUrl] : []),
     ...(news.additionalImages || [])
   ].filter(Boolean) as string[] : [];
-
-  // Auto slide interval for the news hero card
-  useEffect(() => {
-    if (allImages.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % allImages.length);
-    }, 4500);
-    return () => clearInterval(interval);
-  }, [allImages.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -118,7 +98,7 @@ export function NewsDetail() {
           if (rItems.length < 3) {
             rItems = cachedNews.filter(n => n.id !== id);
           }
-          setRelated(rItems.slice(0, 3));
+          setRelated(rItems.slice(0, 4));
           
           try {
             await updateDoc(doc(db, "news", id), {
@@ -137,66 +117,6 @@ export function NewsDetail() {
 
     fetchNews();
   }, [id]);
-
-  const openGallery = (index: number) => {
-    setImgGalleryIndex(index);
-    if (!window.location.hash.includes("gallery")) {
-      const currentState = window.history.state || {};
-      window.history.pushState({ ...currentState, galleryOpen: true }, "", "#gallery");
-    }
-  };
-
-  const closeGallery = () => {
-    setImgGalleryIndex(null);
-    if (window.location.hash.includes("gallery") || window.history.state?.galleryOpen) {
-      window.history.back();
-    }
-  };
-
-  useEffect(() => {
-    const handlePopState = () => {
-      if (!window.location.hash.includes("gallery")) {
-        setImgGalleryIndex(null);
-      }
-    };
-
-    const handleCustomClose = () => {
-      setImgGalleryIndex(null);
-      if (window.location.hash.includes("gallery")) {
-        window.history.back();
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    window.addEventListener("hashchange", handlePopState);
-    window.addEventListener("close-modal-gallery", handleCustomClose);
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      window.removeEventListener("hashchange", handlePopState);
-      window.removeEventListener("close-modal-gallery", handleCustomClose);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (imgGalleryIndex === null || allImages.length === 0) return;
-      
-      if (e.key === "Escape") {
-        closeGallery();
-      } else if (e.key === "ArrowLeft") {
-        if (imgGalleryIndex < allImages.length - 1) {
-          setImgGalleryIndex(imgGalleryIndex + 1);
-        }
-      } else if (e.key === "ArrowRight") {
-        if (imgGalleryIndex > 0) {
-          setImgGalleryIndex(imgGalleryIndex - 1);
-        }
-      }
-    };
-    
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [imgGalleryIndex, allImages]);
 
   const toggleBookmark = () => {
     if (!news) return;
@@ -232,6 +152,11 @@ export function NewsDetail() {
       await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      return;
+    }
+
+    if (platform === "print") {
+      window.print();
       return;
     }
 
@@ -273,8 +198,8 @@ export function NewsDetail() {
   if (loading) {
     return (
       <div className="min-h-screen bg-surface-main flex flex-col items-center justify-center" dir="rtl">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-[#D32027] mb-4"></div>
-        <p className="font-medium text-text-secondary font-ibm text-sm">جاري تحميل الخبر...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-red-600 mb-4"></div>
+        <p className="font-bold text-text-secondary font-alexandria text-sm">جاري التحميل...</p>
       </div>
     );
   }
@@ -282,8 +207,8 @@ export function NewsDetail() {
   if (!news) {
     return (
       <div className="min-h-screen bg-surface-main text-text-primary flex flex-col items-center justify-center p-6" dir="rtl">
-        <h2 className="text-xl font-bold mb-4 font-ibm">الخبر غير موجود</h2>
-        <button onClick={() => navigate("/")} className="bg-red-600 text-white px-6 py-2.5 rounded-xl font-bold font-ibm shadow-md hover:bg-red-700 transition-all">العودة للرئيسية</button>
+        <h2 className="text-xl font-bold mb-4 font-alexandria">الخبر غير موجود</h2>
+        <button onClick={() => navigate("/")} className="btn-primary">العودة للرئيسية</button>
       </div>
     );
   }
@@ -293,233 +218,213 @@ export function NewsDetail() {
   const modInfo = isModified ? formatPublishInfo(news.updatedAt!) : null;
 
   return (
-    <div className="min-h-screen bg-surface-main text-text-primary pb-32 font-sans relative" dir="rtl">
-      {/* Reading Progress Indicator */}
+    <div className="min-h-screen bg-surface-main text-text-primary pb-20 font-sans relative" dir="rtl">
+      {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200 z-50">
         <div 
-          className="h-full bg-[#D32027] transition-all duration-75 shadow-sm" 
+          className="h-full bg-red-600 transition-all duration-75" 
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
-      {/* Top Nav with matching light background */}
-      <div className="sticky top-0 z-40 bg-surface-main/90 backdrop-blur-md border-b border-border-light px-4 h-16 flex items-center justify-between text-text-primary">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary">
-          <ArrowRight className="w-6 h-6" />
+      {/* Top Navigation */}
+      <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-border-light px-4 h-14 flex items-center justify-between text-text-primary">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="p-2 hover:bg-slate-100 rounded-full transition-colors text-text-primary flex items-center gap-1 font-bold text-xs font-alexandria"
+        >
+          <ArrowRight className="w-5 h-5 text-red-600" />
+          <span>رجوع</span>
         </button>
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-1">
           <button 
             onClick={toggleBookmark}
-            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-[#D32027] bg-[#D32027]/10" : "hover:bg-slate-200/50 text-text-primary"}`}
+            className={`p-2 rounded-full transition-colors ${isBookmarked ? "text-red-600 bg-red-600/10" : "hover:bg-slate-100 text-text-primary"}`}
+            title="حفظ الخبر"
           >
-            <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
+            <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
           </button>
-          <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors relative text-text-primary">
-            {copied ? <Check className="w-6 h-6 text-red-600" /> : <Share2 className="w-6 h-6" />}
+          <button onClick={() => handleShare("print")} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-text-primary" title="طباعة المقال">
+            <Printer className="w-5 h-5" />
+          </button>
+          <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-100 rounded-full transition-colors relative text-text-primary" title="نسخ الرابط">
+            {copied ? <Check className="w-5 h-5 text-emerald-600" /> : <Share2 className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        {/* News Card Header - Integrated Animated Slider with Fixed News Elements */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative w-full h-[376px] sm:h-[420px] rounded-[24px] overflow-hidden border border-border-light shadow-medium mb-6 select-none group"
-        >
-          {/* Sliding Background Images Layer */}
-          <div 
-            className="absolute inset-0 w-full h-full cursor-zoom-in"
-            onClick={() => openGallery(currentSlide)}
-            title="انقر لتكبير الصورة"
-          >
-            {allImages.length > 0 ? (
-              <AnimatePresence mode="popLayout">
-                <motion.img 
-                  key={currentSlide}
-                  src={allImages[currentSlide]} 
-                  alt={news.title} 
-                  className="w-full h-full object-cover absolute inset-0" 
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
-                />
-              </AnimatePresence>
-            ) : (
-              <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                <Newspaper className="w-12 h-12 text-slate-300" />
-              </div>
-            )}
-          </div>
-          
-          {/* Fixed Dark Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.88)] via-[rgba(0,0,0,0.42)] to-transparent pointer-events-none"></div>
+      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-6 pt-6">
+        {/* Category & Badges */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className="bg-red-600/10 text-red-600 font-bold text-xs font-alexandria px-3 py-1 rounded-full border border-red-500/20">
+            {news.category || "أخبار عامة"}
+          </span>
 
-          {/* Left/Right manual slide buttons on hover */}
-          {allImages.length > 1 && (
-            <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSlide((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
-                }}
-                className="p-2 bg-black/40 hover:bg-black/70 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
-                title="الصورة السابقة"
-              >
-                <ChevronRight className="w-5 h-5" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSlide((prev) => (prev + 1) % allImages.length);
-                }}
-                className="p-2 bg-black/40 hover:bg-black/70 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
-                title="الصورة التالية"
-              >
-                <ChevronLeft className="w-5 h-5" />
-              </button>
-            </div>
+          {news.isBreaking && (
+            <span className="bg-red-600 text-white font-extrabold text-xs font-alexandria px-3 py-1 rounded-full animate-pulse shadow-sm">
+              خبر عاجل
+            </span>
           )}
 
-          {/* Fixed Category / Live Badge at Top Left */}
-          <div className="absolute top-[16px] left-0 z-10 pointer-events-none">
-            {news.isBreaking ? (
-              <span className="bg-[#D32027] text-white text-[13px] font-bold font-ibm px-3 h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-lg">
-                <span className="relative flex h-2 w-2">
-                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                   <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                </span>
-                تغطية مباشرة
-              </span>
-            ) : news.isPinned ? (
-              <span className="bg-red-600 text-white text-[13px] font-bold font-ibm w-[100px] h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-lg">
-                <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
-                خبر عاجل
-              </span>
-            ) : (
-              <span className="bg-red-600 text-white text-[13px] font-bold font-ibm px-4 h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-lg">
-                {news.category || "أخبار"}
-              </span>
-            )}
-          </div>
-
-          {/* Fixed News Card Footer Details Over the Slider */}
-          <div className="absolute bottom-0 left-0 right-0 p-[20px] pb-[16px] flex flex-col justify-end text-right z-10 pointer-events-none">
-            {/* Overlaid Title */}
-            <h1 
-              className="font-bold text-white leading-normal drop-shadow mb-3 tracking-normal max-w-full font-cairo text-[18px]"
-              style={{ fontSize: `${fontSize > 18 ? 18 + (fontSize - 18) * 0.5 : fontSize}px` }}
-            >
-              {news.title}
-            </h1>
-            
-            <div className="flex items-center justify-between w-full h-[46px] mt-2">
-              <div className="flex items-center gap-[8px]">
-                <div className="w-[40px] h-[40px] rounded-full bg-white/10 flex items-center justify-center border border-white/15 text-white font-bold text-sm select-none shrink-0 font-ibm">
-                  <User className="w-4 h-4 text-white/85" />
-                </div>
-                <div className="flex flex-col text-right">
-                  <span className="text-[13px] font-bold font-ibm text-white leading-tight">{news.author || "رئيس التحرير"}</span>
-                  <span className="text-[10px] text-red-500 font-bold flex items-center gap-1 mt-0.5" style={{ direction: "ltr" }}>
-                    <span>{news.views || 0} مشاهدة</span>
-                    <Eye className="w-3 h-3 text-red-500" />
-                  </span>
-                </div>
-              </div>
-              <div className="flex flex-col text-[12px] text-slate-300 font-normal font-ibm text-left shrink-0">
-                <span>{hDate}</span>
-                <span className="text-[10px] text-slate-400 mt-[2px]">{mDate} • {mTime}</span>
-              </div>
-            </div>
-
-            {/* Slider Dots indicators */}
-            {allImages.length > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-2.5 pointer-events-auto">
-                {allImages.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentSlide(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      idx === currentSlide ? "w-6 bg-red-600" : "w-1.5 bg-white/40 hover:bg-white/70"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Content Controls */}
-        <div className="sticky top-20 z-40 mb-6 flex justify-center">
-           <div className="bg-white/95 border border-border-light rounded-2xl px-4 py-2 flex items-center gap-6 shadow-medium backdrop-blur-sm text-text-primary">
-              <div className="flex items-center gap-2">
-                 <button onClick={() => setFontSize(f => Math.min(f + 1, 30))} className="p-1.5 hover:bg-slate-100 rounded-lg text-text-primary"><Plus className="w-4 h-4" /></button>
-                 <span className="text-sm font-bold min-w-[36px] text-center font-ibm text-text-primary">{fontSize}px</span>
-                 <button onClick={() => setFontSize(f => Math.max(f - 1, 12))} className="p-1.5 hover:bg-slate-100 rounded-lg text-text-primary"><Minus className="w-4 h-4" /></button>
-              </div>
-              <div className="w-px h-6 bg-slate-200"></div>
-              <div className="flex items-center gap-4">
-                 <button onClick={() => handleShare("whatsapp")} className="text-slate-400 hover:text-green-500 transition-colors"><MessageCircle className="w-5 h-5" /></button>
-                 <button onClick={() => handleShare("twitter")} className="text-slate-400 hover:text-sky-400 transition-colors"><Twitter className="w-5 h-5" /></button>
-                 <button onClick={() => handleShare("facebook")} className="text-slate-400 hover:text-blue-500 transition-colors"><Facebook className="w-5 h-5" /></button>
-              </div>
-           </div>
+          {news.isPinned && (
+            <span className="bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-xs font-alexandria px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
+              <Star className="w-3.5 h-3.5 fill-current" />
+              خبر هام
+            </span>
+          )}
         </div>
 
-        {/* Body content styled to match ArticleDetail exactly */}
+        {/* Title */}
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold font-alexandria leading-snug text-text-primary mb-4">
+          {news.title}
+        </h1>
+
+        {/* Short Description */}
+        {news.shortDescription && (
+          <p className="text-base sm:text-lg text-text-secondary font-ibm leading-relaxed mb-6 font-medium">
+            {news.shortDescription}
+          </p>
+        )}
+
+        {/* Author & Date Metadata */}
+        <div className="py-4 border-y border-border-light flex flex-wrap items-center justify-between gap-4 mb-6 text-xs font-ibm text-text-muted">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-full bg-red-600/10 text-red-600 flex items-center justify-center font-bold text-sm">
+              <User className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="font-bold text-text-primary text-sm">{news.author || "المحرر السيادي"}</div>
+              <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5" style={{ direction: "ltr" }}>
+                <Eye className="w-3.5 h-3.5 text-slate-400" />
+                <span>{news.views || 0} مشاهدة</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col text-left">
+            <span className="font-bold text-text-primary">{hDate}</span>
+            <span className="text-[11px] text-slate-400">{mDate} - الساعة {mTime}</span>
+          </div>
+        </div>
+
+        {/* Image Display / Gallery Carousel */}
+        {allImages.length > 0 && (
+          <div className="mb-8">
+            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-border-light bg-slate-900 shadow-md">
+              <img 
+                src={allImages[currentSlide]} 
+                alt={news.title} 
+                className="w-full h-full object-cover transition-all duration-500"
+              />
+              {allImages.length > 1 && (
+                <>
+                  <button 
+                    onClick={() => setCurrentSlide(prev => prev > 0 ? prev - 1 : allImages.length - 1)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setCurrentSlide(prev => (prev + 1) % allImages.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 text-white text-xs font-ibm">
+                    <span>{currentSlide + 1}</span>
+                    <span>/</span>
+                    <span>{allImages.length}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Action Controls Toolbar */}
+        <div className="flex items-center justify-between gap-4 mb-8 bg-surface-card border border-border-light p-3 rounded-xl shadow-soft">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold font-ibm text-slate-500 pl-2 border-l border-slate-200">حجم الخط:</span>
+            <button 
+              onClick={() => setFontSize(f => Math.min(f + 2, 26))} 
+              className="p-1.5 hover:bg-slate-100 rounded-lg font-bold text-xs font-ibm border border-slate-200"
+              title="تكبير الخط"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => setFontSize(f => Math.max(f - 2, 14))} 
+              className="p-1.5 hover:bg-slate-100 rounded-lg font-bold text-xs font-ibm border border-slate-200"
+              title="تصغير الخط"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button onClick={() => handleShare("whatsapp")} className="p-2 text-slate-500 hover:text-emerald-600 transition-colors" title="واتساب">
+              <MessageCircle className="w-5 h-5" />
+            </button>
+            <button onClick={() => handleShare("twitter")} className="p-2 text-slate-500 hover:text-sky-500 transition-colors" title="إكس">
+              <Twitter className="w-5 h-5" />
+            </button>
+            <button onClick={() => handleShare("facebook")} className="p-2 text-slate-500 hover:text-blue-600 transition-colors" title="فيسبوك">
+              <Facebook className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content Markdown Body */}
         <div 
-          className="prose prose-slate max-w-none text-text-primary text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-[1.8] [&_p]:text-justify mb-12 px-[4px]"
-          style={{ 
-            fontSize: `${fontSize}px`, 
-            lineHeight: 1.8,
-          }}
+          className="prose prose-slate max-w-none text-text-primary text-justify leading-relaxed mb-10"
+          style={{ fontSize: `${fontSize}px`, fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif' }}
         >
           <ReactMarkdown>{news.content}</ReactMarkdown>
         </div>
 
-        {/* Modified text (last update) */}
+        {/* Last update notice */}
         {isModified && modInfo && (
-          <div className="text-[10px] font-bold text-slate-400 flex items-center gap-1 mb-8 font-ibm" style={{ direction: "rtl" }}>
-            <Clock className="w-3 h-3" />
-            <span>آخر تحديث: {modInfo.mDate} - {modInfo.mTime}</span>
+          <div className="text-xs text-slate-400 flex items-center gap-1 mb-8 font-ibm">
+            <Clock className="w-3.5 h-3.5" />
+            <span>آخر تحديث: {modInfo.mDate} - الساعة {modInfo.mTime}</span>
           </div>
         )}
 
-        {/* Live Coverage Section */}
+        {/* Live Updates Timeline */}
         {news.liveUpdates && news.liveUpdates.length > 0 && (
-          <div className="mb-12 bg-white rounded-[2rem] p-6 border border-border-light shadow-soft font-ibm text-text-primary" style={{ direction: "rtl" }}>
-             <div className="flex items-center gap-3 mb-6">
-               <span className="relative flex h-3.5 w-3.5">
+          <div className="mb-10 bg-surface-card rounded-2xl p-6 border border-border-light shadow-soft font-ibm text-text-primary">
+             <div className="flex items-center gap-2 mb-6 border-b border-border-light pb-3">
+               <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
                </span>
-               <h2 className="text-lg font-bold text-text-primary font-ibm">تغطية مباشرة وتحديثات</h2>
+               <h3 className="text-base font-bold text-text-primary font-alexandria">التغطية الحية والمستمرة</h3>
              </div>
              
-             <div className="space-y-6 relative before:absolute before:right-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-200">
+             <div className="space-y-6 relative before:absolute before:right-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-200">
                {[...news.liveUpdates].sort((a,b) => {
                  const timeA = typeof a.time === 'number' ? a.time : (a.timestamp || 0);
-                 const timeB = typeof b.time === 'number' ? b.time : (b.timestamp || 0);
+                 const timeB = typeof b.time === 'number' ? b.time : (a.timestamp || 0);
                  return timeB - timeA;
                }).map((update) => (
-                 <div key={update.id} className="relative pr-8">
-                   <span className="absolute right-2 top-2 w-4 h-4 rounded-full bg-white border-[4px] border-[#D32027] z-10 shadow-sm"></span>
+                 <div key={update.id} className="relative pr-7">
+                   <span className="absolute right-1 top-2 w-3 h-3 rounded-full bg-red-600 z-10 border-2 border-white shadow-sm"></span>
                    
-                   <div className="bg-slate-50/85 rounded-[1.5rem] p-4 border border-border-subtle shadow-sm">
-                     <span className="text-[11px] font-bold tracking-wide text-[#D32027] mb-2 block font-ibm">
+                   <div className="bg-slate-50/80 rounded-xl p-4 border border-border-subtle shadow-sm">
+                     <span className="text-xs font-bold text-red-600 mb-1.5 block font-ibm">
                        {typeof update.time === 'number' || update.timestamp ? formatPublishInfo(typeof update.time === 'number' ? update.time : update.timestamp!).mTime : update.time}
                      </span>
-                     <p className="font-medium text-text-primary leading-relaxed text-justify font-ibm" style={{ fontSize: `${fontSize}px` }}>
+                     <p className="font-normal text-text-primary leading-relaxed text-justify font-ibm text-sm">
                        {update.text}
                      </p>
                      
                      {update.imageUrl && (
-                       <div className="mt-4 rounded-xl overflow-hidden border border-border-light bg-slate-50">
+                       <div className="mt-3 rounded-lg overflow-hidden border border-border-light bg-slate-50">
                          <a href={update.imageUrl} target="_blank" rel="noopener noreferrer">
-                           <img src={update.imageUrl} alt={update.imageTitle || update.text} className="w-full h-auto max-h-[300px] object-cover hover:opacity-90 transition-opacity" />
+                           <img src={update.imageUrl} alt={update.imageTitle || update.text} className="w-full h-auto max-h-[300px] object-cover hover:opacity-95 transition-opacity" />
                          </a>
-                         {update.imageTitle && <p className="p-3 text-xs font-bold text-slate-500 text-center font-ibm">{update.imageTitle}</p>}
+                         {update.imageTitle && <p className="p-2 text-xs text-slate-500 text-center font-ibm">{update.imageTitle}</p>}
                        </div>
                      )}
                    </div>
@@ -529,93 +434,33 @@ export function NewsDetail() {
           </div>
         )}
 
-        {/* Full Screen Image Gallery Modal */}
-        {imgGalleryIndex !== null && allImages.length > 0 && (
-          <div 
-            data-gallery-open="true"
-            className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
-            onClick={closeGallery}
-          >
-               <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-[210]" onClick={(e) => e.stopPropagation()}>
-                  <span className="text-white/70 font-bold text-sm drop-shadow-md font-ibm">
-                    {imgGalleryIndex + 1} / {allImages.length}
-                  </span>
-                  <button onClick={closeGallery} className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer">
-                    <X className="w-6 h-6" />
-                  </button>
-               </div>
-               
-               <div className="relative flex items-center justify-center w-full max-w-4xl h-[70vh] sm:h-[80vh]" onClick={(e) => e.stopPropagation()}>
-                  <AnimatePresence mode="popLayout">
-                    <motion.img 
-                      key={imgGalleryIndex}
-                      src={allImages[imgGalleryIndex]} 
-                      alt={`Gallery image ${imgGalleryIndex + 1}`} 
-                      className="max-w-full max-h-full object-contain select-none cursor-grab active:cursor-grabbing"
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.25, ease: "easeInOut" }}
-                      drag="x"
-                      dragConstraints={{ left: 0, right: 0 }}
-                      dragElastic={0.6}
-                      onDragEnd={(event, info) => {
-                        const swipeThreshold = 50;
-                        if (info.offset.x > swipeThreshold) {
-                          if (imgGalleryIndex > 0) {
-                              setImgGalleryIndex(imgGalleryIndex - 1);
-                          }
-                        } else if (info.offset.x < -swipeThreshold) {
-                          if (imgGalleryIndex < allImages.length - 1) {
-                              setImgGalleryIndex(imgGalleryIndex + 1);
-                          }
-                        }
-                      }}
-                    />
-                  </AnimatePresence>
-                  
-                  {imgGalleryIndex > 0 && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex - 1); }}
-                      className="absolute right-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"
-                      title="الصورة السابقة"
-                    >
-                      <ChevronRight className="w-6 h-6" />
-                    </button>
-                  )}
-                  
-                  {imgGalleryIndex < allImages.length - 1 && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex + 1); }}
-                      className="absolute left-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"
-                      title="الصورة التالية"
-                    >
-                      <ChevronLeft className="w-6 h-6" />
-                    </button>
-                  )}
-               </div>
-          </div>
-        )}
-
-        {/* Related News with List Items */}
+        {/* Related News */}
         {related.length > 0 && (
           <div className="border-t border-border-light pt-8 mt-8">
-             <h3 className="text-lg font-bold font-ibm mb-6 flex items-center gap-2 text-text-primary">
-                <div className="w-[4px] h-[18px] bg-[#D32027] rounded-[2px]"></div>
+             <h3 className="text-lg font-bold font-alexandria mb-4 flex items-center gap-2 text-text-primary">
+                <div className="w-1 h-5 bg-red-600 rounded-full"></div>
                 أخبار ذات صلة
              </h3>
-             <div className="grid grid-cols-2 gap-4">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {related.map(rItem => (
-                  <Link key={rItem.id} to={`/news/${rItem.id}`} className="group block bg-white rounded-none p-3 border border-border-light hover:bg-slate-50 transition-all shadow-soft">
-                     <div className="aspect-video rounded-none overflow-hidden mb-3">
-                        <img src={rItem.imageUrl || "https://i.pravatar.cc/150"} alt={rItem.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <Link 
+                    key={rItem.id} 
+                    to={`/news/${rItem.id}`} 
+                    className="group flex gap-3 bg-surface-card rounded-xl p-3 border border-border-light hover:border-red-500/30 transition-all shadow-soft"
+                  >
+                     <div className="w-24 h-20 rounded-lg overflow-hidden shrink-0 bg-slate-100">
+                        <img src={rItem.imageUrl || "https://i.pravatar.cc/150"} alt={rItem.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                      </div>
-                     <h4 className="font-bold font-ibm text-xs text-text-primary line-clamp-2 leading-relaxed text-right">{rItem.title}</h4>
+                     <div className="flex flex-col justify-between flex-1 min-w-0">
+                        <h4 className="font-bold font-alexandria text-xs sm:text-sm text-text-primary line-clamp-2 leading-snug">{rItem.title}</h4>
+                        <span className="text-[10px] font-ibm text-slate-400 mt-1">{formatPublishInfo(rItem.createdAt).mDate}</span>
+                     </div>
                   </Link>
                 ))}
              </div>
           </div>
         )}
+
       </div>
     </div>
   );

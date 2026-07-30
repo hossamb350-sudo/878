@@ -27,11 +27,6 @@
     "noEmit": true,
     "strict": false,
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
     "strictNullChecks": true
   },
   "exclude": [
@@ -41,9 +36,6 @@
     "Resources"
   ],
   "include": [
-    "next-env.d.ts",
-    ".next/types/**/*.ts",
-    ".next/types/**/*.ts",
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"

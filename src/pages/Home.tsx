@@ -57,6 +57,38 @@ function formatPublishInfo(timestamp: number) {
   return { mDate, mTime, hDate };
 }
 
+function formatViews(views: number): string {
+  if (!views) return "0";
+  if (views >= 1000000) {
+    return (views / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+  }
+  if (views >= 1000) {
+    return (views / 1000).toFixed(1).replace(/\.0$/, "") + "K";
+  }
+  return views.toString();
+}
+
+function getCategoryColor(category: string): string {
+  if (!category) return "bg-red-600";
+  const cat = category.trim();
+  if (cat.includes("المولد") || cat.includes("نبوي")) {
+    return "bg-red-600 shadow-[0_4px_12px_rgba(220,38,38,0.3)]";
+  }
+  if (cat.includes("تعز") || cat.includes("أخبار")) {
+    return "bg-blue-600 shadow-[0_4px_12px_rgba(37,99,235,0.3)]";
+  }
+  if (cat.includes("ثقافة")) {
+    return "bg-amber-600 shadow-[0_4px_12px_rgba(217,119,6,0.3)]";
+  }
+  if (cat.includes("رياضة")) {
+    return "bg-emerald-600 shadow-[0_4px_12px_rgba(5,150,105,0.3)]";
+  }
+  if (cat.includes("اقتصاد") || cat.includes("مال")) {
+    return "bg-cyan-600 shadow-[0_4px_12px_rgba(8,145,178,0.3)]";
+  }
+  return "bg-red-600 shadow-[0_4px_12px_rgba(220,38,38,0.3)]";
+}
+
 function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0); // -1 for prev, 1 for next
@@ -92,21 +124,26 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
 
   const currentItem = sliderList[currentIndex];
 
+  const displayCategory = currentItem.category === "المولد النبوي الشريف" 
+    ? "المولد النبوي الشريف 1446هـ" 
+    : currentItem.category;
+
+  const { mDate, hDate } = formatPublishInfo(currentItem.createdAt);
+
   return (
-    <div className="w-full relative select-none px-4 sm:px-6 lg:px-8 mb-6">
-      <div className="relative w-full h-[376px] rounded-[20px] sm:rounded-[24px] overflow-hidden border border-white/5 shadow-lg bg-surface-card">
+    <div className="w-full relative select-none mb-6">
+      <div className="relative w-full h-[290px] sm:h-[376px] overflow-hidden bg-surface-card shadow-md">
         {/* Slider viewport */}
         <div className="w-full h-full relative overflow-hidden">
-          <AnimatePresence initial={false} custom={direction} mode="popLayout">
+          <AnimatePresence initial={false} custom={direction}>
             <motion.div
               key={currentIndex}
-              initial={{ opacity: 0, x: direction > 0 ? "100%" : "-100%" }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: direction > 0 ? "-100%" : "100%" }}
+              initial={{ opacity: 0, scale: 1.02 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
               transition={{ 
-                type: "tween", 
-                ease: [0.32, 0.72, 0, 1],
-                duration: 0.5
+                duration: 0.6,
+                ease: "easeInOut"
               }}
               style={{ 
                 willChange: "transform, opacity",
@@ -127,12 +164,12 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
               }}
               className="w-full h-full absolute top-0 left-0 cursor-grab active:cursor-grabbing"
             >
-              <Link to={currentItem.isLeader ? `/leader/${currentItem.id}` : `/news/${currentItem.id}`} className="block w-full h-full relative">
+              <Link to={currentItem.isLeader ? `/leader/${currentItem.id}` : `/news/${currentItem.id}`} className="block w-full h-full relative group">
                 {currentItem.imageUrl ? (
                   <img 
                     src={currentItem.imageUrl} 
                     alt={currentItem.title} 
-                    className="w-full h-full object-cover pointer-events-none" 
+                    className="w-full h-full object-cover pointer-events-none transition-transform duration-700 group-hover:scale-105" 
                   />
                 ) : (
                   <div className="w-full h-full bg-[#141B26] flex items-center justify-center pointer-events-none">
@@ -140,12 +177,20 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
                   </div>
                 )}
                 
-                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.85)] via-[rgba(0,0,0,0.4)] to-transparent"></div>
+                {/* Deeper multi-stop gradient overlay from black to transparent for readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/75 via-black/25 to-transparent pointer-events-none"></div>
                 
+                {/* Category Pill floating at middle-right height of the slider card */}
+                <div className="absolute top-[48%] right-4 sm:right-6 -translate-y-1/2 z-20">
+                  <span className={`${getCategoryColor(currentItem.category)} text-white text-[10.5px] sm:text-[12px] font-bold px-3 py-1.5 rounded-full select-none tracking-wide`}>
+                    {displayCategory}
+                  </span>
+                </div>
+
                 {/* Pinned News Tag if applicable */}
                 {currentItem.isPinned && (
                   <div className="absolute top-[16px] left-0 z-10">
-                    <span className="bg-blue-600 text-white text-[13px] font-bold font-ibm w-[100px] h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5">
+                    <span className="bg-blue-600 text-white text-[11px] sm:text-[13px] font-bold font-ibm w-[90px] sm:w-[100px] h-[30px] sm:h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-md">
                       <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
                       خبر مثبت
                     </span>
@@ -153,51 +198,44 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
                 )}
 
                 {/* Content Container at the Bottom */}
-                <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 pb-10 sm:pb-10 flex flex-col justify-end text-right z-10">
-                   {/* Meta Row: Chip & Details */}
-                   <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
-                     {/* Category Chip */}
-                     <div className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md shrink-0">
-                        {currentItem.category}
-                     </div>
-
-                     {/* Breaking News Indicator if applicable */}
-                     {currentItem.isBreaking && (
-                       <div className="flex items-center gap-1 text-status-error font-bold text-[10px] sm:text-[11px] bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm shrink-0">
-                          <span className="relative flex h-1.5 w-1.5">
-                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
-                          </span>
-                          تغطية مباشرة
-                       </div>
-                     )}
-
-                     {/* Meta Details */}
-                     <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-white/90">
-                        {currentItem.author && (
-                          <span className="font-bold">{currentItem.author}</span>
-                        )}
-                        {currentItem.author && <span className="opacity-50 text-[8px]">•</span>}
-                        <span>{formatPublishInfo(currentItem.createdAt).mTime}</span>
-                        <span className="opacity-50 text-[8px]">•</span>
-                        <span>{formatPublishInfo(currentItem.createdAt).mDate}</span>
-                        <span className="opacity-50 text-[8px]">•</span>
-                        <span className="text-white/70">{formatPublishInfo(currentItem.createdAt).hDate}</span>
-                      </div>
-                    </div>
-
-                   {/* Title */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 pb-12 sm:pb-14 flex flex-col justify-end text-right z-10 select-none" dir="rtl">
+                   {/* Title / Headline */}
                    <h2 
-                     className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3 font-cairo"
+                     className="font-bold text-[17px] sm:text-[22px] md:text-[25px] text-white leading-[1.35] transition-colors group-hover:text-taiz-sky line-clamp-2 font-cairo text-right w-full mb-3 shadow-text"
                      style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
                       {currentItem.title}
                     </h2>
 
-                    {/* Views below title - aligned to far left of the card */}
-                    <div className="flex justify-start mt-2" style={{ direction: 'ltr' }}>
-                      <div className="flex items-center gap-1 text-white/80 text-[10px] sm:text-[11px] font-medium">
-                        <Eye className="w-3.5 h-3.5 text-red-600" />
-                        <span>{currentItem.views || 0}</span>
+                    {/* Metadata Row: Aligned beautifully in a single line RTL */}
+                    <div className="flex flex-wrap items-center justify-start gap-x-4 sm:gap-x-5 gap-y-1.5 text-white/90 text-[10.5px] sm:text-[12.5px] font-medium w-full" dir="rtl">
+                      {/* Author */}
+                      {currentItem.author && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <User className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                          <span>{currentItem.author}</span>
+                        </div>
+                      )}
+
+                      {/* Hijri Date */}
+                      {hDate && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Calendar className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                          <span>{hDate}</span>
+                        </div>
+                      )}
+
+                      {/* Gregorian Date */}
+                      {mDate && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Calendar className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                          <span>{mDate}</span>
+                        </div>
+                      )}
+
+                      {/* Views */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        <Eye className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                        <span>{formatViews(currentItem.views || 0)}</span>
                       </div>
                     </div>
                  </div>
@@ -206,9 +244,9 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
           </AnimatePresence>
         </div>
 
-        {/* Pagination indicators inside the image at the bottom */}
+        {/* Circular Pagination dots inside the image at the bottom center */}
         {sliderList.length > 1 && (
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-[8px] z-20">
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center items-center gap-[10px] z-20">
             {sliderList.map((_, idx) => (
               <button
                 key={idx}
@@ -216,11 +254,12 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
                   setDirection(idx > currentIndex ? 1 : -1);
                   setCurrentIndex(idx);
                 }}
-                className={`transition-all duration-300 ${
+                className={`transition-all duration-300 rounded-full ${
                   idx === currentIndex 
-                    ? "w-[26px] h-[8px] bg-red-600 rounded-[4px]" 
-                    : "w-[8px] h-[8px] bg-white/30 rounded-[4px] hover:bg-white/50"
+                    ? "bg-red-600 w-[10px] h-[10px] scale-125 shadow-[0_0_8px_rgba(220,38,38,0.5)]" 
+                    : "bg-white/40 hover:bg-white/70 w-[8px] h-[8px]"
                 }`}
+                aria-label={`انتقال إلى الشريحة ${idx + 1}`}
               />
             ))}
           </div>
@@ -505,11 +544,6 @@ export function Home() {
     }
   }, [news, sliderShowLatest]);
 
-  // Determine list items below the slider
-  const listItems = useMemo(() => {
-    return news;
-  }, [news]);
-
   // Define breakingNewsIndex as fallback or kept as empty if not needed
   const breakingNewsIndex = -1;
 
@@ -565,7 +599,7 @@ export function Home() {
         </div>
       </div>
       
-      <div className="p-0 sm:p-4">
+      <div className="p-0">
         <AnimatePresence mode="wait">
           {activeSubTab === "news" ? (
             <motion.div
@@ -597,13 +631,12 @@ export function Home() {
           </div>
         ) : (
           <div className="space-y-0">
-            
             {/* HERO FEATURED POST SLIDER */}
             <NewsSlider sliderList={sliderItems} />
 
             {/* LIST OF OTHER POSTS */}
             <div className="flex flex-col">
-              {listItems.map((item, index) => (
+              {news.map((item, index) => (
                 <div key={item.id} className="relative">
                   {item.isFeaturedLayout ? (
                     <div className="px-4 sm:px-6 lg:px-8">
@@ -624,56 +657,49 @@ export function Home() {
                           </div>
                         )}
                         
-                        {/* Gradient Overlay for Text Readability */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.85)] via-[rgba(0,0,0,0.4)] to-transparent pointer-events-none"></div>
+                        {/* Deeper multi-stop gradient overlay from black to transparent */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 via-black/15 to-transparent pointer-events-none"></div>
                         
                         {/* Content Container at the Bottom */}
-                        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 pb-10 sm:pb-10 flex flex-col justify-end text-right z-10">
-                           {/* Meta Row: Chip & Details */}
-                           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-3">
-                             {/* Category Chip */}
-                             <div className="bg-red-600 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-1 rounded-full shadow-md shrink-0">
-                                {item.category}
-                             </div>
-
-                             {/* Breaking News Indicator if applicable */}
-                             {item.isBreaking && (
-                               <div className="flex items-center gap-1 text-status-error font-bold text-[10px] sm:text-[11px] bg-white/10 px-2 py-1 rounded-full backdrop-blur-sm shrink-0">
-                                  <span className="relative flex h-1.5 w-1.5">
-                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                     <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-status-error"></span>
-                                  </span>
-                                  تغطية مباشرة
-                               </div>
-                             )}
-
-                             {/* Meta Details */}
-                             <div className="flex flex-wrap items-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-white/90">
-                                {item.author && (
-                                  <span className="font-bold">{item.author}</span>
-                                )}
-                                {item.author && <span className="opacity-50 text-[8px]">•</span>}
-                                <span>{formatPublishInfo(item.createdAt).mTime}</span>
-                                <span className="opacity-50 text-[8px]">•</span>
-                                <span>{formatPublishInfo(item.createdAt).mDate}</span>
-                                <span className="opacity-50 text-[8px]">•</span>
-                                <span className="text-white/70">{formatPublishInfo(item.createdAt).hDate}</span>
-                             </div>
+                        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 pb-12 sm:pb-12 flex flex-col justify-end text-right z-10 select-none" dir="rtl">
+                           {/* Row 1: The Red Pill Tag */}
+                           <div className="flex justify-start mb-3">
+                             <span className="bg-red-600 text-white text-[11px] sm:text-[12.5px] font-bold px-4 py-1.5 rounded-full shadow-[0_4px_12px_rgba(220,38,38,0.25)] shrink-0 select-none tracking-wide">
+                                {item.category === "المولد النبوي الشريف" ? "المولد النبوي الشريف 1446هـ" : item.category}
+                             </span>
                            </div>
 
-                           {/* Title */}
+                           {/* Row 2: Title */}
                            <h2 
-                             className="font-bold text-[18px] sm:text-[22px] md:text-[26px] text-white leading-[1.5] transition-colors group-hover:text-taiz-sky line-clamp-3 font-cairo"
+                             className="font-bold text-[18px] sm:text-[22px] md:text-[25px] text-white leading-[1.4] transition-colors group-hover:text-taiz-sky line-clamp-2 font-cairo text-right w-full"
                              style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
                               {item.title}
                            </h2>
 
-                           {/* Views below title - aligned to far left of the card */}
-                           <div className="flex justify-start mt-2" style={{ direction: 'ltr' }}>
-                             <div className="flex items-center gap-1 text-white/80 text-[10px] sm:text-[11px] font-medium">
-                               <Eye className="w-3.5 h-3.5 text-red-600" />
-                               <span>{item.views || 0}</span>
+                           {/* Row 3: Meta Details aligned perfectly right-to-left in a single line */}
+                           <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-1 mt-3.5 text-white/90 text-[11px] sm:text-[12px] font-medium w-full" dir="rtl">
+                             {/* Author */}
+                             {item.author && (
+                               <div className="flex items-center gap-1.5 shrink-0">
+                                 <User className="w-4 h-4 text-white/90 stroke-[2]" />
+                                 <span>{item.author}</span>
+                               </div>
+                             )}
+
+                             {/* Date */}
+                             <div className="flex items-center gap-1.5 shrink-0">
+                               <Calendar className="w-4 h-4 text-white/90 stroke-[2]" />
+                               <span>{format(new Date(item.createdAt), "d MMMM yyyy", { locale: ar })}</span>
                              </div>
+
+                             {/* Views */}
+                             <div className="flex items-center gap-1.5 shrink-0">
+                               <Eye className="w-4 h-4 text-white/90 stroke-[2]" />
+                               <span>{formatViews(item.views || 0)}</span>
+                             </div>
+
+                             {/* :: Separator */}
+                             <span className="text-white/50 font-semibold tracking-widest text-xs shrink-0 select-none ml-1">::</span>
                            </div>
                         </div>
                       </Link>
