@@ -88,8 +88,8 @@ export function Leader() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-main font-cairo py-4 px-3 sm:px-4 pb-12" dir="rtl">
-      <div className="max-w-2xl mx-auto w-full space-y-4">
+    <div className="min-h-screen bg-white font-cairo py-4 px-2 sm:px-3 pb-12" dir="rtl">
+      <div className="max-w-[760px] mx-auto w-full space-y-4">
         
         {/* Top Header Card Container with Search and Segmented Filter Control */}
         <div className="bg-surface-card rounded-[24px] sm:rounded-[28px] p-3 sm:p-4 shadow-soft border border-border-subtle space-y-3">

@@ -64,8 +64,8 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = f
             key={c}
             className={`whitespace-nowrap font-black transition-all ${
               isPrimary 
-                ? (isHero ? "text-white px-4 py-1.5 rounded-xl text-[11px] shadow-md" : "bg-white border border-gray-200 px-3 py-1 rounded-full text-[10px] shadow-sm")
-                : (isHero ? "bg-white/90 text-gray-700 px-2.5 py-1 rounded-lg text-[9px]" : "bg-gray-50/50 border border-gray-100 px-2 py-0.5 rounded-lg text-[8px] opacity-90")
+                ? (isHero ? "text-white px-2.5 py-1 rounded-lg text-[9px] sm:text-[10px] shadow-md" : "bg-white border border-gray-200 px-2.5 py-0.5 rounded-full text-[9px] sm:text-[10px] shadow-sm")
+                : (isHero ? "bg-white/90 text-gray-700 px-2 py-0.5 rounded-md text-[8px] sm:text-[9px]" : "bg-gray-50/50 border border-gray-100 px-2 py-0.5 rounded-md text-[8px] opacity-90")
             }`}
             style={{ 
               backgroundColor: isPrimary && isHero ? color : undefined,

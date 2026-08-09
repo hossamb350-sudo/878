@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../firebase";
@@ -21,12 +21,16 @@ import {
   Star,
   Printer,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Calendar,
+  Newspaper,
+  X
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { getShareableUrl } from "../config/apiConfig";
+import { CategoryBadges } from "../components/CategoryBadges";
 
 export function NewsDetail() {
   const { id } = useParams();
@@ -34,18 +38,113 @@ export function NewsDetail() {
   const [news, setNews] = useState<NewsItem | null>(null);
   const [related, setRelated] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fontSize, setFontSize] = useState(18);
+  const [fontSize, setFontSize] = useState<number>(() => {
+    const saved = localStorage.getItem("news_font_size");
+    return saved ? parseInt(saved, 10) : 16;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("news_font_size", fontSize.toString());
+  }, [fontSize]);
+
   const [savedArticles, setSavedArticles] = useState<string[]>([]);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [copied, setCopied] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [imgGalleryIndex, setImgGalleryIndex] = useState<number | null>(null);
+  const [zoomScale, setZoomScale] = useState(1);
+  const activeThumbnailRef = useRef<HTMLButtonElement | null>(null);
+
+  // Auto-scroll active thumbnail into view
+  useEffect(() => {
+    if (activeThumbnailRef.current) {
+      activeThumbnailRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [currentSlide]);
+
+  // Reset zoom on slide change in gallery
+  useEffect(() => {
+    setZoomScale(1);
+  }, [imgGalleryIndex]);
 
   // Combine primary image and additional images into unified array
   const allImages = news ? [
     ...(news.imageUrl ? [news.imageUrl] : []),
     ...(news.additionalImages || [])
   ].filter(Boolean) as string[] : [];
+
+  const openGallery = (index: number) => {
+    setImgGalleryIndex(index);
+    if (!window.location.hash.includes("gallery")) {
+      const currentState = window.history.state || {};
+      window.history.pushState({ ...currentState, galleryOpen: true }, "", "#gallery");
+    }
+  };
+
+  const closeGallery = () => {
+    setImgGalleryIndex(null);
+    if (window.location.hash.includes("gallery") || window.history.state?.galleryOpen) {
+      window.history.back();
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!window.location.hash.includes("gallery")) {
+        setImgGalleryIndex(null);
+      }
+    };
+
+    const handleCustomClose = () => {
+      setImgGalleryIndex(null);
+      if (window.location.hash.includes("gallery")) {
+        window.history.back();
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("hashchange", handlePopState);
+    window.addEventListener("close-modal-gallery", handleCustomClose);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("hashchange", handlePopState);
+      window.removeEventListener("close-modal-gallery", handleCustomClose);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (imgGalleryIndex === null || allImages.length === 0) return;      
+      if (e.key === "Escape") {
+        closeGallery();
+      } else if (e.key === "ArrowLeft") {
+        if (imgGalleryIndex < allImages.length - 1) {
+          setImgGalleryIndex(imgGalleryIndex + 1);
+        }
+      } else if (e.key === "ArrowRight") {
+        if (imgGalleryIndex > 0) {
+          setImgGalleryIndex(imgGalleryIndex - 1);
+        }
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [imgGalleryIndex, allImages]);
+
+  // Auto slide interval for the news hero card
+  useEffect(() => {
+    if (allImages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % allImages.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [allImages.length]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -197,8 +296,8 @@ export function NewsDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-main flex flex-col items-center justify-center" dir="rtl">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-red-600 mb-4"></div>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center" dir="rtl">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-taiz-sky mb-4"></div>
         <p className="font-bold text-text-secondary font-alexandria text-sm">جاري التحميل...</p>
       </div>
     );
@@ -206,7 +305,7 @@ export function NewsDetail() {
 
   if (!news) {
     return (
-      <div className="min-h-screen bg-surface-main text-text-primary flex flex-col items-center justify-center p-6" dir="rtl">
+      <div className="min-h-screen bg-white text-text-primary flex flex-col items-center justify-center p-6" dir="rtl">
         <h2 className="text-xl font-bold mb-4 font-alexandria">الخبر غير موجود</h2>
         <button onClick={() => navigate("/")} className="btn-primary">العودة للرئيسية</button>
       </div>
@@ -218,29 +317,29 @@ export function NewsDetail() {
   const modInfo = isModified ? formatPublishInfo(news.updatedAt!) : null;
 
   return (
-    <div className="min-h-screen bg-surface-main text-text-primary pb-20 font-sans relative" dir="rtl">
+    <div className="min-h-screen bg-white text-text-primary pb-20 font-sans relative" dir="rtl">
       {/* Reading Progress Bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200 z-50">
+      <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200/50 z-50">
         <div 
-          className="h-full bg-red-600 transition-all duration-75" 
+          className="h-full bg-gradient-to-r from-taiz-sky to-taiz-royal transition-all duration-75" 
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
       {/* Top Navigation */}
-      <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-border-light px-4 h-14 flex items-center justify-between text-text-primary">
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-soft px-4 h-14 flex items-center justify-between text-text-primary">
         <button 
           onClick={() => navigate(-1)} 
           className="p-2 hover:bg-slate-100 rounded-full transition-colors text-text-primary flex items-center gap-1 font-bold text-xs font-alexandria"
         >
-          <ArrowRight className="w-5 h-5 text-red-600" />
+          <ArrowRight className="w-5 h-5 text-taiz-sky" />
           <span>رجوع</span>
         </button>
 
         <div className="flex items-center gap-1">
           <button 
             onClick={toggleBookmark}
-            className={`p-2 rounded-full transition-colors ${isBookmarked ? "text-red-600 bg-red-600/10" : "hover:bg-slate-100 text-text-primary"}`}
+            className={`p-2 rounded-full transition-colors ${isBookmarked ? "text-taiz-sky bg-taiz-sky/10" : "hover:bg-slate-100 text-text-primary"}`}
             title="حفظ الخبر"
           >
             <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
@@ -253,132 +352,206 @@ export function NewsDetail() {
           </button>
         </div>
       </div>
-
-      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-6 pt-6">
-        {/* Category & Badges */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <span className="bg-red-600/10 text-red-600 font-bold text-xs font-alexandria px-3 py-1 rounded-full border border-red-500/20">
-            {news.category || "أخبار عامة"}
-          </span>
-
-          {news.isBreaking && (
-            <span className="bg-red-600 text-white font-extrabold text-xs font-alexandria px-3 py-1 rounded-full animate-pulse shadow-sm">
-              خبر عاجل
-            </span>
-          )}
-
-          {news.isPinned && (
-            <span className="bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold text-xs font-alexandria px-3 py-1 rounded-full border border-amber-500/20 flex items-center gap-1">
-              <Star className="w-3.5 h-3.5 fill-current" />
-              خبر هام
-            </span>
-          )}
-        </div>
-
-        {/* Title */}
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold font-alexandria leading-snug text-text-primary mb-4">
+      <div className="max-w-[760px] mx-auto w-full px-4 pt-5 sm:pt-8 pb-3 sm:pb-5 text-right border-b border-slate-100/40 dark:border-stone-800/20" dir="rtl">
+        <h1 className="font-extrabold text-[20px] sm:text-[24px] md:text-[26px] text-slate-900 dark:text-white leading-[1.45] font-cairo">
           {news.title}
         </h1>
+      </div>
 
-        {/* Short Description */}
-        {news.shortDescription && (
-          <p className="text-base sm:text-lg text-text-secondary font-ibm leading-relaxed mb-6 font-medium">
-            {news.shortDescription}
-          </p>
+      <div className="max-w-[760px] mx-auto w-full px-0 pt-6 sm:pt-10 pb-2">
+        {/* Featured News Card Header - Integrated Slider with horizontal controls */}
+        <motion.div 
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative w-full h-[320px] sm:h-[400px] md:h-[450px] overflow-hidden bg-slate-50 dark:bg-stone-950/20 mb-3 select-none group rounded-xl shadow-xs border border-slate-200/20 dark:border-stone-800/25"
+        >
+          {/* Horizontal Swiping Container */}
+          <div 
+            className="absolute inset-0 w-full h-full cursor-zoom-in"
+            onClick={() => openGallery(currentSlide)}
+            title="انقر لتكبير وعرض الصورة"
+          >
+            {allImages.length > 0 ? (
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={currentSlide}
+                  src={allImages[currentSlide]} 
+                  alt={news.title} 
+                  className="w-full h-full object-cover absolute inset-0" 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
+                />
+              </AnimatePresence>
+            ) : (
+              <div className="w-full h-full bg-[#141B26] flex items-center justify-center">
+                <Newspaper className="w-12 h-12 text-white/20" />
+              </div>
+            )}
+          </div>
+
+          {/* Current Slide Counter Index Badge */}
+          {allImages.length > 0 && (
+            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1" dir="ltr">
+              <span>{currentSlide + 1}</span>
+              <span className="text-white/40">/</span>
+              <span>{allImages.length}</span>
+            </div>
+          )}
+
+          {/* Views badge - compact eye icon with views count on the far left inside the slider */}
+          <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 px-2.5 py-1 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
+            <Eye className="w-3.5 h-3.5 stroke-[2] text-white/80" />
+            <span>{news.views || 4}</span>
+          </div>
+
+          {/* Left/Right manual slide buttons with compatible styles */}
+          {allImages.length > 1 && (
+            <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+                }}
+                className="p-2.5 bg-black/40 hover:bg-taiz-sky active:scale-95 text-white rounded-full backdrop-blur-md transition-all duration-300 pointer-events-auto cursor-pointer shadow-lg"
+                title="الصورة السابقة"
+              >
+                <ChevronRight className="w-5.5 h-5.5 stroke-[2.5]" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSlide((prev) => (prev + 1) % allImages.length);
+                }}
+                className="p-2.5 bg-black/40 hover:bg-taiz-sky active:scale-95 text-white rounded-full backdrop-blur-md transition-all duration-300 pointer-events-auto cursor-pointer shadow-lg"
+                title="الصورة التالية"
+              >
+                <ChevronLeft className="w-5.5 h-5.5 stroke-[2.5]" />
+              </button>
+            </div>
+          )}
+
+          {/* Category Pill floating at top-right area */}
+          <div className="absolute top-4 right-4 z-20 flex flex-wrap gap-2 pointer-events-none">
+            <CategoryBadges item={news} isHero={true} className="drop-shadow-lg" />
+
+            {news.isBreaking && (
+              <span className="bg-red-600 text-white font-extrabold text-xs font-alexandria px-3 py-1.5 rounded-lg animate-pulse shadow-md">
+                خبر عاجل
+              </span>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Dynamic Image Thumbnails underneath Slider */}
+        {allImages.length > 1 && (
+          <div className="px-4 sm:px-5 mb-4 flex items-center justify-center w-full">
+            <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
+              {allImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  ref={idx === currentSlide ? activeThumbnailRef : undefined}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`relative w-14 h-10 rounded-md overflow-hidden shrink-0 snap-center transition-all ${
+                    idx === currentSlide 
+                      ? "ring-2 ring-taiz-sky scale-105 opacity-100" 
+                      : "opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
         )}
+      </div>
 
-        {/* Author & Date Metadata */}
-        <div className="py-4 border-y border-border-light flex flex-wrap items-center justify-between gap-4 mb-6 text-xs font-ibm text-text-muted">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-red-600/10 text-red-600 flex items-center justify-center font-bold text-sm">
-              <User className="w-4 h-4" />
+      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5">
+        {/* News Metadata Card - Extra Compact with Platform Navy branding & 11px Font */}
+        <div className="bg-slate-50/40 dark:bg-stone-900/20 border border-slate-200/20 dark:border-stone-800/40 rounded-lg p-2 sm:p-2.5 shadow-xs mb-3 mt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 font-cairo text-right" dir="rtl">
+          {/* Author info with brand circular navy badge */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div className="w-6.5 h-6.5 bg-taiz-navy/10 dark:bg-taiz-navy/20 rounded-full flex items-center justify-center text-taiz-navy dark:text-taiz-soft shrink-0">
+              <User className="w-3 h-3 stroke-[2.5]" />
             </div>
             <div>
-              <div className="font-bold text-text-primary text-sm">{news.author || "المحرر السيادي"}</div>
-              <div className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5" style={{ direction: "ltr" }}>
-                <Eye className="w-3.5 h-3.5 text-slate-400" />
-                <span>{news.views || 0} مشاهدة</span>
-              </div>
+              <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-bold leading-none mb-0.5">الكاتب</p>
+              <p className="text-[11px] font-black text-slate-800 dark:text-zinc-200">{news.author || "هيثم اليوسفي"}</p>
             </div>
           </div>
 
-          <div className="flex flex-col text-left">
-            <span className="font-bold text-text-primary">{hDate}</span>
-            <span className="text-[11px] text-slate-400">{mDate} - الساعة {mTime}</span>
+          <div className="h-px sm:h-5 w-full sm:w-px bg-slate-200/50 dark:bg-stone-800/40" />
+
+          {/* Inline Dates & Times using 11px size & Navy Blue icons */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-zinc-400 font-bold">
+            <div className="flex items-center gap-1 shrink-0">
+              <Calendar className="w-3 h-3 text-taiz-navy dark:text-taiz-soft stroke-[2.5]" />
+              <span>{mDate ? `${mDate} م` : "15 مايو 2024 م"}</span>
+            </div>
+
+            <span className="text-slate-200 dark:text-stone-800 font-normal hidden sm:inline">|</span>
+
+            <div className="flex items-center gap-1 shrink-0">
+              <Clock className="w-3 h-3 text-taiz-navy dark:text-taiz-soft stroke-[2.5]" />
+              <span>{hDate || "29 ذو القعدة 1445 هـ"}</span>
+            </div>
           </div>
         </div>
 
-        {/* Image Display / Gallery Carousel */}
-        {allImages.length > 0 && (
-          <div className="mb-8">
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-border-light bg-slate-900 shadow-md">
-              <img 
-                src={allImages[currentSlide]} 
-                alt={news.title} 
-                className="w-full h-full object-cover transition-all duration-500"
-              />
-              {allImages.length > 1 && (
-                <>
-                  <button 
-                    onClick={() => setCurrentSlide(prev => prev > 0 ? prev - 1 : allImages.length - 1)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                  <button 
-                    onClick={() => setCurrentSlide(prev => (prev + 1) % allImages.length)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/80 transition-colors"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 text-white text-xs font-ibm">
-                    <span>{currentSlide + 1}</span>
-                    <span>/</span>
-                    <span>{allImages.length}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Action Controls Toolbar */}
-        <div className="flex items-center justify-between gap-4 mb-8 bg-surface-card border border-border-light p-3 rounded-xl shadow-soft">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold font-ibm text-slate-500 pl-2 border-l border-slate-200">حجم الخط:</span>
+        {/* Interaction Bar (شريط التفاعل) matching mockup design */}
+        <div className="my-5 bg-[#fafafa]/90 dark:bg-stone-900/40 border border-slate-200/50 dark:border-stone-800/80 rounded-full px-4 py-2 shadow-sm flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
+          {/* Left side: Font Size Adjuster in mockup (+ 28px -) */}
+          <div className="flex items-center gap-2.5 text-slate-500 dark:text-slate-400 font-bold text-sm font-cairo">
             <button 
-              onClick={() => setFontSize(f => Math.min(f + 2, 26))} 
-              className="p-1.5 hover:bg-slate-100 rounded-lg font-bold text-xs font-ibm border border-slate-200"
+              onClick={() => setFontSize(f => Math.min(f + 1, 32))} 
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-zinc-800 rounded-full transition-colors text-base font-bold"
               title="تكبير الخط"
             >
               <Plus className="w-4 h-4" />
             </button>
+            <span className="font-sans text-sm tracking-tight text-slate-700 dark:text-slate-200 min-w-[34px] text-center font-bold">
+              {fontSize}px
+            </span>
             <button 
-              onClick={() => setFontSize(f => Math.max(f - 2, 14))} 
-              className="p-1.5 hover:bg-slate-100 rounded-lg font-bold text-xs font-ibm border border-slate-200"
+              onClick={() => setFontSize(f => Math.max(f - 1, 14))} 
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-zinc-800 rounded-full transition-colors text-base font-bold"
               title="تصغير الخط"
             >
               <Minus className="w-4 h-4" />
             </button>
           </div>
 
+          {/* Right side: Circular Social Icons */}
           <div className="flex items-center gap-2">
-            <button onClick={() => handleShare("whatsapp")} className="p-2 text-slate-500 hover:text-emerald-600 transition-colors" title="واتساب">
-              <MessageCircle className="w-5 h-5" />
+            <button 
+              onClick={() => handleShare("whatsapp")} 
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-emerald-500 transition-all duration-200"
+              title="مشاركة عبر واتساب"
+            >
+              <MessageCircle className="w-4.5 h-4.5" />
             </button>
-            <button onClick={() => handleShare("twitter")} className="p-2 text-slate-500 hover:text-sky-500 transition-colors" title="إكس">
-              <Twitter className="w-5 h-5" />
+            <button 
+              onClick={() => handleShare("twitter")} 
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-sky-500 transition-all duration-200"
+              title="مشاركة عبر إكس"
+            >
+              <Twitter className="w-4.5 h-4.5" />
             </button>
-            <button onClick={() => handleShare("facebook")} className="p-2 text-slate-500 hover:text-blue-600 transition-colors" title="فيسبوك">
-              <Facebook className="w-5 h-5" />
+            <button 
+              onClick={() => handleShare("facebook")} 
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-blue-600 transition-all duration-200"
+              title="مشاركة عبر فيسبوك"
+            >
+              <Facebook className="w-4.5 h-4.5" />
             </button>
           </div>
         </div>
 
         {/* Content Markdown Body */}
         <div 
-          className="prose prose-slate max-w-none text-text-primary text-justify leading-relaxed mb-10"
-          style={{ fontSize: `${fontSize}px`, fontFamily: '"IBM Plex Sans Arabic", Cairo, sans-serif' }}
+          className="prose prose-slate max-w-none text-slate-800 dark:text-slate-100 text-justify leading-[2.0] mb-10 font-cairo [&_p]:mb-5"
+          style={{ fontSize: `${fontSize}px` }}
         >
           <ReactMarkdown>{news.content}</ReactMarkdown>
         </div>
@@ -438,7 +611,7 @@ export function NewsDetail() {
         {related.length > 0 && (
           <div className="border-t border-border-light pt-8 mt-8">
              <h3 className="text-lg font-bold font-alexandria mb-4 flex items-center gap-2 text-text-primary">
-                <div className="w-1 h-5 bg-red-600 rounded-full"></div>
+                <div className="w-1 h-5 bg-taiz-sky rounded-full"></div>
                 أخبار ذات صلة
              </h3>
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -446,7 +619,7 @@ export function NewsDetail() {
                   <Link 
                     key={rItem.id} 
                     to={`/news/${rItem.id}`} 
-                    className="group flex gap-3 bg-surface-card rounded-xl p-3 border border-border-light hover:border-red-500/30 transition-all shadow-soft"
+                    className="group flex gap-3 bg-surface-card rounded-xl p-3 border border-border-light hover:border-taiz-sky/30 transition-all shadow-soft"
                   >
                      <div className="w-24 h-20 rounded-lg overflow-hidden shrink-0 bg-slate-100">
                         <img src={rItem.imageUrl || "https://i.pravatar.cc/150"} alt={rItem.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -458,6 +631,105 @@ export function NewsDetail() {
                   </Link>
                 ))}
              </div>
+          </div>
+        )}
+
+        {/* Full Screen Image Gallery Modal */}
+        {imgGalleryIndex !== null && allImages.length > 0 && (
+          <div 
+            data-gallery-open="true"
+            className="fixed inset-0 z-[200] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-sm"
+            onClick={closeGallery}
+          >
+               <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-[210]" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-white/70 font-bold text-sm drop-shadow-md font-ibm" style={{ direction: "ltr" }}>
+                    {imgGalleryIndex + 1} / {allImages.length}
+                  </span>
+                  
+                  {/* Zoom and close controls */}
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setZoomScale(prev => Math.min(prev + 0.5, 4))}
+                      className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer"
+                      title="تكبير"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => setZoomScale(prev => Math.max(prev - 0.5, 1))}
+                      className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer"
+                      title="تصغير"
+                    >
+                      <Minus className="w-5 h-5" />
+                    </button>
+                    {zoomScale > 1 && (
+                      <button 
+                        onClick={() => setZoomScale(1)}
+                        className="text-xs text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-full transition-colors drop-shadow-md cursor-pointer font-cairo font-bold animate-fade-in"
+                      >
+                        إعادة ضبط
+                      </button>
+                    )}
+                    <button onClick={closeGallery} className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer">
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
+               </div>
+               
+               <div className="relative flex items-center justify-center w-full max-w-4xl h-[70vh] sm:h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                  <AnimatePresence mode="popLayout">
+                    <motion.img 
+                      key={imgGalleryIndex}
+                      src={allImages[imgGalleryIndex]} 
+                      alt={`Gallery image ${imgGalleryIndex + 1}`} 
+                      className="max-w-full max-h-full object-contain select-none cursor-grab active:cursor-grabbing"
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: zoomScale }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ duration: 0.25, ease: "easeInOut" }}
+                      drag={zoomScale > 1 ? true : "x"}
+                      dragConstraints={zoomScale > 1 ? undefined : { left: 0, right: 0 }}
+                      dragElastic={zoomScale > 1 ? 0.2 : 0.6}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setZoomScale(prev => prev > 1 ? 1 : 2.5);
+                      }}
+                      onDragEnd={(event, info) => {
+                        if (zoomScale > 1) return;
+                        const swipeThreshold = 50;
+                        if (info.offset.x > swipeThreshold) {
+                          if (imgGalleryIndex > 0) {
+                              setImgGalleryIndex(imgGalleryIndex - 1);
+                          }
+                        } else if (info.offset.x < -swipeThreshold) {
+                          if (imgGalleryIndex < allImages.length - 1) {
+                              setImgGalleryIndex(imgGalleryIndex + 1);
+                          }
+                        }
+                      }}
+                    />
+                  </AnimatePresence>
+                  
+                  {imgGalleryIndex > 0 && zoomScale === 1 && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex - 1); }}
+                      className="absolute right-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"
+                      title="الصورة السابقة"
+                    >
+                      <ChevronRight className="w-6 h-6" />
+                    </button>
+                  )}
+                  
+                  {imgGalleryIndex < allImages.length - 1 && zoomScale === 1 && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex + 1); }}
+                      className="absolute left-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"
+                      title="الصورة التالية"
+                    >
+                      <ChevronLeft className="w-6 h-6" />
+                    </button>
+                  )}
+               </div>
           </div>
         )}
 

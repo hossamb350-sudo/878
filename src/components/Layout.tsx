@@ -373,14 +373,14 @@ export function Layout({ children }: { children?: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-surface-main text-text-primary transition-colors" dir="rtl">
+    <div className="flex flex-col min-h-screen bg-white text-text-primary transition-colors" dir="rtl">
       <UrgentNewsBanner />
 
       {/* Platform Logo & Widgets Area */}
-      <div className="w-full bg-surface-main relative z-30">
+      <div className="w-full bg-white relative z-30">
           <HeaderWidgets />
-          {/* Visual Separator: line + subtle premium drop shadow */}
-          <div className="w-full h-1.5 bg-gradient-to-b from-slate-100 to-transparent border-t border-slate-200/50 shadow-[0_4px_12px_rgba(0,0,0,0.02)]" />
+          {/* Visual Separator: thin crisp border with no extra vertical spacing */}
+          <div className="w-full border-b border-slate-200/40" />
       </div>
 
       {/* Main Content Area */}

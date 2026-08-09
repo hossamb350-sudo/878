@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
@@ -22,10 +22,13 @@ import {
   Star,
   X,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Clock,
+  Newspaper
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { getShareableUrl } from "../config/apiConfig";
+import { CategoryBadges } from "../components/CategoryBadges";
 
 export function ArticleDetail() {
   const { id } = useParams();
@@ -35,6 +38,24 @@ export function ArticleDetail() {
   const [loading, setLoading] = useState(true);
   const [imgGalleryIndex, setImgGalleryIndex] = useState<number | null>(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [zoomScale, setZoomScale] = useState(1);
+  const activeThumbnailRef = useRef<HTMLButtonElement | null>(null);
+
+  // Auto-scroll active thumbnail into view
+  useEffect(() => {
+    if (activeThumbnailRef.current) {
+      activeThumbnailRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+        inline: "center",
+      });
+    }
+  }, [currentSlide]);
+
+  // Reset zoom on slide change in gallery
+  useEffect(() => {
+    setZoomScale(1);
+  }, [imgGalleryIndex]);
 
   // Combine primary image and additional images into unified array
   const allImages = article ? [
@@ -231,8 +252,8 @@ export function ArticleDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-main flex flex-col items-center justify-center" dir="rtl">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-[#D32027] mb-4"></div>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center" dir="rtl">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-taiz-sky mb-4"></div>
         <p className="font-medium text-text-secondary font-ibm text-sm">جاري تحميل المقال...</p>
       </div>
     );
@@ -240,172 +261,223 @@ export function ArticleDetail() {
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-surface-main text-text-primary flex flex-col items-center justify-center p-6" dir="rtl">
+      <div className="min-h-screen bg-white text-text-primary flex flex-col items-center justify-center p-6" dir="rtl">
         <h2 className="text-xl font-bold mb-4 font-ibm">المقال غير موجود</h2>
-        <button onClick={() => navigate("/articles")} className="bg-red-600 text-white px-6 py-2.5 rounded-xl font-bold font-ibm shadow-md hover:bg-red-700 transition-all">العودة للمقالات</button>
+        <button onClick={() => navigate("/articles")} className="bg-gradient-to-r from-taiz-sky to-taiz-royal text-white px-6 py-2.5 rounded-xl font-bold font-ibm shadow-md hover:scale-[1.02] transition-all">العودة للمقالات</button>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-surface-main text-text-primary pb-32 font-sans" dir="rtl">
+    <div className="min-h-screen bg-white text-text-primary pb-32 font-sans" dir="rtl">
       {/* Top Nav with matching light background */}
-      <div className="sticky top-0 z-40 bg-surface-main/90 backdrop-blur-md border-b border-border-light px-4 h-16 flex items-center justify-between text-text-primary">
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-soft px-4 h-16 flex items-center justify-between text-text-primary">
         <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary">
-          <ArrowRight className="w-6 h-6" />
+          <ArrowRight className="w-6 h-6 text-taiz-sky" />
         </button>
         <div className="flex items-center gap-2">
           <button 
             onClick={toggleBookmark}
             title={isBookmarked ? "إزالة من المفضلة" : "حفظ في المفضلة"}
-            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-[#D32027] bg-[#D32027]/10" : "hover:bg-slate-200/50 text-text-primary"}`}
+            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-taiz-sky bg-taiz-sky/10" : "hover:bg-slate-200/50 text-text-primary"}`}
           >
             <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
           </button>
           <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors relative text-text-primary">
-            {copied ? <Check className="w-6 h-6 text-red-600" /> : <Share2 className="w-6 h-6" />}
+            {copied ? <Check className="w-6 h-6 text-emerald-600" /> : <Share2 className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6">
-        {/* Featured Article Card Header - Integrated Animated Slider */}
+      {/* Article Title Section Above the Slider */}
+      <div className="max-w-[760px] mx-auto w-full px-4 pt-5 sm:pt-8 pb-3 sm:pb-5 text-right border-b border-slate-100/40 dark:border-stone-800/20" dir="rtl">
+        <h1 className="font-extrabold text-[20px] sm:text-[24px] md:text-[26px] text-slate-900 dark:text-white leading-[1.45] font-cairo">
+          {article.title}
+        </h1>
+      </div>
+
+      <div className="max-w-[760px] mx-auto w-full px-0 pt-6 sm:pt-10 pb-2">
+        {/* Featured Article Card Header - Integrated Slider with horizontal controls */}
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full h-[376px] sm:h-[420px] rounded-[24px] overflow-hidden border border-border-light shadow-medium mb-6 select-none group"
+          className="relative w-full h-[320px] sm:h-[400px] md:h-[450px] overflow-hidden bg-slate-50 dark:bg-stone-950/20 mb-3 select-none group rounded-xl shadow-xs border border-slate-200/20 dark:border-stone-800/25"
         >
-          {/* Sliding Background Images Layer */}
+          {/* Horizontal Swiping Container */}
           <div 
             className="absolute inset-0 w-full h-full cursor-zoom-in"
             onClick={() => openGallery(currentSlide)}
-            title="انقر لتكبير الصورة"
+            title="انقر لتكبير وعرض الصورة"
           >
             {allImages.length > 0 ? (
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence mode="wait">
                 <motion.img 
                   key={currentSlide}
                   src={allImages[currentSlide]} 
                   alt={article.title} 
                   className="w-full h-full object-cover absolute inset-0" 
-                  initial={{ opacity: 0, scale: 1.05 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.8, ease: "easeInOut" }}
+                  transition={{ duration: 0.6, ease: "easeInOut" }}
                 />
               </AnimatePresence>
             ) : (
-              <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                <img 
-                  src={article.authorPhoto || "https://i.pravatar.cc/150"} 
-                  className="w-full h-full object-cover opacity-80" 
-                  alt={article.authorName} 
-                />
+              <div className="w-full h-full bg-[#141B26] flex items-center justify-center">
+                <Newspaper className="w-12 h-12 text-white/20" />
               </div>
             )}
           </div>
-          
-          {/* Fixed Dark Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.88)] via-[rgba(0,0,0,0.42)] to-transparent pointer-events-none"></div>
 
-          {/* Left/Right manual slide buttons on hover */}
+          {/* Current Slide Counter Index Badge */}
+          {allImages.length > 0 && (
+            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1" dir="ltr">
+              <span>{currentSlide + 1}</span>
+              <span className="text-white/40">/</span>
+              <span>{allImages.length}</span>
+            </div>
+          )}
+
+          {/* Views badge - compact eye icon with views count on the far left inside the slider */}
+          <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 px-2.5 py-1 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
+            <Eye className="w-3.5 h-3.5 stroke-[2] text-white/80" />
+            <span>{article.views || 4}</span>
+          </div>
+
+          {/* Left/Right manual slide buttons with compatible styles */}
           {allImages.length > 1 && (
-            <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
+            <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setCurrentSlide((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
                 }}
-                className="p-2 bg-black/40 hover:bg-black/70 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
+                className="p-2.5 bg-black/40 hover:bg-taiz-sky active:scale-95 text-white rounded-full backdrop-blur-md transition-all duration-300 pointer-events-auto cursor-pointer shadow-lg"
                 title="الصورة السابقة"
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight className="w-5.5 h-5.5 stroke-[2.5]" />
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setCurrentSlide((prev) => (prev + 1) % allImages.length);
                 }}
-                className="p-2 bg-black/40 hover:bg-black/70 text-white rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-auto cursor-pointer"
+                className="p-2.5 bg-black/40 hover:bg-taiz-sky active:scale-95 text-white rounded-full backdrop-blur-md transition-all duration-300 pointer-events-auto cursor-pointer shadow-lg"
                 title="الصورة التالية"
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft className="w-5.5 h-5.5 stroke-[2.5]" />
               </button>
             </div>
           )}
 
-          {/* Fixed Badge on Top Left */}
-          <div className="absolute top-[16px] left-0 z-10 pointer-events-none">
-            <span className="bg-[#D32027] text-white text-[13px] font-bold font-ibm px-4 h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-lg">
-              <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
-              مقال مميز
-            </span>
-          </div>
-
-          {/* Fixed Article Card Footer Details Over the Image */}
-          <div className="absolute bottom-0 left-0 right-0 p-[20px] pb-[16px] flex flex-col justify-end text-right z-10 pointer-events-none">
-            <h2 className="text-[18px] font-bold font-ibm leading-[28px] w-full text-white mb-[12px]">
-              {article.title}
-            </h2>
-            
-            <div className="flex items-center justify-between w-full h-[46px]">
-              <div className="flex items-center gap-[8px]">
-                <img 
-                  src={article.authorPhoto || "https://i.pravatar.cc/150"} 
-                  className="w-[44px] h-[44px] rounded-full object-cover shrink-0 border border-white/20" 
-                  alt={article.authorName} 
-                />
-                <span className="text-[14px] font-medium font-ibm text-white">{article.authorName}</span>
-              </div>
-              <div className="flex flex-col text-[12px] text-slate-300 font-normal font-ibm text-left">
-                <span>{article.hijriDate || "ذو الحجة 1446 هـ"}</span>
-                {article.gregorianDate && (
-                  <span className="text-[10px] text-slate-400 mt-[2px]">{article.gregorianDate}</span>
-                )}
-              </div>
-            </div>
-
-            {/* Slider Dots indicators */}
-            {allImages.length > 1 && (
-              <div className="flex items-center justify-center gap-1.5 mt-2.5 pointer-events-auto">
-                {allImages.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentSlide(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      idx === currentSlide ? "w-6 bg-red-600" : "w-1.5 bg-white/40 hover:bg-white/70"
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
+          {/* Category Pill floating at top-right area */}
+          <div className="absolute top-4 right-4 z-20 flex flex-wrap gap-2 pointer-events-none">
+            <CategoryBadges item={article as any} isHero={true} className="drop-shadow-lg" />
           </div>
         </motion.div>
 
-        {/* Content Controls */}
-        <div className="sticky top-20 z-40 mb-6 flex justify-center">
-           <div className="bg-white/95 border border-border-light rounded-2xl px-4 py-2 flex items-center gap-6 shadow-medium backdrop-blur-sm text-text-primary">
-              <div className="flex items-center gap-2">
-                 <button onClick={() => setFontSize(f => Math.min(f + 1, 30))} className="p-1.5 hover:bg-slate-100 rounded-lg text-text-primary"><Plus className="w-4 h-4" /></button>
-                 <span className="text-sm font-bold min-w-[36px] text-center font-ibm text-text-primary">{fontSize}px</span>
-                 <button onClick={() => setFontSize(f => Math.max(f - 1, 12))} className="p-1.5 hover:bg-slate-100 rounded-lg text-text-primary"><Minus className="w-4 h-4" /></button>
+        {/* Dynamic Image Thumbnails underneath Slider */}
+        {allImages.length > 1 && (
+          <div className="px-4 sm:px-5 mb-4 flex items-center justify-center w-full">
+            <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
+              {allImages.map((img, idx) => (
+                <button
+                  key={idx}
+                  ref={idx === currentSlide ? activeThumbnailRef : undefined}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`relative w-14 h-10 rounded-md overflow-hidden shrink-0 snap-center transition-all ${
+                    idx === currentSlide 
+                      ? "ring-2 ring-taiz-sky scale-105 opacity-100" 
+                      : "opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5">
+        {/* Article Metadata Card - Extra Compact with Platform Navy branding & 11px Font */}
+        <div className="bg-slate-50/40 dark:bg-stone-900/20 border border-slate-200/20 dark:border-stone-800/40 rounded-lg p-2 sm:p-2.5 shadow-xs mb-3 mt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 font-cairo text-right" dir="rtl">
+          {/* Author info with brand circular navy/photo badge */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            {article.authorPhoto ? (
+              <img 
+                src={article.authorPhoto} 
+                className="w-6.5 h-6.5 rounded-full object-cover border border-taiz-navy/20" 
+                alt={article.authorName} 
+              />
+            ) : (
+              <div className="w-6.5 h-6.5 bg-taiz-navy/10 dark:bg-taiz-navy/20 rounded-full flex items-center justify-center text-taiz-navy dark:text-taiz-soft shrink-0">
+                <User className="w-3 h-3 stroke-[2.5]" />
               </div>
-              <div className="w-px h-6 bg-slate-200"></div>
-              <div className="flex items-center gap-4">
-                 <button onClick={() => handleShare("whatsapp")} className="text-slate-400 hover:text-green-500 transition-colors"><MessageCircle className="w-5 h-5" /></button>
-                 <button onClick={() => handleShare("twitter")} className="text-slate-400 hover:text-sky-400 transition-colors"><Twitter className="w-5 h-5" /></button>
-                 <button onClick={() => handleShare("facebook")} className="text-slate-400 hover:text-blue-500 transition-colors"><Facebook className="w-5 h-5" /></button>
-              </div>
-           </div>
+            )}
+            <div>
+              <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-bold leading-none mb-0.5">الكاتب</p>
+              <p className="text-[11px] font-black text-slate-800 dark:text-zinc-200">{article.authorName || "هيثم اليوسفي"}</p>
+            </div>
+          </div>
+
+          <div className="h-px sm:h-5 w-full sm:w-px bg-slate-200/50 dark:bg-stone-800/40" />
+
+          {/* Inline Dates & Times using 11px size & Navy Blue icons */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-zinc-400 font-bold">
+            <div className="flex items-center gap-1 shrink-0">
+              <Calendar className="w-3 h-3 text-taiz-navy dark:text-taiz-soft stroke-[2.5]" />
+              <span>{article.hijriDate || "15 صفر 1448 هـ"}</span>
+            </div>
+
+            {article.gregorianDate && (
+              <>
+                <span className="text-slate-200 dark:text-stone-800 font-normal hidden sm:inline">|</span>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <Clock className="w-3 h-3 text-taiz-navy dark:text-taiz-soft stroke-[2.5]" />
+                  <span>{article.gregorianDate}</span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        {/* Floating Interaction Bar (شريط التفاعل) matching screenshot */}
+        <div className="my-6 bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 rounded-full px-6 py-2.5 shadow-sm flex items-center justify-between max-w-xl mx-auto backdrop-blur-sm">
+          {/* Social Share Icons */}
+          <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+            <button onClick={() => handleShare("facebook")} className="hover:text-blue-600 transition-colors p-1" title="فيسبوك">
+              <Facebook className="w-5 h-5" />
+            </button>
+            <button onClick={() => handleShare("twitter")} className="hover:text-sky-500 transition-colors p-1" title="إكس">
+              <Twitter className="w-5 h-5" />
+            </button>
+            <button onClick={() => handleShare("whatsapp")} className="hover:text-emerald-500 transition-colors p-1" title="واتساب">
+              <MessageCircle className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Separator Line */}
+          <div className="h-5 w-px bg-slate-300 dark:bg-zinc-600 mx-2" />
+
+          {/* Font Size Adjuster */}
+          <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-bold text-sm font-ibm">
+            <button onClick={() => setFontSize(f => Math.max(f - 1, 12))} className="p-1 hover:bg-slate-200/60 dark:hover:bg-zinc-700 rounded-full transition-colors" title="تصغير الخط">
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="font-mono text-sm tracking-tight text-slate-800 dark:text-slate-100 min-w-[36px] text-center font-bold">
+              {fontSize}px
+            </span>
+            <button onClick={() => setFontSize(f => Math.min(f + 1, 28))} className="p-1 hover:bg-slate-200/60 dark:hover:bg-zinc-700 rounded-full transition-colors" title="تكبير الخط">
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Body content styled to match NewsDetail exactly */}
         <div 
-          className="prose prose-slate max-w-none text-text-primary text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-[1.8] [&_p]:text-justify mb-12 px-[4px]"
-          style={{ 
-            fontSize: `${fontSize}px`, 
-            lineHeight: 1.8,
-          }}
+          className="prose prose-slate max-w-none text-slate-800 dark:text-slate-100 text-justify leading-[2.0] mb-10 font-cairo [&_p]:mb-5"
+          style={{ fontSize: `${fontSize}px` }}
         >
           <ReactMarkdown>{article.content}</ReactMarkdown>
         </div>
@@ -414,12 +486,12 @@ export function ArticleDetail() {
         {relatedArticles.length > 0 && (
           <div className="border-t border-border-light pt-8 mt-8">
              <h3 className="text-lg font-bold font-ibm mb-6 flex items-center gap-2 text-text-primary">
-                <div className="w-[4px] h-[18px] bg-[#D32027] rounded-[2px]"></div>
+                <div className="w-[4px] h-[18px] bg-taiz-sky rounded-[2px]"></div>
                 مقالات ذات صلة
              </h3>
              <div className="grid grid-cols-2 gap-4">
                 {relatedArticles.map(a => (
-                  <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-white rounded-none p-3 border border-border-light hover:bg-slate-50 transition-all shadow-soft">
+                  <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-white rounded-none p-3 border border-border-light hover:border-taiz-sky/30 hover:bg-slate-50 transition-all shadow-soft">
                      <div className="aspect-video rounded-none overflow-hidden mb-3">
                         <img src={a.imageUrl || a.authorPhoto} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                      </div>
@@ -438,15 +510,41 @@ export function ArticleDetail() {
             onClick={closeGallery}
           >
                <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-[210]" onClick={(e) => e.stopPropagation()}>
-                  <span className="text-white/70 font-bold text-sm drop-shadow-md font-ibm">
+                  <span className="text-white/70 font-bold text-sm drop-shadow-md font-ibm" style={{ direction: "ltr" }}>
                     {imgGalleryIndex + 1} / {allImages.length}
                   </span>
-                  <button onClick={closeGallery} className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer">
-                    <X className="w-6 h-6" />
-                  </button>
+                  
+                  {/* Zoom and close controls */}
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => setZoomScale(prev => Math.min(prev + 0.5, 4))}
+                      className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer"
+                      title="تكبير"
+                    >
+                      <Plus className="w-5 h-5" />
+                    </button>
+                    <button 
+                      onClick={() => setZoomScale(prev => Math.max(prev - 0.5, 1))}
+                      className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer"
+                      title="تصغير"
+                    >
+                      <Minus className="w-5 h-5" />
+                    </button>
+                    {zoomScale > 1 && (
+                      <button 
+                        onClick={() => setZoomScale(1)}
+                        className="text-xs text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-full transition-colors drop-shadow-md cursor-pointer font-cairo font-bold animate-fade-in"
+                      >
+                        إعادة ضبط
+                      </button>
+                    )}
+                    <button onClick={closeGallery} className="text-white bg-black/50 hover:bg-white/20 p-2 rounded-full transition-colors drop-shadow-md cursor-pointer">
+                      <X className="w-6 h-6" />
+                    </button>
+                  </div>
                </div>
                
-               <div className="relative flex items-center justify-center w-full max-w-4xl h-[70vh] sm:h-[80vh]" onClick={(e) => e.stopPropagation()}>
+               <div className="relative flex items-center justify-center w-full max-w-4xl h-[70vh] sm:h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
                   <AnimatePresence mode="popLayout">
                     <motion.img 
                       key={imgGalleryIndex}
@@ -454,13 +552,18 @@ export function ArticleDetail() {
                       alt={`Gallery image ${imgGalleryIndex + 1}`} 
                       className="max-w-full max-h-full object-contain select-none cursor-grab active:cursor-grabbing"
                       initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
+                      animate={{ opacity: 1, scale: zoomScale }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.25, ease: "easeInOut" }}
-                      drag="x"
-                      dragConstraints={{ left: 0, right: 0 }}
-                      dragElastic={0.6}
+                      drag={zoomScale > 1 ? true : "x"}
+                      dragConstraints={zoomScale > 1 ? undefined : { left: 0, right: 0 }}
+                      dragElastic={zoomScale > 1 ? 0.2 : 0.6}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        setZoomScale(prev => prev > 1 ? 1 : 2.5);
+                      }}
                       onDragEnd={(event, info) => {
+                        if (zoomScale > 1) return;
                         const swipeThreshold = 50;
                         if (info.offset.x > swipeThreshold) {
                           if (imgGalleryIndex > 0) {
@@ -475,7 +578,7 @@ export function ArticleDetail() {
                     />
                   </AnimatePresence>
                   
-                  {imgGalleryIndex > 0 && (
+                  {imgGalleryIndex > 0 && zoomScale === 1 && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex - 1); }}
                       className="absolute right-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"
@@ -485,7 +588,7 @@ export function ArticleDetail() {
                     </button>
                   )}
                   
-                  {imgGalleryIndex < allImages.length - 1 && (
+                  {imgGalleryIndex < allImages.length - 1 && zoomScale === 1 && (
                     <button 
                       onClick={(e) => { e.stopPropagation(); setImgGalleryIndex(imgGalleryIndex + 1); }}
                       className="absolute left-2 p-2.5 bg-black/50 hover:bg-black/80 text-white rounded-full backdrop-blur-sm transition-all cursor-pointer z-20"

@@ -93,7 +93,7 @@ function FeaturedArticlesSlider({ featuredList }: { featuredList: Article[] }) {
                 </div>
               )}
               
-              <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.85)] via-[rgba(0,0,0,0.4)] to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/85 via-taiz-royal/40 to-transparent pointer-events-none"></div>
               
               <div className="absolute top-[16px] left-0 z-10">
                 <span className="bg-[#D32027] text-white text-[13px] font-bold font-ibm w-[100px] h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5">
@@ -131,21 +131,34 @@ function FeaturedArticlesSlider({ featuredList }: { featuredList: Article[] }) {
 
       {/* Pagination indicators under the slider */}
       {featuredList.length > 1 && (
-        <div className="flex justify-center items-center gap-[8px] mt-[16px] mb-[8px]">
-          {featuredList.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => {
-                setDirection(idx > currentIndex ? 1 : -1);
-                setCurrentIndex(idx);
-              }}
-              className={`transition-all duration-300 ${
-                idx === currentIndex 
-                  ? "w-[26px] h-[8px] bg-[#D32027] rounded-[4px]" 
-                  : "w-[8px] h-[8px] bg-slate-300 rounded-[4px] hover:bg-slate-400"
-              }`}
-            />
-          ))}
+        <div 
+          className={`flex justify-center items-center mt-[16px] mb-[8px] ${
+            featuredList.length > 8 ? "gap-1" : featuredList.length > 5 ? "gap-1.5" : "gap-2"
+          }`}
+        >
+          {featuredList.map((_, idx) => {
+            const isActive = idx === currentIndex;
+            const total = featuredList.length;
+            const dotSizeClass = total <= 3 
+              ? (isActive ? "w-2.5 h-2.5 bg-taiz-sky shadow-[0_0_8px_rgba(30,66,117,0.5)] scale-110" : "w-2 h-2 bg-slate-300 hover:bg-slate-400")
+              : total <= 5
+              ? (isActive ? "w-2 h-2 bg-taiz-sky shadow-[0_0_6px_rgba(30,66,117,0.5)] scale-110" : "w-1.5 h-1.5 bg-slate-300 hover:bg-slate-400")
+              : total <= 8
+              ? (isActive ? "w-1.5 h-1.5 bg-taiz-sky shadow-[0_0_5px_rgba(30,66,117,0.5)] scale-110" : "w-1 h-1 bg-slate-300 hover:bg-slate-400")
+              : (isActive ? "w-1.25 h-1.25 bg-taiz-sky shadow-[0_0_4px_rgba(30,66,117,0.5)] scale-110" : "w-1 h-1 bg-slate-300 hover:bg-slate-400");
+
+            return (
+              <button
+                key={idx}
+                onClick={() => {
+                  setDirection(idx > currentIndex ? 1 : -1);
+                  setCurrentIndex(idx);
+                }}
+                className={`transition-all duration-300 rounded-full ${dotSizeClass}`}
+                aria-label={`انتقال إلى الشريحة ${idx + 1}`}
+              />
+            );
+          })}
         </div>
       )}
     </div>
@@ -307,11 +320,11 @@ export function Articles() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-main text-text-primary pb-[24px]" dir="rtl">
+    <div className="min-h-screen bg-white text-text-primary pb-[24px]" dir="rtl">
       <div className="max-w-[760px] mx-auto w-full">
         {/* Innovative Top Navigation Experience */}
-        <div className="pt-4 pb-3 px-4 bg-surface-main/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100/85 shadow-[0_4px_20px_rgba(0,0,0,0.01)]">
-          <div className="max-w-[700px] mx-auto w-full flex items-center justify-between">
+        <div className="pt-4 pb-3 px-2 sm:px-3 bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 shadow-soft">
+          <div className="max-w-[760px] mx-auto w-full flex items-center justify-between px-1">
             {/* Right side: Active Indicator & Title with Cairo Font */}
             <div className="flex items-center gap-2.5">
               <span className="relative flex h-2.5 w-2.5">
@@ -335,7 +348,7 @@ export function Articles() {
         </div>
 
         {/* Search Input Bar */}
-        <div className="px-4 sm:px-6 lg:px-8 pt-[12px] pb-[8px]">
+        <div className="px-2 sm:px-3 pt-[12px] pb-[8px]">
           <div className="relative flex items-center bg-white rounded-full px-4 py-2.5 w-full focus-within:ring-1 focus-within:ring-[#D32027] border border-border-subtle transition-all shadow-soft">
             <Search className="w-5 h-5 text-text-muted shrink-0 ml-2" />
             <input 
@@ -348,7 +361,7 @@ export function Articles() {
           </div>
         </div>
 
-        <div className="px-4 sm:px-6 lg:px-8 pt-[10px]">
+        <div className="px-2 sm:px-3 pt-[10px]">
           {/* Featured Articles Carousel / Slider */}
           {featuredArticles.length > 0 && (
             <div className="mb-6">

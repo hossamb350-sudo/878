@@ -202,8 +202,8 @@ const formatLessonCount = (count: number) => {
 
 const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }: any) => {
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-8 bg-[#F8F9FA] dark:bg-stone-950 transition-colors duration-300" ref={scrollRef}>
-      <div className="max-w-3xl mx-auto space-y-6 pb-12">
+    <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-8 bg-white transition-colors duration-300" ref={scrollRef}>
+      <div className="max-w-[760px] mx-auto space-y-6 pb-12">
         {seriesList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Library className="w-16 h-16 text-stone-200 mb-4" />
@@ -311,8 +311,8 @@ const LessonsView = ({
   );
   
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-6 md:py-10 relative bg-[#F7F8FC] dark:bg-stone-950" ref={scrollRef}>
-      <div className="max-w-3xl mx-auto space-y-8 pb-20">
+    <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-6 md:py-10 relative bg-white" ref={scrollRef}>
+      <div className="max-w-[760px] mx-auto space-y-8 pb-20">
         {/* First: Header Card */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}

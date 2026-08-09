@@ -345,8 +345,8 @@ export function Watch() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-cairo px-3.5 sm:px-5 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
-        <div className="max-w-3xl mx-auto space-y-6">
+      <div className="min-h-screen bg-white font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
+        <div className="max-w-[760px] mx-auto space-y-6">
 
           {/* 1. HERO SECTION: البث المباشر (LIVE BROADCAST CARD) */}
           <motion.div 
@@ -504,10 +504,10 @@ export function Watch() {
           {/* SECTION TITLE SEPARATOR: "المحتوى المرئي" */}
           <div className="relative flex items-center justify-center pt-3 pb-1 my-2">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200/80 dark:border-slate-800" />
+              <div className="w-full border-t border-slate-200/80" />
             </div>
-            <div className="relative bg-slate-50 dark:bg-slate-950 px-4 flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 font-cairo">
-              <VideoIcon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+            <div className="relative bg-white px-4 flex items-center gap-2 text-xs font-bold text-slate-500 font-cairo">
+              <VideoIcon className="w-3.5 h-3.5 text-taiz-sky" />
               <span>المحتوى المرئي</span>
             </div>
           </div>
@@ -517,7 +517,7 @@ export function Watch() {
             {/* Filter Circle Button (Far Left in RTL) */}
             <button
               onClick={() => setIsFilterModalOpen(true)}
-              className="w-12 h-12 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-md hover:bg-red-600 dark:hover:bg-red-600 transition-colors cursor-pointer"
+              className="w-12 h-12 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-md hover:bg-taiz-sky dark:hover:bg-taiz-sky transition-colors cursor-pointer"
               title="تصفية الفيديوهات"
             >
               <SlidersHorizontal className="w-5 h-5 stroke-[2.5]" />
@@ -549,14 +549,14 @@ export function Watch() {
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center">
-                  <Flame className="w-4.5 h-4.5 text-red-600 fill-current" />
+                <div className="w-8 h-8 rounded-xl bg-taiz-sky/10 dark:bg-taiz-sky/20 flex items-center justify-center">
+                  <Flame className="w-4.5 h-4.5 text-taiz-sky fill-current" />
                 </div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-cairo">الأكثر مشاهدة</h2>
               </div>
               <button 
                 onClick={() => setShowAllMostViewed(!showAllMostViewed)}
-                className="text-xs font-black text-red-600 dark:text-red-400 flex items-center gap-1 hover:underline cursor-pointer bg-red-50 dark:bg-red-950/30 px-3 py-1.5 rounded-full border border-red-100 dark:border-red-900/30 transition-all hover:scale-105"
+                className="text-[11px] font-black text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-3 py-1.5 rounded-full border border-taiz-sky/10 transition-all hover:scale-105"
               >
                 <span>{showAllMostViewed ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -569,7 +569,7 @@ export function Watch() {
                 <Link
                   key={vid.id}
                   to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
-                  className="group flex flex-col bg-white dark:bg-slate-900 rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-xl hover:border-red-300 dark:hover:border-red-900/50 transition-all duration-300 p-2.5 gap-2.5"
+                  className="group flex flex-col bg-white rounded-[14px] border border-slate-200/80 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5"
                 >
                   {/* Thumbnail Image */}
                   <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
@@ -585,7 +585,7 @@ export function Watch() {
                     {/* Category Pill Tag */}
                     {vid.category && (
                       <div className="absolute top-2 right-2 z-10">
-                        <span className="bg-gradient-to-r from-red-600 to-rose-700 text-white text-[8.5px] font-black px-2 py-0.5 rounded-md shadow-sm">
+                        <span className="bg-gradient-to-r from-taiz-sky to-taiz-royal text-white text-[7px] sm:text-[7.5px] font-black px-1.5 py-[2px] rounded-[4px] shadow-sm tracking-wide">
                           {vid.category}
                         </span>
                       </div>
@@ -593,7 +593,7 @@ export function Watch() {
 
                     {/* Play Button Icon */}
                     <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-red-600 shadow-md transition-all border border-white/40">
+                      <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-taiz-sky shadow-md transition-all border border-white/40">
                         <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                       </div>
                     </div>
@@ -611,15 +611,15 @@ export function Watch() {
                   {/* Card Details */}
                   <div className="flex flex-col justify-between flex-1 space-y-2">
                     {/* Formatted Title */}
-                    <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors min-h-[2.4em] flex items-start font-cairo">
+                    <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-taiz-sky transition-colors min-h-[2.4em] flex items-start font-cairo">
                       {vid.title}
                     </h3>
 
-                    {/* Bottom Metadata: Views count in RED + Date */}
+                    {/* Bottom Metadata: Views count in brand color + Date */}
                     <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
-                      {/* Red Views Badge */}
-                      <span className="flex items-center gap-1 text-red-600 dark:text-red-400 font-black">
-                        <Eye className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                      {/* Views Badge */}
+                      <span className="flex items-center gap-1 text-taiz-sky font-black">
+                        <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
                         <span>{formatViewsArabic(vid.views)} مشاهدة</span>
                       </span>
 
@@ -639,14 +639,14 @@ export function Watch() {
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-red-100 dark:bg-red-950/60 flex items-center justify-center">
-                  <Clock className="w-4.5 h-4.5 text-red-600 stroke-[2.5]" />
+                <div className="w-8 h-8 rounded-xl bg-taiz-sky/10 dark:bg-taiz-sky/20 flex items-center justify-center">
+                  <Clock className="w-4.5 h-4.5 text-taiz-sky stroke-[2.5]" />
                 </div>
                 <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-cairo">أحدث الفيديوهات</h2>
               </div>
               <button 
                 onClick={() => setShowAllLatest(!showAllLatest)}
-                className="text-xs font-black text-red-600 dark:text-red-400 flex items-center gap-1 hover:underline cursor-pointer bg-red-50 dark:bg-red-950/30 px-3 py-1.5 rounded-full border border-red-100 dark:border-red-900/30 transition-all hover:scale-105"
+                className="text-[11px] font-black text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-3 py-1.5 rounded-full border border-taiz-sky/10 transition-all hover:scale-105"
               >
                 <span>{showAllLatest ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -659,7 +659,7 @@ export function Watch() {
                 <Link
                   key={vid.id}
                   to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
-                  className="group flex flex-col bg-white dark:bg-slate-900 rounded-[22px] border border-slate-200/80 dark:border-slate-800 shadow-xs hover:shadow-xl hover:border-red-300 dark:hover:border-red-900/50 transition-all duration-300 p-2.5 gap-2.5"
+                  className="group flex flex-col bg-white rounded-[14px] border border-slate-200/80 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5"
                 >
                   {/* Thumbnail Image */}
                   <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
@@ -675,7 +675,7 @@ export function Watch() {
                     {/* Category Pill Tag */}
                     {vid.category && (
                       <div className="absolute top-2 right-2 z-10">
-                        <span className="bg-gradient-to-r from-red-600 to-rose-700 text-white text-[8.5px] font-black px-2 py-0.5 rounded-md shadow-sm">
+                        <span className="bg-gradient-to-r from-taiz-sky to-taiz-royal text-white text-[7px] sm:text-[7.5px] font-black px-1.5 py-[2px] rounded-[4px] shadow-sm tracking-wide">
                           {vid.category}
                         </span>
                       </div>
@@ -683,7 +683,7 @@ export function Watch() {
 
                     {/* Play Button Icon */}
                     <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-red-600 shadow-md transition-all border border-white/40">
+                      <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-taiz-sky shadow-md transition-all border border-white/40">
                         <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
                       </div>
                     </div>
@@ -701,15 +701,15 @@ export function Watch() {
                   {/* Card Details */}
                   <div className="flex flex-col justify-between flex-1 space-y-2">
                     {/* Formatted Title */}
-                    <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors min-h-[2.4em] flex items-start font-cairo">
+                    <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-taiz-sky transition-colors min-h-[2.4em] flex items-start font-cairo">
                       {vid.title}
                     </h3>
 
-                    {/* Bottom Metadata: Views count in RED + Date */}
+                    {/* Bottom Metadata: Views count in brand color + Date */}
                     <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
-                      {/* Red Views Badge */}
-                      <span className="flex items-center gap-1 text-red-600 dark:text-red-400 font-black">
-                        <Eye className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                      {/* Views Badge */}
+                      <span className="flex items-center gap-1 text-taiz-sky font-black">
+                        <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
                         <span>{formatViewsArabic(vid.views)} مشاهدة</span>
                       </span>
 
@@ -737,7 +737,7 @@ export function Watch() {
                 >
                   <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                     <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2 font-cairo">
-                      <Filter className="w-5 h-5 text-red-600" />
+                      <Filter className="w-5 h-5 text-taiz-sky" />
                       تصفية الفيديوهات
                     </h3>
                     <button 
@@ -762,7 +762,7 @@ export function Watch() {
                           onClick={() => setTempSort(opt.id as any)}
                           className={`py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             tempSort === opt.id 
-                              ? 'bg-red-600 text-white shadow-sm' 
+                              ? 'bg-taiz-sky text-white shadow-sm' 
                               : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
                           }`}
                         >
@@ -779,7 +779,7 @@ export function Watch() {
                         setSortOption(tempSort);
                         setIsFilterModalOpen(false);
                       }}
-                      className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl text-xs font-black shadow-md transition cursor-pointer"
+                      className="flex-1 bg-gradient-to-r from-taiz-sky to-taiz-royal hover:scale-[1.02] text-white py-3 rounded-xl text-xs font-black shadow-md transition cursor-pointer"
                     >
                       تطبيق التصفية
                     </button>
