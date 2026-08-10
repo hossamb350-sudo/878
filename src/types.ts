@@ -56,9 +56,11 @@ export interface VideoItem {
 export interface LiveStream {
   id: string;
   name?: string;
+  description?: string;
   iconUrl?: string;
   url?: string;
   streamUrl?: string;
+  type?: "tv" | "radio";
   isActive: boolean;
   createdAt?: number;
 }

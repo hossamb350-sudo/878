@@ -86,7 +86,7 @@ export function Events() {
   const [syllabuses, setSyllabuses] = useState<any[]>([]);
 
   // Activities Tab Switcher
-  const [activityTab, setActivityTab] = useState<"today" | "upcoming" | "past">("today");
+  const [activityTab, setActivityTab] = useState<"today" | "upcoming" | "past">("upcoming");
 
   // Hijri Month State for Occasions Calendar
   const [selectedHijriMonth, setSelectedHijriMonth] = useState<number>(2); // Safar default

@@ -55,14 +55,24 @@ export function NewsDetail() {
   const [imgGalleryIndex, setImgGalleryIndex] = useState<number | null>(null);
   const [zoomScale, setZoomScale] = useState(1);
   const activeThumbnailRef = useRef<HTMLButtonElement | null>(null);
+  const thumbnailContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto-scroll active thumbnail into view
+  // Auto-scroll active thumbnail into view horizontally without moving the window vertically
   useEffect(() => {
-    if (activeThumbnailRef.current) {
-      activeThumbnailRef.current.scrollIntoView({
+    const container = thumbnailContainerRef.current;
+    const activeBtn = activeThumbnailRef.current;
+    if (container && activeBtn) {
+      const containerRect = container.getBoundingClientRect();
+      const activeRect = activeBtn.getBoundingClientRect();
+      
+      const relativeLeft = activeRect.left - containerRect.left;
+      const absoluteLeft = relativeLeft + container.scrollLeft;
+      
+      const targetScrollLeft = absoluteLeft - (containerRect.width / 2) + (activeRect.width / 2);
+      
+      container.scrollTo({
+        left: targetScrollLeft,
         behavior: "smooth",
-        block: "nearest",
-        inline: "center",
       });
     }
   }, [currentSlide]);
@@ -447,7 +457,7 @@ export function NewsDetail() {
         {/* Dynamic Image Thumbnails underneath Slider */}
         {allImages.length > 1 && (
           <div className="px-4 sm:px-5 mb-4 flex items-center justify-center w-full">
-            <div className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
+            <div ref={thumbnailContainerRef} className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
               {allImages.map((img, idx) => (
                 <button
                   key={idx}

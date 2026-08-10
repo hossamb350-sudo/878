@@ -261,12 +261,26 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
     };
   }, [selectedSurah]);
 
+  // Handle event listener to stop Quran audio from other players
+  useEffect(() => {
+    const handleStopQuran = () => {
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+
+    window.addEventListener("stop-quran-audio", handleStopQuran);
+    return () => window.removeEventListener("stop-quran-audio", handleStopQuran);
+  }, []);
+
   // Handle Play/Pause state changes
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isPlaying) {
+      window.dispatchEvent(new CustomEvent("stop-live-stream"));
       audio.play().catch((err) => {
         console.warn("Playback failed:", err);
         setIsPlaying(false);

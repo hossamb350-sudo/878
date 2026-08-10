@@ -31,7 +31,8 @@
     "@types/cors": "^2.8.19",
     "@types/three": "^0.185.1",
     "@vitejs/plugin-react": "^5.0.4",
-    "axios": "^1.18.1",
+    "autoprefixer": "^10.4.21",
+    "axios": "^1.19.0",
     "cors": "^2.8.6",
     "date-fns": "^4.4.0",
     "dotenv": "^17.2.3",
@@ -59,15 +60,14 @@
     "react-router-dom": "^7.18.0",
     "sharp": "^0.35.2",
     "swiper": "^14.0.7",
+    "tailwindcss": "^4.1.14",
     "three": "^0.185.1",
     "tsparticles": "^4.3.2",
     "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
     "usehooks-ts": "^3.1.1",
     "vite": "^6.2.3",
-    "web-push": "^3.6.7",
-    "typescript": "~5.8.2",
-    "tailwindcss": "^4.1.14",
-    "autoprefixer": "^10.4.21"
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

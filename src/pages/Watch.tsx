@@ -22,11 +22,16 @@ import {
   Users,
   Video as VideoIcon,
   Filter,
-  Sparkles
+  Sparkles,
+  Pause,
+  Volume2,
+  VolumeX,
+  Info
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../components/PullToRefresh";
+import { getEmbedUrl } from "../utils/embed";
 
 const getRelativeTimeArabic = (timestamp: any) => {
   if (!timestamp) return "منذ فترة";
@@ -80,6 +85,7 @@ const DEFAULT_CHANNELS: Partial<LiveStream>[] = [
     name: "المسيرة مباشر", 
     iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%23B91C1C'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23EF4444' stroke-width='2'/><path d='M22 52C25 38 38 30 50 30C62 30 75 38 78 52C70 47 60 45 50 45C40 45 30 47 22 52Z' fill='white'/><text x='50' y='48' font-family='sans-serif' font-weight='900' font-size='18' fill='white' text-anchor='middle'>المسيرة</text><rect x='25' y='58' width='50' height='16' rx='8' fill='white'/><text x='50' y='70' font-family='sans-serif' font-weight='900' font-size='10' fill='%23B91C1C' text-anchor='middle'>مباشر</text></svg>", 
     streamUrl: "https://almasirah.net.ye/live",
+    type: "tv",
     isActive: true 
   },
   { 
@@ -196,13 +202,28 @@ const fallbackLatest: VideoItem[] = [
   }
 ];
 
+import { useLiveStream } from "../context/LiveStreamContext";
+
 export function Watch() {
   const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
   const [channels, setChannels] = useState<LiveStream[]>([]);
   const [loading, setLoading] = useState(true);
+  const [channelTab, setChannelTab] = useState<"tv" | "radio">("tv");
   const [isPlayingLive, setIsPlayingLive] = useState(false);
   
-  const [activeChannelId, setActiveChannelId] = useState<string | null>("ch-[#ch-1]");
+  const {
+    activeStream,
+    isPlaying: isGlobalPlaying,
+    isMuted: isGlobalMuted,
+    volume: globalVolume,
+    playStream: globalPlayStream,
+    stopStream: globalStopStream,
+    togglePlay: globalTogglePlay,
+    setVolume: globalSetVolume,
+    toggleMute: globalToggleMute
+  } = useLiveStream();
+  
+  const [activeChannelId, setActiveChannelId] = useState<string | null>("ch-1");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("الكل");
   const [sortOption, setSortOption] = useState<"newest" | "oldest" | "popular">("newest");
@@ -255,32 +276,26 @@ export function Watch() {
   }, []);
 
   const displayChannels = useMemo(() => {
-    return DEFAULT_CHANNELS.map(def => {
-      const dbMatch = channels.find(c => c.name?.trim() === def.name?.trim());
-      return dbMatch ? { ...def, ...dbMatch } as LiveStream : (def as LiveStream);
-    });
-  }, [channels]);
+    return channels.filter(c => (c.type || "tv") === channelTab);
+  }, [channels, channelTab]);
+
+  useEffect(() => {
+    if (!activeStream || !isGlobalPlaying) {
+      setIsPlayingLive(false);
+    } else if (activeStream && isGlobalPlaying) {
+      setIsPlayingLive(true);
+    }
+  }, [activeStream, isGlobalPlaying]);
+
+  useEffect(() => {
+    const handleStopLive = () => {
+      setIsPlayingLive(false);
+    };
+    window.addEventListener("stop-live-stream", handleStopLive);
+    return () => window.removeEventListener("stop-live-stream", handleStopLive);
+  }, []);
 
   const activeChannel = displayChannels.find(c => c.id === activeChannelId) || displayChannels[0];
-
-  // Embed URL helper
-  const getEmbedUrl = (url?: string, autoplay: boolean = false) => {
-    if (!url) return undefined;
-    if (url.includes("youtube.com") || url.includes("youtu.be")) {
-      const match = url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-      if (match && match[2].length === 11) {
-        return `https://www.youtube.com/embed/${match[2]}?autoplay=${autoplay ? 1 : 0}&mute=${autoplay ? 1 : 0}&rel=0`;
-      }
-    }
-    if (url.includes("/w/") || url.includes("/videos/watch/")) {
-      let embedUrl = url.replace("/w/", "/videos/embed/").replace("/videos/watch/", "/videos/embed/");
-      if (autoplay) {
-        embedUrl += embedUrl.includes("?") ? "&autoplay=1" : "?autoplay=1";
-      }
-      return embedUrl;
-    }
-    return url;
-  };
 
   // Dynamic category list extracted from actual video data
   const dynamicCategories = useMemo(() => {
@@ -367,17 +382,109 @@ export function Watch() {
             <div className="relative w-full aspect-video sm:aspect-[21/9] min-h-[240px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#061224] via-[#081b38] to-[#030914] border border-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.25)] flex flex-col justify-between p-4 sm:p-5 group">
               
               {/* Full Card Video Container when Playing */}
-              {activeChannel && activeChannel.url && isPlayingLive ? (
-                <div className="absolute inset-0 z-30 w-full h-full bg-black rounded-[28px] overflow-hidden">
-                  <iframe 
-                    src={getEmbedUrl(activeChannel.url, true)}
-                    className="w-full h-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  />
+              {activeChannel && (activeChannel.url || activeChannel.streamUrl) && isPlayingLive ? (
+                <div className="absolute inset-0 z-30 w-full h-full bg-black rounded-[28px] overflow-hidden flex flex-col items-center justify-center">
+                  {(activeChannel.type === "radio") ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#061224] via-[#081b38] to-[#030914] relative p-4">
+                      {/* Live Badge inside Radio Player */}
+                      <div className="absolute top-3 left-3 z-40 bg-gradient-to-r from-red-600 to-rose-600 text-white px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1.5 shadow-md border border-white/20">
+                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
+                        <span>مباشر الآن</span>
+                      </div>
+
+                      {/* Subtle Animated Equalizer Visualizer */}
+                      <div className="absolute inset-0 flex items-center justify-center gap-1.5 opacity-25 pointer-events-none">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
+                          <motion.div
+                            key={i}
+                            className="w-2.5 bg-amber-500 rounded-full"
+                            animate={{ height: (activeStream?.id === activeChannel.id && isGlobalPlaying) ? ["15%", "75%", "25%", "90%", "15%"] : "15%" }}
+                            transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.1, ease: "easeInOut" }}
+                          />
+                        ))}
+                      </div>
+                      
+                      {/* Compact, Refined Radio Player Card */}
+                      <div className="relative z-10 w-full max-w-sm bg-slate-900/80 backdrop-blur-xl border border-white/15 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between gap-3 shadow-2xl">
+                        {/* Static non-spinning thumbnail logo */}
+                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl border border-white/20 overflow-hidden shrink-0 bg-slate-800/80 shadow-md">
+                          <img 
+                            src={activeChannel.iconUrl || "/splash_first.png"} 
+                            className="w-full h-full object-cover" 
+                            alt={activeChannel.name}
+                          />
+                        </div>
+
+                        {/* Channel Title & Badge */}
+                        <div className="flex-1 min-w-0 text-right">
+                          <h3 className="text-white font-bold text-sm sm:text-base font-cairo truncate leading-tight">
+                            {activeChannel.name}
+                          </h3>
+                          {activeChannel.description ? (
+                            <p className="text-[11px] text-slate-300 font-medium font-cairo line-clamp-2 mt-0.5 leading-snug">
+                              {activeChannel.description}
+                            </p>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-amber-400 block mt-0.5">
+                              إذاعة صوتية مباشرة
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Compact Controls */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg p-1">
+                            <button 
+                              onClick={globalToggleMute}
+                              className="text-slate-300 hover:text-white transition-colors p-1"
+                              title={isGlobalMuted ? "إلغاء الكتم" : "كتم الصوت"}
+                            >
+                              {isGlobalMuted || globalVolume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                            </button>
+                            <input 
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.01"
+                              value={isGlobalMuted ? 0 : globalVolume}
+                              onChange={(e) => globalSetVolume(parseFloat(e.target.value))}
+                              className="w-14 sm:w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                            />
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              if (activeStream?.id === activeChannel.id) {
+                                globalTogglePlay();
+                              } else {
+                                globalPlayStream(activeChannel);
+                              }
+                            }}
+                            className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center transition-all shadow-lg active:scale-95 shrink-0"
+                          >
+                            {activeStream?.id === activeChannel.id && isGlobalPlaying ? (
+                              <Pause className="w-4 h-4 fill-current" />
+                            ) : (
+                              <Play className="w-4 h-4 fill-current ml-0.5" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <iframe 
+                      src={getEmbedUrl(activeChannel.url || activeChannel.streamUrl, true) || undefined}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    />
+                  )}
                   <button 
-                    onClick={() => setIsPlayingLive(false)}
-                    className="absolute top-3 right-3 z-40 bg-black/70 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition backdrop-blur-md cursor-pointer"
+                    onClick={() => {
+                      setIsPlayingLive(false);
+                      globalStopStream();
+                    }}
+                    className="absolute top-3 right-3 z-40 bg-black/70 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition backdrop-blur-md cursor-pointer shadow-xl"
                     title="إغلاق البث"
                   >
                     <X className="w-4 h-4" />
@@ -400,14 +507,20 @@ export function Watch() {
 
                 {/* Channel Info (Top Right) */}
                 <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <h3 className="text-xs sm:text-sm font-black text-white leading-tight font-cairo drop-shadow-xs">
+                  <div className="text-right max-w-[200px] sm:max-w-[260px]">
+                    <h3 className="text-xs sm:text-sm font-black text-white leading-tight font-cairo drop-shadow-xs truncate">
                       {activeChannel?.name || "قناة المسيرة مباشر"}
                     </h3>
-                    <span className="text-[10px] font-bold text-emerald-400 flex items-center justify-end gap-1 mt-0.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span>جودة HD العالية</span>
-                    </span>
+                    {activeChannel?.description ? (
+                      <p className="text-[10px] text-slate-200 font-medium font-cairo line-clamp-1 mt-0.5">
+                        {activeChannel.description}
+                      </p>
+                    ) : (
+                      <span className="text-[10px] font-bold text-emerald-400 flex items-center justify-end gap-1 mt-0.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        <span>جودة HD العالية</span>
+                      </span>
+                    )}
                   </div>
 
                   <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/25 p-0.5 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
@@ -429,7 +542,12 @@ export function Watch() {
                 <motion.button 
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.92 }}
-                  onClick={() => setIsPlayingLive(true)}
+                  onClick={() => {
+                    setIsPlayingLive(true);
+                    if (activeChannel) {
+                      globalPlayStream(activeChannel);
+                    }
+                  }}
                   className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 shadow-[0_0_35px_rgba(255,255,255,0.25)] flex items-center justify-center text-white cursor-pointer group-hover:bg-red-600/80 group-hover:border-red-400 transition-all duration-300"
                 >
                   <Play className="w-7 h-7 sm:w-9 sm:h-9 fill-current translate-x-[-2px]" />
@@ -439,65 +557,124 @@ export function Watch() {
               {/* BOTTOM ROW: Click CTA */}
               <div className="relative z-10 flex items-center justify-center w-full pt-1">
                 <p className="text-white/90 text-xs sm:text-sm font-black text-center font-cairo backdrop-blur-sm bg-black/20 px-4 py-1 rounded-full border border-white/10">
-                  انقر لتشغيل البث الفضائي الحي
+                  انقر لتشغيل البث الفضائي أو الإذاعي
                 </p>
               </div>
 
             </div>
+
+            {/* Optional Channel Description */}
+            {activeChannel?.description && (
+              <motion.div 
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl text-right shadow-xs space-y-1.5"
+              >
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 font-cairo">
+                  <Info className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>عن {activeChannel.name || "القناة"}</span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium font-cairo leading-relaxed">
+                  {activeChannel.description}
+                </p>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* 2. CHANNELS SECTION (القنوات) */}
-          <div className="space-y-2.5">
+          <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 <Tv className="w-4 h-4 text-slate-800 dark:text-slate-200 stroke-[2.5]" />
                 <h2 className="text-sm font-black text-slate-900 dark:text-white font-cairo">القنوات المتاحة</h2>
               </div>
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                {displayChannels.length} قنوات
+                {displayChannels.length} {channelTab === "tv" ? "قنوات" : "إذاعات"}
               </span>
             </div>
 
+            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 mb-2">
+              <button
+                onClick={() => {
+                  setChannelTab("tv");
+                  setIsPlayingLive(false);
+                }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                  channelTab === "tv" 
+                    ? "bg-white dark:bg-slate-700 text-red-600 shadow-sm" 
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                تلفزيون
+              </button>
+              <button
+                onClick={() => {
+                  setChannelTab("radio");
+                  setIsPlayingLive(false);
+                }}
+                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                  channelTab === "radio" 
+                    ? "bg-white dark:bg-slate-700 text-amber-500 shadow-sm" 
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                }`}
+              >
+                إذاعة
+              </button>
+            </div>
+
             <div className="grid grid-cols-3 xs:grid-cols-6 gap-2 w-full">
-              {displayChannels.map((ch) => {
-                const isSelected = activeChannelId === ch.id;
-                return (
-                  <button
-                    key={ch.id}
-                    onClick={() => {
-                      setActiveChannelId(ch.id!);
-                      setIsPlayingLive(true);
-                    }}
-                    className={`flex flex-col items-center justify-center py-3 px-1 rounded-[20px] bg-white dark:bg-slate-900 border transition-all cursor-pointer gap-2 shadow-xs ${
-                      isSelected 
-                        ? 'border-red-600 dark:border-red-500 bg-red-50/50 dark:bg-red-950/30 shadow-md ring-2 ring-red-600/20 scale-[1.03]' 
-                        : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                    }`}
-                  >
-                    <div className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 ${
-                      isSelected ? 'border-red-500 bg-white' : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
-                    }`}>
-                      <img 
-                        src={ch.iconUrl || "/splash_first.png"} 
-                        alt={ch.name} 
-                        className="w-full h-full object-cover rounded-full"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&q=80';
-                        }}
-                      />
-                      {isSelected && (
-                        <span className="absolute bottom-0 right-0 w-3 h-3 bg-red-600 rounded-full border-2 border-white dark:border-slate-900" />
+              {displayChannels.length > 0 ? (
+                displayChannels.map((ch) => {
+                  const isSelected = activeChannelId === ch.id;
+                  return (
+                    <button
+                      key={ch.id}
+                      onClick={() => {
+                        setActiveChannelId(ch.id!);
+                        setIsPlayingLive(true);
+                        globalPlayStream(ch);
+                      }}
+                      className={`flex flex-col items-center justify-center py-3 px-1 rounded-[20px] bg-white dark:bg-slate-900 border transition-all cursor-pointer gap-2 shadow-xs ${
+                        isSelected 
+                          ? 'border-red-600 dark:border-red-500 bg-red-50/50 dark:bg-red-950/30 shadow-md ring-2 ring-red-600/20 scale-[1.03]' 
+                          : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
+                      }`}
+                    >
+                      <div className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 ${
+                        isSelected ? 'border-red-500 bg-white' : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
+                      }`}>
+                        <img 
+                          src={ch.iconUrl || "/splash_first.png"} 
+                          alt={ch.name} 
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&q=80';
+                          }}
+                        />
+                        {isSelected && (
+                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-red-600 rounded-full border-2 border-white dark:border-slate-900" />
+                        )}
+                      </div>
+                      {/* Full Channel Name Display without truncation */}
+                      <span className={`text-[10px] sm:text-[11px] font-bold text-center leading-tight whitespace-normal break-words w-full px-0.5 font-cairo ${
+                        isSelected ? 'text-red-600 dark:text-red-400 font-black' : 'text-slate-800 dark:text-slate-200'
+                      }`}>
+                        {ch.name}
+                      </span>
+                      {ch.description && (
+                        <span className="text-[9px] text-slate-500 dark:text-slate-400 text-center line-clamp-1 w-full px-0.5 font-normal">
+                          {ch.description}
+                        </span>
                       )}
-                    </div>
-                    {/* Full Channel Name Display without truncation */}
-                    <span className={`text-[10px] sm:text-[11px] font-bold text-center leading-tight whitespace-normal break-words w-full px-0.5 min-h-[2.2em] flex items-center justify-center font-cairo ${
-                      isSelected ? 'text-red-600 dark:text-red-400 font-black' : 'text-slate-800 dark:text-slate-200'
-                    }`}>
-                      {ch.name}
-                    </span>
-                  </button>
-                );
-              })}
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="col-span-3 xs:col-span-6 flex flex-col items-center justify-center py-8 text-slate-500 dark:text-slate-400">
+                  <Tv className="w-8 h-8 mb-2 opacity-50" />
+                  <p className="text-sm font-bold font-cairo">لا توجد {channelTab === "tv" ? "قنوات" : "إذاعات"} متاحة حالياً</p>
+                </div>
+              )}
             </div>
           </div>
 

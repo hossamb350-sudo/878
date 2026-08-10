@@ -1392,7 +1392,7 @@ function AdminSummaryDashboard({
               </div>
               
               <div className="flex flex-col text-right min-w-0">
-                <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100 font-cairo truncate">
+                <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-slate-100 font-cairo whitespace-normal">
                   {section.label}
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 font-cairo">
@@ -3601,6 +3601,8 @@ function AdminLive() {
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
   const [iconUrl, setIconUrl] = useState("");
+  const [description, setDescription] = useState("");
+  const [type, setType] = useState<"tv" | "radio">("tv");
   const [active, setActive] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -3653,6 +3655,8 @@ function AdminLive() {
         name,
         url: finalUrl,
         iconUrl,
+        description: description.trim() || undefined,
+        type,
         isActive: active,
         updatedAt: Date.now(),
       };
@@ -3671,6 +3675,8 @@ function AdminLive() {
       setName("");
       setUrl("");
       setIconUrl("");
+      setDescription("");
+      setType("tv");
       setActive(true);
       setEditingId(null);
     } catch (e) {
@@ -3685,7 +3691,9 @@ function AdminLive() {
     setName(stream.name || "");
     setUrl(stream.url || "");
     setIconUrl(stream.iconUrl || "");
-    setActive(stream.isActive);
+    setDescription(stream.description || "");
+    setType(stream.type || "tv");
+    setActive(stream.isActive ?? true);
     setEditingId(stream.id || null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -3711,13 +3719,13 @@ function AdminLive() {
         </h2>
         <input
           className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          placeholder=""
+          placeholder="اسم القناة أو الإذاعة"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         <input
           className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          placeholder=""
+          placeholder="رابط البث المباشر"
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
@@ -3726,10 +3734,42 @@ function AdminLive() {
         </p>
         <input
           className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
-          placeholder=""
+          placeholder="صورة أو شعار القناة/الإذاعة (رابط URL)"
           value={iconUrl}
           onChange={(e) => setIconUrl(e.target.value)}
         />
+        <textarea
+          rows={2}
+          className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50 text-sm font-cairo"
+          placeholder="وصف اختياري للقناة أو الإذاعة (يظهر للمستخدم عند تحديد القناة)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
+
+        <div className="flex gap-4">
+          <label className="flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-1">
+            <input
+              type="radio"
+              name="streamType"
+              value="tv"
+              checked={type === "tv"}
+              onChange={() => setType("tv")}
+              className="w-4 h-4 accent-red-600"
+            />
+            <span className="font-bold text-gray-800 dark:text-gray-200">تلفزيون (TV)</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-1">
+            <input
+              type="radio"
+              name="streamType"
+              value="radio"
+              checked={type === "radio"}
+              onChange={() => setType("radio")}
+              className="w-4 h-4 accent-red-600"
+            />
+            <span className="font-bold text-gray-800 dark:text-gray-200">إذاعة (Radio)</span>
+          </label>
+        </div>
 
         <label className="flex items-center gap-3 cursor-pointer p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-fit">
           <input
@@ -3798,6 +3838,11 @@ function AdminLive() {
                   <h4 className="font-bold text-[#111827] dark:text-white">
                     {stream.name}
                   </h4>
+                  {stream.description && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2 font-cairo">
+                      {stream.description}
+                    </p>
+                  )}
                   <span
                     className={`text-[11px] font-bold px-2 py-0.5 rounded-sm mt-1.5 inline-block ${
                       stream.isActive

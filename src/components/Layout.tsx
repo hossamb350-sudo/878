@@ -8,6 +8,9 @@ import { SyncService } from "../services/SyncService";
 import { UrgentNews } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { useQuranAudio } from "../context/QuranAudioContext";
+import { useLiveStream } from "../context/LiveStreamContext";
+import { VolumeX } from "lucide-react";
+import { getEmbedUrl } from "../utils/embed";
 
 function NotificationCenter() {
   return null;
@@ -352,6 +355,43 @@ export function Layout({ children }: { children?: React.ReactNode }) {
     toArabicNumerals
   } = useQuranAudio();
 
+  const {
+    activeStream,
+    isPlaying: isLiveStreamPlaying,
+    isMuted,
+    volume,
+    stopStream,
+    togglePlay: toggleLiveStreamPlay,
+    setVolume,
+    toggleMute
+  } = useLiveStream();
+
+  const [isScrolled, setIsScrolled] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const mainScroll = mainRef.current ? mainRef.current.scrollTop : 0;
+      const windowScroll = window.scrollY || document.documentElement.scrollTop || 0;
+      const scrollPos = Math.max(mainScroll, windowScroll);
+      setIsScrolled(scrollPos > 120);
+    };
+
+    const mainEl = mainRef.current;
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    if (mainEl) mainEl.addEventListener('scroll', handleScroll, { passive: true });
+
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (mainEl) mainEl.removeEventListener('scroll', handleScroll);
+    };
+  }, [location.pathname]);
+
+  const isWatchPage = location.pathname === "/watch";
+  const shouldShowTopBar = !!(activeStream && (!isWatchPage || isScrolled));
+
   useEffect(() => {
     const handleResize = () => {
       if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') {
@@ -381,10 +421,82 @@ export function Layout({ children }: { children?: React.ReactNode }) {
           <HeaderWidgets />
           {/* Visual Separator: thin crisp border with no extra vertical spacing */}
           <div className="w-full border-b border-slate-200/40" />
+          
+          {/* Global Mini Audio/Video Player for Live Streams (Merged in Header when not scrolled) */}
+          <AnimatePresence mode="wait">
+            {shouldShowTopBar && (
+              <motion.div
+                key={isScrolled ? "detached-topbar" : "merged-topbar"}
+                initial={{ opacity: 0, y: isScrolled ? -15 : 0, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: 'auto' }}
+                exit={{ opacity: 0, y: isScrolled ? -15 : 0, height: 0 }}
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className={
+                  isScrolled
+                    ? "fixed top-0 left-0 right-0 z-[60] bg-[#162032]/95 backdrop-blur-md shadow-lg border-b border-white/10 transition-all"
+                    : "overflow-hidden bg-[#162032] text-white shadow-md relative z-40 border-b border-white/5"
+                }
+              >
+                <div className="flex items-center justify-between px-3 py-1.5 w-full max-w-2xl mx-auto h-9 text-white font-cairo">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </div>
+                    <span className="text-xs font-bold truncate text-slate-100">{activeStream.name}</span>
+                    {activeStream.description && (
+                      <span className="text-[10px] text-slate-300 truncate hidden md:inline-block max-w-[180px] font-normal">
+                        • {activeStream.description}
+                      </span>
+                    )}
+                    <span className="text-[9px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.5 rounded-full shrink-0 hidden xs:inline-block">
+                      {isLiveStreamPlaying ? "مباشر" : "متوقف"}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 select-none">
+                    <div className="flex items-center gap-1.5 w-16 xs:w-20 sm:w-24">
+                      <button onClick={toggleMute} className="text-slate-400 hover:text-white transition-colors p-0.5" title={isMuted ? "إلغاء كتم الصوت" : "كتم الصوت"}>
+                        {isMuted || volume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                      </button>
+                      <input 
+                        type="range" min="0" max="1" step="0.01" 
+                        value={isMuted ? 0 : volume}
+                        onChange={(e) => setVolume(parseFloat(e.target.value))}
+                        className="flex-1 h-1 bg-slate-700/60 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+                    </div>
+                    
+                    <button 
+                      onClick={toggleLiveStreamPlay}
+                      className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-sm transition-all active:scale-90"
+                      title={isLiveStreamPlaying ? "إيقاف مؤقت" : "تشغيل"}
+                    >
+                      {isLiveStreamPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
+                    </button>
+                    
+                    <button onClick={stopStream} className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors active:scale-90" title="إغلاق المشغل">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Background TV Stream Player for background playback when floating top bar is active */}
+          {shouldShowTopBar && isLiveStreamPlaying && activeStream && activeStream.type !== "radio" && (
+            <iframe
+              src={getEmbedUrl(activeStream.streamUrl || activeStream.url, true, isMuted)}
+              className="w-1 h-1 opacity-0 pointer-events-none fixed -top-[9999px] left-0 z-[-100]"
+              allow="autoplay; encrypted-media"
+              title="background-tv-stream"
+            />
+          )}
       </div>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col overflow-y-auto pb-20 min-w-0 w-full overflow-x-hidden">
+      <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto pb-20 min-w-0 w-full overflow-x-hidden">
         {children || <Outlet />}
       </main>
 
@@ -465,18 +577,18 @@ export function Layout({ children }: { children?: React.ReactNode }) {
                 <div 
                   className={`flex flex-col items-center justify-center w-[90%] py-1.5 transition-all duration-300 relative ${
                     isItemActive 
-                      ? "text-red-600 font-bold" 
-                      : "text-slate-500 hover:text-slate-800"
+                      ? "text-taiz-sky font-bold" 
+                      : "text-slate-500 hover:text-taiz-sky/80"
                   }`}
                 >
                   <div className="h-6 w-full flex items-center justify-center mb-0.5 shrink-0 relative">
-                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isItemActive ? 'stroke-[2.5] text-red-600' : 'stroke-[2]'}`} />
+                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isItemActive ? 'stroke-[2.5] text-taiz-sky' : 'stroke-[2]'}`} />
                   </div>
-                  <span className={`text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-bold text-center leading-tight tracking-tight px-0.5 w-full font-cairo ${isItemActive ? 'text-red-600' : ''}`}>
+                  <span className={`text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-bold text-center leading-tight tracking-tight px-0.5 w-full font-cairo ${isItemActive ? 'text-taiz-sky' : ''}`}>
                     {item.label}
                   </span>
                   {isItemActive && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-[3px] bg-red-600 rounded-t-full" />
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-[3px] bg-taiz-sky rounded-t-full" />
                   )}
                 </div>
               </NavLink>
