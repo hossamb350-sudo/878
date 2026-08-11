@@ -360,6 +360,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
     isPlaying: isLiveStreamPlaying,
     isMuted,
     volume,
+    isPlayingInHero,
     stopStream,
     togglePlay: toggleLiveStreamPlay,
     setVolume,
@@ -374,7 +375,8 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       const mainScroll = mainRef.current ? mainRef.current.scrollTop : 0;
       const windowScroll = window.scrollY || document.documentElement.scrollTop || 0;
       const scrollPos = Math.max(mainScroll, windowScroll);
-      setIsScrolled(scrollPos > 120);
+      const scrolled = scrollPos > 120;
+      setIsScrolled(scrolled);
     };
 
     const mainEl = mainRef.current;
@@ -390,7 +392,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
   }, [location.pathname]);
 
   const isWatchPage = location.pathname === "/watch";
-  const shouldShowTopBar = !!(activeStream && (!isWatchPage || isScrolled));
+  const shouldShowTopBar = !!(activeStream && (!isWatchPage || isScrolled || !isPlayingInHero));
 
   useEffect(() => {
     const handleResize = () => {
@@ -558,7 +560,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
         <div className="grid grid-cols-6 w-full max-w-2xl mx-auto px-1">
           {[
             { to: "/", icon: Newspaper, label: "الأخبار" },
-            { to: "/watch", icon: Tv, label: "شاهد" },
+            { to: "/watch", icon: Tv, label: "ميديا" },
             { to: "/leader", icon: User, label: "السيد القائد" },
             { to: "/quran", icon: BookOpen, label: "هدي القرآن" },
             { to: "/events", icon: CalendarIcon, label: "أنشطة ومناسبات" },

@@ -12,16 +12,23 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getShareableUrl } from "../config/apiConfig";
+import { useLiveStream } from "../context/LiveStreamContext";
 
 export function WatchItem() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { stopStream } = useLiveStream();
   const [video, setVideo] = useState<VideoItem | null>(null);
   const [recentVideos, setRecentVideos] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+
+  useEffect(() => {
+    stopStream();
+    window.dispatchEvent(new CustomEvent("stop-quran-audio"));
+  }, [stopStream]);
 
   useEffect(() => {
     if (video) {
@@ -172,7 +179,7 @@ export function WatchItem() {
           onClick={() => navigate(-1)}
           className="bg-red-600 text-white px-8 py-3 rounded-2xl font-black shadow-lg shadow-red-600/20 hover:scale-105 transition"
         >
-          عودة لقسم شاهد
+          عودة لقسم ميديا
         </button>
       </div>
     );
@@ -217,9 +224,9 @@ export function WatchItem() {
           {/* Back Button Above Title */}
           <button 
             onClick={() => navigate(-1)}
-            className="mb-4 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-cairo"
+            className="mb-4 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-cairo cursor-pointer"
           >
-            <ArrowRight className="w-4 h-4" /> العودة لقسم شاهد مرئي
+            <ArrowRight className="w-4 h-4" /> العودة لقسم ميديا
           </button>
           
           <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">

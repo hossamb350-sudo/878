@@ -209,13 +209,14 @@ export function Watch() {
   const [channels, setChannels] = useState<LiveStream[]>([]);
   const [loading, setLoading] = useState(true);
   const [channelTab, setChannelTab] = useState<"tv" | "radio">("tv");
-  const [isPlayingLive, setIsPlayingLive] = useState(false);
   
   const {
     activeStream,
     isPlaying: isGlobalPlaying,
     isMuted: isGlobalMuted,
     volume: globalVolume,
+    isPlayingInHero,
+    setIsPlayingInHero,
     playStream: globalPlayStream,
     stopStream: globalStopStream,
     togglePlay: globalTogglePlay,
@@ -223,7 +224,8 @@ export function Watch() {
     toggleMute: globalToggleMute
   } = useLiveStream();
   
-  const [activeChannelId, setActiveChannelId] = useState<string | null>("ch-1");
+  const [activeTvId, setActiveTvId] = useState<string | null>("ch-1");
+  const [activeRadioId, setActiveRadioId] = useState<string | null>("rad-1");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("الكل");
   const [sortOption, setSortOption] = useState<"newest" | "oldest" | "popular">("newest");
@@ -253,7 +255,10 @@ export function Watch() {
       if (activeChannels.length > 0) {
         activeChannels.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         setChannels(activeChannels);
-        setActiveChannelId(prev => prev || activeChannels[0].id || null);
+        const tv = activeChannels.filter(c => (c.type || "tv") === "tv");
+        const radio = activeChannels.filter(c => c.type === "radio");
+        if (tv.length > 0) setActiveTvId(prev => prev || tv[0].id || null);
+        if (radio.length > 0) setActiveRadioId(prev => prev || radio[0].id || null);
       } else {
         setChannels(DEFAULT_CHANNELS as LiveStream[]);
       }
@@ -275,27 +280,62 @@ export function Watch() {
     };
   }, []);
 
-  const displayChannels = useMemo(() => {
-    return channels.filter(c => (c.type || "tv") === channelTab);
-  }, [channels, channelTab]);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
-    if (!activeStream || !isGlobalPlaying) {
-      setIsPlayingLive(false);
-    } else if (activeStream && isGlobalPlaying) {
-      setIsPlayingLive(true);
-    }
-  }, [activeStream, isGlobalPlaying]);
-
-  useEffect(() => {
-    const handleStopLive = () => {
-      setIsPlayingLive(false);
+    const handleScroll = () => {
+      const mainEl = document.querySelector('main');
+      const mainScroll = mainEl ? mainEl.scrollTop : 0;
+      const windowScroll = window.scrollY || document.documentElement.scrollTop || 0;
+      const scrollPos = Math.max(mainScroll, windowScroll);
+      setIsScrolled(scrollPos > 120);
     };
-    window.addEventListener("stop-live-stream", handleStopLive);
-    return () => window.removeEventListener("stop-live-stream", handleStopLive);
+
+    const mainEl = document.querySelector('main');
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    if (mainEl) mainEl.addEventListener('scroll', handleScroll, { passive: true });
+
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (mainEl) mainEl.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
-  const activeChannel = displayChannels.find(c => c.id === activeChannelId) || displayChannels[0];
+  const tvChannels = useMemo(() => {
+    return channels.filter(c => (c.type || "tv") === "tv");
+  }, [channels]);
+
+  const radioChannels = useMemo(() => {
+    return channels.filter(c => c.type === "radio");
+  }, [channels]);
+
+  const displayChannels = useMemo(() => {
+    return channelTab === "tv" ? tvChannels : radioChannels;
+  }, [channelTab, tvChannels, radioChannels]);
+
+  const activeTvChannel = useMemo(() => {
+    return tvChannels.find(c => c.id === activeTvId) || tvChannels[0];
+  }, [tvChannels, activeTvId]);
+
+  const activeRadioStation = useMemo(() => {
+    return radioChannels.find(c => c.id === activeRadioId) || radioChannels[0];
+  }, [radioChannels, activeRadioId]);
+
+  useEffect(() => {
+    if (isScrolled && isPlayingInHero) {
+      setIsPlayingInHero(false);
+    }
+  }, [isScrolled, isPlayingInHero, setIsPlayingInHero]);
+
+  useEffect(() => {
+    if (!isGlobalPlaying && isPlayingInHero) {
+      setIsPlayingInHero(false);
+    }
+  }, [isGlobalPlaying, isPlayingInHero, setIsPlayingInHero]);
+
+  const activeChannel = channelTab === "tv" ? activeTvChannel : activeRadioStation;
 
   // Dynamic category list extracted from actual video data
   const dynamicCategories = useMemo(() => {
@@ -363,285 +403,352 @@ export function Watch() {
       <div className="min-h-screen bg-white font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
         <div className="max-w-[760px] mx-auto space-y-6">
 
-          {/* 1. HERO SECTION: البث المباشر (LIVE BROADCAST CARD) */}
+          {/* 1. HERO SECTION: DEDICATED TV AND RADIO VIEWERS */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-2.5 pt-1"
+            className="space-y-3 pt-1"
           >
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
-                </span>
-                <h2 className="text-base font-black text-slate-900 dark:text-white font-cairo">البث المباشر الحي</h2>
-              </div>
-            </div>
+            {channelTab === "tv" ? (
+              /* ================= TV VIEWER ================= */
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                    </span>
+                    <h2 className="text-base font-black text-slate-900 dark:text-white font-cairo">البث التلفزيوني</h2>
+                  </div>
+                </div>
 
-            <div className="relative w-full aspect-video sm:aspect-[21/9] min-h-[240px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#061224] via-[#081b38] to-[#030914] border border-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.25)] flex flex-col justify-between p-4 sm:p-5 group">
-              
-              {/* Full Card Video Container when Playing */}
-              {activeChannel && (activeChannel.url || activeChannel.streamUrl) && isPlayingLive ? (
-                <div className="absolute inset-0 z-30 w-full h-full bg-black rounded-[28px] overflow-hidden flex flex-col items-center justify-center">
-                  {(activeChannel.type === "radio") ? (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-[#061224] via-[#081b38] to-[#030914] relative p-4">
-                      {/* Live Badge inside Radio Player */}
-                      <div className="absolute top-3 left-3 z-40 bg-gradient-to-r from-red-600 to-rose-600 text-white px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1.5 shadow-md border border-white/20">
-                        <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
-                        <span>مباشر الآن</span>
+                <div className="relative w-full aspect-video sm:aspect-[21/9] min-h-[240px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#061224] via-[#081b38] to-[#030914] border border-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.25)] flex flex-col justify-between p-4 sm:p-5 group">
+                  
+                  {/* Embedded Video Player Frame when Playing TV */}
+                  {activeTvChannel && (activeTvChannel.url || activeTvChannel.streamUrl) && isPlayingInHero && activeStream?.id === activeTvChannel.id ? (
+                    <div className="absolute inset-0 z-30 w-full h-full bg-black rounded-[28px] overflow-hidden flex flex-col items-center justify-center">
+                      <iframe 
+                        src={getEmbedUrl(activeTvChannel.url || activeTvChannel.streamUrl, true) || undefined}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen
+                      />
+                      <button 
+                        onClick={() => {
+                          setIsPlayingInHero(false);
+                          globalStopStream();
+                        }}
+                        className="absolute top-3 right-3 z-40 bg-black/70 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition backdrop-blur-md cursor-pointer shadow-xl"
+                        title="إغلاق البث"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {/* Ambient Glow */}
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
+
+                  {/* Top Bar inside TV Viewer */}
+                  <div className="relative z-10 flex items-center justify-between w-full">
+                    <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white px-3.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 shadow-lg border border-white/20">
+                      <span className="w-2 h-2 bg-white rounded-full animate-ping" />
+                      <span>قناة تلفزيونية • مباشر</span>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="text-right max-w-[200px] sm:max-w-[260px]">
+                        <h3 className="text-xs sm:text-sm font-black text-white leading-tight font-cairo truncate">
+                          {activeTvChannel?.name || "القناة التلفزيونية"}
+                        </h3>
+                        <span className="text-[10px] font-bold text-emerald-400 flex items-center justify-end gap-1 mt-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>جودة HD المرئية</span>
+                        </span>
                       </div>
 
-                      {/* Subtle Animated Equalizer Visualizer */}
-                      <div className="absolute inset-0 flex items-center justify-center gap-1.5 opacity-25 pointer-events-none">
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(i => (
-                          <motion.div
-                            key={i}
-                            className="w-2.5 bg-amber-500 rounded-full"
-                            animate={{ height: (activeStream?.id === activeChannel.id && isGlobalPlaying) ? ["15%", "75%", "25%", "90%", "15%"] : "15%" }}
-                            transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.1, ease: "easeInOut" }}
-                          />
-                        ))}
-                      </div>
-                      
-                      {/* Compact, Refined Radio Player Card */}
-                      <div className="relative z-10 w-full max-w-sm bg-slate-900/80 backdrop-blur-xl border border-white/15 p-3.5 sm:p-4 rounded-2xl flex items-center justify-between gap-3 shadow-2xl">
-                        {/* Static non-spinning thumbnail logo */}
-                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl border border-white/20 overflow-hidden shrink-0 bg-slate-800/80 shadow-md">
-                          <img 
-                            src={activeChannel.iconUrl || "/splash_first.png"} 
-                            className="w-full h-full object-cover" 
-                            alt={activeChannel.name}
-                          />
-                        </div>
-
-                        {/* Channel Title & Badge */}
-                        <div className="flex-1 min-w-0 text-right">
-                          <h3 className="text-white font-bold text-sm sm:text-base font-cairo truncate leading-tight">
-                            {activeChannel.name}
-                          </h3>
-                          {activeChannel.description ? (
-                            <p className="text-[11px] text-slate-300 font-medium font-cairo line-clamp-2 mt-0.5 leading-snug">
-                              {activeChannel.description}
-                            </p>
-                          ) : (
-                            <span className="text-[10px] font-semibold text-amber-400 block mt-0.5">
-                              إذاعة صوتية مباشرة
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Compact Controls */}
-                        <div className="flex items-center gap-2 shrink-0">
-                          <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-lg p-1">
-                            <button 
-                              onClick={globalToggleMute}
-                              className="text-slate-300 hover:text-white transition-colors p-1"
-                              title={isGlobalMuted ? "إلغاء الكتم" : "كتم الصوت"}
-                            >
-                              {isGlobalMuted || globalVolume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                            </button>
-                            <input 
-                              type="range"
-                              min="0"
-                              max="1"
-                              step="0.01"
-                              value={isGlobalMuted ? 0 : globalVolume}
-                              onChange={(e) => globalSetVolume(parseFloat(e.target.value))}
-                              className="w-14 sm:w-16 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                            />
-                          </div>
-
-                          <button
-                            onClick={() => {
-                              if (activeStream?.id === activeChannel.id) {
-                                globalTogglePlay();
-                              } else {
-                                globalPlayStream(activeChannel);
-                              }
-                            }}
-                            className="w-10 h-10 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 flex items-center justify-center transition-all shadow-lg active:scale-95 shrink-0"
-                          >
-                            {activeStream?.id === activeChannel.id && isGlobalPlaying ? (
-                              <Pause className="w-4 h-4 fill-current" />
-                            ) : (
-                              <Play className="w-4 h-4 fill-current ml-0.5" />
-                            )}
-                          </button>
-                        </div>
+                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/25 p-0.5 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
+                        <img 
+                          src={activeTvChannel?.iconUrl || "/splash_first.png"} 
+                          alt={activeTvChannel?.name} 
+                          className="w-full h-full object-cover rounded-full"
+                          onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                        />
                       </div>
                     </div>
-                  ) : (
-                    <iframe 
-                      src={getEmbedUrl(activeChannel.url || activeChannel.streamUrl, true) || undefined}
-                      className="w-full h-full border-0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                      allowFullScreen
-                    />
-                  )}
-                  <button 
-                    onClick={() => {
-                      setIsPlayingLive(false);
-                      globalStopStream();
-                    }}
-                    className="absolute top-3 right-3 z-40 bg-black/70 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition backdrop-blur-md cursor-pointer shadow-xl"
-                    title="إغلاق البث"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : null}
-
-              {/* Glowing Ambient Light Effects */}
-              <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-500/25 transition-all duration-700" />
-              <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-600/20 rounded-full blur-3xl pointer-events-none group-hover:bg-red-500/25 transition-all duration-700" />
-
-              {/* TOP ROW: Live Badge (Left) & Channel Info (Right) */}
-              <div className="relative z-10 flex items-center justify-between w-full">
-                
-                {/* Live Badge (Top Left) */}
-                <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white px-3.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 shadow-lg shadow-red-600/30 border border-white/20">
-                  <span className="w-2 h-2 bg-white rounded-full animate-ping" />
-                  <span>مباشر الآن</span>
-                </div>
-
-                {/* Channel Info (Top Right) */}
-                <div className="flex items-center gap-3">
-                  <div className="text-right max-w-[200px] sm:max-w-[260px]">
-                    <h3 className="text-xs sm:text-sm font-black text-white leading-tight font-cairo drop-shadow-xs truncate">
-                      {activeChannel?.name || "قناة المسيرة مباشر"}
-                    </h3>
-                    {activeChannel?.description ? (
-                      <p className="text-[10px] text-slate-200 font-medium font-cairo line-clamp-1 mt-0.5">
-                        {activeChannel.description}
-                      </p>
-                    ) : (
-                      <span className="text-[10px] font-bold text-emerald-400 flex items-center justify-end gap-1 mt-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>جودة HD العالية</span>
-                      </span>
-                    )}
                   </div>
 
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/25 p-0.5 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
-                    <img 
-                      src={activeChannel?.iconUrl || "/splash_first.png"} 
-                      alt={activeChannel?.name} 
-                      className="w-full h-full object-cover rounded-full"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
+                  {/* Center Play Button for TV Viewer */}
+                  <div className="relative z-10 my-auto flex flex-col items-center justify-center pt-2 pb-1">
+                    <motion.button 
+                      whileHover={{ scale: 1.08 }}
+                      whileTap={{ scale: 0.94 }}
+                      onClick={() => {
+                        if (activeTvChannel) {
+                          globalPlayStream(activeTvChannel);
+                          setIsPlayingInHero(true);
+                          window.dispatchEvent(new CustomEvent("stop-quran-audio"));
+                        }
                       }}
-                    />
+                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 shadow-[0_0_35px_rgba(255,255,255,0.25)] flex items-center justify-center text-white cursor-pointer hover:bg-red-600/80 hover:border-red-400 transition-all duration-300"
+                    >
+                      <Play className="w-7 h-7 sm:w-9 sm:h-9 fill-current translate-x-[-2px]" />
+                    </motion.button>
+                  </div>
+
+                  {/* Bottom Bar */}
+                  <div className="relative z-10 flex items-center justify-center w-full pt-1">
+                    <p className="text-white/90 text-xs sm:text-sm font-black text-center font-cairo backdrop-blur-sm bg-black/30 px-4 py-1 rounded-full border border-white/10">
+                      انقر لتشغيل البث التلفزيوني المرئي
+                    </p>
                   </div>
                 </div>
 
+                {/* TV Description */}
+                {activeTvChannel?.description && (
+                  <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl text-right shadow-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400 font-cairo">
+                      <Info className="w-4 h-4 text-red-500 shrink-0" />
+                      <span>عن {activeTvChannel.name}</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium font-cairo leading-relaxed">
+                      {activeTvChannel.description}
+                    </p>
+                  </div>
+                )}
               </div>
-
-              {/* CENTER AREA: Glassmorphism Play Button */}
-              <div className="relative z-10 my-auto flex flex-col items-center justify-center pt-2 pb-1">
-                <motion.button 
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.92 }}
-                  onClick={() => {
-                    setIsPlayingLive(true);
-                    if (activeChannel) {
-                      globalPlayStream(activeChannel);
-                    }
-                  }}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/40 shadow-[0_0_35px_rgba(255,255,255,0.25)] flex items-center justify-center text-white cursor-pointer group-hover:bg-red-600/80 group-hover:border-red-400 transition-all duration-300"
-                >
-                  <Play className="w-7 h-7 sm:w-9 sm:h-9 fill-current translate-x-[-2px]" />
-                </motion.button>
-              </div>
-
-              {/* BOTTOM ROW: Click CTA */}
-              <div className="relative z-10 flex items-center justify-center w-full pt-1">
-                <p className="text-white/90 text-xs sm:text-sm font-black text-center font-cairo backdrop-blur-sm bg-black/20 px-4 py-1 rounded-full border border-white/10">
-                  انقر لتشغيل البث الفضائي أو الإذاعي
-                </p>
-              </div>
-
-            </div>
-
-            {/* Optional Channel Description */}
-            {activeChannel?.description && (
-              <motion.div 
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl text-right shadow-xs space-y-1.5"
-              >
-                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 font-cairo">
-                  <Info className="w-4 h-4 text-amber-500 shrink-0" />
-                  <span>عن {activeChannel.name || "القناة"}</span>
+            ) : (
+              /* ================= RADIO VIEWER ================= */
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                    </span>
+                    <h2 className="text-base font-black text-slate-900 dark:text-white font-cairo">البث الإذاعي</h2>
+                  </div>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium font-cairo leading-relaxed">
-                  {activeChannel.description}
-                </p>
-              </motion.div>
+
+                <div className="relative w-full rounded-[28px] overflow-hidden bg-gradient-to-br from-[#0c162c] via-[#101e3b] to-[#070e1c] border border-amber-500/20 shadow-[0_16px_40px_rgba(0,0,0,0.3)] p-5 sm:p-6 space-y-5 text-white">
+                  {/* Subtle Background Soundwaves Grid */}
+                  <div className="absolute inset-0 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none" />
+
+                  {/* Radio Header Info */}
+                  <div className="relative z-10 flex items-center justify-between gap-3 border-b border-white/10 pb-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-1 shrink-0 overflow-hidden shadow-lg">
+                        <img 
+                          src={activeRadioStation?.iconUrl || "/splash_first.png"} 
+                          alt={activeRadioStation?.name} 
+                          className="w-full h-full object-cover rounded-xl"
+                        />
+                      </div>
+                      <div className="text-right min-w-0">
+                        <div className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full mb-1 border border-amber-500/30">
+                          <Radio className="w-3 h-3 text-amber-400" />
+                          <span>إذاعة صوتية</span>
+                        </div>
+                        <h3 className="text-base sm:text-lg font-black text-white font-cairo truncate leading-tight">
+                          {activeRadioStation?.name || "الإذاعة الصوتية"}
+                        </h3>
+                        <p className="text-xs text-slate-300 font-medium font-cairo truncate mt-0.5">
+                          {activeRadioStation?.description || "بث إذاعي مباشر مستمر على مدار الساعة"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2">
+                      <span className="w-2 h-2 bg-amber-400 rounded-full animate-ping" />
+                      <span className="hidden sm:inline">بث مباشر</span>
+                    </div>
+                  </div>
+
+                  {/* Animated Equalizer Waveform */}
+                  <div className="relative z-10 flex items-center justify-center gap-1.5 h-10 py-1 opacity-90">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
+                      <motion.div
+                        key={i}
+                        className="w-1.5 sm:w-2 bg-gradient-to-t from-amber-600 via-amber-400 to-amber-300 rounded-full"
+                        animate={{ 
+                          height: (activeStream?.id === activeRadioStation?.id && isGlobalPlaying) 
+                            ? ["20%", "90%", "30%", "100%", "25%"] 
+                            : "15%" 
+                        }}
+                        transition={{ 
+                          repeat: Infinity, 
+                          duration: 0.9, 
+                          delay: i * 0.07, 
+                          ease: "easeInOut" 
+                        }}
+                      />
+                    ))}
+                  </div>
+
+                  {/* INTEGRATED RADIO AUDIO PLAYER CONTROLS */}
+                  <div className="relative z-10 bg-slate-900/80 backdrop-blur-xl border border-white/15 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                    
+                    {/* Status Badge */}
+                    <div className="text-right flex items-center gap-2">
+                      {activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? (
+                        <div className="flex items-center gap-2 text-emerald-400 font-black text-xs font-cairo">
+                          <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                          </span>
+                          <span>جاري البث الصوتي المباشر الآن</span>
+                        </div>
+                      ) : (
+                        <span className="text-amber-400/90 text-xs font-bold font-cairo">
+                          اضغط للاستماع للبث الإذاعي المباشر
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Audio Controls */}
+                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                      {/* Volume Controls */}
+                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5">
+                        <button 
+                          onClick={globalToggleMute}
+                          className="text-slate-300 hover:text-white transition-colors p-1"
+                          title={isGlobalMuted ? "إلغاء الكتم" : "كتم الصوت"}
+                        >
+                          {isGlobalMuted || globalVolume === 0 ? <VolumeX className="w-4 h-4 text-amber-400" /> : <Volume2 className="w-4 h-4 text-amber-400" />}
+                        </button>
+                        <input 
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.01"
+                          value={isGlobalMuted ? 0 : globalVolume}
+                          onChange={(e) => globalSetVolume(parseFloat(e.target.value))}
+                          className="w-20 sm:w-28 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                        />
+                      </div>
+
+                      {/* Main Play / Pause Button */}
+                      <button
+                        onClick={() => {
+                          if (activeStream?.id === activeRadioStation?.id) {
+                            globalTogglePlay();
+                            setIsPlayingInHero(true);
+                          } else if (activeRadioStation) {
+                            globalPlayStream(activeRadioStation);
+                            setIsPlayingInHero(true);
+                          }
+                        }}
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 flex items-center justify-center transition-all shadow-lg active:scale-95 shrink-0"
+                        title={activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? "إيقاف مؤقت" : "تشغيل الإذاعة"}
+                      >
+                        {activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? (
+                          <Pause className="w-6 h-6 fill-current" />
+                        ) : (
+                          <Play className="w-6 h-6 fill-current ml-0.5" />
+                        )}
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Radio Description */}
+                {activeRadioStation?.description && (
+                  <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl text-right shadow-xs space-y-1">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 font-cairo">
+                      <Radio className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>عن {activeRadioStation.name}</span>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium font-cairo leading-relaxed">
+                      {activeRadioStation.description}
+                    </p>
+                  </div>
+                )}
+              </div>
             )}
           </motion.div>
 
-          {/* 2. CHANNELS SECTION (القنوات) */}
+          {/* 2. CHANNELS / RADIOS SECTION */}
           <div className="space-y-3">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <Tv className="w-4 h-4 text-slate-800 dark:text-slate-200 stroke-[2.5]" />
-                <h2 className="text-sm font-black text-slate-900 dark:text-white font-cairo">القنوات المتاحة</h2>
+                {channelTab === "tv" ? (
+                  <Tv className="w-4 h-4 text-slate-800 dark:text-slate-200 stroke-[2.5]" />
+                ) : (
+                  <Radio className="w-4 h-4 text-amber-500 stroke-[2.5]" />
+                )}
+                <h2 className="text-sm font-black text-slate-900 dark:text-white font-cairo">
+                  {channelTab === "tv" ? "القنوات الفضائية المتاحة" : "الإذاعات الصوتية المتاحة"}
+                </h2>
               </div>
               <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                 {displayChannels.length} {channelTab === "tv" ? "قنوات" : "إذاعات"}
               </span>
             </div>
 
-            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 mb-2">
+            {/* TAB SWITCHER: TV vs RADIO */}
+            <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
               <button
-                onClick={() => {
-                  setChannelTab("tv");
-                  setIsPlayingLive(false);
-                }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                onClick={() => setChannelTab("tv")}
+                className={`flex-1 py-2.5 text-xs sm:text-sm font-black rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   channelTab === "tv" 
-                    ? "bg-white dark:bg-slate-700 text-red-600 shadow-sm" 
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                    ? "bg-white dark:bg-slate-900 text-red-600 dark:text-red-400 shadow-md border border-slate-200/80 dark:border-slate-800" 
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                تلفزيون
+                <Tv className="w-4 h-4" />
+                <span>قنوات التلفزيون</span>
               </button>
               <button
-                onClick={() => {
-                  setChannelTab("radio");
-                  setIsPlayingLive(false);
-                }}
-                className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+                onClick={() => setChannelTab("radio")}
+                className={`flex-1 py-2.5 text-xs sm:text-sm font-black rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
                   channelTab === "radio" 
-                    ? "bg-white dark:bg-slate-700 text-amber-500 shadow-sm" 
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                    ? "bg-white dark:bg-slate-900 text-amber-500 dark:text-amber-400 shadow-md border border-slate-200/80 dark:border-slate-800" 
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                إذاعة
+                <Radio className="w-4 h-4" />
+                <span>الإذاعات الصوتية</span>
               </button>
             </div>
 
+            {/* CHANNELS GRID */}
             <div className="grid grid-cols-3 xs:grid-cols-6 gap-2 w-full">
               {displayChannels.length > 0 ? (
                 displayChannels.map((ch) => {
-                  const isSelected = activeChannelId === ch.id;
+                  const isSelected = channelTab === "tv" ? activeTvId === ch.id : activeRadioId === ch.id;
                   return (
                     <button
                       key={ch.id}
                       onClick={() => {
-                        setActiveChannelId(ch.id!);
-                        setIsPlayingLive(true);
-                        globalPlayStream(ch);
+                        if (channelTab === "tv") {
+                          setActiveTvId(ch.id!);
+                          globalPlayStream(ch);
+                          setIsPlayingInHero(true);
+                        } else {
+                          setActiveRadioId(ch.id!);
+                          globalPlayStream(ch);
+                          setIsPlayingInHero(true);
+                        }
+                        if (isScrolled) {
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          const mainEl = document.querySelector('main');
+                          if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
                       }}
                       className={`flex flex-col items-center justify-center py-3 px-1 rounded-[20px] bg-white dark:bg-slate-900 border transition-all cursor-pointer gap-2 shadow-xs ${
                         isSelected 
-                          ? 'border-red-600 dark:border-red-500 bg-red-50/50 dark:bg-red-950/30 shadow-md ring-2 ring-red-600/20 scale-[1.03]' 
+                          ? (channelTab === "tv" 
+                              ? 'border-red-600 dark:border-red-500 bg-red-50/50 dark:bg-red-950/30 shadow-md ring-2 ring-red-600/20 scale-[1.03]'
+                              : 'border-amber-500 dark:border-amber-400 bg-amber-50/50 dark:bg-amber-950/30 shadow-md ring-2 ring-amber-500/20 scale-[1.03]')
                           : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
                       }`}
                     >
                       <div className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 ${
-                        isSelected ? 'border-red-500 bg-white' : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
+                        isSelected 
+                          ? (channelTab === "tv" ? 'border-red-500 bg-white' : 'border-amber-500 bg-white') 
+                          : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
                       }`}>
                         <img 
                           src={ch.iconUrl || "/splash_first.png"} 
@@ -652,27 +759,24 @@ export function Watch() {
                           }}
                         />
                         {isSelected && (
-                          <span className="absolute bottom-0 right-0 w-3 h-3 bg-red-600 rounded-full border-2 border-white dark:border-slate-900" />
+                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${
+                            channelTab === "tv" ? "bg-red-600" : "bg-amber-500"
+                          }`} />
                         )}
                       </div>
-                      {/* Full Channel Name Display without truncation */}
-                      <span className={`text-[10px] sm:text-[11px] font-bold text-center leading-tight whitespace-normal break-words w-full px-0.5 font-cairo ${
-                        isSelected ? 'text-red-600 dark:text-red-400 font-black' : 'text-slate-800 dark:text-slate-200'
+                      <span className={`text-[11px] font-bold font-cairo truncate max-w-full text-center px-1 ${
+                        isSelected 
+                          ? (channelTab === "tv" ? "text-red-700 dark:text-red-400 font-black" : "text-amber-600 dark:text-amber-400 font-black") 
+                          : "text-slate-700 dark:text-slate-300"
                       }`}>
                         {ch.name}
                       </span>
-                      {ch.description && (
-                        <span className="text-[9px] text-slate-500 dark:text-slate-400 text-center line-clamp-1 w-full px-0.5 font-normal">
-                          {ch.description}
-                        </span>
-                      )}
                     </button>
                   );
                 })
               ) : (
-                <div className="col-span-3 xs:col-span-6 flex flex-col items-center justify-center py-8 text-slate-500 dark:text-slate-400">
-                  <Tv className="w-8 h-8 mb-2 opacity-50" />
-                  <p className="text-sm font-bold font-cairo">لا توجد {channelTab === "tv" ? "قنوات" : "إذاعات"} متاحة حالياً</p>
+                <div className="col-span-full py-8 text-center text-xs font-bold text-slate-400">
+                  لا توجد {channelTab === "tv" ? "قنوات" : "إذاعات"} متاحة حالياً
                 </div>
               )}
             </div>

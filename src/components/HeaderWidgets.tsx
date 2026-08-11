@@ -246,37 +246,49 @@ export const HeaderWidgets: React.FC = () => {
       <div className="w-full bg-slate-50/80 border-x border-b border-slate-200/40 px-4 py-2.5 flex items-center justify-between gap-3 overflow-hidden shadow-inner-sm">
         
         {/* Date/Day Widget */}
-        <div className="flex items-center gap-2 flex-1">
-          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-xs">
+        <Link 
+          to="/calendar" 
+          title="الذهاب إلى التقويم الهجري"
+          className="flex items-center gap-2 flex-1 hover:opacity-80 active:scale-95 transition-all cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-xs group-hover:border-[#D32027]/40">
             <Calendar className="w-4 h-4 text-[#D32027]" />
           </div>
           <div className="flex flex-col text-right">
             <span className="text-slate-850 font-black text-[10px] sm:text-[11px] leading-tight font-cairo">{dayName}</span>
             <span className="text-[#D32027] font-bold text-[9px] sm:text-[10px] leading-none font-cairo mt-0.5">{hijriDate}</span>
           </div>
-        </div>
+        </Link>
 
         {/* Next Prayer Widget (Countdown) */}
-        <div className="flex items-center gap-2 flex-1 justify-center border-x border-slate-200/40 px-2">
-          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-xs">
+        <Link 
+          to="/prayer-times" 
+          title="الذهاب إلى مواقيت الصلاة"
+          className="flex items-center gap-2 flex-1 justify-center border-x border-slate-200/40 px-2 hover:opacity-80 active:scale-95 transition-all cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-xs group-hover:border-emerald-500/40">
             <Clock className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="flex flex-col text-right w-[50px] sm:w-[60px]">
             <span className="text-slate-850 font-black text-[10px] sm:text-[11px] leading-tight font-cairo">{nextPrayerInfo.name}</span>
             <span className="text-emerald-600 font-bold text-[10px] sm:text-[11px] leading-none font-sans mt-0.5 tracking-wider">{nextPrayerInfo.countdown}</span>
           </div>
-        </div>
+        </Link>
 
         {/* Weather Widget */}
-        <div className="flex items-center gap-2 flex-1 justify-end">
-          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-xs">
+        <Link 
+          to="/weather" 
+          title="الذهاب إلى حالة الطقس"
+          className="flex items-center gap-2 flex-1 justify-end hover:opacity-80 active:scale-95 transition-all cursor-pointer group"
+        >
+          <div className="w-8 h-8 rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-xs group-hover:border-sky-500/40">
             <weatherDisplay.icon className="w-4 h-4 text-sky-500" />
           </div>
           <div className="flex flex-col text-right">
             <span className="text-slate-850 font-black text-[10px] sm:text-[11px] leading-tight font-cairo">الطقس الآن</span>
             <span className="text-sky-500 font-bold text-[9px] sm:text-[10px] leading-none font-cairo mt-0.5 whitespace-nowrap">{weatherDisplay.text}</span>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Drawer */}

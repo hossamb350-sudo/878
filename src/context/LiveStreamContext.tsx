@@ -6,6 +6,10 @@ interface LiveStreamContextType {
   isPlaying: boolean;
   isMuted: boolean;
   volume: number;
+  isPlayingInHero: boolean;
+  setIsPlayingInHero: (val: boolean) => void;
+  isTopBarPinned: boolean;
+  setTopBarPinned: (pinned: boolean) => void;
   playStream: (stream: LiveStream) => void;
   stopStream: () => void;
   togglePlay: () => void;
@@ -21,6 +25,8 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolumeState] = useState(1);
+  const [isPlayingInHero, setIsPlayingInHero] = useState(false);
+  const [isTopBarPinned, setIsTopBarPinned] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const playStream = (stream: LiveStream) => {
@@ -32,6 +38,8 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
   const stopStream = () => {
     setIsPlaying(false);
     setActiveStream(null);
+    setIsPlayingInHero(false);
+    setIsTopBarPinned(false);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = "";
@@ -101,6 +109,10 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
         isPlaying,
         isMuted,
         volume,
+        isPlayingInHero,
+        setIsPlayingInHero,
+        isTopBarPinned,
+        setTopBarPinned: setIsTopBarPinned,
         playStream,
         stopStream,
         togglePlay,

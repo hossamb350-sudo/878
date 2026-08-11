@@ -3655,7 +3655,7 @@ function AdminLive() {
         name,
         url: finalUrl,
         iconUrl,
-        description: description.trim() || undefined,
+        description: description.trim() || "",
         type,
         isActive: active,
         updatedAt: Date.now(),

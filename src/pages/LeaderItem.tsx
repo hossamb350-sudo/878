@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { getShareableUrl } from "../config/apiConfig";
+import { useLiveStream } from "../context/LiveStreamContext";
 
 // Helper function to translate standard video links into embeddable URLs
 const getEmbedUrl = (url: string) => {
@@ -81,7 +82,13 @@ const getEmbedUrl = (url: string) => {
 export function LeaderItem() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { stopStream } = useLiveStream();
   const [content, setContent] = useState<LeaderContent | null>(null);
+
+  useEffect(() => {
+    stopStream();
+    window.dispatchEvent(new CustomEvent("stop-quran-audio"));
+  }, [stopStream]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   
@@ -405,174 +412,181 @@ export function LeaderItem() {
           </div>
         )}
 
-        {/* Content Section */}
-        <div className="px-6 sm:px-8 pt-6">
-          {/* Back Button Above Title */}
-          <button 
-            onClick={() => navigate(-1)}
-            className="mb-6 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-ibm"
-          >
-            <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
-          </button>
-        </div>
-
-        {/* Title area for video items since they don't have it in the header */}
-        {content.type === "video" && (
-          <div className="px-6 sm:px-8 pb-6 border-b border-stone-100 dark:border-stone-800">
-             <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
+        {/* Title area & Content */}
+        {content.type === "video" ? (
+          <div className="max-w-[800px] mx-auto">
+            <div className="px-5 sm:px-8 pb-6 pt-6 border-b border-stone-100 dark:border-stone-800">
+              {/* Back Button Above Title */}
+              <button 
+                onClick={() => navigate(-1)}
+                className="mb-4 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-cairo cursor-pointer"
+              >
+                <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
+              </button>
+              
+              <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
                 عرض مرئي
-             </span>
-             <h1 
-                className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo"
-                style={{ fontSize: `${fontSize}px` }}
-              >
+              </span>
+              
+              <h1 className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo text-xl sm:text-2xl">
                 {content.title}
               </h1>
+
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
                 <span>{mDate}</span>
-                <span className="text-stone-200 dark:text-stone-700">|</span>
-                <span>{hDate}</span>
+                {hDate && (
+                  <>
+                    <span className="text-stone-200 dark:text-stone-700">|</span>
+                    <span>{hDate}</span>
+                  </>
+                )}
                 <span className="text-stone-200 dark:text-stone-700">|</span>
                 <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
                   <Eye className="w-3 h-3 text-red-600 shrink-0" />
-                  <span>{(content.views || 0) + 1} مشاهدة</span>
+                  <span>{((content.views || 0) + 1).toLocaleString('ar-EG')} مشاهدة</span>
                 </span>
               </div>
-          </div>
-        )}
-
-        {/* For text content, title is usually at the bottom of header, let's adjust it */}
-        {content.type !== "video" && (
-          <div className="px-6 sm:px-8 pb-6 border-b border-stone-100 dark:border-stone-800">
-             <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
-                محاضرات ودروس
-             </span>
-             <h1 
-                className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo"
-                style={{ fontSize: `${fontSize}px` }}
-              >
-                {content.title}
-              </h1>
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
-                <span>{mDate}</span>
-                <span className="text-stone-200 dark:text-stone-700">|</span>
-                <span>{hDate}</span>
-                <span className="text-stone-200 dark:text-stone-700">|</span>
-                <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
-                  <Eye className="w-3 h-3 text-red-600 shrink-0" />
-                  <span>{(content.views || 0) + 1} مشاهدة</span>
-                </span>
-              </div>
-          </div>
-        )}
-
-        {/* Reading Options toolbar */}
-        <div className="flex items-center justify-between py-4 px-6 sm:px-8 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800/80 transition-colors duration-300">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={toggleDarkMode}
-              className="flex items-center gap-2 text-sm font-bold text-gray-600 dark:text-stone-300 hover:opacity-80 transition cursor-pointer select-none font-ibm"
-            >
-              <span>{isDarkMode ? "ليلي" : "نهاري"}</span>
-              {isDarkMode ? (
-                <Moon className="w-5 h-5 text-red-600 fill-indigo-400/20" />
-              ) : (
-                <Sun className="w-5 h-5 text-amber-500 fill-amber-500" />
-              )}
-            </button>
-          </div>
-
-          <div className="flex items-center border border-gray-200 dark:border-stone-800 rounded-lg px-3 py-1 bg-white dark:bg-stone-900 shadow-sm text-sm font-bold text-gray-700 dark:text-stone-300 select-none font-ibm">
-            <button 
-              onClick={() => setFontSize(prev => Math.min(prev + 1, 26))} 
-              className="p-1 text-gray-500 hover:text-gray-950 dark:hover:text-white transition cursor-pointer"
-            >
-              <Plus className="w-4 h-4" strokeWidth={3} />
-            </button>
-            <span className="mx-4 text-sm font-bold min-w-[36px] text-center">
-              {fontSize}px
-            </span>
-            <button 
-              onClick={() => setFontSize(prev => Math.max(prev - 1, 14))} 
-              className="p-1 text-gray-500 hover:text-gray-950 dark:hover:text-white transition cursor-pointer"
-            >
-              <Minus className="w-4 h-4" strokeWidth={3} />
-            </button>
-          </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="bg-white dark:bg-stone-900 transition-colors duration-300 pt-8 pb-16">
-          <div className="px-6 sm:px-8">
-            <div className="mb-12">
-              {content.type === "video" ? (
-                <div className="space-y-6">
-                  {content.description && (
-                    <div className="bg-stone-50 dark:bg-stone-800/30 p-6 rounded-2xl border border-stone-100 dark:border-stone-800/40">
-                      <p className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed font-bold font-ibm">
-                        {content.description}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="flex gap-3">
-                    <button 
-                      onClick={shareText}
-                      className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs shadow-lg shadow-red-600/20 font-ibm"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>مشاركة المحتوى</span>
-                    </button>
-                    <button 
-                      onClick={toggleBookmark}
-                      className={`flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-ibm ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
-                    >
-                      <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
-                      <span>حفظ</span>
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                   <div 
-                    className="prose prose-stone dark:prose-invert max-w-none text-gray-800 dark:text-stone-100 text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-relaxed"
-                    style={{ 
-                      fontSize: `${fontSize}px`, 
-                      lineHeight: 1.8,
-                    }}
-                  >
-                    {content.content.split("\n").map((para, pIdx) => renderParagraph(para, pIdx))}
-                  </div>
-
-                  <div className="flex gap-3 pt-8 border-t border-stone-100 dark:border-stone-800 mt-12">
-                    <button 
-                      onClick={shareText}
-                      className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-cairo shadow-lg shadow-red-600/20"
-                    >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>مشاركة النص</span>
-                    </button>
-                    <button 
-                      onClick={handleCopyText}
-                      className="flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-cairo"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5 text-red-600" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copied ? "تم النسخ" : "نسخ النص"}</span>
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Slogan Footer */}
-            {content.type !== "video" && (
-              <div className="mt-16 pt-8 border-t border-stone-100 dark:border-stone-800 text-center">
-                <Quote className="w-8 h-8 mx-auto text-red-600/20 mb-3" />
-                <p className="text-sm font-bold text-red-600 font-ibm">انتهى خطاب السيد القائد</p>
+            <div className="px-5 sm:px-8 py-8">
+              {/* Description Block - Only show if exists */}
+              {content.description && (
+                <div className="bg-stone-50 dark:bg-stone-800/30 p-6 rounded-2xl border border-stone-100 dark:border-stone-800/40 mb-6">
+                  <p className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed font-bold font-ibm whitespace-pre-line">
+                    {content.description}
+                  </p>
+                </div>
+              )}
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={shareText}
+                  className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs shadow-lg shadow-red-600/20 font-ibm cursor-pointer"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>مشاركة المحتوى</span>
+                </button>
+                <button 
+                  onClick={toggleBookmark}
+                  className={`flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-ibm cursor-pointer ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
+                >
+                  <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
+                  <span>حفظ</span>
+                </button>
               </div>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="px-6 sm:px-8 pt-6">
+              <button 
+                onClick={() => navigate(-1)}
+                className="mb-6 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-ibm cursor-pointer"
+              >
+                <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
+              </button>
+            </div>
+
+            <div className="px-6 sm:px-8 pb-6 border-b border-stone-100 dark:border-stone-800">
+               <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
+                  محاضرات ودروس
+               </span>
+               <h1 
+                  className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo"
+                  style={{ fontSize: `${fontSize}px` }}
+                >
+                  {content.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
+                  <span>{mDate}</span>
+                  <span className="text-stone-200 dark:text-stone-700">|</span>
+                  <span>{hDate}</span>
+                  <span className="text-stone-200 dark:text-stone-700">|</span>
+                  <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
+                    <Eye className="w-3 h-3 text-red-600 shrink-0" />
+                    <span>{(content.views || 0) + 1} مشاهدة</span>
+                  </span>
+                </div>
+            </div>
+
+            {/* Reading Options toolbar */}
+            <div className="flex items-center justify-between py-4 px-6 sm:px-8 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800/80 transition-colors duration-300">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={toggleDarkMode}
+                  className="flex items-center gap-2 text-sm font-bold text-gray-600 dark:text-stone-300 hover:opacity-80 transition cursor-pointer select-none font-ibm"
+                >
+                  <span>{isDarkMode ? "ليلي" : "نهاري"}</span>
+                  {isDarkMode ? (
+                    <Moon className="w-5 h-5 text-red-600 fill-indigo-400/20" />
+                  ) : (
+                    <Sun className="w-5 h-5 text-amber-500 fill-amber-500" />
+                  )}
+                </button>
+              </div>
+
+              <div className="flex items-center border border-gray-200 dark:border-stone-800 rounded-lg px-3 py-1 bg-white dark:bg-stone-900 shadow-sm text-sm font-bold text-gray-700 dark:text-stone-300 select-none font-ibm">
+                <button 
+                  onClick={() => setFontSize(prev => Math.min(prev + 1, 26))} 
+                  className="p-1 text-gray-500 hover:text-gray-950 dark:hover:text-white transition cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" strokeWidth={3} />
+                </button>
+                <span className="mx-4 text-sm font-bold min-w-[36px] text-center">
+                  {fontSize}px
+                </span>
+                <button 
+                  onClick={() => setFontSize(prev => Math.max(prev - 1, 14))} 
+                  className="p-1 text-gray-500 hover:text-gray-950 dark:hover:text-white transition cursor-pointer"
+                >
+                  <Minus className="w-4 h-4" strokeWidth={3} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content Area */}
+            <div className="bg-white dark:bg-stone-900 transition-colors duration-300 pt-8 pb-16">
+              <div className="px-6 sm:px-8">
+                <div className="mb-12">
+                  <div className="space-y-4">
+                    <div 
+                      className="prose prose-stone dark:prose-invert max-w-none text-gray-800 dark:text-stone-100 text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-relaxed"
+                      style={{ 
+                        fontSize: `${fontSize}px`, 
+                        lineHeight: 1.8,
+                      }}
+                    >
+                      {content.content.split("\n").map((para, pIdx) => renderParagraph(para, pIdx))}
+                    </div>
+
+                    <div className="flex gap-3 pt-8 border-t border-stone-100 dark:border-stone-800 mt-12">
+                      <button 
+                        onClick={shareText}
+                        className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-cairo shadow-lg shadow-red-600/20 cursor-pointer"
+                      >
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>مشاركة النص</span>
+                      </button>
+                      <button 
+                        onClick={handleCopyText}
+                        className="flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-cairo cursor-pointer"
+                      >
+                        {copied ? <Check className="w-3.5 h-3.5 text-red-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copied ? "تم النسخ" : "نسخ النص"}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Slogan Footer */}
+                <div className="mt-16 pt-8 border-t border-stone-100 dark:border-stone-800 text-center">
+                  <Quote className="w-8 h-8 mx-auto text-red-600/20 mb-3" />
+                  <p className="text-sm font-bold text-red-600 font-ibm">انتهى خطاب السيد القائد</p>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </article>
     </motion.div>
   );
