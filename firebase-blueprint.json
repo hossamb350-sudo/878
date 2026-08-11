@@ -230,6 +230,20 @@
         "updatedAt": { "type": "number" }
       },
       "required": ["imageUrl"]
+    },
+    "AppVersionConfig": {
+      "title": "App Version and Lock Config",
+      "description": "Enforce minimum app version and display forced update messages",
+      "type": "object",
+      "properties": {
+        "minRequiredVersion": { "type": "string" },
+        "updateUrl": { "type": "string" },
+        "lockMessage": { "type": "string" },
+        "isEnabled": { "type": "boolean" },
+        "updatedAt": { "type": "number" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["minRequiredVersion", "updateUrl", "lockMessage", "isEnabled", "updatedAt"]
     }
   },
   "firestore": {
@@ -272,6 +286,10 @@
     "/settings/custom_footer": {
       "schema": { "$ref": "CustomFooter" },
       "description": "Custom footer image settings"
+    },
+    "/settings/app_version_config": {
+      "schema": { "$ref": "AppVersionConfig" },
+      "description": "Enforce minimum app version and display forced update messages"
     },
     "/leader/{contentId}": {
       "schema": { "$ref": "LeaderContent" },

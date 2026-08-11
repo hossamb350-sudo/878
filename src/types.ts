@@ -257,3 +257,13 @@ export interface Author {
   bio?: string;
   createdAt: number;
 }
+
+export interface AppVersionConfig {
+  minRequiredVersion: string;
+  updateUrl: string;
+  lockMessage: string;
+  isEnabled: boolean;
+  updatedAt: number;
+  updatedBy?: string;
+}
+

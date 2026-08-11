@@ -115,6 +115,7 @@ import { AdminCategoryManager } from "../components/AdminCategoryManager";
 import { AdminArticles } from "../components/AdminArticles";
 import { AdminOnlineUsers } from "../components/AdminOnlineUsers";
 import { AdminRegisteredUsers } from "../components/AdminRegisteredUsers";
+import { AdminVersionLock } from "../components/AdminVersionLock";
 import { OnlineUsersConfig, RegisteredUsersConfig } from "../services/OnlineUsersService";
 import { ContactUsSection } from "../components/ContactUsSection";
 
@@ -478,6 +479,7 @@ export function Admin() {
       access: isAdmin || isManager || (isEditor && hasPermission("categories")),
     },
     { id: "registered-users", icon: Users, label: "إدارة عدد المستخدمين", access: isAdmin },
+    { id: "version-lock", icon: Shield, label: "قفل وإصدار التطبيق", access: isAdmin },
     { id: "roles", icon: Users, label: "إدارة الصلاحيات", access: isAdmin },
   ];
 
@@ -825,6 +827,7 @@ export function Admin() {
                 {activeTab === "social" && <AdminSocialLinks />}
                 {activeTab === "roles" && isAdmin && <AdminRoles />}
                 {activeTab === "registered-users" && isAdmin && <AdminRegisteredUsers isAdmin={isAdmin} />}
+                {activeTab === "version-lock" && isAdmin && <AdminVersionLock isAdmin={isAdmin} />}
               </div>
             </div>
           )}
