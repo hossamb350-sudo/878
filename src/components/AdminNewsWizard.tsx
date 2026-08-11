@@ -59,6 +59,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   const [tags, setTags] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successToastMessage, setSuccessToastMessage] = useState("");
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [showAuthorDropdown, setShowAuthorDropdown] = useState(false);
   const [showCatManager, setShowCatManager] = useState(false);
@@ -386,8 +387,9 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       }
 
       let savedId = editingId;
+      const isEditingMode = newsMode === "edit";
       
-      if (newsMode === "edit") {
+      if (isEditingMode) {
         if (!editingId) throw new Error("لا يوجد معرّف للخبر الجاري تعديله!");
         await updateDoc(doc(db, "news", editingId), payload);
       } else {
@@ -400,7 +402,17 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       
       setLastSavedId(savedId);
       localStorage.removeItem("news_draft");
+
+      const msg = isEditingMode ? "تم تعديل الخبر بنجاح" : "تم نشر الخبر بنجاح";
+      setSuccessToastMessage(msg);
       setShowSuccessModal(true);
+
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        setNewsMode("list");
+        resetForm();
+        if (onBackToDashboard) onBackToDashboard();
+      }, 1500);
     } catch (e) {
       console.error(e);
       alert("حدث خطأ أثناء الحفظ!");
@@ -414,62 +426,19 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 max-w-sm w-full text-center shadow-2xl"
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-emerald-500/20"
       >
-        <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-10 h-10 text-red-600" />
+        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
         </div>
-        <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">تم العملية بنجاح!</h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-8 font-bold">تم {newsMode === "edit" ? "تحديث" : "نشر"} الخبر بنجاح في المنصة.</p>
-        
-        <div className="grid grid-cols-1 gap-3">
-          <button 
-            onClick={() => {
-              setShowSuccessModal(false);
-              setNewsMode("list");
-              resetForm();
-              window.location.href = `/news/${lastSavedId}`;
-            }}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black transition-all flex items-center justify-center gap-2 text-sm"
-          >
-            <Eye className="w-4 h-4" />
-            عرض الخبر
-          </button>
-          <button 
-            onClick={() => {
-              setShowSuccessModal(false);
-              setNewsMode("list");
-              resetForm();
-              if (onBackToDashboard) onBackToDashboard();
-            }}
-            className="w-full py-3 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-white rounded-2xl font-black transition-all text-sm flex items-center justify-center gap-2"
-          >
-            <Settings className="w-4 h-4" />
-            لوحة الإدارة
-          </button>
-          <button 
-            onClick={() => {
-              setShowSuccessModal(false);
-              resetForm();
-              setNewsMode("add");
-              setCurrentStep(1);
-            }}
-            className="w-full py-3 text-emerald-600 font-black hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-2xl transition-all text-sm border border-emerald-100 dark:border-emerald-900/30"
-          >
-            إضافة خبر جديد
-          </button>
-          <button 
-            onClick={() => {
-              setShowSuccessModal(false);
-              setNewsMode("list");
-              resetForm();
-              window.location.href = "/";
-            }}
-            className="w-full py-3 text-gray-500 font-black hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded-2xl transition-all text-sm border border-gray-100 dark:border-gray-700"
-          >
-            الرئيسية
-          </button>
-        </div>
+        <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-2">
+          {successToastMessage || (newsMode === "edit" ? "تم تعديل الخبر بنجاح" : "تم نشر الخبر بنجاح")}
+        </h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-bold flex items-center justify-center gap-2 mt-4">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          جاري الانتقال إلى لوحة الإدارة...
+        </p>
       </motion.div>
     </div>
   );

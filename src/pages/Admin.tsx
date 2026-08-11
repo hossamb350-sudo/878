@@ -2626,6 +2626,12 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
       setLastSavedId(savedId);
       localStorage.removeItem("news_draft");
       setShowSuccessModal(true);
+
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        setNewsMode("list");
+        resetForm();
+      }, 1500);
     } catch (e) {
       console.error(e);
       alert("حدث خطأ أثناء الحفظ!");
@@ -2639,52 +2645,19 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-8 max-w-sm w-full text-center shadow-2xl"
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl border border-emerald-500/20"
       >
-        <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle className="w-10 h-10 text-red-600" />
+        <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
         </div>
-        <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
-          تم العملية بنجاح!
+        <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white mb-2">
+          {editingId ? "تم تعديل الخبر بنجاح" : "تم نشر الخبر بنجاح"}
         </h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-8 font-bold">
-          تم {editingId ? "تحديث" : "نشر"} الخبر بنجاح في المنصة.
+        <p className="text-xs text-gray-500 dark:text-gray-400 font-bold flex items-center justify-center gap-2 mt-4">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+          جاري الانتقال إلى لوحة الإدارة...
         </p>
-
-        <div className="grid grid-cols-1 gap-3">
-          <button
-            onClick={() => {
-              setShowSuccessModal(false);
-              window.open(`/news/${lastSavedId}`, "_blank");
-            }}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black transition-all flex items-center justify-center gap-2"
-          >
-            <Eye className="w-5 h-5" />
-            عرض الخبر
-          </button>
-          <button
-            onClick={() => {
-              setShowSuccessModal(false);
-              setNewsMode("list");
-              resetForm();
-            }}
-            className="w-full py-4 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-white rounded-2xl font-black transition-all"
-          >
-            العودة للوحة الإدارة
-          </button>
-          {!editingId && (
-            <button
-              onClick={() => {
-                setShowSuccessModal(false);
-                resetForm();
-                setCurrentStep(1);
-              }}
-              className="w-full py-4 text-blue-600 font-black hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-2xl transition-all"
-            >
-              إضافة خبر جديد آخر
-            </button>
-          )}
-        </div>
       </motion.div>
     </div>
   );

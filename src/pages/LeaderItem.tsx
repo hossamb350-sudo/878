@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../firebase";
@@ -23,27 +23,30 @@ import {
   Moon,
   Plus,
   Minus,
-  Clock
+  Clock,
+  Play,
+  Video as VideoIcon
 } from "lucide-react";
 import { motion } from "motion/react";
 import { getShareableUrl } from "../config/apiConfig";
 import { useLiveStream } from "../context/LiveStreamContext";
 
 // Helper function to translate standard video links into embeddable URLs
-const getEmbedUrl = (url: string) => {
+const getEmbedUrl = (url: string, autoPlay: boolean = false) => {
   if (!url) return undefined;
   const cleanUrl = url.trim();
 
   // Youtube match
   if (cleanUrl.includes("youtube.com") || cleanUrl.includes("youtu.be")) {
     if (cleanUrl.includes("/embed/")) {
-      return cleanUrl;
+      const base = cleanUrl.includes("?") ? cleanUrl : `${cleanUrl}?rel=0`;
+      return `${base}&enablejsapi=1&autoplay=${autoPlay ? 1 : 0}`;
     }
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
     const match = cleanUrl.match(regExp);
     if (match && match[2].length === 11) {
       const videoId = match[2];
-      return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+      return `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&rel=0&enablejsapi=1`;
     }
   }
 
@@ -73,7 +76,8 @@ const getEmbedUrl = (url: string) => {
 
   // Almasirah or clean Peertube watch link
   if (cleanUrl.includes("/w/") || cleanUrl.includes("/videos/watch/")) {
-    return cleanUrl.replace("/w/", "/videos/embed/").replace("/videos/watch/", "/videos/embed/");
+    const embedUrl = cleanUrl.replace("/w/", "/videos/embed/").replace("/videos/watch/", "/videos/embed/");
+    return autoPlay ? `${embedUrl}?autoplay=1` : embedUrl;
   }
 
   return cleanUrl;
@@ -84,13 +88,33 @@ export function LeaderItem() {
   const navigate = useNavigate();
   const { stopStream } = useLiveStream();
   const [content, setContent] = useState<LeaderContent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
-  useEffect(() => {
+  const handlePlayVideo = useCallback(() => {
+    setIsVideoPlaying(true);
     stopStream();
     window.dispatchEvent(new CustomEvent("stop-quran-audio"));
   }, [stopStream]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+
+  // Handle postMessage from YouTube iframe if played directly inside iframe
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        if (typeof event.data === 'string' && event.data.includes("infoDelivery")) {
+          const data = JSON.parse(event.data);
+          if (data.event === 'infoDelivery' && data.info && data.info.playerState === 1) {
+            handlePlayVideo();
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handlePlayVideo]);
   
   // Custom reading preferences
   const [fontSize, setFontSize] = useState<number>(() => {
@@ -348,31 +372,53 @@ export function LeaderItem() {
       <article className="w-full">
         {/* Edge-to-Edge Header */}
         {content.type === "video" ? (
-          <div className="w-full relative aspect-video bg-black overflow-hidden">
-            <iframe 
-              src={getEmbedUrl(content.content)} 
-              className="w-full h-full border-0"
-              allowFullScreen
-              allow="autoplay; encrypted-media; picture-in-picture"
-            ></iframe>
-            
-            <div className="absolute inset-0 pointer-events-none p-4 sm:p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-end gap-2 pointer-events-auto">
-                <button 
-                  onClick={shareText}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/10 hover:bg-red-600 transition-all active:scale-90"
-                  title="مشاركة"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={toggleBookmark}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/10 transition-all active:scale-90 ${isFavorited ? 'text-red-500 bg-white/20' : 'text-white hover:text-red-400'}`}
-                  title="حفظ"
-                >
-                  <Bookmark className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-                </button>
+          <div className="w-full relative aspect-video bg-black overflow-hidden group">
+            {isVideoPlaying ? (
+              <iframe 
+                src={getEmbedUrl(content.content, true)} 
+                className="w-full h-full border-0"
+                allowFullScreen
+                allow="autoplay; encrypted-media; picture-in-picture"
+              ></iframe>
+            ) : (
+              <div 
+                onClick={handlePlayVideo}
+                className="relative w-full h-full cursor-pointer flex items-center justify-center bg-stone-900 group"
+              >
+                {content.thumbnailUrl ? (
+                  <img 
+                    src={content.thumbnailUrl} 
+                    alt={content.title} 
+                    className="w-full h-full object-cover opacity-80 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-stone-900 to-black flex items-center justify-center">
+                    <VideoIcon className="w-16 h-16 text-white/20" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600/90 hover:bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 border border-white/20 transform group-hover:scale-110 transition-all duration-300">
+                    <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-current" />
+                  </div>
+                </div>
               </div>
+            )}
+            
+            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 pointer-events-auto">
+              <button 
+                onClick={shareText}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/10 hover:bg-red-600 transition-all active:scale-90"
+                title="مشاركة"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={toggleBookmark}
+                className={`w-8 h-8 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-md border border-white/10 transition-all active:scale-90 ${isFavorited ? 'text-red-500 bg-white/20' : 'text-white hover:text-red-400'}`}
+                title="حفظ"
+              >
+                <Bookmark className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
+              </button>
             </div>
           </div>
         ) : (
