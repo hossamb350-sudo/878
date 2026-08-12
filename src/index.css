@@ -1,0 +1,155 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@300;400;500;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+@custom-variant dark (&:is(.never-dark));
+
+@theme {
+  --font-sans: "Cairo", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-cairo: "Cairo", sans-serif;
+  --font-ibm: "IBM Plex Sans Arabic", sans-serif;
+  --font-tajawal: "Tajawal", sans-serif;
+  --font-alexandria: "Alexandria", sans-serif;
+  --font-noto-arabic: "Noto Sans Arabic", sans-serif;
+
+  /* Brand Colors */
+  --color-taiz-navy: #07152B;
+  --color-taiz-royal: #10264A;
+  --color-taiz-sky: #1E4275;
+  --color-taiz-cyan: #34619B;
+  --color-taiz-soft: #6D8BAF;
+
+  /* Surface & Background Colors */
+  --color-surface-main: #ffffff;
+  --color-surface-card: #ffffff;
+  --color-surface-hover: #f8fafc;
+  
+  /* Border Colors */
+  --color-border-light: rgba(226, 232, 240, 0.95);
+  --color-border-subtle: rgba(203, 213, 225, 0.8);
+  
+  /* Text Colors */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #334155;
+  --color-text-muted: #64748b;
+
+  /* Status / Semantic Colors */
+  --color-status-success: #10b981;
+  --color-status-success-bg: #d1fae5;
+  --color-status-warning: #f59e0b;
+  --color-status-warning-bg: #fef3c7;
+  --color-status-error: #ef4444;
+  --color-status-error-bg: #fee2e2;
+  --color-status-info: #3b82f6;
+  --color-status-info-bg: #dbeafe;
+
+  /* Border Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-soft: 0 2px 8px -1px rgba(15, 23, 42, 0.04), 0 1px 3px -1px rgba(15, 23, 42, 0.02);
+  --shadow-medium: 0 6px 16px -4px rgba(15, 23, 42, 0.06), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
+  --shadow-strong: 0 12px 24px -6px rgba(15, 23, 42, 0.08), 0 4px 10px -3px rgba(15, 23, 42, 0.04);
+  --shadow-glow: 0 0 15px rgba(211, 32, 39, 0.1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-surface-main text-text-primary antialiased font-sans;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary { @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500 shadow-md hover:shadow-lg transform hover:-translate-y-0.5; }
+  .btn-secondary { @apply bg-surface-main text-red-600 border border-border-subtle hover:bg-white hover:border-red-500/30 focus:ring-red-500 shadow-sm; }
+  .input-field { @apply w-full bg-surface-main border border-border-subtle focus:border-taiz-sky focus:bg-white focus:outline-none focus:ring-4 focus:ring-taiz-sky/10 rounded-xl px-4 py-3 text-sm font-bold transition-all placeholder:text-text-muted; }
+  .card { @apply bg-surface-card rounded-2xl border border-border-light shadow-soft; }
+  .card-hover { @apply hover:shadow-medium hover:border-taiz-sky/20 hover:-translate-y-0.5 transition-all duration-300; }
+  
+  .glass-panel {
+    @apply bg-white/95 backdrop-blur-lg border border-border-light shadow-soft;
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  .shimmer-sweep {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shimmer-sweep::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      to bottom right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0) 60%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(45deg);
+    animation: shimmer-anim 4s infinite linear;
+    pointer-events: none;
+  }
+}
+
+@keyframes shimmer-anim {
+  0% { transform: translateX(-150%) rotate(45deg); }
+  100% { transform: translateX(150%) rotate(45deg); }
+}
+
+@utility hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility bg-taiz-gradient {
+  background-image: linear-gradient(to right, #07152B, #10264A, #1E4275);
+}
+
+/* Quran Reading Focus Mode Layout Styles */
+body.quran-reading-focus nav,
+body.quran-reading-focus div.relative.z-30,
+body.quran-reading-focus header {
+  display: none !important;
+}
+
+body.quran-reading-focus main {
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+  max-height: 100vh !important;
+  overflow: hidden !important;
+}
+
+:root {
+  color-scheme: light;
+}

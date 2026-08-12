@@ -1,0 +1,133 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+          validate-wrappers: false
+
+      - name: Debug Gradle wrapper
+        run: |
+          echo "Listing android/gradle/wrapper..."
+          ls -la android/gradle/wrapper || true
+          if [ -f android/gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "gradle-wrapper.jar size and info:"
+            stat --format='%s %n' android/gradle/wrapper/gradle-wrapper.jar || true
+          else
+            echo "gradle-wrapper.jar not found"
+          fi
+
+      - name: Regenerate Gradle wrapper (if missing or corrupt)
+        working-directory: ./android
+        run: |
+          set -e
+          echo "Trying to regenerate gradle wrapper using system gradle or existing gradlew..."
+          if command -v gradle >/dev/null 2>&1; then
+            echo "Using system gradle to regenerate wrapper..."
+            gradle wrapper --gradle-version 8.10.2 || true
+          else
+            echo "system gradle not found, trying existing ./gradlew..."
+            if [ -f ./gradlew ]; then
+              chmod +x ./gradlew || true
+              ./gradlew wrapper --gradle-version 8.10.2 || true
+            else
+              echo "No system gradle and no ./gradlew present — cannot regenerate wrapper here"
+            fi
+          fi
+          chmod +x ./gradlew || true
+          echo "Done regeneration step (if possible)."
+
+      - name: Cache Android debug.keystore
+        uses: actions/cache@v4
+        with:
+          path: ~/.config/.android/debug.keystore
+          key: android-debug-keystore
+
+      - name: Install dependencies
+        run: |
+          npm install --legacy-peer-deps
+          # Robustly fix deprecated syntax in capacitor-google-auth to prevent build failures
+          node -e '
+            const fs = require("fs");
+            const file = "node_modules/@southdevs/capacitor-google-auth/android/build.gradle";
+            if (fs.existsSync(file)) {
+              let content = fs.readFileSync(file, "utf8");
+              content = content.replace(/jcenter\(\)/g, "mavenCentral()");
+              content = content.replace(/namespace\s+"/, "namespace = \"");
+              content = content.replace(/compileSdk\s+project/, "compileSdk = project");
+              content = content.replace(/abortOnError\s+false/, "abortOnError = false");
+              fs.writeFileSync(file, content, "utf8");
+              console.log("Successfully patched capacitor-google-auth build.gradle");
+            } else {
+              console.log("capacitor-google-auth build.gradle not found to patch");
+            }
+          '
+
+      - name: Build Web App
+        run: npm run build
+
+      - name: Sync Capacitor
+        run: npx cap sync android
+
+      - name: Build APK
+        working-directory: ./android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew clean
+          echo "Starting assembleDebug and capturing log..."
+          ./gradlew assembleDebug --no-daemon --stacktrace > gradle_build.log 2>&1 || {
+            echo "=========================================================================="
+            echo "❌ GRADLE BUILD FAILED! Printing the last 250 lines of gradle_build.log below:"
+            echo "=========================================================================="
+            tail -n 250 gradle_build.log
+            echo "=========================================================================="
+            exit 1
+          }
+          echo "Gradle build succeeded! Printing the full build log:"
+          cat gradle_build.log
+
+      - name: Print SHA-1 fingerprint
+        working-directory: ./android
+        run: ./gradlew signingReport
+
+      - name: Upload Gradle problems report (if present)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-problems-report
+          path: android/build/reports/problems/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: TA_Platform_APK
+          path: android/app/build/outputs/apk/debug/*.apk

@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">المنصة الإعلامية</string>
+    <string name="title_activity_main">المنصة الإعلامية</string>
+    <string name="package_name">com.taiz.platform</string>
+    <string name="custom_url_scheme">com.taiz.platform</string>
+    <string name="server_client_id">565624301516-17egbf55cbcp1vsdhd3mh024n2m5bqtp.apps.googleusercontent.com</string>
+</resources>
