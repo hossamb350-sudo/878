@@ -26,7 +26,8 @@ import {
   Pause,
   Volume2,
   VolumeX,
-  Info
+  Info,
+  Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
@@ -213,6 +214,7 @@ export function Watch() {
   const {
     activeStream,
     isPlaying: isGlobalPlaying,
+    isLoading: isGlobalLoading,
     isMuted: isGlobalMuted,
     volume: globalVolume,
     isPlayingInHero,
@@ -347,10 +349,6 @@ export function Watch() {
           if (trimmed) cats.add(trimmed);
         });
       }
-    });
-    // Add categories from fallback items
-    [...fallbackMostViewed, ...fallbackLatest].forEach(v => {
-      if (v.category) cats.add(v.category.trim());
     });
     return ["الكل", "الأحدث", ...Array.from(cats)];
   }, [rawVideos]);
@@ -591,14 +589,25 @@ export function Watch() {
                     
                     {/* Status Badge */}
                     <div className="text-right flex items-center gap-2">
-                      {activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? (
-                        <div className="flex items-center gap-2 text-emerald-400 font-black text-xs font-cairo">
-                          <span className="relative flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      {activeStream?.id === activeRadioStation?.id ? (
+                        isGlobalLoading ? (
+                          <div className="flex items-center gap-2 text-amber-400 font-black text-xs font-cairo">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>جاري التحميل... أو الاتصال ضعيف</span>
+                          </div>
+                        ) : isGlobalPlaying ? (
+                          <div className="flex items-center gap-2 text-emerald-400 font-black text-xs font-cairo">
+                            <span className="relative flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                            </span>
+                            <span>جاري البث الصوتي المباشر الآن</span>
+                          </div>
+                        ) : (
+                          <span className="text-amber-400/90 text-xs font-bold font-cairo">
+                            اضغط للاستماع للبث الإذاعي المباشر
                           </span>
-                          <span>جاري البث الصوتي المباشر الآن</span>
-                        </div>
+                        )
                       ) : (
                         <span className="text-amber-400/90 text-xs font-bold font-cairo">
                           اضغط للاستماع للبث الإذاعي المباشر
@@ -641,8 +650,11 @@ export function Watch() {
                         }}
                         className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 flex items-center justify-center transition-all shadow-lg active:scale-95 shrink-0"
                         title={activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? "إيقاف مؤقت" : "تشغيل الإذاعة"}
+                        disabled={activeStream?.id === activeRadioStation?.id && isGlobalLoading}
                       >
-                        {activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? (
+                        {activeStream?.id === activeRadioStation?.id && isGlobalLoading ? (
+                          <Loader2 className="w-6 h-6 animate-spin text-slate-800" />
+                        ) : activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? (
                           <Pause className="w-6 h-6 fill-current" />
                         ) : (
                           <Play className="w-6 h-6 fill-current ml-0.5" />

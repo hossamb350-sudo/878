@@ -55,6 +55,16 @@ service cloud.firestore {
     // Collections
     // ---------------------------------------------------------
 
+    match /featured_topics/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
+    match /categories/{id} {
+      allow read: if true;
+      allow write: if isManager();
+    }
+
     match /users/{userId} {
       allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
       allow create: if isSignedIn() && request.auth.uid == userId && isValidUser(request.resource.data);

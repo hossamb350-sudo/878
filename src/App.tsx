@@ -33,6 +33,7 @@ import { db } from "./firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { CURRENT_APP_VERSION, isVersionOutdated } from "./config/version";
 import { AppVersionConfig } from "./types";
+import { CategoryService } from "./services/CategoryService";
 import { AlertTriangle, Download } from "lucide-react";
 
 function AnimatedRoutes() {
@@ -90,6 +91,21 @@ export default function App() {
       }
     );
     return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const purgeOld = async () => {
+      const purged = localStorage.getItem("categories_purged_v2");
+      if (!purged) {
+        try {
+          await CategoryService.purgeAllOldCategoriesAndUnlinkContent();
+          localStorage.setItem("categories_purged_v2", "true");
+        } catch (e) {
+          console.warn("Auto purge failed:", e);
+        }
+      }
+    };
+    purgeOld();
   }, []);
 
   useEffect(() => {

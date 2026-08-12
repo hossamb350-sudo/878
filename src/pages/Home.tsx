@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
+import { CategoryService } from "../services/CategoryService";
 import { NewsItem, VideoItem, LeaderContent, Article } from "../types";
 import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
@@ -10,6 +11,7 @@ import { ar } from "date-fns/locale";
 import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen, Star } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../components/PullToRefresh";
+import { FeaturedTopicsSlider } from "../components/FeaturedTopicsSlider";
 
 function getRelativeArabicTime(timestamp: number): string {
   const diffMs = Date.now() - timestamp;
@@ -292,14 +294,19 @@ export function Home() {
     }
   }, [activeSubTab, navigate]);
   const prevVideoIdsRef = useRef<string[]>([]);
-  const [categories, setCategories] = useState<Record<string, string>>({
-    "محلية": "#34619B",
-    "تعبئة عامة": "#07152B",
-    "اجتماعية": "#10264A",
-    "أنشطة وزيارات": "#7C3AED",
-    "مشاريع": "#10B981",
-    "مقال": "#F59E0B"
-  });
+  const [categories, setCategories] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const unsubCats = CategoryService.subscribeCategories((list) => {
+      const catMap: Record<string, string> = {};
+      list.forEach(c => {
+        catMap[c.name] = c.color || "#3B82F6";
+      });
+      setCategories(catMap);
+      localStorage.setItem("news_categories_color_cache", JSON.stringify(catMap));
+    });
+    return () => unsubCats();
+  }, []);
 
   // Derived combined news items (regular news + leader lectures/lessons)
   const news = useMemo(() => {
@@ -351,33 +358,7 @@ export function Home() {
     return combined.slice(0, 5);
   }, [rawVideos, rawLeader]);
 
-  useEffect(() => {
-    const fetchCats = async () => {
-      const cached = localStorage.getItem("news_categories_color_cache");
-      if (cached) {
-        try {
-          setCategories(JSON.parse(cached));
-        } catch {}
-      }
-      try {
-        const catDoc = await getDoc(doc(db, "newsMetadata", "categories"));
-        if (catDoc.exists()) {
-          const data = catDoc.data();
-          const catMap: Record<string, string> = { ...categories };
-          if (data.items) {
-            data.items.forEach((item: any) => {
-              if (item.name && item.color) catMap[item.name] = item.color;
-            });
-          }
-          setCategories(catMap);
-          localStorage.setItem("news_categories_color_cache", JSON.stringify(catMap));
-        }
-      } catch (e) {
-        console.warn("Error fetching category colors (using cache fallback):", e);
-      }
-    };
-    fetchCats();
-  }, []);
+
 
   useEffect(() => {
     // Load from cache first
@@ -631,6 +612,9 @@ export function Home() {
             <div className="border-b border-slate-200/80 pb-0 mb-3.5 px-0">
                <NewsSlider sliderList={sliderItems} />
             </div>
+
+            {/* FEATURED TOPICS SLIDER */}
+            <FeaturedTopicsSlider />
 
             {/* LATEST VIDEOS SECTION */}
             {videos.length > 0 && (

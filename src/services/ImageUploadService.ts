@@ -28,7 +28,48 @@ export class ImageUploadService {
       : "";
 
     const fileToBase64 = async (f: File | Blob, retries = 2): Promise<string> => {
-      const readWithFileReader = (file: File | Blob): Promise<string> => {
+      const readWithFileReader = async (file: File | Blob): Promise<string> => {
+        // Attempt 1: Direct arrayBuffer (fastest & most reliable for modern JS runtimes)
+        try {
+          if (typeof file.arrayBuffer === "function") {
+            const buffer = await file.arrayBuffer();
+            const bytes = new Uint8Array(buffer);
+            let binary = "";
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i += 8192) {
+              binary += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192) as any);
+            }
+            const base64 = btoa(binary);
+            const mimeType = file.type || "image/jpeg";
+            return `data:${mimeType};base64,${base64}`;
+          }
+        } catch (arrayBufferErr) {
+          console.warn("[ImageUploadService] arrayBuffer conversion failed, trying FileReader:", arrayBufferErr);
+        }
+
+        // Attempt 2: Object URL Fetch fallback for stale file descriptors
+        try {
+          if (typeof URL !== "undefined" && typeof URL.createObjectURL === "function") {
+            const objectUrl = URL.createObjectURL(file);
+            const response = await fetch(objectUrl);
+            const freshBlob = await response.blob();
+            URL.revokeObjectURL(objectUrl);
+
+            return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                if (typeof reader.result === "string") resolve(reader.result);
+                else reject(new Error("محتوى الملف غير صالح"));
+              };
+              reader.onerror = () => reject(reader.error || new Error("NotReadableError"));
+              reader.readAsDataURL(freshBlob);
+            });
+          }
+        } catch (fetchErr) {
+          console.warn("[ImageUploadService] ObjectURL fetch failed, trying direct FileReader:", fetchErr);
+        }
+
+        // Attempt 3: Standard FileReader
         return new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload = () => {
@@ -42,7 +83,7 @@ export class ImageUploadService {
             const domErr = reader.error;
             const detailMsg = domErr 
               ? `${domErr.name}: ${domErr.message}` 
-              : "فشل في قراءة ملف الصورة (NotReadableError). يرجى محاولة اختيار الصورة مرة أخرى.";
+              : "فشل في قراءة ملف الصورة. يرجى إعادة اختيار ملف الصورة من جديد.";
             console.error("[ImageUploadService] FileReader error:", domErr);
             reject(new Error(detailMsg));
           };
@@ -50,7 +91,6 @@ export class ImageUploadService {
         });
       };
 
-      // Standard fallback with retry
       let lastErr: any;
       for (let i = 0; i < retries; i++) {
         try {

@@ -9,6 +9,7 @@ import {
   User as FirebaseUser,
 } from "firebase/auth";
 import { auth, db } from "../firebase";
+import { CategoryService } from "../services/CategoryService";
 import { Capacitor } from "@capacitor/core";
 
 const isProd = import.meta.env.PROD;
@@ -116,6 +117,7 @@ import { AdminArticles } from "../components/AdminArticles";
 import { AdminOnlineUsers } from "../components/AdminOnlineUsers";
 import { AdminRegisteredUsers } from "../components/AdminRegisteredUsers";
 import { AdminVersionLock } from "../components/AdminVersionLock";
+import { AdminFeaturedTopics } from "../components/AdminFeaturedTopics";
 import { OnlineUsersConfig, RegisteredUsersConfig } from "../services/OnlineUsersService";
 import { ContactUsSection } from "../components/ContactUsSection";
 
@@ -429,6 +431,12 @@ export function Admin() {
       icon: AlertTriangle,
       label: "الأخبار العاجلة",
       access: isAdmin || isManager || (isEditor && hasPermission("urgent")),
+    },
+    {
+      id: "featuredTopics",
+      icon: Zap,
+      label: "أبرز المواضيع",
+      access: isAdmin || isManager,
     },
     {
       id: "videos",
@@ -818,6 +826,7 @@ export function Admin() {
                 )}
                 {activeTab === "categories" && <AdminCategoryManager />}
                 {activeTab === "urgent" && <AdminUrgentNews />}
+                {activeTab === "featuredTopics" && <AdminFeaturedTopics />}
                 {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
                 {activeTab === "live" && <AdminLive />}
                 {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
@@ -2231,7 +2240,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
   const [author, setAuthor] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [additionalImagesText, setAdditionalImagesText] = useState("");
-  const [cat, setCat] = useState("محلية");
+  const [cat, setCat] = useState("");
   const [customCat, setCustomCat] = useState("");
   const [isBreaking, setIsBreaking] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
@@ -2300,7 +2309,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
           setContent(draft.content || "");
           setImageUrl(draft.imageUrl || "");
           setAdditionalImagesText(draft.additionalImagesText || "");
-          setCat(draft.cat || "محلية");
+          setCat(draft.cat || "");
           setCustomCat(draft.customCat || "");
           setIsPinned(!!draft.isPinned);
           setIsBreaking(!!draft.isBreaking);
@@ -2324,14 +2333,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
   const [loadingList, setLoadingList] = useState(false);
 
   // Categories and Authors persistence
-  const [savedCats, setSavedCats] = useState<string[]>([
-    "محلية",
-    "تعبئة عامة",
-    "اجتماعية",
-    "أنشطة وزيارات",
-    "مشاريع",
-    "مقال",
-  ]);
+  const [savedCats, setSavedCats] = useState<string[]>([]);
   const [savedAuthors, setSavedAuthors] = useState<string[]>([]);
 
   const fetchMetadata = async () => {
@@ -2352,22 +2354,18 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
     try {
       const catDoc = await getDoc(doc(db, "newsMetadata", "categories"));
       if (catDoc.exists()) {
-        const list = catDoc.data().list || [];
-        const combined = Array.from(
-          new Set([
-            ...[
-              "محلية",
-              "تعبئة عامة",
-              "اجتماعية",
-              "أنشطة وزيارات",
-              "مشاريع",
-              "مقال",
-            ],
-            ...list,
-          ])
-        );
-        setSavedCats(combined);
-        localStorage.setItem("admin_saved_cats", JSON.stringify(combined));
+        const data = catDoc.data();
+        let list: string[] = [];
+        if (data.items) {
+          list = data.items.map((i: any) => typeof i === "string" ? i : i.name);
+        } else if (data.list) {
+          list = data.list;
+        }
+        setSavedCats(list);
+        localStorage.setItem("admin_saved_cats", JSON.stringify(list));
+      } else {
+        setSavedCats([]);
+        localStorage.removeItem("admin_saved_cats");
       }
 
       const authDoc = await getDoc(doc(db, "newsMetadata", "authors"));
@@ -2474,7 +2472,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
     setAuthor("");
     setImageUrl("");
     setAdditionalImagesText("");
-    setCat("محلية");
+    setCat("");
     setCustomCat("");
     setIsBreaking(false);
     setIsPinned(false);
@@ -2502,7 +2500,7 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
     }
 
     if (savedCats.includes(item.category || "")) {
-      setCat(item.category || "محلية");
+      setCat(item.category || "");
       setCustomCat("");
     } else {
       setCat("custom");
@@ -3166,29 +3164,13 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const [categoriesList, setCategoriesList] = useState<string[]>([
-    "تقارير ميدانية",
-    "زوامل وأناشيد",
-    "محاضرات ودروس",
-    "أفلام وثائقية",
-  ]);
+  const [categoriesList, setCategoriesList] = useState<{name: string, color: string}[]>([]);
 
   useEffect(() => {
-    let active = true;
-    const loadCategories = async () => {
-      try {
-        const list = await GitHubClient.fetchContent<string>("video_categories");
-        if (active && list && list.length > 0) {
-          setCategoriesList(list);
-        }
-      } catch (err) {
-        console.warn("Failed to load categories from GitHub:", err);
-      }
-    };
-    loadCategories();
-    return () => {
-      active = false;
-    };
+    const unsub = CategoryService.subscribeCategories((list) => {
+      setCategoriesList(list.map(c => ({ name: c.name, color: c.color })));
+    });
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -3237,15 +3219,12 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
     const parsedOrder = order.trim() ? Number(order) : 9999;
     const trimmedCategory = category.trim();
     try {
-      // Sync video categories with GitHub if it is a new category
-      if (trimmedCategory && !categoriesList.some(cat => cat.toLowerCase() === trimmedCategory.toLowerCase())) {
-        const updatedCategories = [...categoriesList, trimmedCategory];
-        setCategoriesList(updatedCategories);
+      // Save custom category to central system if new
+      if (trimmedCategory && !categoriesList.some(cat => cat.name.toLowerCase() === trimmedCategory.toLowerCase())) {
         try {
-          console.log("Saving new category to GitHub...", trimmedCategory);
-          await GitHubClient.saveContent("video_categories", updatedCategories);
-        } catch (githubErr) {
-          console.warn("Failed to save new category to GitHub:", githubErr);
+          await CategoryService.saveCategory({ name: trimmedCategory });
+        } catch (catErr) {
+          console.warn("Failed saving category to CategoryService:", catErr);
         }
       }
 
@@ -3422,11 +3401,11 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
               value=""
             >
               <option value="" disabled>
-                تصنيفات مقترحة
+                اختر من التصنيفات الموحدة
               </option>
               {categoriesList.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
+                <option key={cat.name} value={cat.name}>
+                  {cat.name}
                 </option>
               ))}
             </select>

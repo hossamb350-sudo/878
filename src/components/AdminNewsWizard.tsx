@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { SyncService } from "../services/SyncService";
+import { CategoryService } from "../services/CategoryService";
 import { AdminCategoryManager } from "./AdminCategoryManager";
 import { AdminAuthorManager } from "./AdminAuthorManager";
 import { ImageUpload } from "./ImageUpload";
@@ -118,30 +119,11 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
         } else if (data.list) {
           items = data.list.map((name: string) => ({ name, color: "#34619B" }));
         }
-        
-        const defaultCats: CategoryItem[] = [
-          { name: "محلية", color: "#34619B" },
-          { name: "تعبئة عامة", color: "#07152B" },
-          { name: "اجتماعية", color: "#10264A" },
-          { name: "أنشطة وزيارات", color: "#7C3AED" },
-          { name: "مشاريع", color: "#10B981" },
-          { name: "مقال", color: "#F59E0B" }
-        ];
-
-        let combined: CategoryItem[] = [];
-        
-        // Use Firestore items as the base (preserving their colors)
-        combined = [...items];
-        
-        // Add missing default categories
-        defaultCats.forEach(def => {
-          if (!combined.some(c => c.name === def.name)) {
-            combined.push(def);
-          }
-        });
-        
-        setSavedCats(combined);
-        localStorage.setItem("wizard_saved_cats", JSON.stringify(combined));
+        setSavedCats(items);
+        localStorage.setItem("wizard_saved_cats", JSON.stringify(items));
+      } else {
+        setSavedCats([]);
+        localStorage.removeItem("wizard_saved_cats");
       }
       
       const authDoc = await getDoc(doc(db, "newsMetadata", "authors"));
@@ -174,6 +156,12 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
 
   useEffect(() => {
     fetchMetadata();
+    const unsubCats = CategoryService.subscribeCategories((list) => {
+      const items: CategoryItem[] = list.map(c => ({ name: c.name, color: c.color || "#3B82F6" }));
+      setSavedCats(items);
+      localStorage.setItem("wizard_saved_cats", JSON.stringify(items));
+    });
+    return () => unsubCats();
   }, []);
 
   // formatting helper
@@ -255,8 +243,8 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     setAuthor("");
     setImageUrl("");
     setAdditionalImages([]);
-    setCat("محلية");
-    setSelectedCats(["محلية"]);
+    setCat("");
+    setSelectedCats([]);
     setCustomCat("");
     setIsBreaking(false);
     setIsPinned(false);
@@ -372,11 +360,12 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     
     try {
       // Save Metadata (Category)
-      if (cat === "custom" && customCat && !savedCats.some(c => c.name === customCat)) {
-        const newItem = { name: customCat, color: customCatColor };
-        const newList = [...savedCats, newItem];
-        await setDoc(doc(db, "newsMetadata", "categories"), { items: newList });
-        setSavedCats(newList);
+      if (cat === "custom" && customCat) {
+        try {
+          await CategoryService.saveCategory({ name: customCat, color: customCatColor });
+        } catch (e) {
+          console.warn("Error saving custom category to CategoryService", e);
+        }
       }
 
       // Save Metadata (Author)

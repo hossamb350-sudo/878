@@ -8,6 +8,7 @@ import FormData from "form-data";
 import ImageKit from "imagekit";
 import os from "os";
 import cors from "cors";
+import https from "https";
 import webPush from "web-push";
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps, App } from "firebase-admin/app";
@@ -519,6 +520,7 @@ app.get("/api/proxy/stream", async (req, res) => {
       method: "get",
       url: targetUrl,
       responseType: "stream",
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Bypass SSL issues for some Android browsers
       headers: {
         // Pass a generic user agent as some radio servers reject empty user agents
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
@@ -527,13 +529,13 @@ app.get("/api/proxy/stream", async (req, res) => {
 
     // Copy relevant headers
     if (response.headers["content-type"]) {
-      res.setHeader("Content-Type", response.headers["content-type"]);
+      res.setHeader("Content-Type", String(response.headers["content-type"]));
     }
     if (response.headers["icy-metaint"]) {
-      res.setHeader("icy-metaint", response.headers["icy-metaint"]);
+      res.setHeader("icy-metaint", String(response.headers["icy-metaint"]));
     }
     if (response.headers["icy-name"]) {
-      res.setHeader("icy-name", response.headers["icy-name"]);
+      res.setHeader("icy-name", String(response.headers["icy-name"]));
     }
 
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");

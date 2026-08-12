@@ -258,6 +258,26 @@ export interface Author {
   createdAt: number;
 }
 
+export interface FeaturedTopic {
+  id: string;
+  title: string;
+  imageUrl: string;
+  categories: string[];
+  isVisible: boolean;
+  order: number;
+  createdAt: number;
+  updatedAt?: number;
+}
+export interface Category {
+  id: string;
+  name: string;
+  color: string;
+  description?: string;
+  order?: number;
+  createdAt?: number;
+  updatedAt?: number;
+}
+
 export interface AppVersionConfig {
   minRequiredVersion: string;
   updateUrl: string;

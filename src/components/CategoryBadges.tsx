@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { NewsItem } from "../types";
-import { db } from "../firebase";
-import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { CategoryService } from "../services/CategoryService";
 
 interface CategoryBadgesProps {
   item: NewsItem;
@@ -14,21 +13,12 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = f
   const [categories, setCategories] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    const unsub = onSnapshot(doc(db, "newsMetadata", "categories"), (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        const catMap: Record<string, string> = {};
-        (data.items || data.list || []).forEach((c: any) => {
-          if (typeof c === 'string') {
-            catMap[c] = "#34619B";
-          } else if (c.name) {
-            catMap[c.name] = c.color || "#34619B";
-          }
-        });
-        setCategories(catMap);
-      }
-    }, (e) => {
-      console.warn("Error fetching categories for badges", e);
+    const unsub = CategoryService.subscribeCategories((list) => {
+      const catMap: Record<string, string> = {};
+      list.forEach(c => {
+        catMap[c.name] = c.color || "#3B82F6";
+      });
+      setCategories(catMap);
     });
 
     return () => unsub();

@@ -13,7 +13,8 @@ import {
   setDoc,
   getDoc
 } from "firebase/firestore";
-import { Article, Author } from "../types";
+import { Article, Author, Category } from "../types";
+import { CategoryService } from "../services/CategoryService";
 import { ImageUpload } from "./ImageUpload";
 import { 
   Calendar, 
@@ -39,6 +40,7 @@ import { motion, AnimatePresence } from "motion/react";
 export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [mode, setMode] = useState<"list" | "add" | "edit" | "authors">("list");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -70,9 +72,14 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
       setAuthors(snap.docs.map(d => ({ id: d.id, ...d.data() } as Author)));
     });
 
+    const unsubCats = CategoryService.subscribeCategories((list) => {
+      setCategories(list);
+    });
+
     return () => {
       unsubArticles();
       unsubAuthors();
+      unsubCats();
     };
   }, []);
 
@@ -301,13 +308,19 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-widest">التصنيف</label>
-                      <input 
+                      <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-widest">التصنيف الموحد</label>
+                      <select 
                         value={category}
                         onChange={e => setCategory(e.target.value)}
-                        className="w-full bg-gray-50 dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 font-bold outline-none focus:ring-2 focus:ring-amber-500/20"
-                        placeholder="مثلاً: سياسي، ثقافي..."
-                      />
+                        className="w-full bg-gray-50 dark:bg-gray-900 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 font-bold outline-none focus:ring-2 focus:ring-amber-500/20 dark:text-white"
+                      >
+                        <option value="">اختر التصنيف</option>
+                        {categories.map(c => (
+                          <option key={c.id} value={c.name}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-xs font-black text-gray-400 mb-2 uppercase tracking-widest">الكاتب</label>

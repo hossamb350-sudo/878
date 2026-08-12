@@ -244,9 +244,27 @@
         "updatedBy": { "type": "string" }
       },
       "required": ["minRequiredVersion", "updateUrl", "lockMessage", "isEnabled", "updatedAt"]
+    },
+    "FeaturedTopic": {
+      "title": "Featured Topic",
+      "description": "Featured topics grouping categories",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "categories": { "type": "array" },
+        "isVisible": { "type": "boolean" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["title", "imageUrl", "categories", "isVisible", "order", "createdAt"]
     }
   },
   "firestore": {
+    "/featured_topics/{topicId}": {
+      "schema": { "$ref": "FeaturedTopic" },
+      "description": "Featured topics shown on home page"
+    },
     "/users/{userId}": {
       "schema": { "$ref": "User" },
       "description": "User profiles and roles"

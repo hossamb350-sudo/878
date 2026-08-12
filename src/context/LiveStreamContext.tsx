@@ -4,6 +4,7 @@ import { LiveStream } from "../types";
 interface LiveStreamContextType {
   activeStream: LiveStream | null;
   isPlaying: boolean;
+  isLoading: boolean;
   isMuted: boolean;
   volume: number;
   isPlayingInHero: boolean;
@@ -23,6 +24,7 @@ const LiveStreamContext = createContext<LiveStreamContextType | undefined>(undef
 export function LiveStreamProvider({ children }: { children: React.ReactNode }) {
   const [activeStream, setActiveStream] = useState<LiveStream | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [volume, setVolumeState] = useState(1);
   const [isPlayingInHero, setIsPlayingInHero] = useState(false);
@@ -90,8 +92,8 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       if (activeStream.type === "radio") {
         let src = activeStream.streamUrl || activeStream.url;
         
-        // Proxy HTTP streams to avoid mixed content blocking on HTTPS domains
-        if (src && src.startsWith("http://")) {
+        // Proxy ALL radio streams to avoid mixed content blocking and bypass CORS/SSL on Android browsers
+        if (src && !src.startsWith('/api/proxy')) {
           src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
         }
 
@@ -118,6 +120,7 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       value={{
         activeStream,
         isPlaying,
+        isLoading,
         isMuted,
         volume,
         isPlayingInHero,
@@ -139,6 +142,11 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
         className="hidden" 
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        onWaiting={() => setIsLoading(true)}
+        onPlaying={() => setIsLoading(false)}
+        onStalled={() => setIsLoading(true)}
+        onCanPlay={() => setIsLoading(false)}
+        onError={() => setIsLoading(false)}
       />
     </LiveStreamContext.Provider>
   );
