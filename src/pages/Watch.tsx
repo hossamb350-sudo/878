@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { SyncService } from "../services/SyncService";
 import { VideoItem, LiveStream } from "../types";
+import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { 
@@ -399,24 +400,24 @@ export function Watch() {
   return (
     <PullToRefresh onRefresh={handleRefresh}>
       <div className="min-h-screen bg-white font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
-        <div className="max-w-[760px] mx-auto space-y-6">
+        <div className="max-w-[760px] mx-auto space-y-3.5">
 
           {/* 1. HERO SECTION: DEDICATED TV AND RADIO VIEWERS */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-3 pt-1"
+            className="space-y-2 pt-0.5"
           >
             {channelTab === "tv" ? (
               /* ================= TV VIEWER ================= */
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <span className="relative flex h-3 w-3">
+                    <span className="relative flex h-2 sm:h-2.5 w-2 sm:w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                      <span className="relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5 bg-red-600"></span>
                     </span>
-                    <h2 className="text-base font-black text-slate-900 dark:text-white font-cairo">البث التلفزيوني</h2>
+                    <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-900 dark:text-white font-cairo leading-tight">البث التلفزيوني</h2>
                   </div>
                 </div>
 
@@ -518,14 +519,14 @@ export function Watch() {
               </div>
             ) : (
               /* ================= RADIO VIEWER ================= */
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
-                    <span className="relative flex h-3 w-3">
+                    <span className="relative flex h-2 sm:h-2.5 w-2 sm:w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                      <span className="relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5 bg-amber-500"></span>
                     </span>
-                    <h2 className="text-base font-black text-slate-900 dark:text-white font-cairo">البث الإذاعي</h2>
+                    <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-900 dark:text-white font-cairo leading-tight">البث الإذاعي</h2>
                   </div>
                 </div>
 
@@ -682,19 +683,21 @@ export function Watch() {
           </motion.div>
 
           {/* 2. CHANNELS / RADIOS SECTION */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                {channelTab === "tv" ? (
-                  <Tv className="w-4 h-4 text-slate-800 dark:text-slate-200 stroke-[2.5]" />
-                ) : (
-                  <Radio className="w-4 h-4 text-amber-500 stroke-[2.5]" />
-                )}
-                <h2 className="text-sm font-black text-slate-900 dark:text-white font-cairo">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+                  {channelTab === "tv" ? (
+                    <Tv className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  ) : (
+                    <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  )}
+                </div>
+                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
                   {channelTab === "tv" ? "القنوات الفضائية المتاحة" : "الإذاعات الصوتية المتاحة"}
                 </h2>
               </div>
-              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 font-cairo">
                 {displayChannels.length} {channelTab === "tv" ? "قنوات" : "إذاعات"}
               </span>
             </div>
@@ -795,61 +798,61 @@ export function Watch() {
           </div>
 
           {/* SECTION TITLE SEPARATOR: "المحتوى المرئي" */}
-          <div className="relative flex items-center justify-center pt-3 pb-1 my-2">
+          <div className="relative flex items-center justify-center pt-1 pb-0.5 my-1">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200/80" />
+              <div className="w-full border-t border-slate-200/80 dark:border-slate-800" />
             </div>
-            <div className="relative bg-white px-4 flex items-center gap-2 text-xs font-bold text-slate-500 font-cairo">
+            <div className="relative bg-white dark:bg-slate-900 px-3 flex items-center gap-1.5 text-[11px] font-bold text-slate-500 font-cairo">
               <VideoIcon className="w-3.5 h-3.5 text-taiz-sky" />
               <span>المحتوى المرئي</span>
             </div>
           </div>
 
           {/* 4. FLOATING SEARCH FIELD & FILTER BUTTON ROW */}
-          <div className="flex items-center gap-2.5 w-full pt-1">
+          <div className="flex items-center gap-2 w-full pt-0.5">
             {/* Filter Circle Button (Far Left in RTL) */}
             <button
               onClick={() => setIsFilterModalOpen(true)}
-              className="w-12 h-12 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-md hover:bg-taiz-sky dark:hover:bg-taiz-sky transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-taiz-sky dark:hover:bg-taiz-sky transition-colors cursor-pointer"
               title="تصفية الفيديوهات"
             >
-              <SlidersHorizontal className="w-5 h-5 stroke-[2.5]" />
+              <SlidersHorizontal className="w-4 h-4 stroke-[2.5]" />
             </button>
 
             {/* Search Input Bar (Floating White Capsule) */}
-            <div className="relative flex-1 h-12 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center px-4">
+            <div className="relative flex-1 h-10 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center px-3.5">
               <input 
                 type="text"
                 placeholder="ابحث عن فيديو..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-transparent border-0 focus:outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400 text-xs sm:text-sm font-medium pr-1 pl-8"
+                className="w-full bg-transparent border-0 focus:outline-none text-slate-800 dark:text-slate-100 placeholder-slate-400 text-xs font-medium pr-1 pl-8"
               />
               {searchQuery ? (
                 <button 
                   onClick={() => setSearchQuery("")}
-                  className="absolute left-4 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                  className="absolute left-3.5 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                 </button>
               ) : (
-                <Search className="absolute left-4 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3.5 w-3.5 h-3.5 text-slate-400" />
               )}
             </div>
           </div>
 
           {/* 5. MOST WATCHED SECTION (الأكثر مشاهدة) */}
-          <div className="space-y-3 pt-2">
+          <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-taiz-sky/10 dark:bg-taiz-sky/20 flex items-center justify-center">
-                  <Flame className="w-4.5 h-4.5 text-taiz-sky fill-current" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+                  <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-current" />
                 </div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-cairo">الأكثر مشاهدة</h2>
+                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">الأكثر مشاهدة</h2>
               </div>
               <button 
                 onClick={() => setShowAllMostViewed(!showAllMostViewed)}
-                className="text-[11px] font-black text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-3 py-1.5 rounded-full border border-taiz-sky/10 transition-all hover:scale-105"
+                className="text-[10px] sm:text-[11px] font-bold text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-2.5 py-1 rounded-full border border-taiz-sky/10 transition-all hover:scale-105"
               >
                 <span>{showAllMostViewed ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -878,9 +881,7 @@ export function Watch() {
                     {/* Category Pill Tag */}
                     {vid.category && (
                       <div className="absolute top-2 right-2 z-10">
-                        <span className="bg-gradient-to-r from-taiz-sky to-taiz-royal text-white text-[7px] sm:text-[7.5px] font-black px-1.5 py-[2px] rounded-[4px] shadow-sm tracking-wide">
-                          {vid.category}
-                        </span>
+                        <CategoryBadges category={vid.category} isSecondary={true} className="drop-shadow-sm" />
                       </div>
                     )}
 
@@ -929,17 +930,17 @@ export function Watch() {
           </div>
 
           {/* 6. LATEST VIDEOS SECTION (أحدث الفيديوهات) */}
-          <div className="space-y-3 pt-2">
+          <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-taiz-sky/10 dark:bg-taiz-sky/20 flex items-center justify-center">
-                  <Clock className="w-4.5 h-4.5 text-taiz-sky stroke-[2.5]" />
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[2.5]" />
                 </div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-white font-cairo">أحدث الفيديوهات</h2>
+                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أحدث الفيديوهات</h2>
               </div>
               <button 
                 onClick={() => setShowAllLatest(!showAllLatest)}
-                className="text-[11px] font-black text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-3 py-1.5 rounded-full border border-taiz-sky/10 transition-all hover:scale-105"
+                className="text-[10px] sm:text-[11px] font-bold text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-2.5 py-1 rounded-full border border-taiz-sky/10 transition-all hover:scale-105"
               >
                 <span>{showAllLatest ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -968,9 +969,7 @@ export function Watch() {
                     {/* Category Pill Tag */}
                     {vid.category && (
                       <div className="absolute top-2 right-2 z-10">
-                        <span className="bg-gradient-to-r from-taiz-sky to-taiz-royal text-white text-[7px] sm:text-[7.5px] font-black px-1.5 py-[2px] rounded-[4px] shadow-sm tracking-wide">
-                          {vid.category}
-                        </span>
+                        <CategoryBadges category={vid.category} isSecondary={true} className="drop-shadow-sm" />
                       </div>
                     )}
 

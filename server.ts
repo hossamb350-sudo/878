@@ -52,12 +52,13 @@ function getDb() {
 }
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
-// Configure web-push details
-const DEFAULT_VAPID_PUBLIC_KEY = process.env.VITE_VAPID_PUBLIC_KEY || "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
-const DEFAULT_VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || "btEWHmdPbPg_jgywYnb6z4NujfcN5TeJQDY8JbDTAOQ";
+// Safe CJS/ESM interop helpers
+const webPushClient: typeof webPush = (webPush as any).default || webPush;
+const ImageKitConstructor: typeof ImageKit = (ImageKit as any).default || ImageKit;
 
+// Configure web-push details safely
 function isValidVapidKey(publicKey: string): boolean {
   if (!publicKey || typeof publicKey !== "string") return false;
   try {
@@ -69,26 +70,23 @@ function isValidVapidKey(publicKey: string): boolean {
   }
 }
 
-function getVapidKeys() {
-  const envPub = process.env.VITE_VAPID_PUBLIC_KEY;
-  const envPriv = process.env.VAPID_PRIVATE_KEY;
-
-  if (envPub && envPriv && isValidVapidKey(envPub)) {
-    return { publicKey: envPub, privateKey: envPriv };
-  } else {
-    console.warn("Using fallback/default stable VAPID keypair since the environment configured keys are invalid or not 65 bytes when decoded.");
-    return { publicKey: DEFAULT_VAPID_PUBLIC_KEY, privateKey: DEFAULT_VAPID_PRIVATE_KEY };
-  }
-}
-
-const { publicKey: VAPID_PUBLIC_KEY, privateKey: VAPID_PRIVATE_KEY } = getVapidKeys();
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:hossamb350@gmail.com";
 
 try {
-  webPush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+  let pubKey = process.env.VITE_VAPID_PUBLIC_KEY;
+  let privKey = process.env.VAPID_PRIVATE_KEY;
+
+  if (!pubKey || !privKey || !isValidVapidKey(pubKey)) {
+    console.warn("Generating dynamic fallback VAPID keys since environment keys are missing or invalid.");
+    const generated = webPushClient.generateVAPIDKeys();
+    pubKey = generated.publicKey;
+    privKey = generated.privateKey;
+  }
+
+  webPushClient.setVapidDetails(VAPID_SUBJECT, pubKey, privKey);
   console.log("Web-Push VAPID details configured successfully.");
 } catch (e) {
-  console.error("Failed to set VAPID details:", e);
+  console.error("Failed to set VAPID details (Push notifications disabled):", e);
 }
 
 // Enable CORS for all origins dynamically
@@ -100,7 +98,7 @@ app.use(cors({
 }));
 
 // Initialize ImageKit
-const imagekit = new ImageKit({
+const imagekit = new ImageKitConstructor({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY || IMAGEKIT_CONFIG.publicKey,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY || IMAGEKIT_CONFIG.privateKey,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || IMAGEKIT_CONFIG.urlEndpoint,
@@ -960,7 +958,7 @@ app.post("/api/push/send", async (req, res) => {
   console.log(`Attempting to broadcast push notification to ${subs.length} local subscribers.`);
 
   const notificationsPromises = subs.map((sub: any) => {
-    return webPush.sendNotification(sub, payload)
+    return webPushClient.sendNotification(sub, payload)
       .catch((err) => {
         console.error(`Error sending push notification to endpoint ${sub.endpoint}:`, err);
         // If the endpoint is no longer active (404 or 410 Gone), remove it

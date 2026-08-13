@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { Sparkles, ChevronLeft, ChevronRight, Tag, ArrowUpRight, Flame } from "lucide-react";
+import { ChevronLeft, ChevronRight, Layers, ArrowUpLeft, MoveHorizontal } from "lucide-react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { FeaturedTopic } from "../types";
@@ -8,6 +8,8 @@ import { FeaturedTopic } from "../types";
 export function FeaturedTopicsSlider() {
   const [topics, setTopics] = useState<FeaturedTopic[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasScrolled, setHasScrolled] = useState(false);
+  const [showScrollHint, setShowScrollHint] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -18,7 +20,6 @@ export function FeaturedTopicsSlider() {
     
     const unsub = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as FeaturedTopic));
-      // Sort by order manually
       setTopics(data.sort((a, b) => (a.order || 0) - (b.order || 0)));
       setLoading(false);
     });
@@ -26,156 +27,122 @@ export function FeaturedTopicsSlider() {
     return unsub;
   }, []);
 
+  // Timer to automatically hide the scroll hint after 3 seconds on page load
+  useEffect(() => {
+    if (!loading && topics.length > 0) {
+      const timer = setTimeout(() => {
+        setShowScrollHint(false);
+      }, 3200);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, topics]);
+
   const scrollContainer = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
     const scrollAmount = 300;
-    // In RTL, left scroll increases/decreases differently based on browser implementation
     const multiplier = direction === 'left' ? -1 : 1;
     scrollRef.current.scrollBy({
       left: multiplier * scrollAmount,
       behavior: 'smooth'
     });
+    setHasScrolled(true);
   };
 
   if (loading || topics.length === 0) return null;
 
   return (
-    <div className="pb-2 mb-6 mx-2 sm:mx-3">
-      <div className="bg-white dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 shadow-soft rounded-[28px] p-4 sm:p-6 relative overflow-hidden backdrop-blur-md">
-        {/* Ambient Decorative Background Glows */}
-        <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-amber-500/10 via-taiz-sky/5 to-transparent rounded-full blur-3xl pointer-events-none -mt-20 -mr-20" />
-        <div className="absolute bottom-0 left-0 w-56 h-56 bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full blur-2xl pointer-events-none -mb-16 -ml-16" />
-
-        {/* Section Header */}
-        <div className="flex items-center justify-between mb-4 relative z-10" style={{ direction: "rtl" }}>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-taiz-sky flex items-center justify-center text-white shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/20">
-                <Sparkles className="w-5 h-5 text-white animate-pulse" />
-              </div>
-              <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
-              </span>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-black text-lg sm:text-xl text-slate-900 dark:text-white font-cairo tracking-tight">
-                  أبرز المواضيع
-                </h2>
-                <span className="inline-flex items-center gap-1 text-[11px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-cairo">
-                  <Flame className="w-3 h-3 text-amber-500" />
-                  تغطيات خاصة
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5 font-cairo">
-                تصفح أهم القضايا والمواضيع الساخنة والمتابعات الشاملة
-              </p>
-            </div>
-          </div>
-
-          {/* Nav Buttons (Desktop) */}
-          <div className="hidden sm:flex items-center gap-2">
-            <button
-              onClick={() => scrollContainer('right')}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-taiz-sky hover:text-white transition-colors border border-slate-200/60 dark:border-slate-700/60"
-              title="التمرير لليمين"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => scrollContainer('left')}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-taiz-sky hover:text-white transition-colors border border-slate-200/60 dark:border-slate-700/60"
-              title="التمرير لليسار"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-          </div>
+    <section className="py-1 relative" aria-label="أبرز المواضيع">
+      {/* Header aligned with News Section Identity */}
+      <div className="flex items-center gap-2 px-3 sm:px-4 mb-2.5 select-none" dir="rtl">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+          <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
         </div>
-
-        {/* Scrollable Topics Row */}
-        <div className="relative group/slider">
-          {/* Subtle Edge Fade Overlays */}
-          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-slate-900 to-transparent z-10 rounded-r-2xl" />
-          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-slate-900 to-transparent z-10 rounded-l-2xl" />
-
-          <div 
-            ref={scrollRef}
-            className="flex overflow-x-auto gap-4 sm:gap-5 px-1 py-2 snap-x snap-mandatory hide-scrollbar touch-pan-x"
-            style={{ scrollBehavior: 'smooth', direction: 'rtl' }}
+        <div className="flex flex-col">
+          <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أبرز المواضيع</h3>
+          <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">تغطيات شاملة لأبرز الأحداث.</p>
+        </div>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2"></div>
+        
+        {/* Navigation Controls */}
+        <div className="hidden sm:flex items-center gap-1.5 mr-2">
+          <button
+            onClick={() => scrollContainer('right')}
+            className="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-taiz-sky dark:hover:text-taiz-sky hover:border-taiz-sky/30 transition-all active:scale-95 shadow-xs"
+            aria-label="التمرير لليمين"
           >
-            {topics.map((topic) => (
-              <Link
-                key={topic.id}
-                to={`/topic/${topic.id}`}
-                className="group/card relative flex-none w-[190px] sm:w-[220px] md:w-[235px] h-[260px] sm:h-[285px] rounded-[24px] overflow-hidden snap-start transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl hover:shadow-amber-500/15 border border-slate-200/80 dark:border-slate-800 bg-slate-950 flex flex-col justify-between p-4 active:scale-98"
-              >
-                {/* Image & Gradient Overlays */}
-                <div className="absolute inset-0">
-                  <img 
-                    src={topic.imageUrl} 
-                    alt={topic.title}
-                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover/card:scale-110"
-                    loading="lazy"
-                  />
-                  {/* Multi-stage Gradient Overlay for Legibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-900/20 opacity-90 transition-opacity duration-300 group-hover/card:opacity-95" />
-                  <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent" />
-                </div>
-
-                {/* Top Badge Area */}
-                <div className="relative z-10 flex items-center justify-between gap-2">
-                  {topic.categories && topic.categories.length > 0 ? (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-[11px] font-black font-cairo shadow-sm truncate max-w-[80%]">
-                      <Tag className="w-3 h-3 text-amber-300 shrink-0" />
-                      <span className="truncate">{topic.categories[0]}</span>
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white text-[11px] font-black font-cairo shadow-sm">
-                      <Sparkles className="w-3 h-3 text-amber-300" />
-                      موضوع خاص
-                    </span>
-                  )}
-
-                  <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white/90 group-hover/card:bg-amber-500 group-hover/card:text-white group-hover/card:border-amber-400 transition-all shadow-md shrink-0">
-                    <ArrowUpRight className="w-4 h-4 rtl:rotate-90 group-hover/card:scale-110 transition-transform" />
-                  </div>
-                </div>
-
-                {/* Bottom Content Area */}
-                <div className="relative z-10 mt-auto pt-4">
-                  <h3 className="text-white font-black text-base sm:text-lg font-cairo leading-snug drop-shadow-md group-hover/card:text-amber-300 transition-colors line-clamp-2">
-                    {topic.title}
-                  </h3>
-
-                  {topic.categories && topic.categories.length > 1 && (
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {topic.categories.slice(1, 3).map((cat, idx) => (
-                        <span key={idx} className="text-[10px] font-bold text-slate-300 bg-white/10 px-2 py-0.5 rounded-md backdrop-blur-xs font-cairo">
-                          #{cat}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="mt-3 flex items-center justify-between text-[11px] font-bold text-amber-300/90 group-hover/card:text-amber-200 transition-colors font-cairo">
-                    <span className="flex items-center gap-1">
-                      <span>تصفح التغطية</span>
-                      <ChevronLeft className="w-3.5 h-3.5 group-hover/card:-translate-x-1 transition-transform" />
-                    </span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
-                  </div>
-
-                  {/* Bottom Accent Bar */}
-                  <div className="w-0 group-hover/card:w-full h-1 bg-gradient-to-r from-amber-400 via-orange-500 to-taiz-sky transition-all duration-500 rounded-full mt-2.5" />
-                </div>
-              </Link>
-            ))}
-          </div>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => scrollContainer('left')}
+            className="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-taiz-sky dark:hover:text-taiz-sky hover:border-taiz-sky/30 transition-all active:scale-95 shadow-xs"
+            aria-label="التمرير لليسار"
+          >
+            <ChevronLeft className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
-    </div>
+
+      {/* Slider Container */}
+      <div className="relative">
+        <div 
+          ref={scrollRef}
+          onScroll={() => { if (!hasScrolled) setHasScrolled(true); }}
+          className="flex overflow-x-auto gap-2.5 sm:gap-3 pb-2 px-3 sm:px-4 snap-x snap-mandatory hide-scrollbar touch-pan-x"
+          style={{ scrollBehavior: 'smooth', direction: 'rtl' }}
+        >
+          {topics.map((topic, index) => (
+            <Link
+              key={topic.id}
+              to={`/topic/${topic.id}`}
+              className="block relative flex-none w-[140px] sm:w-[165px] md:w-[190px] h-[170px] sm:h-[200px] rounded-[14px] sm:rounded-[16px] overflow-hidden snap-start border border-black/5 dark:border-white/10 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.96] active:brightness-95 transition-all duration-300 ease-out group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
+              style={{ transform: 'translateZ(0)' }}
+            >
+              {/* Background Image */}
+              <img 
+                src={topic.imageUrl} 
+                alt={topic.title}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 group-active:scale-100 transition-transform duration-700 ease-out pointer-events-none"
+                loading="lazy"
+              />
+              
+              {/* Gradient Overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10 pointer-events-none group-hover:via-black/40 transition-all duration-500"></div>
+
+              {/* Press Feedback Ripple Layer */}
+              <div className="absolute inset-0 bg-white/0 group-active:bg-white/10 transition-colors duration-150 pointer-events-none z-20"></div>
+
+              {/* Temporary Visual Scroll Indicator upon Page Load (Fades out after 3s or on scroll) */}
+              {index === 1 && (
+                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none transition-all duration-700 ease-in-out ${
+                  showScrollHint && !hasScrolled ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                }`}>
+                  <div className="bg-slate-900/85 backdrop-blur-md border border-white/20 text-white px-2.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl animate-pulse">
+                    <MoveHorizontal className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-[10px] font-bold tracking-wider font-cairo drop-shadow-md">اسحب للتمرير</span>
+                    <ChevronLeft className="w-3 h-3 text-amber-400 -ml-0.5 animate-bounce" />
+                  </div>
+                </div>
+              )}
+
+              {/* Top Left Icon */}
+              <div className="absolute top-2.5 left-2.5 z-20 w-6 h-6 rounded-full bg-white/20 backdrop-blur-md border border-white/10 flex items-center justify-center shadow-xs group-hover:bg-amber-400 group-hover:text-slate-900 transition-all duration-300 group-hover:scale-110">
+                <ArrowUpLeft className="w-3 h-3 text-white group-hover:text-slate-900 -rotate-90 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </div>
+
+              {/* Content Container at the Bottom */}
+              <div className="absolute bottom-0 left-0 right-0 p-2.5 sm:p-3 flex flex-col justify-end text-right z-10 select-none">
+                {/* Browse Coverage Link */}
+                <div className="flex items-center justify-start gap-1 text-amber-400 font-cairo">
+                  <div className="w-1 h-1 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.8)] group-hover:scale-125 transition-transform"></div>
+                  <span className="text-[11px] sm:text-[12px] font-bold">تصفح التغطية</span>
+                  <ChevronLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform duration-300" />
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 

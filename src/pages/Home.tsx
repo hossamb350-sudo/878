@@ -115,7 +115,7 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
   const { mDate, hDate } = formatPublishInfo(currentItem.createdAt);
 
   return (
-    <div className="w-full relative select-none mb-6 px-2 sm:px-3 mt-3">
+    <div className="w-full relative select-none mb-2 px-2 sm:px-3 mt-1">
       <div className="relative w-full h-[376px] overflow-hidden bg-surface-card shadow-lg rounded-[20px] sm:rounded-[24px]">
         {/* Slider viewport */}
         <div className="w-full h-full relative overflow-hidden rounded-[20px] sm:rounded-[24px]">
@@ -584,61 +584,68 @@ export function Home() {
             
             {/* LATEST NEWS HEADER */}
             {/* Innovative Top Navigation Experience */}
-            <div className="pt-2 pb-3 px-2 sm:px-3 bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 shadow-soft">
+            <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 shadow-soft">
               <div className="max-w-[760px] mx-auto w-full flex items-center justify-between px-1">
                 {/* Right side: Active Indicator & Title with Cairo Font */}
-                <div className="flex items-center gap-2.5">
-                  <span className="relative flex h-2.5 w-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-taiz-soft opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-taiz-sky"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-taiz-sky"></span>
                   </span>
-                  <span className="font-black text-base text-slate-800 font-cairo tracking-tight">أحدث الأخبار والتقارير</span>
+                  <span className="font-bold text-xs sm:text-sm text-slate-800 font-cairo tracking-tight">أحدث الأخبار والتقارير</span>
                 </div>
 
                 {/* Left side: Dedicated Direct Navigation Shortcut to Articles with Hover Micro-animations */}
                 <Link 
                   to="/articles" 
                   title="الانتقال السريع إلى مقالات وآراء"
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-taiz-sky to-taiz-royal hover:from-taiz-royal hover:to-taiz-navy text-white rounded-full border border-taiz-sky/10 shadow-[0_4px_12px_rgba(30,66,117,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black"
+                  className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-taiz-sky to-taiz-royal hover:from-taiz-royal hover:to-taiz-navy text-white rounded-full border border-taiz-sky/10 shadow-xs transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-[11px] font-bold"
                 >
-                  <BookOpen className="w-4 h-4 text-white/90 group-hover:scale-110 transition-transform duration-300" />
+                  <BookOpen className="w-3.5 h-3.5 text-white/90 group-hover:scale-110 transition-transform duration-300" />
                   <span>مقالات وآراء</span>
-                  <ChevronLeft className="w-4 h-4 text-white/70 group-hover:-translate-x-1 transition-transform" />
+                  <ChevronLeft className="w-3.5 h-3.5 text-white/70 group-hover:-translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
 
             {/* HERO FEATURED POST SLIDER */}
-            <div className="border-b border-slate-200/80 pb-0 mb-3.5 px-0">
+            <div className="border-b border-slate-200/60 dark:border-slate-800/60 pb-1 mb-2 px-0">
                <NewsSlider sliderList={sliderItems} />
             </div>
 
             {/* FEATURED TOPICS SLIDER */}
-            <FeaturedTopicsSlider />
+            <div className="border-b border-slate-200/60 dark:border-slate-800/60 pb-1 mb-2">
+              <FeaturedTopicsSlider />
+            </div>
 
             {/* LATEST VIDEOS SECTION */}
             {videos.length > 0 && (
-              <div className="pb-1 mb-3.5 mx-2 sm:mx-3">
-                <div className="py-3 px-4 sm:px-5 bg-white border border-slate-200/80 shadow-soft rounded-[18px] relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-taiz-sky/5 rounded-full blur-[40px] -mt-10 -mr-10"></div>
-                  <div className="flex items-center justify-between mb-3 text-right relative z-10" style={{ direction: "rtl" }}>
-                    <Link to="/watch" className="flex items-center gap-3 group cursor-pointer inline-flex">
-                       <div className="bg-taiz-sky p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:-translate-y-0.5 transition-all">
-                          <MonitorPlay className="w-5 h-5 text-white" />
-                       </div>
-                       <h2 className="font-black text-[18px] sm:text-[20px] select-none text-text-primary group-hover:text-taiz-sky transition-colors font-cairo">أحدث الفيديوهات</h2>
+              <div className="border-b border-slate-200/60 dark:border-slate-800/60 pb-2 mb-2 mx-0 sm:mx-0">
+                <div className="py-1 px-3 sm:px-4 relative">
+                  <div className="flex items-center gap-2 mb-2.5 select-none" dir="rtl">
+                    <Link to="/watch" className="flex items-center gap-2 group cursor-pointer shrink-0">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm">
+                        <MonitorPlay className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                      </div>
+                      <div className="flex flex-col text-right">
+                        <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
+                        <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
+                      </div>
                     </Link>
+                    
+                    <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2"></div>
 
-                    <Link 
-                      to="/watch"
-                      className="flex items-center gap-1 text-xs font-bold text-taiz-sky hover:text-taiz-royal transition-colors py-1.5 px-3 bg-taiz-sky/10 hover:bg-taiz-sky/20 rounded-full"
-                    >
-                      <span>عرض الكل</span>
-                      <ChevronLeft className="w-4 h-4" />
-                    </Link>
+                    <div className="hidden sm:flex items-center gap-1.5 mr-2">
+                      <Link 
+                        to="/watch"
+                        className="text-[10px] sm:text-[11px] font-bold text-taiz-sky hover:text-taiz-royal transition-colors py-0.5 px-2.5 bg-taiz-sky/10 hover:bg-taiz-sky/20 rounded-md whitespace-nowrap"
+                      >
+                        عرض الكل
+                      </Link>
+                    </div>
                   </div>
                   
-                  <div className="flex overflow-x-auto gap-4 pb-3 snap-x hide-scrollbar relative z-10" style={{ scrollbarWidth: 'none' }}>
+                  <div className="flex overflow-x-auto gap-3 pb-1 snap-x hide-scrollbar relative z-10" style={{ scrollbarWidth: 'none' }}>
                     {videos.map(video => (
                        <Link 
                          id={`home-video-${video.id}`}
@@ -655,9 +662,7 @@ export function Home() {
                              <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
                              
                              <div className="absolute top-2 right-2 z-30">
-                                <div className="bg-white/95 text-gray-900 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
-                                   {video.category || "فيديو"}
-                                </div>
+                                <CategoryBadges category={video.category || "فيديو"} isSecondary={true} className="drop-shadow-sm" />
                              </div>
                              
                              <div className="absolute inset-0 flex items-center justify-center z-20">
@@ -688,13 +693,13 @@ export function Home() {
             )}
 
             {/* VISUAL SEPARATOR FOR NEWS CARDS */}
-            <div className="flex items-center gap-3 px-3 sm:px-4 mt-5 mb-4 select-none" dir="rtl">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-md shrink-0">
-                <Newspaper className="w-5 h-5 text-white" />
+            <div className="flex items-center gap-2 px-3 sm:px-4 my-2.5 select-none" dir="rtl">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+                <Newspaper className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
               </div>
               <div className="flex flex-col">
-                <h3 className="font-black text-[17px] text-slate-800 dark:text-white font-cairo leading-tight">أخبار وتقارير</h3>
-                <p className="text-[11px] text-slate-500 font-medium font-cairo">تغطية إخبارية مفصلة للأحداث</p>
+                <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أخبار وتقارير</h3>
+                <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">تغطية إخبارية مفصلة للأحداث</p>
               </div>
               <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-4"></div>
             </div>
@@ -707,7 +712,7 @@ export function Home() {
                     <div className="px-2 sm:px-3">
                       <Link 
                         to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
-                        className="block relative w-full h-[376px] rounded-[20px] sm:rounded-[24px] overflow-hidden border border-black/5 dark:border-white/10 shadow-lg hover:shadow-xl hover:-translate-y-0.5 active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out mb-6 select-none group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
+                        className="block relative w-full h-[320px] sm:h-[350px] rounded-[18px] sm:rounded-[22px] overflow-hidden border border-black/5 dark:border-white/10 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out mb-3 select-none group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
                         style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                       >
                         {item.imageUrl ? (
@@ -770,7 +775,7 @@ export function Home() {
                   ) : (
                     <Link
                       to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
-                      className="flex items-center bg-white rounded-[14px] border border-slate-200/80 shadow-soft mx-2 sm:mx-3 mb-3 overflow-hidden group relative hover:shadow-medium hover:bg-slate-50/50 hover:-translate-y-0.5 active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out h-[110px] sm:h-[130px] will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
+                      className="flex items-center bg-white rounded-[14px] border border-slate-200/80 shadow-soft mx-2 sm:mx-3 mb-2 overflow-hidden group relative hover:shadow-medium hover:bg-slate-50/50 hover:-translate-y-0.5 active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out h-[105px] sm:h-[120px] will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
                       style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                     >
                       {/* Right Side Compact Image */}

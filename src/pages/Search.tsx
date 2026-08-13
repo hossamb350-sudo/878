@@ -22,28 +22,13 @@ export function Search() {
     const search = async () => {
       setLoading(true);
       try {
-        let allNews = await SyncService.getCache<NewsItem>("news");
-        if (!allNews || allNews.length === 0) {
-          const snap = await getDocs(collection(db, "news"));
-          allNews = snap.docs.map(d => ({ id: d.id, ...d.data() } as NewsItem));
-        }
-        const queryLower = q.trim().toLowerCase();
-        const filtered = allNews.filter(n => {
-          const title = n.title?.toLowerCase() || "";
-          const desc = (n.shortDescription || (n as any).summary || "").toLowerCase();
-          const content = n.content?.toLowerCase() || "";
-          const cat = n.category?.toLowerCase() || "";
-          const legacyCat = ((n as any).cat || "").toLowerCase();
-
-          return (
-            title.includes(queryLower) ||
-            desc.includes(queryLower) ||
-            content.includes(queryLower) ||
-            cat.includes(queryLower) ||
-            legacyCat.includes(queryLower) ||
-            queryLower.includes(cat)
-          );
-        });
+        // Fast client-side filter over cached news
+        const allNews = await SyncService.getCache<NewsItem>("news");
+        const filtered = allNews.filter(n => 
+          (n.title && n.title.includes(q)) || 
+          (n.shortDescription && n.shortDescription.includes(q)) || 
+          (n.content && n.content.includes(q))
+        );
         setResults(filtered);
       } catch (err) {
         console.error(err);

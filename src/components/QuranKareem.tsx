@@ -839,7 +839,7 @@ export function QuranKareem() {
 
             {/* Persistent Redesigned Floating Audio Player Bar at the bottom of the active view */}
             {surahDetail && (
-              <div className="fixed bottom-[84px] sm:bottom-[88px] left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm bg-stone-900/95 dark:bg-stone-900/95 text-white backdrop-blur-md px-3.5 py-2 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.3)] border border-stone-800/80 flex items-center justify-between z-40 gap-2.5">
+              <div className="fixed bottom-[64px] sm:bottom-[68px] left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm bg-stone-900/95 dark:bg-stone-900/95 text-white backdrop-blur-md px-3.5 py-2 rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.3)] border border-stone-800/80 flex items-center justify-between z-40 gap-2.5">
                 
                 {/* Playing Details */}
                 <div className="flex items-center gap-1.5 min-w-0 max-w-[35%] text-right select-none">

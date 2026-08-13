@@ -25,7 +25,7 @@ export const PRESET_CATEGORY_COLORS = [
   "#64748B", // Slate
 ];
 
-const DEFAULT_CATEGORIES: { name: string; color: string; description?: string }[] = [
+export const DEFAULT_CATEGORIES: { name: string; color: string; description?: string }[] = [
   { name: "محلية", color: "#06B6D4", description: "الأخبار المحلية والشؤون الداخلية" },
   { name: "تعبئة عامة", color: "#EF4444", description: "فعاليات وأخبار التعبئة العامة" },
   { name: "اجتماعية", color: "#10B981", description: "المشاريع والمبادرات الاجتماعية" },
@@ -36,9 +36,32 @@ const DEFAULT_CATEGORIES: { name: string; color: string; description?: string }[
   { name: "زوامل وأناشيد", color: "#EC4899", description: "القصائد والزوامل والأناشيد" },
   { name: "محاضرات ودروس", color: "#14B8A6", description: "المحاضرات التوعوية والدروس" },
   { name: "أفلام وثائقية", color: "#F97316", description: "الوثائقيات والمواد المرئية" },
+  { name: "سياسي", color: "#3B82F6", description: "الأخبار السياسية" },
+  { name: "اقتصادي", color: "#10B981", description: "الأخبار الاقتصادية" },
+  { name: "ثقافي", color: "#8B5CF6", description: "الفعاليات الثقافية" },
+  { name: "السيد القائد", color: "#1e4275", description: "كلمات ومواقف السيد القائد" },
+  { name: "فعاليات", color: "#EF4444", description: "الفعاليات والأنشطة العامة" },
+  { name: "لقاء خاص", color: "#8B5CF6", description: "المقابلات واللقاءات الحصرية" },
+  { name: "تقرير ميداني", color: "#3B82F6", description: "تقارير ميدانية خاصة" },
+  { name: "تقارير خاصة", color: "#06B6D4", description: "تقارير إخبارية خاصة" },
+  { name: "مشاريع حيوية", color: "#F59E0B", description: "مشاريع حيوية وتنموية" },
 ];
 
 export const CategoryService = {
+  getFallbackColor: (name: string): string => {
+    if (!name) return "#34619B";
+    const norm = name.trim().toLowerCase();
+    const match = DEFAULT_CATEGORIES.find(c => c.name.toLowerCase() === norm);
+    if (match) return match.color;
+
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorIndex = Math.abs(hash) % PRESET_CATEGORY_COLORS.length;
+    return PRESET_CATEGORY_COLORS[colorIndex];
+  },
+
   subscribeCategories: (callback: (cats: Category[]) => void) => {
     const q = query(collection(db, "categories"), orderBy("order", "asc"));
     return onSnapshot(q, (snapshot) => {

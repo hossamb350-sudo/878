@@ -498,7 +498,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       </div>
 
       {/* Main Content Area */}
-      <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto pb-20 min-w-0 w-full overflow-x-hidden">
+      <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto pb-16 min-w-0 w-full overflow-x-hidden">
         {children || <Outlet />}
       </main>
 
@@ -509,7 +509,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="fixed bottom-[84px] left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm bg-slate-900/95 dark:bg-stone-900/95 text-white backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] border border-slate-800/80 dark:border-stone-800/80 flex items-center justify-between z-50 gap-3"
+            className="fixed bottom-[64px] left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm bg-slate-900/95 dark:bg-stone-900/95 text-white backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] border border-slate-800/80 dark:border-stone-800/80 flex items-center justify-between z-50 gap-2.5"
           >
             {/* Clickable Area to return to Quran page and open Surah */}
             <button
@@ -556,8 +556,8 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       </AnimatePresence>
 
       {/* Navigation for All Devices */}
-      <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.04)] border-t border-slate-100/80 px-2 flex justify-center items-center z-40 pb-safe transition-transform duration-300 h-[72px] sm:h-[76px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
-        <div className="grid grid-cols-6 w-full max-w-2xl mx-auto px-1">
+      <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.04)] border-t border-slate-100/80 px-1 flex justify-center items-center z-40 pb-safe transition-transform duration-300 h-[54px] sm:h-[58px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+        <div className="grid grid-cols-6 w-full max-w-2xl mx-auto px-0.5">
           {[
             { to: "/", icon: Newspaper, label: "الأخبار" },
             { to: "/watch", icon: Tv, label: "ميديا" },
@@ -577,20 +577,20 @@ export function Layout({ children }: { children?: React.ReactNode }) {
                 className="flex flex-col items-center justify-center w-full relative"
               >
                 <div 
-                  className={`flex flex-col items-center justify-center w-[90%] py-1.5 transition-all duration-300 relative ${
+                  className={`flex flex-col items-center justify-center w-full py-0.5 transition-all duration-300 relative ${
                     isItemActive 
                       ? "text-taiz-sky font-bold" 
                       : "text-slate-500 hover:text-taiz-sky/80"
                   }`}
                 >
-                  <div className="h-6 w-full flex items-center justify-center mb-0.5 shrink-0 relative">
-                    <item.icon className={`w-5 h-5 sm:w-5.5 sm:h-5.5 transition-all duration-300 ${isItemActive ? 'stroke-[2.5] text-taiz-sky' : 'stroke-[2]'}`} />
+                  <div className="h-4.5 sm:h-5 w-full flex items-center justify-center mb-0.5 shrink-0 relative">
+                    <item.icon className={`w-4 h-4 sm:w-[18px] sm:h-[18px] transition-all duration-300 ${isItemActive ? 'stroke-[2.5] text-taiz-sky' : 'stroke-[2]'}`} />
                   </div>
-                  <span className={`text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-bold text-center leading-tight tracking-tight px-0.5 w-full font-cairo ${isItemActive ? 'text-taiz-sky' : ''}`}>
+                  <span className={`text-[8.5px] min-[360px]:text-[9.5px] sm:text-[10px] font-bold text-center leading-none tracking-tight px-0.5 w-full font-cairo ${isItemActive ? 'text-taiz-sky' : ''}`}>
                     {item.label}
                   </span>
                   {isItemActive && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-[3px] bg-taiz-sky rounded-t-full" />
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-taiz-sky rounded-t-full" />
                   )}
                 </div>
               </NavLink>

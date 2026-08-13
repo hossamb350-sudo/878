@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { NewsItem } from "../types";
 import { CategoryService } from "../services/CategoryService";
 
 interface CategoryBadgesProps {
-  item: NewsItem;
+  item?: { category?: string; categories?: string[] };
+  category?: string;
+  categories?: string[];
   isHero?: boolean;
   isSecondary?: boolean;
   className?: string;
 }
 
-export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = false, isSecondary = false, className = "" }) => {
-  const [categories, setCategories] = useState<Record<string, string>>({});
+export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ 
+  item, 
+  category, 
+  categories: categoriesProp, 
+  isHero = false, 
+  isSecondary = false, 
+  className = "" 
+}) => {
+  const [categoriesMap, setCategoriesMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const unsub = CategoryService.subscribeCategories((list) => {
@@ -18,26 +26,28 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({ item, isHero = f
       list.forEach(c => {
         catMap[c.name] = c.color || "#3B82F6";
       });
-      setCategories(catMap);
+      setCategoriesMap(catMap);
     });
 
     return () => unsub();
   }, []);
 
-  const cats = Array.from(new Set((item.categories || (item.category ? [item.category] : [])).filter(c => !!c)));
+  const rawCats = categoriesProp || item?.categories || (category ? [category] : (item?.category ? [item.category] : []));
+  const cats = Array.from(new Set(rawCats.filter((c): c is string => !!c && c.trim().length > 0)));
+
   if (cats.length === 0) return null;
 
   return (
     <div className={`flex flex-wrap items-center gap-1.5 z-20 ${className}`}>
       {cats.map((c, i) => {
-        const color = categories[c] || "#34619B";
+        const color = categoriesMap[c] || CategoryService.getFallbackColor(c);
         const isPrimary = i === 0;
         
         if (isSecondary) {
           return (
             <span
               key={c}
-              className="whitespace-nowrap font-black transition-all px-1.5 py-[1px] rounded-t-[4px] rounded-b-none text-[7px] sm:text-[7.5px] shadow-sm tracking-wide"
+              className="whitespace-nowrap font-black transition-all px-1.5 py-[1px] rounded-[4px] text-[7px] sm:text-[7.5px] shadow-sm tracking-wide"
               style={{
                 backgroundColor: color,
                 color: "white",
