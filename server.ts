@@ -544,7 +544,7 @@ app.get("/api/proxy/stream", async (req, res) => {
       responseType: "stream",
       maxRedirects: 5,
       timeout: 15000,
-      httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Bypass SSL/TLS issues
+      httpsAgent: new https.Agent({ rejectUnauthorized: true }), // Bypass SSL/TLS issues
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
         "Accept": "*/*"

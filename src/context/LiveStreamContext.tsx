@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from "react";
 import { LiveStream } from "../types";
 import { API_BASE } from "../config/apiConfig";
+import { radioPlayer } from "../services/radioPlayer";
 
 interface LiveStreamContextType {
   activeStream: LiveStream | null;
@@ -47,6 +48,7 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       audioRef.current.pause();
       audioRef.current.src = "";
     }
+    radioPlayer.stop();
   };
 
   const togglePlay = () => {
@@ -78,57 +80,78 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       if (audioRef.current) {
         audioRef.current.pause();
       }
+      radioPlayer.pause();
     };
-
     window.addEventListener("stop-live-stream", handleStopLiveStream);
     return () => window.removeEventListener("stop-live-stream", handleStopLiveStream);
   }, []);
 
+  // Sync Native Radio Events
+  useEffect(() => {
+    if (radioPlayer.isNativeMode) {
+      const unsubPlaying = radioPlayer.on('playing', () => { setIsPlaying(true); setIsLoading(false); });
+      const unsubPaused = radioPlayer.on('paused', () => setIsPlaying(false));
+      const unsubBuffering = radioPlayer.on('buffering', () => setIsLoading(true));
+      const unsubStopped = radioPlayer.on('stopped', () => { setIsPlaying(false); setActiveStream(null); });
+      const unsubError = radioPlayer.on('error', (err) => { console.error("Native Radio Error:", err); setIsLoading(false); });
+      
+      return () => {
+        unsubPlaying();
+        unsubPaused();
+        unsubBuffering();
+        unsubStopped();
+        unsubError();
+      };
+    }
+  }, []);
+
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
     
     if (isPlaying && activeStream) {
       window.dispatchEvent(new CustomEvent("stop-quran-audio"));
       if (activeStream.type === "radio") {
         let src = activeStream.streamUrl || activeStream.url;
         
-        // Proxy ALL radio streams to solve Android playback limitations:
-        // 1. Bypasses Android WebView's Cleartext HTTP restrictions for 'http://' streams.
-        // 2. Bypasses SSL/TLS verification and self-signed certificate errors via backend client.
-        // 3. Eliminates CORS restrictions on both native devices and desktop web.
-        if (src && !src.startsWith('/api/proxy') && !src.includes('/api/proxy')) {
-          src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
-        }
+        if (radioPlayer.isNativeMode) {
+          // Native Android ExoPlayer connects directly to streams! No proxy/CORS needed.
+          if (src) {
+             radioPlayer.play(src, activeStream.name || "Live Radio", activeStream.iconUrl || "");
+          }
+          if (audio) { audio.pause(); audio.removeAttribute("src"); audio.load(); } // Definitive stop for HTML5
+        } else {
+          // Web needs proxy to solve CORS and Mixed Content Limitations
+          if (src && !src.startsWith('/api/proxy') && !src.includes('/api/proxy')) {
+            src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
+          }
 
-        if (src) {
-          // Resolve relative proxy path to absolute using API_BASE for Native, and fallback to origin for web
-          let base = API_BASE || window.location.origin;
-          
-          // Failsafe backup if window.location.origin is capacitor:// but API_BASE is empty/unresolved
-          if (!base || base.startsWith("capacitor://") || base.includes("localhost")) {
-            // Default to the active Cloud Run server URL
-            base = "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
-          }
-          
-          const absoluteSrc = src.startsWith("http") 
-            ? src 
-            : `${base}${src}`;
-          
-          if (audio.src !== absoluteSrc) {
-            audio.src = absoluteSrc;
-            // Force the player engine to reload the stream source correctly on Android
-            audio.load();
+          if (src) {
+            let base = API_BASE || window.location.origin;
+            
+            if (!base || base.startsWith("capacitor://") || base.includes("localhost")) {
+              base = "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
+            }
+            
+            const absoluteSrc = src.startsWith("http") ? src : `${base}${src}`;
+
+            if (audio) {
+              if (audio.src !== absoluteSrc) {
+                audio.src = absoluteSrc;
+                audio.load();
+              }
+              audio.play().catch(e => console.warn("Live stream playback failed:", e));
+            }
           }
         }
-        
-        audio.play().catch(e => console.warn("Live stream playback failed:", e));
       } else {
         // TV stream plays video/audio inside Watch page iframe; pause background audio element
-        audio.pause();
+        if (audio) audio.pause();
+        if (radioPlayer.isNativeMode) radioPlayer.pause();
       }
     } else {
-      audio.pause();
+      if (audio) audio.pause();
+      // Don't call stop(), just pause() to keep notification in paused state
+      if (radioPlayer.isNativeMode) radioPlayer.pause();
     }
   }, [isPlaying, activeStream]);
 
@@ -153,7 +176,7 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       }}
     >
       {children}
-      {/* Hidden global audio element */}
+      {/* Hidden global audio element for Web only */}
       <audio 
         ref={audioRef} 
         className="hidden" 
