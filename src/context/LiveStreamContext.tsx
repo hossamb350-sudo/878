@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from "react";
 import { LiveStream } from "../types";
+import { API_BASE } from "../config/apiConfig";
 
 interface LiveStreamContextType {
   activeStream: LiveStream | null;
@@ -92,14 +93,20 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       if (activeStream.type === "radio") {
         let src = activeStream.streamUrl || activeStream.url;
         
-        // Proxy ALL radio streams to avoid mixed content blocking and bypass CORS/SSL on Android browsers
-        if (src && !src.startsWith('/api/proxy')) {
+        // Proxy ALL radio streams to solve Android playback limitations:
+        // 1. Bypasses Android WebView's Cleartext HTTP restrictions for 'http://' streams.
+        // 2. Bypasses SSL/TLS verification and self-signed certificate errors via backend client.
+        // 3. Eliminates CORS restrictions on both native devices and desktop web.
+        if (src && !src.startsWith('/api/proxy') && !src.includes('/api/proxy')) {
           src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
         }
 
         if (src) {
-          // Resolve relative proxy path to absolute so `audio.src !== src` comparison works reliably
-          const absoluteSrc = src.startsWith("http") ? src : new URL(src, window.location.origin).href;
+          // Resolve relative proxy path to absolute using API_BASE for Native, and fallback to origin for web
+          const absoluteSrc = src.startsWith("http") 
+            ? src 
+            : `${API_BASE || window.location.origin}${src}`;
+          
           if (audio.src !== absoluteSrc) {
             audio.src = absoluteSrc;
           }
