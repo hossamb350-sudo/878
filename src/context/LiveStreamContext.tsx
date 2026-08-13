@@ -157,15 +157,18 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       <audio 
         ref={audioRef} 
         className="hidden" 
-        crossOrigin="anonymous"
         preload="none"
+        playsInline
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onWaiting={() => setIsLoading(true)}
         onPlaying={() => setIsLoading(false)}
         onStalled={() => setIsLoading(true)}
         onCanPlay={() => setIsLoading(false)}
-        onError={() => setIsLoading(false)}
+        onError={() => {
+          console.error("Audio error:", audioRef.current?.error);
+          setIsLoading(false);
+        }}
       />
     </LiveStreamContext.Provider>
   );
