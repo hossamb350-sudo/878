@@ -109,6 +109,8 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
           
           if (audio.src !== absoluteSrc) {
             audio.src = absoluteSrc;
+            // Force the player engine to reload the stream source correctly on Android
+            audio.load();
           }
         }
         
@@ -147,6 +149,8 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       <audio 
         ref={audioRef} 
         className="hidden" 
+        crossOrigin="anonymous"
+        preload="none"
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onWaiting={() => setIsLoading(true)}

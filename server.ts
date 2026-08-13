@@ -508,27 +508,70 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
 
 // Stream Proxy API (For HTTP radio streams to avoid Mixed Content / CORS)
 app.get("/api/proxy/stream", async (req, res) => {
-  const targetUrl = req.query.url as string;
+  // Extract the full target URL robustly, keeping any nested query parameters intact
+  let targetUrl = req.query.url as string;
+  const originalUrl = req.originalUrl;
+  const urlIndex = originalUrl.indexOf("?url=");
+  if (urlIndex !== -1) {
+    const rawUrlParam = originalUrl.substring(urlIndex + 5);
+    try {
+      targetUrl = decodeURIComponent(rawUrlParam);
+    } catch (e) {
+      // Fallback to parsed query param if decoding fails
+      targetUrl = req.query.url as string;
+    }
+  }
+
   if (!targetUrl) {
     return res.status(400).json({ error: "Missing url parameter" });
   }
+
+  // Explicitly set CORS headers for mobile WebView compatibility
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "*");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+
+  let axiosStream: any = null;
 
   try {
     const response = await axios({
       method: "get",
       url: targetUrl,
       responseType: "stream",
-      httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Bypass SSL issues for some Android browsers
+      maxRedirects: 5,
+      timeout: 12000,
+      httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Bypass SSL/TLS issues
       headers: {
-        // Pass a generic user agent as some radio servers reject empty user agents
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Accept": "*/*",
+        "Range": req.headers.range || "bytes=0-"
       }
     });
 
-    // Copy relevant headers
-    if (response.headers["content-type"]) {
-      res.setHeader("Content-Type", String(response.headers["content-type"]));
+    axiosStream = response.data;
+
+    // Detect and set the correct audio Content-Type
+    const rawContentType = response.headers["content-type"];
+    let contentType = typeof rawContentType === "string" ? rawContentType : String(rawContentType || "");
+    
+    if (!contentType || contentType.includes("octet-stream") || contentType.includes("text/html")) {
+      // Fallback to audio/mpeg or audio/aac depending on URL keywords
+      if (targetUrl.toLowerCase().includes("aac")) {
+        contentType = "audio/aac";
+      } else if (targetUrl.toLowerCase().includes("m3u8")) {
+        contentType = "application/x-mpegURL";
+      } else {
+        contentType = "audio/mpeg";
+      }
     }
+
+    res.setHeader("Content-Type", String(contentType));
+
+    // Copy icecast metadata headers if present
     if (response.headers["icy-metaint"]) {
       res.setHeader("icy-metaint", String(response.headers["icy-metaint"]));
     }
@@ -540,10 +583,34 @@ app.get("/api/proxy/stream", async (req, res) => {
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
 
-    response.data.pipe(res);
+    // Handle connection closure by the mobile app client to prevent socket leaks
+    req.on("close", () => {
+      if (axiosStream) {
+        try {
+          axiosStream.destroy();
+        } catch (err) {
+          console.warn("Error destroying proxy stream on client close:", err);
+        }
+      }
+    });
+
+    // Handle errors on the streaming data pipe itself
+    axiosStream.on("error", (streamErr: any) => {
+      console.warn("Upstream audio stream error:", streamErr.message);
+      try {
+        res.end();
+      } catch (e) {}
+    });
+
+    axiosStream.pipe(res);
   } catch (error: any) {
-    console.error("Stream proxy error:", error.message);
-    res.status(500).json({ error: "Failed to proxy stream" });
+    console.error("Stream proxy connection error:", error.message);
+    if (axiosStream) {
+      try {
+        axiosStream.destroy();
+      } catch (e) {}
+    }
+    res.status(500).json({ error: "Failed to connect to the stream" });
   }
 });
 
