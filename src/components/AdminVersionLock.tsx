@@ -117,15 +117,15 @@ export const AdminVersionLock: React.FC<AdminVersionLockProps> = ({ isAdmin = tr
     <div className="space-y-6 text-right font-cairo" dir="rtl">
       
       {/* 1. HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
-        <div>
-          <h2 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-2">
-            <Lock className="w-5 h-5 text-[#BF841F]" />
-            إصدارات التطبيق والتحكم بالقفل (Force Update)
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-medium">
-            تحكم في إصدارات تطبيق الأندرويد وإجبار المستخدمين على التحديث عند إطلاق نسخة جديدة.
-          </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+            <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إصدارات التطبيق وقفل التحديث</h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">تحكم في إصدارات تطبيق الأندرويد وفرض التحديث الإجباري</p>
+          </div>
         </div>
         
         {/* Real-time Version Info Banner */}

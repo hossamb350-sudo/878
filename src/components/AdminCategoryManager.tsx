@@ -197,25 +197,21 @@ export const AdminCategoryManager: React.FC = () => {
   );
 
   return (
-    <div className="space-y-8 animate-fade-in font-sans" dir="rtl">
+    <div className="space-y-6 animate-fade-in font-sans" dir="rtl">
       {/* Header Banner */}
-      <div className="bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-purple-900/20 relative overflow-hidden group">
+      <div className="bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 rounded-3xl p-6 text-white shadow-2xl shadow-purple-900/20 relative overflow-hidden group">
         <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl -mr-20 -mt-20 group-hover:bg-purple-500/20 transition-all duration-700"></div>
         <div className="absolute bottom-0 left-0 w-60 h-60 bg-blue-500/10 rounded-full blur-2xl -ml-10 -mb-10"></div>
         
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-purple-200 text-xs font-bold mb-3 border border-white/10">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              نظام التصنيفات الموحد والـ المركزي
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 select-none" dir="rtl">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-sm">
+              <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight flex items-center gap-3 text-white">
-              <Tag className="w-9 h-9 text-purple-400 stroke-[2.5]" />
-              إدارة التصنيفات الموحدة
-            </h2>
-            <p className="text-purple-100/80 font-bold text-sm sm:text-base mt-2 max-w-2xl leading-relaxed">
-              إنشاء وإدارة جميع تصنيفات المنصة من مكان واحد، وتحديد الألوان المخصصة لتطبيقها تلقائياً عبر جميع أنواع المحتوى (الأخبار، الفيديوهات، المقالات، والمواضيع البارزة).
-            </p>
+            <div className="flex flex-col text-right">
+              <h3 className="font-bold text-[13px] sm:text-[14px] text-white font-cairo leading-tight">إدارة التصنيفات الموحدة</h3>
+              <p className="text-[10px] sm:text-[11px] text-purple-200 font-medium font-cairo">إنشاء وإدارة وتلوين تصنيفات الأخبار والفيديوهات والمقالات</p>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto shrink-0">

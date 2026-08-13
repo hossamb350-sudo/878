@@ -141,21 +141,19 @@ export const AdminRegisteredUsers: React.FC<AdminRegisteredUsersProps> = ({ isAd
     <div className="space-y-6 animate-fade-in font-sans" dir="rtl">
       
       {/* HEADER BANNER */}
-      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 p-5 sm:p-6 rounded-[26px] text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 p-4 sm:p-5 rounded-2xl text-white shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-2xl -translate-y-10 translate-x-10 pointer-events-none"></div>
         <div className="relative z-10 flex items-center justify-between gap-4">
           <div className="space-y-1 text-right">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-white/20 backdrop-blur-md rounded-xl">
-                <Users className="w-6 h-6 text-white stroke-[2.2]" />
+            <div className="flex items-center gap-2 select-none">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-sm">
+                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
               </div>
-              <h2 className="text-xl sm:text-2xl font-black font-cairo tracking-tight">
-                إدارة عدد المستخدمين المسجلين
-              </h2>
+              <div className="flex flex-col text-right">
+                <h3 className="font-bold text-[13px] sm:text-[14px] text-white font-cairo leading-tight">إدارة عدد المستخدمين المسجلين</h3>
+                <p className="text-[10px] sm:text-[11px] text-amber-100 font-medium font-cairo">عرض وتخصيص العدد الفعلي والمعروض للمستخدمين المسجلين بمرونة</p>
+              </div>
             </div>
-            <p className="text-xs sm:text-sm font-extrabold text-amber-100 font-cairo leading-relaxed max-w-xl">
-              عرض العدد الفعلي للمستخدمين المسجلين في قاعدة البيانات أو تخصيص الرقم المعروض بمرونة مع إمكانية العودة للعدد الفعلي في أي وقت.
-            </p>
           </div>
 
           <div className="hidden sm:flex flex-col items-center justify-center p-3 bg-white/15 backdrop-blur-md rounded-2xl border border-white/20 min-w-[120px]">

@@ -116,19 +116,22 @@ export function AdminFeaturedTopics() {
 
   return (
     <div className="space-y-6 font-cairo" style={{ direction: "rtl" }}>
-      <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-100 dark:border-slate-700/80 shadow-sm">
-        <div>
-          <h2 className="text-xl font-black text-gray-900 dark:text-white">إدارة «أبرز المواضيع»</h2>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-            إضافة وتعديل المواضيع البارزة وصورها المخصصة الظاهرة في الصفحة الرئيسية
-          </p>
+      <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-2xl border border-gray-100 dark:border-slate-700/80 shadow-sm">
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+            <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إدارة أبرز المواضيع</h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إضافة وتعديل المواضيع البارزة وصورها المخصصة</p>
+          </div>
         </div>
         {!editingId && (
           <button
             onClick={handleAddNew}
-            className="flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold transition-all shadow-md active:scale-95 text-sm"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-all shadow-md active:scale-95 text-xs"
           >
-            <Plus className="w-5 h-5" />
+            <Plus className="w-4 h-4" />
             <span>إضافة موضوع جديد</span>
           </button>
         )}

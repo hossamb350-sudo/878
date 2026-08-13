@@ -230,26 +230,9 @@ export function TopicDetail() {
 
           {/* Banner Content */}
           <div className="relative z-10 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/20 backdrop-blur-md border border-amber-500/30 text-amber-300 text-xs font-black">
-                <Sparkles className="w-3.5 h-3.5" />
-                موضوع بارز
-              </span>
-              {topic.categories && topic.categories.map((cat, idx) => (
-                <span key={idx} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-xs font-bold">
-                  <Tag className="w-3 h-3 text-amber-300" />
-                  <span>{cat}</span>
-                </span>
-              ))}
-            </div>
-
             <h1 className="text-xl sm:text-3xl font-black text-white leading-tight font-cairo drop-shadow-md">
               {topic.title}
             </h1>
-
-            <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-2xl leading-relaxed">
-              تغطية شاملة ومباشرة لكافة الأخبار والتقارير والفيديوهات المرتبطة بالتصنيفات الخاصة بهذا الموضوع
-            </p>
           </div>
         </div>
 

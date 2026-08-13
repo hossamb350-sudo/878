@@ -1378,13 +1378,15 @@ function AdminSummaryDashboard({
       </div>
 
       {/* SECTIONS HEADER: "أقسام الإدارة" */}
-      <div className="flex items-center justify-between pt-2 px-1">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white font-cairo">
-            أقسام الإدارة
-          </h3>
-          <LayoutGrid className="w-6 h-6 text-red-500 stroke-[2.2]" />
+      <div className="flex items-center gap-2 px-1 my-2.5 select-none" dir="rtl">
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+          <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
         </div>
+        <div className="flex flex-col text-right">
+          <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أقسام الإدارة</h3>
+          <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">التحكم في محتوى وأقسام المنصة</p>
+        </div>
+        <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-4"></div>
       </div>
 
       {/* 3-COLUMN GRID OF MANAGEMENT SECTION CARDS */}
@@ -1758,27 +1760,25 @@ function AdminUrgentNews() {
   });
 
   return (
-    <div className="space-y-8 animate-fade-in max-w-6xl mx-auto font-cairo">
+    <div className="space-y-6 animate-fade-in max-w-6xl mx-auto font-cairo">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-6">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 flex items-center gap-3">
-            <span className="p-2.5 bg-red-100 text-red-600 rounded-xl">
-              <Zap className="w-6 h-6" />
-            </span>
-            نظام الأخبار العاجلة (شريط الأخبار)
-          </h2>
-          <p className="text-gray-500 mt-2 font-bold text-sm">
-            إدارة وتتبع الأخبار العاجلة، الشريط المتحرك، وإعدادات العرض الحية.
-          </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-red-600 to-red-400 flex items-center justify-center shadow-sm shrink-0">
+            <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">نظام الأخبار العاجلة</h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة وتتبع الأخبار العاجلة وإعدادات العرض</p>
+          </div>
         </div>
         {activeDocs.length > 0 && (
           <button
             onClick={cancelAllActiveNews}
-            className="bg-white hover:bg-red-50 text-red-600 font-bold px-5 py-2.5 rounded-xl text-sm flex items-center gap-2 border border-red-200 transition-all shadow-sm"
+            className="bg-white hover:bg-red-50 text-red-600 font-bold px-4 py-2 rounded-lg text-xs flex items-center gap-1.5 border border-red-200 transition-all shadow-sm"
           >
             <XCircle className="w-4 h-4" />
-            <span>إلغاء جميع الأخبار النشطة</span>
+            <span>إلغاء النشطة</span>
           </button>
         )}
       </div>
@@ -3299,10 +3299,17 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h2 className="text-xl font-bold text-[#111827] dark:text-white flex items-center gap-2">
-          <Video className="w-5 h-5 text-red-600" />{" "}
-          {editingId ? "تعديل فيديو" : "إضافة فيديو"}
-        </h2>
+        <div className="flex items-center gap-2 my-2.5 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-red-600 to-red-400 flex items-center justify-center shadow-sm shrink-0">
+            <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
+              {editingId ? "تعديل فيديو / تقرير مرئي" : "إضافة فيديو جديد"}
+            </h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة وتحميل المواد المرئية والتقارير</p>
+          </div>
+        </div>
 
         <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 p-4 rounded-lg text-sm border border-blue-100 dark:border-blue-900">
           <strong className="block mb-1 text-blue-800 dark:text-blue-200">
@@ -3668,10 +3675,17 @@ function AdminLive() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm">
-        <h2 className="text-xl font-bold text-[#111827] dark:text-white flex items-center gap-2">
-          <Radio className="w-5 h-5 text-red-600" />
-          {editingId ? "تعديل بث مباشر" : "إضافة بث مباشر جديد"}
-        </h2>
+        <div className="flex items-center gap-2 my-2.5 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-red-600 to-red-400 flex items-center justify-center shadow-sm shrink-0">
+            <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
+              {editingId ? "تعديل قناة البث المباشر" : "إضافة بث مباشر جديد"}
+            </h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة قنوات البث التلفزيوني والإذاعي الحي</p>
+          </div>
+        </div>
         <input
           className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/50"
           placeholder="اسم القناة أو الإذاعة"
@@ -4266,10 +4280,13 @@ function AdminQuran() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b dark:border-gray-700 pb-4">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Settings className="w-6 h-6 text-red-600" />
-            <h2 className="text-xl font-bold">إعداد هدي القران</h2>
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إعداد مقررات هدي القرآن</h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">التحكم بمقررات وسلاسل ودروس هدي القرآن الكريم</p>
           </div>
         </div>
         
@@ -6091,12 +6108,17 @@ function AdminEvents() {
   const [activeSubTab, setActiveSubTab] = useState<"calendar" | "activities">("calendar");
 
   return (
-    <div className="space-y-8" dir="rtl">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
-          <CalendarIcon className="w-6 h-6 text-red-600" />
-          قسم المناسبات والفعاليات
-        </h2>
+    <div className="space-y-6" dir="rtl">
+      <div className="flex justify-between items-center my-2.5">
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+            <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">قسم المناسبات والفعاليات</h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة المناسبات والتقويم السنوي والفعاليات والأنشطة المرتبطة بها</p>
+          </div>
+        </div>
       </div>
 
       <div className="bg-gray-100 dark:bg-gray-800/50 p-1 rounded-xl flex gap-1 w-max">
@@ -6307,17 +6329,15 @@ function AdminRoles() {
   );
 
   return (
-    <div className="space-y-8 animate-fade-in" dir="rtl">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-light pb-6">
-        <div className="flex items-center gap-3">
-          <Shield className="w-8 h-8 text-red-600" />
-          <div>
-            <h2 className="text-2xl font-black text-text-primary">
-              إدارة الصلاحيات
-            </h2>
-            <p className="text-xs text-text-muted font-bold">
-              إدارة وتخصيص صلاحيات الوصول للمنصة
-            </p>
+    <div className="space-y-6 animate-fade-in" dir="rtl">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-light pb-4">
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+            <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إدارة الصلاحيات</h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة وتخصيص صلاحيات ورتب الوصول للمنصة والمشرفين</p>
           </div>
         </div>
 
@@ -6671,15 +6691,17 @@ function AdminSocialLinks() {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in text-right" dir="rtl">
+    <div className="space-y-6 animate-fade-in text-right" dir="rtl">
       <div className="border-b dark:border-gray-700 pb-4">
-        <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center justify-end gap-2">
-          <span>إدارة روابط تابعنا</span>
-          <Share2 className="w-6 h-6 text-red-600" />
-        </h2>
-        <p className="text-gray-500 text-sm mt-1 font-bold">
-          هذه الروابط تظهر في قسم "تابعنا" في صفحة حسابي لجميع المستخدمين.
-        </p>
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إدارة روابط تابعنا</h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">التحكم في قنوات التواصل والشبكات الاجتماعية للمنصة</p>
+          </div>
+        </div>
       </div>
 
       <div className="bg-gray-50 dark:bg-gray-900/40 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 space-y-4">

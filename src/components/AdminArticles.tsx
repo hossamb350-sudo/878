@@ -195,22 +195,24 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
   if (loading) return <div className="p-10 text-center font-bold">جاري التحميل...</div>;
 
   return (
-    <div className="space-y-8 animate-fade-in" dir="rtl">
+    <div className="space-y-6 animate-fade-in" dir="rtl">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-br from-amber-500 to-orange-600 p-8 rounded-[2.5rem] text-white shadow-xl shadow-amber-500/20">
-        <div className="text-right">
-          <h2 className="text-3xl font-black flex items-center justify-end gap-3">
-            <span>إدارة المقالات</span>
-            <BookOpen className="w-8 h-8" />
-          </h2>
-          <p className="text-amber-50 font-bold opacity-90 mt-2">إضافة وتعديل وحذف المقالات والتحكم في ظهورها</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-br from-amber-500 to-orange-600 p-6 rounded-3xl text-white shadow-xl shadow-amber-500/20">
+        <div className="flex items-center gap-2 select-none" dir="rtl">
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/10 flex items-center justify-center shadow-sm shrink-0">
+            <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h3 className="font-bold text-[13px] sm:text-[14px] text-white font-cairo leading-tight">إدارة المقالات</h3>
+            <p className="text-[10px] sm:text-[11px] text-amber-100 font-medium font-cairo">إضافة وتعديل وحذف المقالات والتحكم في ظهورها</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
            <button 
             onClick={() => setMode(mode === "authors" ? "list" : "authors")}
-            className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-2xl font-black transition-all flex items-center gap-2 backdrop-blur-sm"
+            className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all flex items-center gap-1.5 backdrop-blur-sm text-xs"
           >
-            <User className="w-5 h-5" />
+            <User className="w-4 h-4" />
             {mode === "authors" ? "العودة للمقالات" : "إدارة الكتاب"}
           </button>
           <button 
