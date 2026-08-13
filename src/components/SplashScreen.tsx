@@ -208,7 +208,7 @@ export function SplashScreen({ onComplete }: { onComplete: () => void }) {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -6, scale: 0.97 }}
                 transition={{ duration: 0.22 }}
-                className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl bg-[#0e2142]/85 border border-[#5CA9FF]/35 backdrop-blur-md shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex flex-col items-center text-center"
+                className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl bg-[#11284E]/25 border border-[#5CA9FF]/25 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.37)] flex flex-col items-center text-center"
                 dir="rtl"
               >
                 <span className="text-xs sm:text-sm font-black text-[#D9A441] mb-0.5">
