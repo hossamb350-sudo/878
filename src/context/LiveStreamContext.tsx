@@ -103,9 +103,17 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
 
         if (src) {
           // Resolve relative proxy path to absolute using API_BASE for Native, and fallback to origin for web
+          let base = API_BASE || window.location.origin;
+          
+          // Failsafe backup if window.location.origin is capacitor:// but API_BASE is empty/unresolved
+          if (!base || base.startsWith("capacitor://") || base.includes("localhost")) {
+            // Default to the active Cloud Run server URL
+            base = "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
+          }
+          
           const absoluteSrc = src.startsWith("http") 
             ? src 
-            : `${API_BASE || window.location.origin}${src}`;
+            : `${base}${src}`;
           
           if (audio.src !== absoluteSrc) {
             audio.src = absoluteSrc;

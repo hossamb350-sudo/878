@@ -543,12 +543,11 @@ app.get("/api/proxy/stream", async (req, res) => {
       url: targetUrl,
       responseType: "stream",
       maxRedirects: 5,
-      timeout: 12000,
+      timeout: 15000,
       httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Bypass SSL/TLS issues
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Accept": "*/*",
-        "Range": req.headers.range || "bytes=0-"
+        "Accept": "*/*"
       }
     });
 
@@ -570,6 +569,8 @@ app.get("/api/proxy/stream", async (req, res) => {
     }
 
     res.setHeader("Content-Type", String(contentType));
+    res.setHeader("Accept-Ranges", "none"); // Tell Android WebView/ExoPlayer this is a continuous live stream
+    res.setHeader("Connection", "keep-alive");
 
     // Copy icecast metadata headers if present
     if (response.headers["icy-metaint"]) {
