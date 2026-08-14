@@ -14,9 +14,13 @@ import {
   BookMarked,
   MessageSquare,
   Trophy,
+  Volume2,
+  History,
+  Play,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { QuranLesson, QuranSeries } from "../types";
+import { SURAHS_METADATA } from "../data/surahData";
 
 interface QuranStatsProps {
   lessonsList: QuranLesson[];
@@ -34,6 +38,7 @@ interface QuranStatsProps {
   onClearNote: (lessonId: string, index: number) => void;
   onClearHighlight: (lessonId: string, index: number) => void;
   onResetDashboard?: () => void;
+  onNavigateToQuran?: () => void;
 }
 
 export function QuranStats({
@@ -48,10 +53,49 @@ export function QuranStats({
   onClearNote,
   onClearHighlight,
   onResetDashboard,
+  onNavigateToQuran,
 }: QuranStatsProps) {
   const [activeTab, setActiveTab] = useState<
-    "lessons" | "history" | "bookmarks" | "notes" | "highlights"
+    "lessons" | "quran-recitation" | "history" | "bookmarks" | "notes" | "highlights"
   >("lessons");
+
+  // Load Quran progress
+  const [qProgress, setQProgress] = useState<{
+    startedSurahs: { [number: number]: { lastIndex: number; total: number; timestamp: number } };
+    completedSurahs: number[];
+    bookmarks: { surahNumber: number; surahName: string; ayahIndex: number; verseText: string; timestamp: number }[];
+    totalAyahsListenedCount: number;
+  }>(() => {
+    try {
+      const stored = localStorage.getItem("quran_progress");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return {
+      startedSurahs: {},
+      completedSurahs: [],
+      bookmarks: [],
+      totalAyahsListenedCount: 0,
+    };
+  });
+
+  const [quranProgressSubTab, setQuranProgressSubTab] = useState<"history" | "bookmarks">("history");
+
+  const handleResetQuranProgress = () => {
+    if (confirm("هل أنت تأكد من تصفير سجل متابعة تلاوة القرآن الكريم بالكامل؟")) {
+      const emptyData = { startedSurahs: {}, completedSurahs: [], bookmarks: [], totalAyahsListenedCount: 0 };
+      localStorage.setItem("quran_progress", JSON.stringify(emptyData));
+      setQProgress(emptyData);
+    }
+  };
+
+  const handleClearQuranBookmark = (surahNumber: number, ayahIndex: number) => {
+    const updatedBookmarks = qProgress.bookmarks.filter(
+      (b) => !(b.surahNumber === surahNumber && b.ayahIndex === ayahIndex)
+    );
+    const updated = { ...qProgress, bookmarks: updatedBookmarks };
+    localStorage.setItem("quran_progress", JSON.stringify(updated));
+    setQProgress(updated);
+  };
 
   // Load / Compute global reading stats
   const qStats = (() => {
@@ -198,8 +242,8 @@ export function QuranStats({
           </div>
         </div>
 
-        {/* Distinct Section Header */}
-        <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-slate-50/90 dark:bg-stone-900/80 rounded-xl border-r-4 border-r-taiz-royal dark:border-r-taiz-sky border border-slate-200/80 dark:border-stone-800 select-none mb-1 shadow-2xs" dir="rtl">
+        {/* Section Header */}
+        <div className="flex items-center justify-between gap-3 px-1 py-1 select-none mb-2" dir="rtl">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-xs shrink-0 text-white">
               <Trophy className="w-4 h-4" />
@@ -208,7 +252,7 @@ export function QuranStats({
               <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
                 سجل القراءة والأنشطة
               </h2>
-              <p className="text-[10.5px] sm:text-[11px] text-amber-500 font-bold font-cairo">
+              <p className="text-[10.5px] sm:text-[11px] text-orange-500 font-bold font-cairo">
                 تفاصيل الدروس والملاحظات والعلامات المحفوظة
               </p>
             </div>
@@ -222,6 +266,12 @@ export function QuranStats({
             className={`flex-1 text-center py-2 px-2.5 rounded-lg transition-colors ${activeTab === "lessons" ? "bg-taiz-royal text-white shadow-sm font-black" : "text-text-secondary hover:bg-surface-hover"}`}
           >
             📚 المتابعة بالدروس ({activeLessons.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("quran-recitation")}
+            className={`flex-1 text-center py-2 px-2.5 rounded-lg transition-colors ${activeTab === "quran-recitation" ? "bg-emerald-600 text-white shadow-sm font-black" : "text-text-secondary hover:bg-surface-hover"}`}
+          >
+            📖 متابعة تلاوتي ({Object.keys(qProgress.startedSurahs).length})
           </button>
           <button
             onClick={() => setActiveTab("history")}
@@ -251,6 +301,194 @@ export function QuranStats({
 
         {/* 3. Panel Switcher content */}
         <div className="space-y-4">
+          {/* TAB: Quran Recitation Progress */}
+          {activeTab === "quran-recitation" && (
+            <div className="space-y-5 animate-fade-in">
+              {/* Recitation stats cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-surface-card p-4 rounded-xl border border-border-light flex items-center justify-between shadow-xs">
+                  <div className="text-right">
+                    <span className="text-[11px] text-text-muted font-extrabold block">سور مكتملة</span>
+                    <span className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block">
+                      {qProgress.completedSurahs.length} <span className="text-xs font-normal text-text-muted">سورة</span>
+                    </span>
+                  </div>
+                  <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/20 rounded-lg text-emerald-600 shrink-0">
+                    <BookOpenCheck className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-surface-card p-4 rounded-xl border border-border-light flex items-center justify-between shadow-xs">
+                  <div className="text-right">
+                    <span className="text-[11px] text-text-muted font-extrabold block">سور قيد الاستماع</span>
+                    <span className="text-xl font-black text-amber-500 mt-0.5 block">
+                      {Object.keys(qProgress.startedSurahs).length} <span className="text-xs font-normal text-text-muted">سورة</span>
+                    </span>
+                  </div>
+                  <div className="p-2.5 bg-amber-50 dark:bg-amber-950/20 rounded-lg text-amber-500 shrink-0">
+                    <History className="w-5 h-5" />
+                  </div>
+                </div>
+
+                <div className="bg-surface-card p-4 rounded-xl border border-border-light flex items-center justify-between shadow-xs">
+                  <div className="text-right">
+                    <span className="text-[11px] text-text-muted font-extrabold block">مرات الاستماع للآيات</span>
+                    <span className="text-xl font-black text-blue-500 mt-0.5 block">
+                      {qProgress.totalAyahsListenedCount || 0} <span className="text-xs font-normal text-text-muted">آية</span>
+                    </span>
+                  </div>
+                  <div className="p-2.5 bg-blue-50 dark:bg-blue-950/20 rounded-lg text-blue-500 shrink-0">
+                    <Volume2 className="w-5 h-5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Reset Quran progress header & sub-tab selector */}
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex gap-1.5 bg-surface-main p-1 rounded-lg border border-border-light">
+                  <button
+                    onClick={() => setQuranProgressSubTab("history")}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                      quranProgressSubTab === "history"
+                        ? "bg-emerald-600 text-white font-black shadow-xs"
+                        : "text-text-secondary hover:text-text-primary"
+                    }`}
+                  >
+                    ⏳ سجل الاستماع ({Object.keys(qProgress.startedSurahs).length})
+                  </button>
+                  <button
+                    onClick={() => setQuranProgressSubTab("bookmarks")}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-md transition-all ${
+                      quranProgressSubTab === "bookmarks"
+                        ? "bg-emerald-600 text-white font-black shadow-xs"
+                        : "text-text-secondary hover:text-text-primary"
+                    }`}
+                  >
+                    🔖 الآيات المحفوظة ({qProgress.bookmarks.length})
+                  </button>
+                </div>
+
+                <button
+                  onClick={handleResetQuranProgress}
+                  className="px-3 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition flex items-center gap-1 border border-red-200/50 dark:border-red-900/30"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  <span>تصفير سجل التلاوة</span>
+                </button>
+              </div>
+
+              {/* Sub-tab Content: History */}
+              {quranProgressSubTab === "history" && (
+                <div className="space-y-3">
+                  {Object.keys(qProgress.startedSurahs).length === 0 ? (
+                    <div className="bg-surface-card p-8 rounded-2xl border border-border-light text-center text-text-muted">
+                      <BookOpen className="w-12 h-12 text-border-light mx-auto mb-3" />
+                      <p className="font-bold text-text-primary font-cairo">سجل تلاوة القرآن فارغ حالياً.</p>
+                      <p className="text-xs text-text-secondary mt-1">
+                        عندما تبدأ بالاستماع لأي سورة من قسم القرآن الكريم، سيتم تتبع تقدمك تلقائياً وحفظه هنا.
+                      </p>
+                    </div>
+                  ) : (
+                    Object.entries(qProgress.startedSurahs).map(([numStr, record]) => {
+                      const surahNum = parseInt(numStr, 10);
+                      const metadata = SURAHS_METADATA.find((s) => s.number === surahNum);
+                      if (!metadata) return null;
+
+                      const percentage = Math.min(100, Math.round(((record.lastIndex + 1) / record.total) * 100));
+
+                      return (
+                        <div
+                          key={`started_${surahNum}`}
+                          className="bg-surface-card p-4 rounded-xl border border-border-light shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 text-right"
+                        >
+                          <div className="flex-1 min-w-0 w-full">
+                            <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 font-bold px-2.5 py-0.5 rounded-full font-cairo">
+                              سورة {metadata.name}
+                            </span>
+                            <h3 className="text-sm font-black text-text-primary mt-1 font-cairo">
+                              {metadata.englishName} • {metadata.revelationType.toLowerCase().includes("makkah") || metadata.revelationType.toLowerCase().includes("meccan") ? "مكية" : "مدنية"}
+                            </h3>
+
+                            <div className="flex items-center gap-3 mt-2.5">
+                              <div className="flex-1 bg-surface-hover h-2 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-emerald-600 transition-all duration-300"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <span className="text-[11px] font-bold text-text-secondary font-mono">
+                                {percentage}% ({record.lastIndex + 1}/{record.total} آية)
+                              </span>
+                            </div>
+                          </div>
+
+                          {onNavigateToQuran && (
+                            <button
+                              onClick={onNavigateToQuran}
+                              className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-xs flex items-center gap-1 transition self-end sm:self-center shrink-0 shadow-xs"
+                            >
+                              <Volume2 className="w-3.5 h-3.5" />
+                              <span>انتقال للقرآن</span>
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              )}
+
+              {/* Sub-tab Content: Bookmarks */}
+              {quranProgressSubTab === "bookmarks" && (
+                <div className="space-y-3">
+                  {qProgress.bookmarks.length === 0 ? (
+                    <div className="bg-surface-card p-8 rounded-2xl border border-border-light text-center text-text-muted">
+                      <Bookmark className="w-12 h-12 text-border-light mx-auto mb-3" />
+                      <p className="font-bold text-text-primary font-cairo">لا توجد آيات قرآنية محفوظة.</p>
+                      <p className="text-xs text-text-secondary mt-1">
+                        أثناء استماعك للقرآن الكريم، يمكنك حفظ الآيات للرجوع إليها هنا لاحقاً.
+                      </p>
+                    </div>
+                  ) : (
+                    qProgress.bookmarks.map((bm, idx) => (
+                      <div
+                        key={`bm_${bm.surahNumber}_${bm.ayahIndex}_${idx}`}
+                        className="bg-surface-card p-4 rounded-xl border border-border-light shadow-xs flex flex-col gap-2.5 text-right"
+                      >
+                        <div className="flex justify-between items-center text-[10px] text-text-muted font-bold border-b border-border-light pb-2 font-cairo">
+                          <span className="text-emerald-600 dark:text-emerald-400">سورة {bm.surahName}</span>
+                          <span>الآية {bm.ayahIndex + 1}</span>
+                        </div>
+
+                        <p className="text-base font-medium text-text-primary leading-relaxed p-3 bg-amber-50/50 dark:bg-amber-950/10 border-r-4 border-amber-400 rounded-l-lg font-mono">
+                          {bm.verseText || (bm as any).text}
+                        </p>
+
+                        <div className="flex justify-end gap-2 text-xs pt-1 border-t border-border-light font-cairo">
+                          <button
+                            onClick={() => handleClearQuranBookmark(bm.surahNumber, bm.ayahIndex)}
+                            className="px-2.5 py-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded font-bold flex items-center gap-1 transition"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>حذف</span>
+                          </button>
+                          {onNavigateToQuran && (
+                            <button
+                              onClick={onNavigateToQuran}
+                              className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold flex items-center gap-1 transition shadow-xs"
+                            >
+                              <Play className="w-3 h-3 fill-current" />
+                              <span>استماع وتلاوة</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           {/* TAB: Lessons activity grouping */}
           {activeTab === "lessons" && (
             <div className="space-y-4">

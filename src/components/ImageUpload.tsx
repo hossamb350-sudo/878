@@ -10,7 +10,7 @@ interface ImageUploadProps {
   onChange?: (url: string) => void;
   onUploadsComplete?: (urls: string[]) => void;
   onRemove?: () => void;
-  label: string;
+  label?: string;
   placeholder?: string;
   className?: string;
   multiple?: boolean;

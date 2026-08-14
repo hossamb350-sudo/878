@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { HeaderWidgets } from "./HeaderWidgets";
-import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X, Play, Pause, Volume2, ArrowLeft } from "lucide-react";
+import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X, Play, Pause, Volume2, ArrowLeft, Radio } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limit, onSnapshot, doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -14,6 +14,70 @@ import { getEmbedUrl } from "../utils/embed";
 
 function NotificationCenter() {
   return null;
+}
+
+// Custom dual-color icons matching the exact image design
+function NewsNavIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="2.5" className="text-slate-700" />
+      <line x1="7" y1="8" x2="17" y2="8" className="text-[#F26522]" strokeWidth="2.5" />
+      <line x1="12" y1="12" x2="17" y2="12" className="text-slate-700" />
+      <line x1="12" y1="15" x2="17" y2="15" className="text-slate-700" />
+      <rect x="7" y="11" width="3.5" height="4" rx="0.5" className="text-slate-700" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function MediaNavIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 3l3.5 4M16 3l-3.5 4" className="text-slate-700" />
+      <rect x="2" y="7" width="20" height="14" rx="3.5" className="text-slate-700" />
+      <polygon points="10,11 15,14 10,17" className="text-[#F26522]" fill="#F26522" stroke="none" />
+    </svg>
+  );
+}
+
+function LeaderNavIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="7" r="4" className="text-slate-700" />
+      <path d="M5 21v-1.5a6 6 0 0 1 12 0V21" className="text-slate-700" />
+      <line x1="9.5" y1="16.5" x2="14.5" y2="16.5" className="text-[#F26522]" strokeWidth="2.5" />
+      <line x1="12" y1="16.5" x2="12" y2="20" className="text-[#F26522]" strokeWidth="2" />
+    </svg>
+  );
+}
+
+function QuranNavIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 5.5C4.5 4 7.5 4 12 6.5C16.5 4 19.5 4 22 5.5V18.5C19.5 17 16.5 17 12 19.5C7.5 17 4.5 17 2 18.5V5.5Z" className="text-slate-700" />
+      <path d="M12 6.5V19.5" className="text-[#F26522]" strokeWidth="2.5" />
+    </svg>
+  );
+}
+
+function EventsNavIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="15" rx="3" className="text-slate-700" />
+      <line x1="8" y1="3" x2="8" y2="7" className="text-[#F26522]" strokeWidth="2.5" />
+      <line x1="16" y1="3" x2="16" y2="7" className="text-[#F26522]" strokeWidth="2.5" />
+      <line x1="3" y1="9.5" x2="21" y2="9.5" className="text-slate-700" />
+    </svg>
+  );
+}
+
+function AccountNavIcon({ className = "w-5 h-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="7" r="4" className="text-slate-700" />
+      <path d="M5 21v-1.5a6 6 0 0 1 12 0V21" className="text-slate-700" />
+      <path d="M7.5 17.5l3.5 1.5" className="text-[#F26522]" strokeWidth="2.5" />
+    </svg>
+  );
 }
 
 /*
@@ -424,63 +488,93 @@ export function Layout({ children }: { children?: React.ReactNode }) {
           {/* Visual Separator: thin crisp border with no extra vertical spacing */}
           <div className="w-full border-b border-slate-200/40" />
           
-          {/* Global Mini Audio/Video Player for Live Streams (Merged in Header when not scrolled) */}
+          {/* Global Ultra-Tech Luxury Floating Audio/Video Capsule for Live Streams */}
           <AnimatePresence mode="wait">
-            {shouldShowTopBar && (
+            {shouldShowTopBar && activeStream && (
               <motion.div
-                key={isScrolled ? "detached-topbar" : "merged-topbar"}
-                initial={{ opacity: 0, y: isScrolled ? -15 : 0, height: 0 }}
-                animate={{ opacity: 1, y: 0, height: 'auto' }}
-                exit={{ opacity: 0, y: isScrolled ? -15 : 0, height: 0 }}
-                transition={{ duration: 0.2, ease: "easeInOut" }}
+                key={isScrolled ? "floating-topbar-scrolled" : "floating-topbar-top"}
+                initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
                 className={
                   isScrolled
-                    ? "fixed top-0 left-0 right-0 z-[60] bg-[#162032]/95 backdrop-blur-md shadow-lg border-b border-white/10 transition-all"
-                    : "overflow-hidden bg-[#162032] text-white shadow-md relative z-40 border-b border-white/5"
+                    ? "fixed top-3 left-1/2 -translate-x-1/2 w-[calc(100%-1.25rem)] max-w-md bg-slate-950/95 text-white backdrop-blur-2xl px-3.5 py-2.5 rounded-2xl shadow-[0_16px_45px_rgba(0,0,0,0.65),0_0_25px_rgba(245,158,11,0.2)] border border-amber-500/35 flex items-center justify-between z-[60] gap-2.5 ring-1 ring-amber-500/20"
+                    : "my-2 mx-auto w-[calc(100%-1.25rem)] max-w-md bg-slate-950/95 text-white backdrop-blur-2xl px-3.5 py-2.5 rounded-2xl shadow-[0_12px_35px_rgba(0,0,0,0.45),0_0_20px_rgba(245,158,11,0.18)] border border-amber-500/30 flex items-center justify-between z-40 gap-2.5 ring-1 ring-amber-500/15"
                 }
               >
-                <div className="flex items-center justify-between px-3 py-1.5 w-full max-w-2xl mx-auto h-9 text-white font-cairo">
-                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <div className="relative flex h-2 w-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                    </div>
-                    <span className="text-xs font-bold truncate text-slate-100">{activeStream.name}</span>
-                    {activeStream.description && (
-                      <span className="text-[10px] text-slate-300 truncate hidden md:inline-block max-w-[180px] font-normal">
-                        • {activeStream.description}
-                      </span>
+                {/* 1. Channel Info & Live Equalizer */}
+                <div className="flex items-center gap-2.5 min-w-0 flex-1 text-right select-none">
+                  <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-amber-950/80 via-slate-900 to-amber-950/60 flex items-center justify-center shrink-0 border border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.25)]">
+                    {isLiveStreamPlaying ? (
+                      <div className="flex items-end justify-center gap-[2px] h-3.5 w-3.5">
+                        <span className="w-[2.5px] bg-amber-400 rounded-full animate-[bounce_1s_infinite_100ms] h-full" />
+                        <span className="w-[2.5px] bg-yellow-300 rounded-full animate-[bounce_1s_infinite_300ms] h-2/3" />
+                        <span className="w-[2.5px] bg-amber-400 rounded-full animate-[bounce_1s_infinite_200ms] h-5/6" />
+                      </div>
+                    ) : (
+                      activeStream.type === "radio" ? (
+                        <Radio className="w-4 h-4 text-amber-400 opacity-90" />
+                      ) : (
+                        <Tv className="w-4 h-4 text-amber-400 opacity-90" />
+                      )
                     )}
-                    <span className="text-[9px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-1.5 py-0.5 rounded-full shrink-0 hidden xs:inline-block">
-                      {isLiveStreamPlaying ? "مباشر" : "متوقف"}
-                    </span>
                   </div>
                   
-                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 select-none">
-                    <div className="flex items-center gap-1.5 w-16 xs:w-20 sm:w-24">
-                      <button onClick={toggleMute} className="text-slate-400 hover:text-white transition-colors p-0.5" title={isMuted ? "إلغاء كتم الصوت" : "كتم الصوت"}>
-                        {isMuted || volume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                      </button>
-                      <input 
-                        type="range" min="0" max="1" step="0.01" 
-                        value={isMuted ? 0 : volume}
-                        onChange={(e) => setVolume(parseFloat(e.target.value))}
-                        className="flex-1 h-1 bg-slate-700/60 rounded-lg appearance-none cursor-pointer accent-amber-500"
-                      />
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[11px] font-black font-cairo leading-tight bg-gradient-to-r from-amber-300 via-amber-100 to-yellow-400 bg-clip-text text-transparent truncate">
+                      {activeStream.name}
+                    </span>
+                    <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                      <div className="relative flex h-2 w-2 shrink-0 items-center justify-center">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]"></span>
+                      </div>
+                      <span className="text-[9.5px] font-extrabold font-cairo text-amber-300/90 leading-none truncate">
+                        {isLiveStreamPlaying ? "بث مباشر الآن" : "متوقف مؤقتاً"}
+                      </span>
                     </div>
-                    
-                    <button 
-                      onClick={toggleLiveStreamPlay}
-                      className="w-6 h-6 sm:w-7 sm:h-7 flex items-center justify-center rounded-full bg-amber-500 hover:bg-amber-400 text-slate-900 shadow-sm transition-all active:scale-90"
-                      title={isLiveStreamPlaying ? "إيقاف مؤقت" : "تشغيل"}
-                    >
-                      {isLiveStreamPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
-                    </button>
-                    
-                    <button onClick={stopStream} className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors active:scale-90" title="إغلاق المشغل">
-                      <X className="w-3.5 h-3.5" />
-                    </button>
                   </div>
+                </div>
+
+                {/* 2. Controls & Custom Slider */}
+                <div className="flex items-center gap-2 shrink-0 select-none">
+                  {/* Volume Slider Pill */}
+                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-900/90 border border-slate-800/90 shadow-inner">
+                    <button 
+                      onClick={toggleMute} 
+                      className="text-slate-400 hover:text-amber-400 transition-colors p-0.5 active:scale-90" 
+                      title={isMuted ? "إلغاء كتم الصوت" : "كتم الصوت"}
+                    >
+                      {isMuted || volume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+                    </button>
+                    <input 
+                      type="range" min="0" max="1" step="0.01" 
+                      value={isMuted ? 0 : volume}
+                      onChange={(e) => setVolume(parseFloat(e.target.value))}
+                      className="luxury-slider w-10 xs:w-14 sm:w-16"
+                    />
+                  </div>
+
+                  {/* Play / Pause Metallic Circle */}
+                  <button 
+                    onClick={toggleLiveStreamPlay}
+                    className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-300 text-slate-950 flex items-center justify-center shadow-[0_0_18px_rgba(245,158,11,0.45)] transition-all active:scale-90 hover:scale-105"
+                    title={isLiveStreamPlaying ? "إيقاف مؤقت" : "تشغيل"}
+                  >
+                    {isLiveStreamPlaying ? <Pause className="w-4 h-4 fill-slate-950 stroke-none" /> : <Play className="w-4 h-4 fill-slate-950 stroke-none translate-x-[-0.5px]" />}
+                  </button>
+
+                  <div className="w-px h-5 bg-slate-800/80" />
+
+                  {/* Close Button */}
+                  <button 
+                    onClick={stopStream} 
+                    className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-colors active:scale-90" 
+                    title="إغلاق البث"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               </motion.div>
             )}
@@ -509,7 +603,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 30, scale: 0.95 }}
-            className="fixed bottom-[64px] left-1/2 -translate-x-1/2 w-[calc(100%-1.5rem)] max-w-sm bg-slate-900/95 dark:bg-stone-900/95 text-white backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.35)] border border-slate-800/80 dark:border-stone-800/80 flex items-center justify-between z-50 gap-2.5"
+            className="fixed bottom-[68px] sm:bottom-[72px] left-1/2 -translate-x-1/2 w-[calc(100%-1.25rem)] max-w-sm bg-slate-950/95 text-white backdrop-blur-2xl px-3.5 py-2 rounded-2xl shadow-[0_16px_40px_rgba(0,0,0,0.6),0_0_20px_rgba(16,185,129,0.15)] border border-emerald-500/30 flex items-center justify-between z-50 gap-2.5 ring-1 ring-emerald-500/15"
           >
             {/* Clickable Area to return to Quran page and open Surah */}
             <button
@@ -517,15 +611,23 @@ export function Layout({ children }: { children?: React.ReactNode }) {
               className="flex items-center gap-2.5 min-w-0 flex-1 text-right group active:scale-[0.98] transition"
               title="الذهاب للسورة وتتبع الآية"
             >
-              <div className="w-8 h-8 rounded-full bg-emerald-950/80 flex items-center justify-center shrink-0 border border-emerald-800/30 group-hover:bg-emerald-900 transition">
-                <Volume2 className={`w-4 h-4 text-emerald-400 ${isPlaying ? "animate-pulse" : ""}`} />
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-900/70 to-slate-900 flex items-center justify-center shrink-0 border border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.25)] group-hover:border-emerald-400 transition">
+                {isPlaying ? (
+                  <div className="flex items-end justify-center gap-[2px] h-3.5 w-3.5">
+                    <span className="w-[2.5px] bg-emerald-400 rounded-full animate-[bounce_1s_infinite_100ms] h-full" />
+                    <span className="w-[2.5px] bg-teal-300 rounded-full animate-[bounce_1s_infinite_300ms] h-2/3" />
+                    <span className="w-[2.5px] bg-emerald-400 rounded-full animate-[bounce_1s_infinite_200ms] h-5/6" />
+                  </div>
+                ) : (
+                  <Volume2 className="w-4 h-4 text-emerald-400 opacity-80" />
+                )}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[11px] font-black font-cairo leading-none text-emerald-400 group-hover:text-emerald-300 transition flex items-center gap-1">
+                <span className="text-[11px] font-black font-cairo leading-none bg-gradient-to-r from-emerald-300 via-teal-200 to-emerald-400 bg-clip-text text-transparent group-hover:from-emerald-200 group-hover:to-teal-200 transition flex items-center gap-1">
                   <span>سورة {selectedSurah.name}</span>
-                  <ArrowLeft className="w-2.5 h-2.5 text-emerald-500/80 group-hover:translate-x-[-1px] transition-transform" />
+                  <ArrowLeft className="w-2.5 h-2.5 text-emerald-400 group-hover:translate-x-[-2px] transition-transform" />
                 </span>
-                <span className="text-[9px] text-slate-300 font-bold font-cairo mt-1 leading-none truncate">
+                <span className="text-[9.5px] text-slate-300 font-bold font-cairo mt-1 leading-none truncate">
                   {surahDetail ? `الآية ${toArabicNumerals(surahDetail.ayahs[currentAyahIndex]?.numberInSurah || 1)}` : "جاري تلاوة السورة..."}
                 </span>
               </div>
@@ -535,17 +637,17 @@ export function Layout({ children }: { children?: React.ReactNode }) {
             <div className="flex items-center gap-2 shrink-0 select-none">
               <button
                 onClick={togglePlay}
-                className="w-7 h-7 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center shadow-md active:scale-90 transition"
+                className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-500 via-teal-400 to-emerald-300 text-slate-950 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] active:scale-90 hover:scale-105 transition-all"
                 title={isPlaying ? "إيقاف مؤقت" : "تشغيل"}
               >
-                {isPlaying ? <Pause className="w-3.5 h-3.5 fill-white" /> : <Play className="w-3.5 h-3.5 fill-white translate-x-[-0.5px]" />}
+                {isPlaying ? <Pause className="w-4 h-4 fill-slate-950 stroke-none" /> : <Play className="w-4 h-4 fill-slate-950 stroke-none translate-x-[-0.5px]" />}
               </button>
 
-              <div className="w-px h-5 bg-slate-700/60" />
+              <div className="w-px h-5 bg-slate-800" />
 
               <button
                 onClick={closePlayer}
-                className="p-1 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition active:scale-90"
+                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition active:scale-90"
                 title="إغلاق المشغل"
               >
                 <X className="w-4 h-4" />
@@ -556,42 +658,42 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       </AnimatePresence>
 
       {/* Navigation for All Devices */}
-      <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-8px_30px_rgba(0,0,0,0.04)] border-t border-slate-100/80 px-1 flex justify-center items-center z-40 pb-safe transition-transform duration-300 h-[54px] sm:h-[58px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
-        <div className="grid grid-cols-6 w-full max-w-2xl mx-auto px-0.5">
+      <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_25px_rgba(0,0,0,0.06)] border-t border-slate-100 z-40 pb-safe transition-transform duration-300 h-[62px] sm:h-[66px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+        <div className="grid grid-cols-6 w-full max-w-2xl mx-auto h-full px-0.5 relative">
           {[
-            { to: "/", icon: Newspaper, label: "الأخبار" },
-            { to: "/watch", icon: Tv, label: "ميديا" },
-            { to: "/leader", icon: User, label: "السيد القائد" },
-            { to: "/quran", icon: BookOpen, label: "هدي القرآن" },
-            { to: "/events", icon: CalendarIcon, label: "أنشطة ومناسبات" },
-            { to: "/admin", icon: User, label: "حسابي" }
-          ].map((item) => {
+            { to: "/", icon: NewsNavIcon, label: "الأخبار" },
+            { to: "/watch", icon: MediaNavIcon, label: "ميديا" },
+            { to: "/leader", icon: LeaderNavIcon, label: "السيد القائد" },
+            { to: "/quran", icon: QuranNavIcon, label: "هدي القرآن" },
+            { to: "/events", icon: EventsNavIcon, label: "أنشطة ومناسبات" },
+            { to: "/admin", icon: AccountNavIcon, label: "حسابي" }
+          ].map((item, index) => {
             const isItemActive = item.to === "/"
               ? (location.pathname === "/" || location.pathname.startsWith("/articles"))
-              : location.pathname === item.to;
+              : location.pathname.startsWith(item.to);
 
             return (
               <NavLink
                 key={item.to}
                 to={item.to}
-                className="flex flex-col items-center justify-center w-full relative"
+                className={`flex flex-col items-center justify-center w-full relative h-full px-0.5 ${
+                  index < 5 ? 'border-l border-slate-200/50' : ''
+                }`}
               >
-                <div 
-                  className={`flex flex-col items-center justify-center w-full py-0.5 transition-all duration-300 relative ${
-                    isItemActive 
-                      ? "text-taiz-sky font-bold" 
-                      : "text-slate-500 hover:text-taiz-sky/80"
-                  }`}
-                >
-                  <div className="h-4.5 sm:h-5 w-full flex items-center justify-center mb-0.5 shrink-0 relative">
-                    <item.icon className={`w-4 h-4 sm:w-[18px] sm:h-[18px] transition-all duration-300 ${isItemActive ? 'stroke-[2.5] text-taiz-sky' : 'stroke-[2]'}`} />
+                <div className="flex flex-col items-center justify-center w-full py-1 transition-all duration-300">
+                  <div className="h-5 sm:h-5.5 flex items-center justify-center mb-0.5 shrink-0">
+                    <item.icon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                   </div>
-                  <span className={`text-[8.5px] min-[360px]:text-[9.5px] sm:text-[10px] font-bold text-center leading-none tracking-tight px-0.5 w-full font-cairo ${isItemActive ? 'text-taiz-sky' : ''}`}>
+                  <span className="text-[8.5px] min-[360px]:text-[9.5px] sm:text-[10px] font-bold text-center leading-tight tracking-tight px-0.5 w-full font-cairo text-slate-800 line-clamp-2">
                     {item.label}
                   </span>
-                  {isItemActive && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-5 h-[2px] bg-taiz-sky rounded-t-full" />
-                  )}
+                  <div className="mt-1 flex items-center justify-center h-1.5">
+                    {isItemActive ? (
+                      <div className="w-6 h-[3px] bg-[#F26522] rounded-full" />
+                    ) : (
+                      <div className="w-1.5 h-1.5 bg-[#F26522] rounded-full" />
+                    )}
+                  </div>
                 </div>
               </NavLink>
             );

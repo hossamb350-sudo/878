@@ -112,7 +112,7 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
       const stored = localStorage.getItem("quran_kareem_font_size");
       if (stored === "sm" || stored === "md" || stored === "lg" || stored === "xl") return stored;
     } catch (e) {}
-    return "lg";
+    return "md";
   });
   const [lineHeight, setLineHeight] = useState<"compact" | "relaxed" | "loose">(() => {
     try {
@@ -129,6 +129,8 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
     return true;
   });
   const [focusMode, setFocusMode] = useState(false);
+  const focusModePushedRef = useRef(false);
+
   const [autoPlayNext, setAutoPlayNext] = useState<boolean>(() => {
     try {
       const stored = localStorage.getItem("quran_auto_play_next");
@@ -158,16 +160,35 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
     localStorage.setItem("quran_kareem_font_medium", JSON.stringify(fontMedium));
   }, [fontMedium]);
 
-  // Use focusMode to toggle a global class to hide the main app navigation
+  // Handle focusMode global body class and phone back button
   useEffect(() => {
     if (focusMode) {
       document.body.classList.add("quran-reading-focus");
+
+      if (!focusModePushedRef.current) {
+        focusModePushedRef.current = true;
+        window.history.pushState({ quranFocusMode: true }, "");
+      }
+
+      const handlePopState = () => {
+        focusModePushedRef.current = false;
+        setFocusMode(false);
+      };
+
+      window.addEventListener("popstate", handlePopState);
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+        document.body.classList.remove("quran-reading-focus");
+      };
     } else {
       document.body.classList.remove("quran-reading-focus");
+      if (focusModePushedRef.current) {
+        focusModePushedRef.current = false;
+        if (window.history.state?.quranFocusMode) {
+          window.history.back();
+        }
+      }
     }
-    return () => {
-      document.body.classList.remove("quran-reading-focus");
-    };
   }, [focusMode]);
 
   // Recitation progress saved in localStorage

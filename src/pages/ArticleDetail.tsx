@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { Article } from "../types";
 import { motion, AnimatePresence } from "motion/react";
@@ -72,6 +72,22 @@ export function ArticleDetail() {
     ...(article.imageUrl ? [article.imageUrl] : []),
     ...(article.additionalImages || [])
   ].filter(Boolean) as string[] : [];
+
+  // Live Author Sync: Keep author photo and name up to date if authorId matches
+  useEffect(() => {
+    if (!article?.authorId) return;
+    const unsub = onSnapshot(doc(db, "authors", article.authorId), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setArticle(prev => prev ? {
+          ...prev,
+          authorName: data.name || prev.authorName,
+          authorPhoto: data.photoURL || prev.authorPhoto
+        } : null);
+      }
+    });
+    return () => unsub();
+  }, [article?.authorId]);
 
   // Auto slide interval for the article hero card
   useEffect(() => {
@@ -306,20 +322,21 @@ export function ArticleDetail() {
         </h1>
       </div>
 
-      <div className="max-w-[760px] mx-auto w-full px-0 pt-6 sm:pt-10 pb-2">
-        {/* Featured Article Card Header - Integrated Slider with horizontal controls */}
-        <motion.div 
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="relative w-full h-[320px] sm:h-[400px] md:h-[450px] overflow-hidden bg-slate-50 dark:bg-stone-950/20 mb-3 select-none group rounded-xl shadow-xs border border-slate-200/20 dark:border-stone-800/25"
-        >
-          {/* Horizontal Swiping Container */}
-          <div 
-            className="absolute inset-0 w-full h-full cursor-zoom-in"
-            onClick={() => openGallery(currentSlide)}
-            title="انقر لتكبير وعرض الصورة"
+      {/* Render Image Gallery Slider ONLY if article has images */}
+      {allImages.length > 0 && (
+        <div className="max-w-[760px] mx-auto w-full px-0 pt-4 sm:pt-6 pb-2">
+          {/* Featured Article Card Header - Integrated Slider with horizontal controls */}
+          <motion.div 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative w-full h-[320px] sm:h-[400px] md:h-[450px] overflow-hidden bg-slate-900 mb-3 select-none group rounded-2xl shadow-md border border-slate-200/20 dark:border-slate-800/80"
           >
-            {allImages.length > 0 ? (
+            {/* Horizontal Swiping Container */}
+            <div 
+              className="absolute inset-0 w-full h-full cursor-zoom-in"
+              onClick={() => openGallery(currentSlide)}
+              title="انقر لتكبير وعرض الصورة"
+            >
               <AnimatePresence mode="wait">
                 <motion.img 
                   key={currentSlide}
@@ -332,124 +349,129 @@ export function ArticleDetail() {
                   transition={{ duration: 0.6, ease: "easeInOut" }}
                 />
               </AnimatePresence>
-            ) : (
-              <div className="w-full h-full bg-[#141B26] flex items-center justify-center">
-                <Newspaper className="w-12 h-12 text-white/20" />
-              </div>
-            )}
-          </div>
+            </div>
 
-          {/* Current Slide Counter Index Badge */}
-          {allImages.length > 0 && (
+            {/* Current Slide Counter Index Badge */}
             <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white px-3.5 py-1.5 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1" dir="ltr">
               <span>{currentSlide + 1}</span>
               <span className="text-white/40">/</span>
               <span>{allImages.length}</span>
             </div>
-          )}
 
-          {/* Views badge - compact eye icon with views count on the far left inside the slider */}
-          <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 px-2.5 py-1 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
-            <Eye className="w-3.5 h-3.5 stroke-[2] text-white/80" />
-            <span>{article.views || 4}</span>
-          </div>
-
-          {/* Left/Right manual slide buttons with compatible styles */}
-          {allImages.length > 1 && (
-            <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSlide((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
-                }}
-                className="p-2.5 bg-black/40 hover:bg-taiz-sky active:scale-95 text-white rounded-full backdrop-blur-md transition-all duration-300 pointer-events-auto cursor-pointer shadow-lg"
-                title="الصورة السابقة"
-              >
-                <ChevronRight className="w-5.5 h-5.5 stroke-[2.5]" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSlide((prev) => (prev + 1) % allImages.length);
-                }}
-                className="p-2.5 bg-black/40 hover:bg-taiz-sky active:scale-95 text-white rounded-full backdrop-blur-md transition-all duration-300 pointer-events-auto cursor-pointer shadow-lg"
-                title="الصورة التالية"
-              >
-                <ChevronLeft className="w-5.5 h-5.5 stroke-[2.5]" />
-              </button>
+            {/* Views badge */}
+            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 px-2.5 py-1 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
+              <Eye className="w-3.5 h-3.5 stroke-[2] text-white/80" />
+              <span>{article.views || 0}</span>
             </div>
-          )}
 
-          {/* Category Pill floating at top-right area */}
-          <div className="absolute top-4 right-4 z-20 flex flex-wrap gap-2 pointer-events-none">
-            <CategoryBadges item={article as any} isHero={true} className="drop-shadow-lg" />
-          </div>
-        </motion.div>
-
-        {/* Dynamic Image Thumbnails underneath Slider */}
-        {allImages.length > 1 && (
-          <div className="px-4 sm:px-5 mb-4 flex items-center justify-center w-full">
-            <div ref={thumbnailContainerRef} className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
-              {allImages.map((img, idx) => (
+            {/* Left/Right manual slide buttons */}
+            {allImages.length > 1 && (
+              <div className="absolute inset-x-4 top-1/2 -translate-y-1/2 flex justify-between items-center z-20 pointer-events-none">
                 <button
-                  key={idx}
-                  ref={idx === currentSlide ? activeThumbnailRef : undefined}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={`relative w-14 h-10 rounded-md overflow-hidden shrink-0 snap-center transition-all ${
-                    idx === currentSlide 
-                      ? "ring-2 ring-taiz-sky scale-105 opacity-100" 
-                      : "opacity-60 hover:opacity-100"
-                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentSlide((prev) => (prev > 0 ? prev - 1 : allImages.length - 1));
+                  }}
+                  className="p-2.5 bg-black/40 hover:bg-taiz-sky active:scale-95 text-white rounded-full backdrop-blur-md transition-all duration-300 pointer-events-auto cursor-pointer shadow-lg"
+                  title="الصورة السابقة"
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <ChevronRight className="w-5.5 h-5.5 stroke-[2.5]" />
                 </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5">
-        {/* Article Metadata Card - Extra Compact with Platform Navy branding & 11px Font */}
-        <div className="bg-slate-50/40 dark:bg-stone-900/20 border border-slate-200/20 dark:border-stone-800/40 rounded-lg p-2 sm:p-2.5 shadow-xs mb-3 mt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 font-cairo text-right" dir="rtl">
-          {/* Author info with brand circular navy/photo badge */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            {article.authorPhoto ? (
-              <img 
-                src={article.authorPhoto} 
-                className="w-6.5 h-6.5 rounded-full object-cover border border-taiz-navy/20" 
-                alt={article.authorName} 
-              />
-            ) : (
-              <div className="w-6.5 h-6.5 bg-taiz-navy/10 dark:bg-taiz-navy/20 rounded-full flex items-center justify-center text-taiz-navy dark:text-taiz-soft shrink-0">
-                <User className="w-3 h-3 stroke-[2.5]" />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentSlide((prev) => (prev + 1) % allImages.length);
+                  }}
+                  className="p-2.5 bg-black/40 hover:bg-taiz-sky active:scale-95 text-white rounded-full backdrop-blur-md transition-all duration-300 pointer-events-auto cursor-pointer shadow-lg"
+                  title="الصورة التالية"
+                >
+                  <ChevronLeft className="w-5.5 h-5.5 stroke-[2.5]" />
+                </button>
               </div>
             )}
-            <div>
-              <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-bold leading-none mb-0.5">الكاتب</p>
-              <p className="text-[11px] font-black text-slate-800 dark:text-zinc-200">{article.authorName || "هيثم اليوسفي"}</p>
+
+            {/* Category Pill floating at top-right area */}
+            <div className="absolute top-4 right-4 z-20 flex flex-wrap gap-2 pointer-events-none">
+              <CategoryBadges item={article as any} isHero={true} className="drop-shadow-lg" />
+            </div>
+          </motion.div>
+
+          {/* Dynamic Image Thumbnails underneath Slider */}
+          {allImages.length > 1 && (
+            <div className="px-4 sm:px-5 mb-4 flex items-center justify-center w-full">
+              <div ref={thumbnailContainerRef} className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
+                {allImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    ref={idx === currentSlide ? activeThumbnailRef : undefined}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`relative w-14 h-10 rounded-md overflow-hidden shrink-0 snap-center transition-all ${
+                      idx === currentSlide 
+                        ? "ring-2 ring-taiz-sky scale-105 opacity-100" 
+                        : "opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5 mt-4">
+        {/* Article Metadata Card - Re-designed, Elegant, Structured */}
+        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-xs mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 font-cairo text-right" dir="rtl">
+          {/* Author info with author avatar, prefix badge & name */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="relative">
+              {article.authorPhoto ? (
+                <img 
+                  src={article.authorPhoto} 
+                  className="w-11 h-11 rounded-full object-cover ring-2 ring-taiz-sky/30 shadow-xs" 
+                  alt={article.authorName} 
+                />
+              ) : (
+                <div className="w-11 h-11 bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-700 rounded-full flex items-center justify-center text-slate-700 dark:text-slate-200 ring-2 ring-taiz-sky/20 shadow-xs shrink-0">
+                  <User className="w-5 h-5 stroke-[2]" />
+                </div>
+              )}
+              <div className="absolute -bottom-1 -right-1 bg-amber-500 text-white rounded-full p-0.5 shadow-xs">
+                <Check className="w-2.5 h-2.5 stroke-[3]" />
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md inline-block w-fit mb-0.5">
+                بقلم الكاتب
+              </span>
+              <p className="text-sm font-black text-slate-900 dark:text-white leading-tight">
+                {article.authorName || "كاتب المنصة"}
+              </p>
             </div>
           </div>
 
-          <div className="h-px sm:h-5 w-full sm:w-px bg-slate-200/50 dark:bg-stone-800/40" />
+          <div className="h-px sm:h-8 w-full sm:w-px bg-slate-200 dark:bg-slate-800" />
 
-          {/* Inline Dates & Times using 11px size & Navy Blue icons */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-zinc-400 font-bold">
-            <div className="flex items-center gap-1 shrink-0">
-              <Calendar className="w-3 h-3 text-taiz-navy dark:text-taiz-soft stroke-[2.5]" />
+          {/* Dates & Views Info */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600 dark:text-slate-300 font-bold">
+            <div className="flex items-center gap-1.5 shrink-0 bg-white dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+              <Calendar className="w-3.5 h-3.5 text-taiz-sky stroke-[2]" />
               <span>{article.hijriDate || "15 صفر 1448 هـ"}</span>
             </div>
 
             {article.gregorianDate && (
-              <>
-                <span className="text-slate-200 dark:text-stone-800 font-normal hidden sm:inline">|</span>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <Clock className="w-3 h-3 text-taiz-navy dark:text-taiz-soft stroke-[2.5]" />
-                  <span>{article.gregorianDate}</span>
-                </div>
-              </>
+              <div className="flex items-center gap-1.5 shrink-0 bg-white dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                <Clock className="w-3.5 h-3.5 text-taiz-sky stroke-[2]" />
+                <span>{article.gregorianDate}</span>
+              </div>
             )}
+
+            <div className="flex items-center gap-1.5 shrink-0 bg-white dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-slate-500">
+              <Eye className="w-3.5 h-3.5 text-emerald-500 stroke-[2]" />
+              <span>{article.views || 0} مشاهدة</span>
+            </div>
           </div>
         </div>
         {/* Floating Interaction Bar (شريط التفاعل) matching screenshot */}

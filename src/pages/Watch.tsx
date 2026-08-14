@@ -743,7 +743,7 @@ export function Watch() {
                 <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
                   {channelTab === "tv" ? "القنوات الفضائية المتاحة" : "الإذاعات المتاحة"}
                 </h2>
-                <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">
+                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">
                   {channelTab === "tv" ? "اختر القناة للمشاهدة المباشرة" : "استمع إلى البث الإذاعي المباشر"}
                 </p>
               </div>
@@ -900,7 +900,7 @@ export function Watch() {
               </div>
               <div className="flex flex-col text-right">
                 <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">الأكثر مشاهدة</h2>
-                <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">الفيديوهات والتغطيات الأكثر رواجاً وتفاعلاً</p>
+                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">الفيديوهات والتغطيات الأكثر رواجاً وتفاعلاً</p>
               </div>
               
               <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
@@ -992,7 +992,7 @@ export function Watch() {
               </div>
               <div className="flex flex-col text-right">
                 <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أحدث الفيديوهات</h2>
-                <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
+                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
               </div>
               
               <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>

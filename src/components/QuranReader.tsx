@@ -88,6 +88,7 @@ export function QuranReader({
 
   // Focus and helpers
   const [focusMode, setFocusMode] = useState(false);
+  const focusModePushedRef = useRef(false);
   const [showSettings, setShowSettings] = useState(false);
 
   // Scroll details state
@@ -150,7 +151,7 @@ export function QuranReader({
     );
   }, [fontMedium]);
 
-  // Handle global focusMode body classes and full screen
+  // Handle global focusMode body classes, full screen, and phone back button
   useEffect(() => {
     if (focusMode) {
       document.body.classList.add("quran-reading-focus");
@@ -158,29 +159,43 @@ export function QuranReader({
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen?.();
         }
-      } catch (err) {
-        console.warn("Could not request full screen:", err);
+      } catch (err) {}
+
+      if (!focusModePushedRef.current) {
+        focusModePushedRef.current = true;
+        window.history.pushState({ lessonFocusMode: true }, "");
       }
+
+      const handlePopState = () => {
+        focusModePushedRef.current = false;
+        setFocusMode(false);
+      };
+
+      window.addEventListener("popstate", handlePopState);
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+        document.body.classList.remove("quran-reading-focus");
+        try {
+          if (document.fullscreenElement) {
+            document.exitFullscreen?.();
+          }
+        } catch (err) {}
+      };
     } else {
       document.body.classList.remove("quran-reading-focus");
       try {
         if (document.fullscreenElement) {
           document.exitFullscreen?.();
         }
-      } catch (err) {
-        console.warn("Could not exit full screen:", err);
+      } catch (err) {}
+
+      if (focusModePushedRef.current) {
+        focusModePushedRef.current = false;
+        if (window.history.state?.lessonFocusMode) {
+          window.history.back();
+        }
       }
     }
-    return () => {
-      document.body.classList.remove("quran-reading-focus");
-      try {
-        if (document.fullscreenElement) {
-          document.exitFullscreen?.();
-        }
-      } catch (err) {
-        console.warn("Could not exit full screen:", err);
-      }
-    };
   }, [focusMode]);
 
   // Handle Reading Time Accumulation (active viewing)
@@ -796,16 +811,25 @@ export function QuranReader({
         )}
       </AnimatePresence>
 
-      {/* Focus Mode floating header inside the reader */}
+      {/* Focus Mode top bar - Never covers content */}
       {focusMode && (
-        <div className="absolute top-6 left-6 z-[100] flex items-center gap-2 pointer-events-none">
+        <div className={`sticky top-0 z-[100] w-full px-4 py-2.5 flex items-center justify-between border-b backdrop-blur-md shadow-xs transition-colors duration-300 ${
+          readerTheme === 'day' 
+            ? 'bg-white/95 border-slate-200 text-slate-900' 
+            : readerTheme === 'sepia' 
+            ? 'bg-[#F4ECD8]/95 border-[#EADFCA] text-[#3D2C1E]' 
+            : 'bg-[#121214]/95 border-zinc-800 text-zinc-100'
+        }`}>
           <button
             onClick={() => setFocusMode(false)}
-            className="flex items-center gap-1.5 px-5 py-2.5 bg-black/80 hover:bg-black backdrop-blur-xl text-white font-black rounded-full text-xs shadow-strong border border-white/20 transition-all duration-300 pointer-events-auto hover:scale-105 active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-black rounded-xl text-xs shadow-xs transition-all active:scale-95 font-cairo"
           >
-            <Minimize2 className="w-4 h-4 text-red-600" />
+            <Minimize2 className="w-4 h-4" />
             <span>خروج من وضع التركيز</span>
           </button>
+          <span className="text-xs font-black font-cairo opacity-80 truncate max-w-[200px]">
+            {lesson.title}
+          </span>
         </div>
       )}
 
@@ -1304,38 +1328,60 @@ export function QuranReader({
         </div>
       </div>
 
-      {/* 2. Interactive Bottom Reading HUD Indicators (Time left, progress remaining) */}
+      {/* 2. Interactive Bottom Reading HUD Indicators (Compact & Harmonized) */}
       {!focusMode && (
-        <div className="bg-taiz-navy border-t border-white/10 text-white px-4 py-2.5 flex items-center justify-between shadow-lg text-xs font-sans shrink-0">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-red-600" />
-            <span className="font-bold">
+        <div 
+          className={`border-t px-3 py-1 sm:py-1.5 flex items-center justify-between text-[10.5px] sm:text-[11.5px] font-cairo shrink-0 transition-colors duration-300 ${
+            readerTheme === 'day'
+              ? 'bg-slate-50/95 border-slate-200/80 text-slate-700'
+              : readerTheme === 'sepia'
+              ? 'bg-[#EFE6D5]/95 border-[#E2D6BF] text-[#4A3B2C]'
+              : 'bg-[#18181A]/95 border-zinc-800 text-zinc-300'
+          }`}
+        >
+          {/* Right item: Remaining time */}
+          <div className="flex items-center gap-1.5">
+            <Clock className={`w-3.5 h-3.5 ${
+              readerTheme === 'day' ? 'text-amber-600' : readerTheme === 'sepia' ? 'text-amber-700' : 'text-amber-400'
+            }`} />
+            <span className="font-semibold">
               بقي حوالي:{" "}
-              <span className="text-emerald-400 font-black">
+              <span className={`font-black ${
+                readerTheme === 'day' ? 'text-emerald-700' : readerTheme === 'sepia' ? 'text-emerald-800' : 'text-emerald-400'
+              }`}>
                 {scrollStats.timeRemainingMinutes} دقائق
               </span>
             </span>
           </div>
 
-          <div className="text-center">
-            <span className="font-extrabold text-taiz-sky">
-              تمت قراءة {scrollStats.percentage}% من الدرس
+          {/* Middle item: Reading percentage and progress bar */}
+          <div className="flex flex-col items-center">
+            <span className={`font-bold ${
+              readerTheme === 'day' ? 'text-slate-800' : readerTheme === 'sepia' ? 'text-[#3D2C1E]' : 'text-zinc-100'
+            }`}>
+              تمت قراءة <span className="font-black text-[#F26522]">{scrollStats.percentage}%</span> من الدرس
             </span>
-            {/* Progress bar line */}
-            <div className="w-32 bg-white/20 h-1 rounded-full overflow-hidden mt-1 mx-auto">
+            <div className={`w-20 sm:w-24 h-1 rounded-full overflow-hidden mt-0.5 ${
+              readerTheme === 'day' ? 'bg-slate-200' : readerTheme === 'sepia' ? 'bg-[#DCD0B9]' : 'bg-zinc-700'
+            }`}>
               <div
-                className="h-full bg-taiz-sky"
+                className="h-full bg-[#F26522] rounded-full transition-all duration-300"
                 style={{ width: `${scrollStats.percentage}%` }}
               />
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <BookText className="w-4 h-4 text-red-600" />
-            <span className="font-bold">
+          {/* Left item: Remaining paragraphs */}
+          <div className="flex items-center gap-1.5">
+            <BookText className={`w-3.5 h-3.5 ${
+              readerTheme === 'day' ? 'text-amber-600' : readerTheme === 'sepia' ? 'text-amber-700' : 'text-amber-400'
+            }`} />
+            <span className="font-semibold">
               متبقي:{" "}
-              <span className="text-blue-400 font-black">
-                {scrollStats.paragraphsRemaining} فِقرات
+              <span className={`font-black ${
+                readerTheme === 'day' ? 'text-sky-700' : readerTheme === 'sepia' ? 'text-sky-800' : 'text-sky-400'
+              }`}>
+                {scrollStats.paragraphsRemaining} فقرات
               </span>
             </span>
           </div>

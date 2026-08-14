@@ -138,8 +138,10 @@
 
 /* Quran Reading Focus Mode Layout Styles */
 body.quran-reading-focus nav,
-body.quran-reading-focus div.relative.z-30,
-body.quran-reading-focus header {
+body.quran-reading-focus header,
+body.quran-reading-focus footer,
+body.quran-reading-focus [data-app-nav],
+body.quran-reading-focus div.relative.z-30 {
   display: none !important;
 }
 
@@ -148,6 +150,51 @@ body.quran-reading-focus main {
   margin-bottom: 0 !important;
   max-height: 100vh !important;
   overflow: hidden !important;
+}
+
+/* Custom Luxury Range Slider */
+input[type="range"].luxury-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"].luxury-slider::-webkit-slider-runnable-track {
+  background: rgba(51, 65, 85, 0.8);
+  height: 4px;
+  border-radius: 9999px;
+}
+
+input[type="range"].luxury-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -4px;
+  background: #f59e0b;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
+  transition: transform 0.15s ease;
+}
+
+input[type="range"].luxury-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+input[type="range"].luxury-slider::-moz-range-track {
+  background: rgba(51, 65, 85, 0.8);
+  height: 4px;
+  border-radius: 9999px;
+}
+
+input[type="range"].luxury-slider::-moz-range-thumb {
+  border: none;
+  background: #f59e0b;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.8);
 }
 
 :root {

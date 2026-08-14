@@ -237,6 +237,7 @@ export interface Article {
   title: string;
   content: string;
   category: string;
+  categories?: string[];
   imageUrl?: string;
   additionalImages?: string[];
   authorName: string;

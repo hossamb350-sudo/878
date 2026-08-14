@@ -123,7 +123,7 @@ export function AdminFeaturedTopics() {
           </div>
           <div className="flex flex-col">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إدارة أبرز المواضيع</h3>
-            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إضافة وتعديل المواضيع البارزة وصورها المخصصة</p>
+            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">إضافة وتعديل المواضيع البارزة وصورها المخصصة</p>
           </div>
         </div>
         {!editingId && (

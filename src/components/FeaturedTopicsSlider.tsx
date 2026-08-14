@@ -59,7 +59,7 @@ export function FeaturedTopicsSlider() {
         </div>
         <div className="flex flex-col">
           <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أبرز المواضيع</h3>
-          <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">تغطيات شاملة لأبرز الأحداث.</p>
+          <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">تغطيات شاملة لأبرز الأحداث.</p>
         </div>
         <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2"></div>
         

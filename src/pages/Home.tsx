@@ -583,28 +583,53 @@ export function Home() {
           <div className="space-y-0">
             
             {/* LATEST NEWS HEADER */}
-            {/* Innovative Top Navigation Experience */}
-            <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 shadow-soft">
-              <div className="max-w-[760px] mx-auto w-full flex items-center justify-between px-1">
-                {/* Right side: Active Indicator & Title with Cairo Font */}
+            {/* Innovative Creative Dual Segmented Navigation Switcher */}
+            <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800 shadow-soft">
+              <div className="max-w-[760px] mx-auto w-full flex items-center justify-between gap-2 px-1">
+                {/* Right side: Live Status Indicator */}
                 <div className="flex items-center gap-2">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-taiz-soft opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-taiz-sky"></span>
-                  </span>
-                  <span className="font-bold text-xs sm:text-sm text-slate-800 font-cairo tracking-tight">أحدث الأخبار والتقارير</span>
+                  <div className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 px-2.5 py-1 rounded-xl shadow-2xs">
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D32027]"></span>
+                    </span>
+                    <span className="font-bold text-[11px] sm:text-xs text-slate-800 dark:text-slate-100 font-cairo tracking-tight whitespace-nowrap">
+                      تغطية إخبارية حية
+                    </span>
+                  </div>
                 </div>
 
-                {/* Left side: Dedicated Direct Navigation Shortcut to Articles with Hover Micro-animations */}
-                <Link 
-                  to="/articles" 
-                  title="الانتقال السريع إلى مقالات وآراء"
-                  className="flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-taiz-sky to-taiz-royal hover:from-taiz-royal hover:to-taiz-navy text-white rounded-full border border-taiz-sky/10 shadow-xs transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-[11px] font-bold"
-                >
-                  <BookOpen className="w-3.5 h-3.5 text-white/90 group-hover:scale-110 transition-transform duration-300" />
-                  <span>مقالات وآراء</span>
-                  <ChevronLeft className="w-3.5 h-3.5 text-white/70 group-hover:-translate-x-1 transition-transform" />
-                </Link>
+                {/* Left side: Premium Segmented Switcher Pills */}
+                <div className="bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 flex items-center gap-1 shadow-inner select-none">
+                  {/* News Tab (Active) */}
+                  <Link
+                    to="/"
+                    title="قسم الأخبار والتقارير"
+                    className="relative flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-black font-cairo transition-all duration-300 active:scale-95 text-white"
+                  >
+                    <motion.div
+                      layoutId="news-articles-tab-pill"
+                      className="absolute inset-0 bg-gradient-to-r from-taiz-royal via-taiz-sky to-taiz-royal rounded-lg sm:rounded-xl shadow-xs border border-taiz-sky/20"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      <Newspaper className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                      <span className="whitespace-nowrap">الأخبار والتقارير</span>
+                    </span>
+                  </Link>
+
+                  {/* Articles Tab (Inactive) */}
+                  <Link
+                    to="/articles"
+                    title="قسم المقالات والآراء"
+                    className="relative flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-cairo transition-all duration-300 active:scale-95 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
+                  >
+                    <span className="relative z-10 flex items-center gap-1.5">
+                      <BookOpen className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 group-hover:text-taiz-sky transition-colors" />
+                      <span className="whitespace-nowrap">مقالات وآراء</span>
+                    </span>
+                  </Link>
+                </div>
               </div>
             </div>
 
@@ -629,7 +654,7 @@ export function Home() {
                       </div>
                       <div className="flex flex-col text-right">
                         <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
-                        <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
+                        <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
                       </div>
                     </Link>
                     
@@ -699,7 +724,7 @@ export function Home() {
               </div>
               <div className="flex flex-col">
                 <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أخبار وتقارير</h3>
-                <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">تغطية إخبارية مفصلة للأحداث</p>
+                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">تغطية إخبارية مفصلة للأحداث</p>
               </div>
               <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-4"></div>
             </div>

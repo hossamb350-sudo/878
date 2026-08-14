@@ -1384,7 +1384,7 @@ function AdminSummaryDashboard({
         </div>
         <div className="flex flex-col text-right">
           <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أقسام الإدارة</h3>
-          <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">التحكم في محتوى وأقسام المنصة</p>
+          <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">التحكم في محتوى وأقسام المنصة</p>
         </div>
         <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-4"></div>
       </div>
@@ -1769,7 +1769,7 @@ function AdminUrgentNews() {
           </div>
           <div className="flex flex-col text-right">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">نظام الأخبار العاجلة</h3>
-            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة وتتبع الأخبار العاجلة وإعدادات العرض</p>
+            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">إدارة وتتبع الأخبار العاجلة وإعدادات العرض</p>
           </div>
         </div>
         {activeDocs.length > 0 && (
@@ -3307,7 +3307,7 @@ function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
               {editingId ? "تعديل فيديو / تقرير مرئي" : "إضافة فيديو جديد"}
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة وتحميل المواد المرئية والتقارير</p>
+            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">إدارة وتحميل المواد المرئية والتقارير</p>
           </div>
         </div>
 
@@ -3683,7 +3683,7 @@ function AdminLive() {
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
               {editingId ? "تعديل قناة البث المباشر" : "إضافة بث مباشر جديد"}
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة قنوات البث التلفزيوني والإذاعي الحي</p>
+            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">إدارة قنوات البث التلفزيوني والإذاعي الحي</p>
           </div>
         </div>
         <input
@@ -4286,7 +4286,7 @@ function AdminQuran() {
           </div>
           <div className="flex flex-col text-right">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إعداد مقررات هدي القرآن</h3>
-            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">التحكم بمقررات وسلاسل ودروس هدي القرآن الكريم</p>
+            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">التحكم بمقررات وسلاسل ودروس هدي القرآن الكريم</p>
           </div>
         </div>
         
@@ -6116,7 +6116,7 @@ function AdminEvents() {
           </div>
           <div className="flex flex-col text-right">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">قسم المناسبات والفعاليات</h3>
-            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة المناسبات والتقويم السنوي والفعاليات والأنشطة المرتبطة بها</p>
+            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">إدارة المناسبات والتقويم السنوي والفعاليات والأنشطة المرتبطة بها</p>
           </div>
         </div>
       </div>
@@ -6337,7 +6337,7 @@ function AdminRoles() {
           </div>
           <div className="flex flex-col text-right">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إدارة الصلاحيات</h3>
-            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">إدارة وتخصيص صلاحيات ورتب الوصول للمنصة والمشرفين</p>
+            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">إدارة وتخصيص صلاحيات ورتب الوصول للمنصة والمشرفين</p>
           </div>
         </div>
 
@@ -6699,7 +6699,7 @@ function AdminSocialLinks() {
           </div>
           <div className="flex flex-col text-right">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إدارة روابط تابعنا</h3>
-            <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">التحكم في قنوات التواصل والشبكات الاجتماعية للمنصة</p>
+            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">التحكم في قنوات التواصل والشبكات الاجتماعية للمنصة</p>
           </div>
         </div>
       </div>
