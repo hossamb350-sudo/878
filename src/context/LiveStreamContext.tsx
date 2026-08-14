@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import { LiveStream } from "../types";
 
 interface LiveStreamContextType {
@@ -92,8 +93,9 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       if (activeStream.type === "radio") {
         let src = activeStream.streamUrl || activeStream.url;
         
-        // Proxy ALL radio streams to avoid mixed content blocking and bypass CORS/SSL on Android browsers
-        if (src && !src.startsWith('/api/proxy')) {
+        // Proxy ALL radio streams on web to avoid mixed content blocking and bypass CORS/SSL
+        // Do NOT proxy on native Android/iOS as Capacitor runs locally and cannot resolve relative /api paths
+        if (src && !src.startsWith('/api/proxy') && !Capacitor.isNativePlatform()) {
           src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
         }
 
