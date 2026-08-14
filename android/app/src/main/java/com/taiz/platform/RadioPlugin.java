@@ -4,6 +4,8 @@ import android.Manifest;
 import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.Player;
@@ -40,54 +42,60 @@ public class RadioPlugin extends Plugin {
     private String pendingUrl = null;
     private String pendingName = null;
     private String pendingArtwork = null;
+    private Handler mainHandler;
 
     @Override
     public void load() {
         Log.d("RadioPlugin", "Loading Plugin");
-        SessionToken sessionToken = new SessionToken(getContext(),
-                new ComponentName(getContext(), RadioPlaybackService.class));
+        mainHandler = new Handler(Looper.getMainLooper());
         
-        controllerFuture = new MediaController.Builder(getContext(), sessionToken).buildAsync();
-        controllerFuture.addListener(() -> {
-            try {
-                controller = controllerFuture.get();
-                Log.d("RadioPlugin", "Controller connected");
-                
-                controller.addListener(new Player.Listener() {
-                    @Override
-                    public void onPlaybackStateChanged(int playbackState) {
-                        Log.d("RadioPlugin", "State changed: " + playbackState);
-                        if (playbackState == Player.STATE_BUFFERING) {
-                            notifyListeners("buffering", new JSObject());
-                        } else if (playbackState == Player.STATE_ENDED) {
-                            notifyListeners("stopped", new JSObject());
-                        }
-                    }
-
-                    @Override
-                    public void onIsPlayingChanged(boolean isPlaying) {
-                        Log.d("RadioPlugin", "isPlaying changed: " + isPlaying);
-                        if (isPlaying) {
-                            notifyListeners("playing", new JSObject());
-                        } else {
-                            if (controller.getPlaybackState() != Player.STATE_BUFFERING) {
-                                notifyListeners("paused", new JSObject());
+        // Ensure MediaController is built and connected on the Main Thread
+        mainHandler.post(() -> {
+            SessionToken sessionToken = new SessionToken(getContext(),
+                    new ComponentName(getContext(), RadioPlaybackService.class));
+                    
+            controllerFuture = new MediaController.Builder(getContext(), sessionToken).buildAsync();
+            controllerFuture.addListener(() -> {
+                try {
+                    controller = controllerFuture.get();
+                    Log.d("RadioPlugin", "Controller connected");
+                    
+                    controller.addListener(new Player.Listener() {
+                        @Override
+                        public void onPlaybackStateChanged(int playbackState) {
+                            Log.d("RadioPlugin", "State changed: " + playbackState);
+                            if (playbackState == Player.STATE_BUFFERING) {
+                                notifyListeners("buffering", new JSObject());
+                            } else if (playbackState == Player.STATE_ENDED) {
+                                notifyListeners("stopped", new JSObject());
                             }
                         }
-                    }
-                    
-                    @Override
-                    public void onPlayerError(PlaybackException error) {
-                        Log.e("RadioPlugin", "Player error: " + error.getMessage());
-                        JSObject ret = new JSObject();
-                        ret.put("error", error.getMessage());
-                        notifyListeners("error", ret);
-                    }
-                });
-            } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        }, MoreExecutors.directExecutor());
+
+                        @Override
+                        public void onIsPlayingChanged(boolean isPlaying) {
+                            Log.d("RadioPlugin", "isPlaying changed: " + isPlaying);
+                            if (isPlaying) {
+                                notifyListeners("playing", new JSObject());
+                            } else {
+                                if (controller.getPlaybackState() != Player.STATE_BUFFERING) {
+                                    notifyListeners("paused", new JSObject());
+                                }
+                            }
+                        }
+                        
+                        @Override
+                        public void onPlayerError(PlaybackException error) {
+                            Log.e("RadioPlugin", "Player error: " + error.getMessage());
+                            JSObject ret = new JSObject();
+                            ret.put("error", error.getMessage());
+                            notifyListeners("error", ret);
+                        }
+                    });
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }, MoreExecutors.directExecutor());
+        });
     }
 
     @PluginMethod
@@ -118,8 +126,6 @@ public class RadioPlugin extends Plugin {
 
     @PermissionCallback
     private void notificationsPermsCallback(PluginCall call) {
-        // Even if permission is denied, we still attempt to play. 
-        // The service will just run without a visible notification.
         if (pendingPlayCall != null && pendingUrl != null) {
             executePlay(pendingPlayCall, pendingUrl, pendingName, pendingArtwork);
             pendingPlayCall = null;
@@ -129,53 +135,65 @@ public class RadioPlugin extends Plugin {
     }
 
     private void executePlay(PluginCall call, String url, String stationName, String artwork) {
-        if (controller != null) {
-            if (!url.equals(currentUrl)) {
-                currentUrl = url;
-                
-                MediaMetadata.Builder metadataBuilder = new MediaMetadata.Builder()
-                        .setTitle(stationName)
-                        .setArtist("Live Stream");
-                        
-                if (artwork != null && !artwork.isEmpty()) {
-                    metadataBuilder.setArtworkUri(Uri.parse(artwork));
+        if (mainHandler == null) mainHandler = new Handler(Looper.getMainLooper());
+        
+        mainHandler.post(() -> {
+            if (controller != null) {
+                if (!url.equals(currentUrl)) {
+                    currentUrl = url;
+                    
+                    MediaMetadata.Builder metadataBuilder = new MediaMetadata.Builder()
+                            .setTitle(stationName)
+                            .setArtist("Live Stream");
+                            
+                    if (artwork != null && !artwork.isEmpty()) {
+                        metadataBuilder.setArtworkUri(Uri.parse(artwork));
+                    }
+
+                    MediaItem mediaItem = new MediaItem.Builder()
+                            .setUri(Uri.parse(url))
+                            .setMediaMetadata(metadataBuilder.build())
+                            .build();
+
+                    controller.setMediaItem(mediaItem);
+                    controller.prepare();
                 }
-
-                MediaItem mediaItem = new MediaItem.Builder()
-                        .setUri(Uri.parse(url))
-                        .setMediaMetadata(metadataBuilder.build())
-                        .build();
-
-                controller.setMediaItem(mediaItem);
-                controller.prepare();
+                controller.play();
+                call.resolve();
+            } else {
+                call.reject("Controller not ready");
             }
-            controller.play();
-            call.resolve();
-        } else {
-            call.reject("Controller not ready");
-        }
+        });
     }
 
     @PluginMethod
     public void pause(PluginCall call) {
-        if (controller != null) {
-            controller.pause();
-            call.resolve();
-        } else {
-            call.reject("Controller not ready");
-        }
+        if (mainHandler == null) mainHandler = new Handler(Looper.getMainLooper());
+        
+        mainHandler.post(() -> {
+            if (controller != null) {
+                controller.pause();
+                call.resolve();
+            } else {
+                call.reject("Controller not ready");
+            }
+        });
     }
 
     @PluginMethod
     public void stop(PluginCall call) {
-        if (controller != null) {
-            controller.stop();
-            controller.clearMediaItems();
-            currentUrl = "";
-            call.resolve();
-            notifyListeners("stopped", new JSObject());
-        } else {
-            call.reject("Controller not ready");
-        }
+        if (mainHandler == null) mainHandler = new Handler(Looper.getMainLooper());
+        
+        mainHandler.post(() -> {
+            if (controller != null) {
+                controller.stop();
+                controller.clearMediaItems();
+                currentUrl = "";
+                call.resolve();
+                notifyListeners("stopped", new JSObject());
+            } else {
+                call.reject("Controller not ready");
+            }
+        });
     }
 }
