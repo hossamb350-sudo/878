@@ -6,6 +6,7 @@ import {
   isStreamInBroadcastWindow, 
   getRadioScheduleInfo 
 } from "../utils/yemenTime";
+import { API_BASE } from "../config/apiConfig";
 
 interface LiveStreamContextType {
   activeStream: LiveStream | null;
@@ -39,9 +40,38 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
   const [isTopBarPinned, setIsTopBarPinned] = useState(false);
   const [streamError, setStreamError] = useState<string | null>(null);
   const [isOutsideBroadcastHours, setIsOutsideBroadcastHours] = useState(false);
+  const [detectedTypeMap, setDetectedTypeMap] = useState<Record<string, "tv" | "radio">>({});
   
   const retryCountRef = useRef(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Helper to dynamically detect if a stream is audio (radio) or video (tv) via content-type header from backend
+  const detectStreamType = useCallback(async (url: string) => {
+    if (detectedTypeMap[url]) return detectedTypeMap[url];
+    try {
+      const response = await fetch(`${API_BASE}/api/stream/detect-type?url=${encodeURIComponent(url)}`);
+      if (response.ok) {
+        const data = await response.json();
+        const detected: "tv" | "radio" = data.isAudio ? "radio" : "tv";
+        setDetectedTypeMap(prev => ({ ...prev, [url]: detected }));
+        return detected;
+      }
+    } catch (e) {
+      console.warn("Dynamic stream type detection failed:", e);
+    }
+    // Fallback detection logic if offline or blocked
+    const isLikelyAudio = url.includes("proxy") || url.includes("stream") || url.includes("radio") || url.includes("168.119.10.136");
+    const fallbackType = isLikelyAudio ? "radio" : "tv";
+    return fallbackType;
+  }, [detectedTypeMap]);
+
+  const isRadioType = (stream: LiveStream) => {
+    const src = stream.streamUrl || stream.url || "";
+    if (detectedTypeMap[src]) {
+      return detectedTypeMap[src] === "radio";
+    }
+    return stream.type === "radio" || src.includes("proxy") || src.includes("stream") || src.includes("radio") || src.includes("168.119.10.136");
+  };
 
   // Check schedule info whenever activeStream changes or on clock tick
   const checkSchedule = useCallback((stream: LiveStream | null) => {
@@ -50,7 +80,7 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       return;
     }
     const src = stream.streamUrl || stream.url;
-    if (stream.type === "radio" && isTimedRadioStream(src)) {
+    if (isRadioType(stream) && src && isTimedRadioStream(src)) {
       const schedule = getRadioScheduleInfo(src);
       setIsOutsideBroadcastHours(!schedule.isOpen);
       if (!schedule.isOpen) {
@@ -61,7 +91,7 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     } else {
       setIsOutsideBroadcastHours(false);
     }
-  }, [streamError]);
+  }, [streamError, detectedTypeMap]);
 
   const playStream = (stream: LiveStream) => {
     window.dispatchEvent(new CustomEvent("stop-quran-audio"));
@@ -69,8 +99,14 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     setStreamError(null);
     retryCountRef.current = 0;
 
-    const src = stream.streamUrl || stream.url;
-    if (stream.type === "radio" && isTimedRadioStream(src)) {
+    const src = stream.streamUrl || stream.url || "";
+    
+    // Trigger lazy content-type discovery
+    if (src) {
+      detectStreamType(src).catch(() => {});
+    }
+
+    if (isRadioType(stream) && src && isTimedRadioStream(src)) {
       const schedule = getRadioScheduleInfo(src);
       if (!schedule.isOpen) {
         setIsOutsideBroadcastHours(true);
@@ -104,8 +140,8 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     if (activeStream) {
       if (!isPlaying) {
         window.dispatchEvent(new CustomEvent("stop-quran-audio"));
-        const src = activeStream.streamUrl || activeStream.url;
-        if (activeStream.type === "radio" && isTimedRadioStream(src)) {
+        const src = activeStream.streamUrl || activeStream.url || "";
+        if (isRadioType(activeStream) && src && isTimedRadioStream(src)) {
           const schedule = getRadioScheduleInfo(src);
           if (!schedule.isOpen) {
             setIsOutsideBroadcastHours(true);
@@ -168,11 +204,13 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     
     if (isPlaying && activeStream) {
       window.dispatchEvent(new CustomEvent("stop-quran-audio"));
-      if (activeStream.type === "radio") {
+      const isRadio = isRadioType(activeStream);
+
+      if (isRadio) {
         let src = activeStream.streamUrl || activeStream.url;
         
         // Check Yemen timezone broadcast schedule for timed radio
-        if (isTimedRadioStream(src) && !isStreamInBroadcastWindow(src)) {
+        if (src && isTimedRadioStream(src) && !isStreamInBroadcastWindow(src)) {
           setIsOutsideBroadcastHours(true);
           setStreamError("البث متوقف حالياً • يبدأ البث الإذاعي لإذاعة تعز يوميًا من الساعة الثامنة صباحًا وحتى الساعة العاشرة مساءً.");
           setIsLoading(false);
@@ -184,10 +222,9 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
         setIsOutsideBroadcastHours(false);
         setIsLoading(true);
 
-        // Proxy HTTP radio streams on web to prevent Mixed Content / CORS blocking
-        // On Native Android/iOS, connect directly to stream URL (supported via networkSecurityConfig)
-        if (src && !src.startsWith('/api/proxy') && !Capacitor.isNativePlatform()) {
-          src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
+        // Proxy HTTP radio streams on Web and Android to prevent Mixed Content blocking & resolve ExoPlayer direct streaming limits
+        if (src && src.startsWith("http://") && !src.startsWith("/api/proxy")) {
+          src = `${API_BASE}/api/proxy/stream?url=${encodeURIComponent(src)}`;
         }
 
         if (src) {
@@ -208,14 +245,14 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     } else {
       audio.pause();
     }
-  }, [isPlaying, activeStream]);
+  }, [isPlaying, activeStream, detectedTypeMap]);
 
   const handleAudioError = () => {
     setIsLoading(false);
     if (!activeStream) return;
 
     const src = activeStream.streamUrl || activeStream.url;
-    if (activeStream.type === "radio" && isTimedRadioStream(src)) {
+    if (isRadioType(activeStream) && src && isTimedRadioStream(src)) {
       if (!isStreamInBroadcastWindow(src)) {
         setIsOutsideBroadcastHours(true);
         setStreamError("البث متوقف حالياً • يبدأ البث الإذاعي لإذاعة تعز يوميًا من الساعة الثامنة صباحًا وحتى الساعة العاشرة مساءً.");

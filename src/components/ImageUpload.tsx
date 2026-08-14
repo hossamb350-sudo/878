@@ -37,13 +37,43 @@ export function ImageUpload({
   const [showSettingsExplanation, setShowSettingsExplanation] = useState(false);
   const [showSourceSelector, setShowSourceSelector] = useState(false);
 
+  const readAsDataURLAsync = (file: File | Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === "string") resolve(reader.result);
+        else reject(new Error("محتوى الملف غير صالح"));
+      };
+      reader.onerror = () => reject(reader.error || new Error("NotReadableError"));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       if (multiple) {
-        await uploadFiles(Array.from(files));
+        const fileList = Array.from(files);
+        const resolvedFiles: (string | File | Blob)[] = [];
+        for (const f of fileList) {
+          try {
+            const base64 = await readAsDataURLAsync(f);
+            resolvedFiles.push(base64);
+          } catch (err) {
+            console.warn("Immediate read failed, passing raw file:", err);
+            resolvedFiles.push(f);
+          }
+        }
+        await uploadFiles(resolvedFiles);
       } else {
-        await uploadFile(files[0]);
+        const file = files[0];
+        try {
+          const base64 = await readAsDataURLAsync(file);
+          await uploadFile(base64, file.name);
+        } catch (err) {
+          console.warn("Immediate read failed, passing raw file:", err);
+          await uploadFile(file);
+        }
       }
     }
   };
@@ -271,15 +301,33 @@ export function ImageUpload({
     setIsDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(false);
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       if (multiple) {
-        uploadFiles(Array.from(files));
+        const fileList = Array.from(files);
+        const resolvedFiles: (string | File | Blob)[] = [];
+        for (const f of fileList) {
+          try {
+            const base64 = await readAsDataURLAsync(f);
+            resolvedFiles.push(base64);
+          } catch (err) {
+            console.warn("Immediate drop read failed, passing raw file:", err);
+            resolvedFiles.push(f);
+          }
+        }
+        await uploadFiles(resolvedFiles);
       } else {
-        uploadFile(files[0]);
+        const file = files[0];
+        try {
+          const base64 = await readAsDataURLAsync(file);
+          await uploadFile(base64, file.name);
+        } catch (err) {
+          console.warn("Immediate drop read failed, passing raw file:", err);
+          await uploadFile(file);
+        }
       }
     }
   };
