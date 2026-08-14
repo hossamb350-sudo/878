@@ -25,36 +25,22 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 var import_express = __toESM(require("express"), 1);
 var import_path = __toESM(require("path"), 1);
 var import_fs = __toESM(require("fs"), 1);
+var import_vite = require("vite");
 var import_dotenv = __toESM(require("dotenv"), 1);
 var import_multer = __toESM(require("multer"), 1);
 var import_axios = __toESM(require("axios"), 1);
 var import_imagekit = __toESM(require("imagekit"), 1);
-var import_os = __toESM(require("os"), 1);
 var import_cors = __toESM(require("cors"), 1);
-var import_https = __toESM(require("https"), 1);
 var import_web_push = __toESM(require("web-push"), 1);
 var import_genai = require("@google/genai");
 var import_app = require("firebase-admin/app");
 var import_firestore = require("firebase-admin/firestore");
 
 // src/config/imagekitConfig.ts
-var import_meta = {};
-var getEnv = (key, fallback) => {
-  try {
-    if (typeof import_meta !== "undefined" && import_meta.env && import_meta.env[key]) {
-      return import_meta.env[key];
-    }
-    if (typeof process !== "undefined" && process.env && process.env[key]) {
-      return process.env[key];
-    }
-  } catch (e) {
-  }
-  return fallback;
-};
 var IMAGEKIT_CONFIG = {
-  urlEndpoint: getEnv("IMAGEKIT_URL_ENDPOINT", "https://ik.imagekit.io/scwjupjlq"),
-  publicKey: getEnv("IMAGEKIT_PUBLIC_KEY", "public_Zs+0QoId6cKbJ6RaYcqq/A7KRcs=+WHkfzjg="),
-  privateKey: getEnv("IMAGEKIT_PRIVATE_KEY", "private_hEfX4huhE9HYYoIaUwm+WHkfzjg=")
+  urlEndpoint: "https://ik.imagekit.io/scwjupjlq",
+  publicKey: "public_Zs+0QoId6cKbJ6RaYcqq/A7KRcs=+WHkfzjg=",
+  privateKey: "private_hEfX4huhE9HYYoIaUwm+WHkfzjg="
 };
 
 // server.ts
@@ -68,30 +54,19 @@ try {
 } catch (e) {
   console.warn("Could not load firebase-applet-config.json, falling back to env var.");
 }
-var adminApp = null;
-var dbInstance = null;
-function getDb() {
-  if (!dbInstance) {
-    try {
-      if ((0, import_app.getApps)().length === 0) {
-        adminApp = (0, import_app.initializeApp)({
-          projectId: firebaseConfig.projectId
-        });
-      } else {
-        adminApp = (0, import_app.getApps)()[0];
-      }
-      dbInstance = (0, import_firestore.getFirestore)(adminApp);
-    } catch (err) {
-      console.error("Failed to initialize Firebase Admin / Firestore:", err);
-      return null;
-    }
-  }
-  return dbInstance;
+var adminApp;
+if ((0, import_app.getApps)().length === 0) {
+  adminApp = (0, import_app.initializeApp)({
+    projectId: firebaseConfig.projectId
+  });
+} else {
+  adminApp = (0, import_app.getApps)()[0];
 }
+var db = (0, import_firestore.getFirestore)(adminApp);
 var app = (0, import_express.default)();
-var PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3e3;
-var webPushClient = import_web_push.default.default || import_web_push.default;
-var ImageKitConstructor = import_imagekit.default.default || import_imagekit.default;
+var PORT = 3e3;
+var DEFAULT_VAPID_PUBLIC_KEY = "BEw8fkpN0JQ-HB7b1mxhuicMWZUqvB5nCnLRYv6VjIoMxCTJQVsYGqP2-CnhPpUm0pkgz6LQZ7Ut1jsvQn4Q9ow";
+var DEFAULT_VAPID_PRIVATE_KEY = "btEWHmdPbPg_jgywYnb6z4NujfcN5TeJQDY8JbDTAOQ";
 function isValidVapidKey(publicKey) {
   if (!publicKey || typeof publicKey !== "string") return false;
   try {
@@ -102,20 +77,23 @@ function isValidVapidKey(publicKey) {
     return false;
   }
 }
+function getVapidKeys() {
+  const envPub = process.env.VITE_VAPID_PUBLIC_KEY;
+  const envPriv = process.env.VAPID_PRIVATE_KEY;
+  if (envPub && envPriv && isValidVapidKey(envPub)) {
+    return { publicKey: envPub, privateKey: envPriv };
+  } else {
+    console.warn("Using fallback/default stable VAPID keypair since the environment configured keys are invalid or not 65 bytes when decoded.");
+    return { publicKey: DEFAULT_VAPID_PUBLIC_KEY, privateKey: DEFAULT_VAPID_PRIVATE_KEY };
+  }
+}
+var { publicKey: VAPID_PUBLIC_KEY, privateKey: VAPID_PRIVATE_KEY } = getVapidKeys();
 var VAPID_SUBJECT = process.env.VAPID_SUBJECT || "mailto:hossamb350@gmail.com";
 try {
-  let pubKey = process.env.VITE_VAPID_PUBLIC_KEY;
-  let privKey = process.env.VAPID_PRIVATE_KEY;
-  if (!pubKey || !privKey || !isValidVapidKey(pubKey)) {
-    console.warn("Generating dynamic fallback VAPID keys since environment keys are missing or invalid.");
-    const generated = webPushClient.generateVAPIDKeys();
-    pubKey = generated.publicKey;
-    privKey = generated.privateKey;
-  }
-  webPushClient.setVapidDetails(VAPID_SUBJECT, pubKey, privKey);
+  import_web_push.default.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
   console.log("Web-Push VAPID details configured successfully.");
 } catch (e) {
-  console.error("Failed to set VAPID details (Push notifications disabled):", e);
+  console.error("Failed to set VAPID details:", e);
 }
 app.use((0, import_cors.default)({
   origin: true,
@@ -123,19 +101,19 @@ app.use((0, import_cors.default)({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
   allowedHeaders: ["Content-Type", "Authorization", "Accept", "X-Requested-With"]
 }));
-var imagekit = new ImageKitConstructor({
+var imagekit = new import_imagekit.default({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY || IMAGEKIT_CONFIG.publicKey,
   privateKey: process.env.IMAGEKIT_PRIVATE_KEY || IMAGEKIT_CONFIG.privateKey,
   urlEndpoint: process.env.IMAGEKIT_URL_ENDPOINT || IMAGEKIT_CONFIG.urlEndpoint
 });
-var aiClient = null;
-function getAiClient() {
-  if (!aiClient) {
-    const key = process.env.GEMINI_API_KEY;
-    aiClient = new import_genai.GoogleGenAI({ apiKey: key, httpOptions: { headers: { "User-Agent": "aistudio-build" } } });
+var ai = new import_genai.GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+  httpOptions: {
+    headers: {
+      "User-Agent": "aistudio-build"
+    }
   }
-  return aiClient;
-}
+});
 app.use(import_express.default.json({ limit: "50mb" }));
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString() });
@@ -156,11 +134,11 @@ app.get("/api/quran-data", (req, res) => {
 });
 app.get("/api/weather", async (req, res) => {
   try {
-    const { lat = "13.660174", lon = "44.131802" } = req.query;
-    const apiKey = process.env.OPENWEATHER_API_KEY || "";
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
+    const { lat = "13.5795", lon = "44.0203" } = req.query;
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "OpenWeather API key is not configured" });
+    }
     const response = await import_axios.default.get(`https://api.openweathermap.org/data/2.5/weather`, {
       params: {
         lat,
@@ -174,16 +152,16 @@ app.get("/api/weather", async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error("Error fetching weather data:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch weather data", details: error.message });
+    res.status(500).json({ error: "Failed to fetch weather data" });
   }
 });
 app.get("/api/forecast", async (req, res) => {
   try {
-    const { lat = "13.660174", lon = "44.131802" } = req.query;
-    const apiKey = process.env.OPENWEATHER_API_KEY || "";
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
+    const { lat = "13.5795", lon = "44.0203" } = req.query;
+    const apiKey = process.env.OPENWEATHER_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: "OpenWeather API key is not configured" });
+    }
     const response = await import_axios.default.get(`https://api.openweathermap.org/data/2.5/forecast`, {
       params: {
         lat,
@@ -197,27 +175,7 @@ app.get("/api/forecast", async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error("Error fetching forecast data:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch forecast data", details: error.message });
-  }
-});
-app.get("/api/air_pollution", async (req, res) => {
-  try {
-    const { lat = "13.660174", lon = "44.131802" } = req.query;
-    const apiKey = process.env.OPENWEATHER_API_KEY || "";
-    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
-    const response = await import_axios.default.get(`https://api.openweathermap.org/data/2.5/air_pollution`, {
-      params: {
-        lat,
-        lon,
-        appid: apiKey
-      }
-    });
-    res.json(response.data);
-  } catch (error) {
-    console.error("Error fetching air pollution data:", error.response?.data || error.message);
-    res.status(500).json({ error: "Failed to fetch air pollution data", details: error.message });
+    res.status(500).json({ error: "Failed to fetch forecast data" });
   }
 });
 app.get("/api/prayer-times", async (req, res) => {
@@ -261,11 +219,11 @@ app.use((req, res, next) => {
   }
   next();
 });
-var CACHE_DIR = process.env.NODE_ENV === "production" ? import_path.default.join(import_os.default.tmpdir(), "cache") : import_path.default.join(process.cwd(), "cache");
+var CACHE_DIR = import_path.default.join(process.cwd(), "cache");
 if (!import_fs.default.existsSync(CACHE_DIR)) {
   import_fs.default.mkdirSync(CACHE_DIR, { recursive: true });
 }
-var UPLOADS_DIR = process.env.NODE_ENV === "production" ? import_path.default.join(import_os.default.tmpdir(), "uploads") : import_path.default.join(process.cwd(), "public/uploads");
+var UPLOADS_DIR = import_path.default.join(process.cwd(), "public/uploads");
 if (!import_fs.default.existsSync(UPLOADS_DIR)) {
   import_fs.default.mkdirSync(UPLOADS_DIR, { recursive: true });
 }
@@ -308,10 +266,8 @@ app.post("/api/quran-data", async (req, res) => {
   const filePath = import_path.default.join(process.cwd(), "public/quranData.json");
   const tempPath = filePath + ".tmp";
   try {
-    if (process.env.NODE_ENV !== "production") {
-      import_fs.default.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf8");
-      import_fs.default.renameSync(tempPath, filePath);
-    }
+    import_fs.default.writeFileSync(tempPath, JSON.stringify(data, null, 2), "utf8");
+    import_fs.default.renameSync(tempPath, filePath);
     const { token, owner, repo, branch } = getGitHubConfig();
     if (token && owner && repo) {
       const base64Content = Buffer.from(JSON.stringify(data, null, 2), "utf8").toString("base64");
@@ -380,7 +336,6 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
         return s;
       }
       const lessonTitles = relatedLessons.map((l) => l.title).join("\u060C ");
-      const ai = getAiClient();
       const prompt = `\u0623\u0646\u062A \u062E\u0628\u064A\u0631 \u0641\u064A \u0645\u062D\u062A\u0648\u0649 \u0647\u062F\u064A \u0627\u0644\u0642\u0631\u0622\u0646 \u0627\u0644\u0643\u0631\u064A\u0645. \u0628\u0646\u0627\u0621\u064B \u0639\u0644\u0649 \u0639\u0646\u0627\u0648\u064A\u0646 \u0627\u0644\u062F\u0631\u0648\u0633 \u0627\u0644\u062A\u0627\u0644\u064A\u0629 \u0627\u0644\u062A\u0627\u0628\u0639\u0629 \u0644\u0633\u0644\u0633\u0644\u0629 \u0628\u0639\u0646\u0648\u0627\u0646 "${s.title}":
       
       \u0639\u0646\u0627\u0648\u064A\u0646 \u0627\u0644\u062F\u0631\u0648\u0633:
@@ -390,21 +345,18 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
       try {
         console.log(`Calling Gemini for series ${s.id}...`);
         const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
+          model: "gemini-1.5-flash",
           contents: prompt
         });
         const description = response.text?.trim() || s.description;
         console.log(`Generated description for ${s.id}: ${description?.substring(0, 50)}...`);
         try {
-          const db = getDb();
-          if (db) {
-            console.log(`Updating Firestore for series ${s.id}...`);
-            await db.collection("quran_series").doc(s.id).update({
-              description,
-              updatedAt: import_firestore.FieldValue.serverTimestamp()
-            });
-            console.log(`Firestore updated for series ${s.id}`);
-          }
+          console.log(`Updating Firestore for series ${s.id}...`);
+          await db.collection("quran_series").doc(s.id).update({
+            description,
+            updatedAt: import_firestore.FieldValue.serverTimestamp()
+          });
+          console.log(`Firestore updated for series ${s.id}`);
         } catch (fsErr) {
           console.error(`Firestore update failed for series ${s.id}:`, fsErr.message);
         }
@@ -415,9 +367,7 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
       }
     }));
     data.series = updatedSeries;
-    if (process.env.NODE_ENV !== "production") {
-      import_fs.default.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
-    }
+    import_fs.default.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf8");
     const { token, owner, repo, branch } = getGitHubConfig();
     if (token && owner && repo) {
       const base64Content = Buffer.from(JSON.stringify(data, null, 2), "utf8").toString("base64");
@@ -458,94 +408,6 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
   } catch (error) {
     console.error("Error in generate-series-descriptions:", error);
     res.status(500).json({ error: "\u0641\u0634\u0644 \u0641\u064A \u062A\u0648\u0644\u064A\u062F \u0627\u0644\u0623\u0648\u0635\u0627\u0641 \u0639\u0628\u0631 \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A" });
-  }
-});
-app.get("/api/proxy/stream", async (req, res) => {
-  let targetUrl = req.query.url;
-  const originalUrl = req.originalUrl;
-  const urlIndex = originalUrl.indexOf("?url=");
-  if (urlIndex !== -1) {
-    const rawUrlParam = originalUrl.substring(urlIndex + 5);
-    try {
-      targetUrl = decodeURIComponent(rawUrlParam);
-    } catch (e) {
-      targetUrl = req.query.url;
-    }
-  }
-  if (!targetUrl) {
-    return res.status(400).json({ error: "Missing url parameter" });
-  }
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "*");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  let axiosStream = null;
-  try {
-    const response = await (0, import_axios.default)({
-      method: "get",
-      url: targetUrl,
-      responseType: "stream",
-      maxRedirects: 5,
-      timeout: 15e3,
-      httpsAgent: new import_https.default.Agent({ rejectUnauthorized: true }),
-      // Bypass SSL/TLS issues
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Accept": "*/*"
-      }
-    });
-    axiosStream = response.data;
-    const rawContentType = response.headers["content-type"];
-    let contentType = typeof rawContentType === "string" ? rawContentType : String(rawContentType || "");
-    if (!contentType || contentType.includes("octet-stream") || contentType.includes("text/html")) {
-      if (targetUrl.toLowerCase().includes("aac")) {
-        contentType = "audio/aac";
-      } else if (targetUrl.toLowerCase().includes("m3u8")) {
-        contentType = "application/x-mpegURL";
-      } else {
-        contentType = "audio/mpeg";
-      }
-    }
-    res.setHeader("Content-Type", String(contentType));
-    res.setHeader("Accept-Ranges", "none");
-    res.setHeader("Connection", "keep-alive");
-    if (response.headers["icy-metaint"]) {
-      res.setHeader("icy-metaint", String(response.headers["icy-metaint"]));
-    }
-    if (response.headers["icy-name"]) {
-      res.setHeader("icy-name", String(response.headers["icy-name"]));
-    }
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.setHeader("Pragma", "no-cache");
-    res.setHeader("Expires", "0");
-    req.on("close", () => {
-      if (axiosStream) {
-        try {
-          axiosStream.destroy();
-        } catch (err) {
-          console.warn("Error destroying proxy stream on client close:", err);
-        }
-      }
-    });
-    axiosStream.on("error", (streamErr) => {
-      console.warn("Upstream audio stream error:", streamErr.message);
-      try {
-        res.end();
-      } catch (e) {
-      }
-    });
-    axiosStream.pipe(res);
-  } catch (error) {
-    console.error("Stream proxy connection error:", error.message);
-    if (axiosStream) {
-      try {
-        axiosStream.destroy();
-      } catch (e) {
-      }
-    }
-    res.status(500).json({ error: "Failed to connect to the stream" });
   }
 });
 app.post("/api/upload", upload.single("image"), (req, res) => {
@@ -869,7 +731,7 @@ app.post("/api/push/send", async (req, res) => {
   const subs = getStoredSubscriptions();
   console.log(`Attempting to broadcast push notification to ${subs.length} local subscribers.`);
   const notificationsPromises = subs.map((sub) => {
-    return webPushClient.sendNotification(sub, payload).catch((err) => {
+    return import_web_push.default.sendNotification(sub, payload).catch((err) => {
       console.error(`Error sending push notification to endpoint ${sub.endpoint}:`, err);
       if (err.statusCode === 410 || err.statusCode === 404) {
         return { error: true, endpoint: sub.endpoint };
@@ -889,125 +751,6 @@ app.post("/api/push/send", async (req, res) => {
   } catch (err) {
     console.error("Error broadcasting push notifications:", err);
     res.status(500).json({ error: "Failed to broadcast some notifications.", message: err.message });
-  }
-});
-app.post("/api/newspaper/ai-assist", async (req, res) => {
-  try {
-    const { task, issueData, selectedItems } = req.body;
-    const ai = getAiClient();
-    if (task === "generate_editorial") {
-      const prompt = `\u0623\u0646\u062A \u0631\u0626\u064A\u0633 \u062A\u062D\u0631\u064A\u0631 \u0635\u062D\u064A\u0641\u0629 \u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A\u0629 \u064A\u0645\u0646\u064A\u0629 \u0627\u062D\u062A\u0631\u0627\u0641\u064A\u0629 \u0628\u0627\u0633\u0645 "${issueData?.title || "\u0635\u062D\u064A\u0641\u0629 \u062A\u0639\u0632 \u0627\u0644\u0625\u0639\u0644\u0627\u0645\u064A\u0629"}".
-\u064A\u0631\u062C\u0649 \u0643\u062A\u0627\u0628\u0629 \u0627\u0641\u062A\u062A\u0627\u062D\u064A\u0629 \u0639\u062F\u062F \u0628\u0631\u0635\u0627\u0646\u0629 \u0648\u0628\u0644\u0627\u063A\u0629 \u0635\u062D\u0641\u064A\u0629 \u0639\u0627\u0644\u064A\u0629 \u062A\u062D\u062A \u0639\u0646\u0648\u0627\u0646 \u0631\u0626\u064A\u0633\u064A \u0623\u0648 \u0645\u0648\u0636\u0648\u0639 \u0627\u0644\u0639\u062F\u062F: "${issueData?.mainHeadline || "\u0627\u0644\u0623\u062D\u062F\u0627\u062B \u0648\u0627\u0644\u062A\u0637\u0648\u0631\u0627\u062A \u0627\u0644\u062C\u0627\u0631\u064A\u0629"}".
-\u0627\u0644\u0645\u0637\u0644\u0648\u0628:
-1. \u0639\u0646\u0648\u0627\u0646 \u0644\u0644\u0627\u0641\u062A\u062A\u0627\u062D\u064A\u0629 (\u0645\u062B\u0627\u0644: \u0643\u0644\u0645\u0629 \u0627\u0644\u0639\u062F\u062F / \u0631\u0624\u064A\u0629 \u0625\u0639\u0644\u0627\u0645\u064A\u0629).
-2. \u0646\u0635 \u0627\u0644\u0627\u0641\u062A\u062A\u0627\u062D\u064A\u0629 \u0641\u064A \u0641\u0642\u0631\u0627\u062A \u0645\u062A\u0646\u0627\u0633\u0642\u0629 (\u062D\u0648\u0627\u0644\u064A 150 - 250 \u0643\u0644\u0645\u0629) \u062A\u063A\u0637\u064A \u0623\u0647\u0645\u064A\u0629 \u0627\u0644\u0631\u0633\u0627\u0644\u0629 \u0627\u0644\u0625\u0639\u0644\u0627\u0645\u064A\u0629 \u0648\u062A\u0633\u062A\u0639\u0631\u0636 \u0627\u0644\u062A\u0637\u0648\u0631\u0627\u062A \u0628\u0623\u0633\u0644\u0648\u0628 \u0635\u062D\u0641\u064A \u0631\u0627\u0642\u064D.
-\u0623\u0639\u062F \u0627\u0644\u0646\u062A\u064A\u062C\u0629 \u0628\u0635\u064A\u063A\u0629 JSON \u0643\u0627\u0644\u062A\u0627\u0644\u064A:
-{
-  "title": "\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0627\u0641\u062A\u062A\u0627\u062D\u064A\u0629",
-  "content": "\u0646\u0635 \u0627\u0644\u0627\u0641\u062A\u062A\u0627\u062D\u064A\u0629 \u0627\u0644\u0643\u0627\u0645\u0644 \u0647\u0646\u0627..."
-}`;
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json"
-        }
-      });
-      const text = response.text || "{}";
-      return res.json(JSON.parse(text));
-    }
-    if (task === "auto_layout") {
-      const prompt = `\u0623\u0646\u062A \u0645\u062E\u0631\u062C \u0635\u062D\u0641\u064A \u0627\u062D\u062A\u0631\u0627\u0641\u064A (Art Director) \u0644\u0635\u062D\u064A\u0641\u0629 \u0643\u0628\u0631\u0649 \u0628\u0645\u0647\u0627\u0631\u0629 \u0639\u0627\u0644\u0645\u064A\u0629. 
-\u0645\u0637\u0644\u0648\u0628 \u0645\u0646\u0643 \u0625\u0646\u0634\u0627\u0621 \u062A\u062E\u0637\u064A\u0637 \u0645\u062A\u0643\u0627\u0645\u0644 (Layout) \u0644\u0625\u0635\u062F\u0627\u0631 \u0635\u062D\u064A\u0641\u0629 \u0645\u0637\u0628\u0648\u0639\u0629/\u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A\u0629 \u0628\u0646\u0627\u0621\u064B \u0639\u0644\u0649 \u0627\u0644\u0645\u0648\u0627\u062F \u0627\u0644\u062A\u0627\u0644\u064A\u0629:
-${JSON.stringify((selectedItems || []).slice(0, 15).map((item) => ({
-        id: item.id,
-        title: item.title,
-        category: item.category || "\u0639\u0627\u0645",
-        sourceType: item.sourceType || "news",
-        summary: item.summary || item.shortDescription || item.content?.substring(0, 100),
-        hasImage: !!(item.imageUrl || item.image)
-      })))}
-
-\u0627\u0644\u0645\u0639\u0627\u064A\u064A\u0631 \u0627\u0644\u0641\u0646\u064A\u0629 \u0648\u0627\u0644\u0637\u0628\u0627\u0639\u064A\u0629 \u0627\u0644\u0635\u0627\u0631\u0645\u0629:
-1. **\u0645\u0642\u0627\u0633\u0627\u062A \u0627\u0644\u0635\u0641\u062D\u0627\u062A:** \u0627\u0644\u0635\u062D\u064A\u0641\u0629 \u062A\u0639\u062A\u0645\u062F \u0628\u0634\u0643\u0644 \u0627\u0641\u062A\u0631\u0627\u0636\u064A \u0645\u0642\u0627\u0633 "Broadsheet" \u0623\u0648 \u064A\u0645\u0643\u0646 \u062A\u063A\u064A\u064A\u0631\u0647\u0627.
-2. **\u0627\u0644\u0634\u0628\u0643\u0629 \u0627\u0644\u0625\u062E\u0631\u0627\u062C\u064A\u0629 (Grid):** 6 \u0625\u0644\u0649 8 \u0623\u0639\u0645\u062F\u0629 \u0644\u0644\u0635\u0641\u062D\u0627\u062A \u0627\u0644\u062F\u0627\u062E\u0644\u064A\u0629\u060C \u06484 \u0625\u0644\u0649 6 \u0623\u0639\u0645\u062F\u0629 \u0644\u0644\u063A\u0644\u0627\u0641. \u0627\u0644\u0645\u0633\u0627\u0641\u0629 \u0628\u064A\u0646 \u0627\u0644\u0623\u0639\u0645\u062F\u0629 4-6 \u0645\u0645.
-3. **\u0623\u062D\u062C\u0627\u0645 \u0627\u0644\u062E\u0637\u0648\u0637 \u0648\u0627\u0644\u062A\u0633\u0644\u0633\u0644 \u0627\u0644\u0628\u0635\u0631\u064A:**
-   - \u0627\u0633\u0645 \u0627\u0644\u0635\u062D\u064A\u0641\u0629: 80-130pt
-   - \u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0635\u0641\u062D\u0629: 24-34pt
-   - \u0627\u0644\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u0631\u0626\u064A\u0633\u064A (\u0627\u0644\u063A\u0644\u0627\u0641): 42-72pt
-   - \u0627\u0644\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u062F\u0627\u062E\u0644\u064A: 30-48pt
-   - \u0627\u0644\u0639\u0646\u0627\u0648\u064A\u0646 \u0627\u0644\u0641\u0631\u0639\u064A\u0629: 18-26pt
-   - \u0645\u062A\u0646 \u0627\u0644\u0623\u062E\u0628\u0627\u0631: 9.5-11pt
-4. **\u0627\u0644\u0635\u0648\u0631:** \u062D\u062F\u062F \u062D\u062C\u0645 \u0627\u0644\u0635\u0648\u0631\u0629 (full, half, quarter, inline, square, rect, pano).
-5. **\u0627\u0644\u062A\u062E\u0637\u064A\u0637\u0627\u062A (Templates):** \u0644\u0627 \u062A\u0639\u062A\u0645\u062F \u0642\u0627\u0644\u0628\u0627\u064B \u062B\u0627\u0628\u062A\u0627\u064B\u060C \u0627\u0628\u062A\u0643\u0631 \u062A\u0648\u0632\u064A\u0639\u0627\u064B \u062F\u064A\u0646\u0627\u0645\u064A\u0643\u064A\u0627\u064B \u064A\u0648\u0627\u0632\u0646 \u0627\u0644\u0645\u0633\u0627\u062D\u0627\u062A \u0627\u0644\u0628\u064A\u0636\u0627\u0621\u060C \u0648\u0623\u0639\u0645\u062F\u0629 \u0627\u0644\u0646\u0635\u0648\u0635\u060C \u0648\u0627\u0644\u0625\u0639\u0644\u0627\u0646\u0627\u062A\u060C \u0648\u0627\u0644\u0627\u0642\u062A\u0628\u0627\u0633\u0627\u062A.
-6. **\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0627\u0644\u0625\u062E\u0631\u0627\u062C\u064A:** \u062D\u0644\u0644 \u0623\u0647\u0645\u064A\u0629 \u0627\u0644\u062E\u0628\u0631 \u0648\u062D\u062F\u062F (importance: high/medium/low) \u0644\u064A\u062A\u0645 \u062A\u062E\u0635\u064A\u0635 \u0639\u062F\u062F \u0627\u0644\u0623\u0639\u0645\u062F\u0629 (colSpan) \u0648(rowSpan).
-
-\u0623\u0639\u062F \u0627\u0644\u0646\u062A\u064A\u062C\u0629 \u062D\u0635\u0631\u0627\u064B \u0628\u0635\u064A\u063A\u0629 JSON \u0645\u062A\u0648\u0627\u0641\u0642\u0629 \u0645\u0639 \u0647\u0630\u0627 \u0627\u0644\u0647\u064A\u0643\u0644:
-{
-  "theme": "classic",
-  "pageSize": "broadsheet",
-  "fontFamily": "IBM Plex Sans Arabic",
-  "marginTop": 20, "marginBottom": 20, "marginLeft": 15, "marginRight": 15, "safeArea": 12,
-  "pages": [
-    {
-      "pageNumber": 1,
-      "pageType": "cover",
-      "title": "\u0627\u0644\u063A\u0644\u0627\u0641 \u0627\u0644\u0631\u0626\u064A\u0633\u064A",
-      "gridColumns": 6,
-      "columnGap": 5,
-      "layoutTemplate": "dynamic-cover-v1",
-      "items": [
-        {
-          "id": "item_id_here",
-          "importance": "high",
-          "imageSize": "pano",
-          "columns": 4,
-          "colSpan": 4,
-          "rowSpan": 2,
-          "featuredBox": false
-        }
-        // ... (\u062A\u0648\u0632\u064A\u0639 \u0628\u0627\u0642\u064A \u0627\u0644\u0645\u0648\u0627\u062F \u0623\u0648 \u0625\u0639\u0644\u0627\u0646\u0627\u062A id="ad-1" \u0645\u062B\u0644\u0627\u064B)
-      ],
-      "notes": "\u062A\u0639\u0644\u064A\u0645\u0627\u062A \u0644\u0644\u0645\u062E\u0631\u062C \u062D\u0648\u0644 \u062A\u0648\u0627\u0632\u0646 \u0627\u0644\u063A\u0644\u0627\u0641"
-    }
-  ],
-  "editorialSuggestions": "\u0646\u0635\u0627\u0626\u062D \u0625\u062E\u0631\u0627\u062C\u064A\u0629 \u0644\u0636\u0645\u0627\u0646 \u0627\u0644\u062A\u0648\u0627\u0632\u0646 \u0627\u0644\u0628\u0635\u0631\u064A \u0648\u0627\u0644\u062C\u0627\u0630\u0628\u064A\u0629"
-}`;
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json"
-        }
-      });
-      const text = response.text || "{}";
-      return res.json(JSON.parse(text));
-    }
-    if (task === "enhance_subheadings") {
-      const { title, content } = req.body;
-      const prompt = `\u0623\u0646\u062A \u0645\u062D\u0631\u0631 \u0635\u062D\u0641\u064A \u0645\u062A\u0645\u0631\u0633. \u0642\u0645 \u0628\u0625\u0646\u0634\u0627\u0621 3 \u0639\u0646\u0627\u0648\u064A\u0646 \u0641\u0631\u0639\u064A\u0629 \u0634\u0627\u0631\u062D\u0629 \u0648\u0645\u0648\u062C\u0632\u0629 (Deck / Subheadlines) \u0648\u0627\u0642\u062A\u0628\u0627\u0633 \u0628\u0627\u0631\u0632 (Pull Quote) \u0644\u0644\u0639\u0646\u0648\u0627\u0646 \u0627\u0644\u062A\u0627\u0644\u064A:
-\u0627\u0644\u0639\u0646\u0648\u0627\u0646: "${title}"
-\u0627\u0644\u0646\u0635 \u0627\u0644\u0645\u062E\u062A\u0635\u0631: "${(content || "").substring(0, 300)}"
-
-\u0623\u0639\u062F \u0627\u0644\u0646\u062A\u064A\u062C\u0629 \u0628\u0635\u064A\u063A\u0629 JSON:
-{
-  "subtitles": ["\u0639\u0646\u0648\u0627\u0646 \u0641\u0631\u0639\u064A 1", "\u0639\u0646\u0648\u0627\u0646 \u0641\u0631\u0639\u064A 2"],
-  "pullQuote": "\u0646\u0635 \u0627\u0644\u0627\u0642\u062A\u0628\u0627\u0633 \u0627\u0644\u0628\u0627\u0631\u0632 \u0644\u0627\u0633\u062A\u062E\u062F\u0627\u0645\u0647 \u0641\u064A \u0643\u0627\u062F\u0631 \u0625\u062E\u0631\u0627\u062C\u064A"
-}`;
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json"
-        }
-      });
-      const text = response.text || "{}";
-      return res.json(JSON.parse(text));
-    }
-    return res.status(400).json({ error: "\u0627\u0644\u0645\u0647\u0627\u0645 \u0627\u0644\u0645\u062A\u0627\u062D\u0629: generate_editorial, auto_layout, enhance_subheadings" });
-  } catch (error) {
-    console.error("AI Newspaper Assist Error:", error);
-    res.status(500).json({ error: error.message || "\u0641\u0634\u0644 \u0645\u0639\u0627\u0644\u062C\u0629 \u0637\u0644\u0628 \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0644\u0644\u0635\u062D\u064A\u0641\u0629" });
   }
 });
 app.get("/sw.js", (req, res) => {
@@ -1038,24 +781,15 @@ app.use((err, req, res, next) => {
   next(err);
 });
 async function startServer() {
-  const isProduction = process.env.NODE_ENV === "production" || process.env.VITE_USER_NODE_ENV === "production" || !process.argv[1]?.endsWith("server.ts");
-  console.log(`Starting server in ${isProduction ? "production" : "development"} mode...`);
-  console.log(`NODE_ENV: ${process.env.NODE_ENV}`);
-  console.log(`CWD: ${process.cwd()}`);
-  if (!isProduction) {
-    const { createServer: createViteServer } = await import("vite");
-    const vite = await createViteServer({
+  if (process.env.NODE_ENV !== "production") {
+    const vite = await (0, import_vite.createServer)({
       server: { middlewareMode: true },
       appType: "spa"
     });
     app.use(vite.middlewares);
   } else {
     const distPath = import_path.default.join(process.cwd(), "dist");
-    const publicPath = import_path.default.join(process.cwd(), "public");
     app.use(import_express.default.static(distPath));
-    if (import_fs.default.existsSync(publicPath)) {
-      app.use(import_express.default.static(publicPath));
-    }
     app.get("*", (req, res) => {
       res.sendFile(import_path.default.join(distPath, "index.html"));
     });

@@ -1,7 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from "react";
 import { LiveStream } from "../types";
-import { API_BASE } from "../config/apiConfig";
-import { radioPlayer } from "../services/radioPlayer";
 
 interface LiveStreamContextType {
   activeStream: LiveStream | null;
@@ -48,7 +46,6 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       audioRef.current.pause();
       audioRef.current.src = "";
     }
-    radioPlayer.stop();
   };
 
   const togglePlay = () => {
@@ -80,78 +77,41 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       if (audioRef.current) {
         audioRef.current.pause();
       }
-      radioPlayer.pause();
     };
+
     window.addEventListener("stop-live-stream", handleStopLiveStream);
     return () => window.removeEventListener("stop-live-stream", handleStopLiveStream);
   }, []);
 
-  // Sync Native Radio Events
-  useEffect(() => {
-    if (radioPlayer.isNativeMode) {
-      const unsubPlaying = radioPlayer.on('playing', () => { setIsPlaying(true); setIsLoading(false); });
-      const unsubPaused = radioPlayer.on('paused', () => setIsPlaying(false));
-      const unsubBuffering = radioPlayer.on('buffering', () => setIsLoading(true));
-      const unsubStopped = radioPlayer.on('stopped', () => { setIsPlaying(false); setActiveStream(null); });
-      const unsubError = radioPlayer.on('error', (err) => { console.error("Native Radio Error:", err); setIsLoading(false); });
-      
-      return () => {
-        unsubPlaying();
-        unsubPaused();
-        unsubBuffering();
-        unsubStopped();
-        unsubError();
-      };
-    }
-  }, []);
-
   useEffect(() => {
     const audio = audioRef.current;
+    if (!audio) return;
     
     if (isPlaying && activeStream) {
       window.dispatchEvent(new CustomEvent("stop-quran-audio"));
       if (activeStream.type === "radio") {
         let src = activeStream.streamUrl || activeStream.url;
         
-        if (radioPlayer.isNativeMode) {
-          // Native Android ExoPlayer connects directly to streams! No proxy/CORS needed.
-          if (src) {
-             radioPlayer.play(src, activeStream.name || "Live Radio", activeStream.iconUrl || "");
-          }
-          if (audio) { audio.pause(); audio.removeAttribute("src"); audio.load(); } // Definitive stop for HTML5
-        } else {
-          // Web needs proxy to solve CORS and Mixed Content Limitations
-          if (src && !src.startsWith('/api/proxy') && !src.includes('/api/proxy')) {
-            src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
-          }
+        // Proxy ALL radio streams to avoid mixed content blocking and bypass CORS/SSL on Android browsers
+        if (src && !src.startsWith('/api/proxy')) {
+          src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
+        }
 
-          if (src) {
-            let base = API_BASE || window.location.origin;
-            
-            if (!base || base.startsWith("capacitor://") || base.includes("localhost")) {
-              base = "https://ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
-            }
-            
-            const absoluteSrc = src.startsWith("http") ? src : `${base}${src}`;
-
-            if (audio) {
-              if (audio.src !== absoluteSrc) {
-                audio.src = absoluteSrc;
-                audio.load();
-              }
-              audio.play().catch(e => console.warn("Live stream playback failed:", e));
-            }
+        if (src) {
+          // Resolve relative proxy path to absolute so `audio.src !== src` comparison works reliably
+          const absoluteSrc = src.startsWith("http") ? src : new URL(src, window.location.origin).href;
+          if (audio.src !== absoluteSrc) {
+            audio.src = absoluteSrc;
           }
         }
+        
+        audio.play().catch(e => console.warn("Live stream playback failed:", e));
       } else {
         // TV stream plays video/audio inside Watch page iframe; pause background audio element
-        if (audio) audio.pause();
-        if (radioPlayer.isNativeMode) radioPlayer.pause();
+        audio.pause();
       }
     } else {
-      if (audio) audio.pause();
-      // Don't call stop(), just pause() to keep notification in paused state
-      if (radioPlayer.isNativeMode) radioPlayer.pause();
+      audio.pause();
     }
   }, [isPlaying, activeStream]);
 
@@ -176,22 +136,17 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       }}
     >
       {children}
-      {/* Hidden global audio element for Web only */}
+      {/* Hidden global audio element */}
       <audio 
         ref={audioRef} 
         className="hidden" 
-        preload="none"
-        playsInline
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         onWaiting={() => setIsLoading(true)}
         onPlaying={() => setIsLoading(false)}
         onStalled={() => setIsLoading(true)}
         onCanPlay={() => setIsLoading(false)}
-        onError={() => {
-          console.error("Audio error:", audioRef.current?.error);
-          setIsLoading(false);
-        }}
+        onError={() => setIsLoading(false)}
       />
     </LiveStreamContext.Provider>
   );
