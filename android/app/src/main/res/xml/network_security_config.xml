@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
-    <!-- Allow cleartext HTTP specifically for the secondary live radio stream IP without opening all cleartext traffic -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">168.119.10.136</domain>
-    </domain-config>
+    <!-- Allow cleartext HTTP globally so IP addresses and HTTP streams can play on Android 9+ -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
 </network-security-config>
