@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { QuranLesson, QuranSeries } from "../types";
+import { formatLessonDisplayTitle } from "../data/staticQuranData";
 
 interface QuranReaderProps {
   lesson: QuranLesson;
@@ -624,44 +625,44 @@ export function QuranReader({
     >
       {/* 1. Header Toolbar (Hidden in Focus Mode unless mouse hovers or active) */}
       {!focusMode && (
-        <div className="bg-taiz-navy text-white px-4 py-3 flex items-center justify-between z-40 shadow-md shrink-0">
+        <div className="bg-taiz-navy text-white px-3 sm:px-4 py-1.5 flex items-center justify-between z-40 shadow-xs shrink-0">
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl transition duration-200"
+            className="flex items-center gap-1 px-2.5 py-1 bg-white/10 hover:bg-white/20 rounded-lg transition duration-200"
           >
-            <ChevronLeft className="w-5 h-5 rotate-180" />
-            <span className="text-sm font-bold">رجوع</span>
+            <ChevronLeft className="w-4 h-4 rotate-180" />
+            <span className="text-xs sm:text-[13px] font-bold font-cairo">رجوع</span>
           </button>
 
           <div className="text-center max-w-[50%]">
-            <h1 className="text-sm md:text-base font-black truncate">
-              {lesson.title}
+            <h1 className="text-xs sm:text-sm font-bold font-cairo truncate leading-tight">
+              {formatLessonDisplayTitle(lesson.title, lesson.order, undefined, series.title)}
             </h1>
-            <p className="text-[10px] text-white/70 truncate font-semibold">
+            <p className="text-[9px] sm:text-[10px] text-amber-400 truncate font-bold font-cairo leading-tight">
               {series.title}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <button
               onClick={() => {
                 setFocusMode(true);
               }}
-              className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition duration-200"
+              className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition duration-200"
               title="وضع التركيز"
             >
-              <Maximize className="w-5 h-5" />
+              <Maximize className="w-4 h-4" />
             </button>
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className={`p-2 rounded-xl transition duration-200 ${
+              className={`p-1.5 rounded-lg transition duration-200 ${
                 showSettings
-                  ? "bg-blue-600 text-white"
+                  ? "bg-emerald-600 text-white"
                   : "bg-white/5 hover:bg-white/10"
               }`}
               title="تنسيق الألوان والخط"
             >
-              <Sliders className="w-5 h-5" />
+              <Sliders className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -674,85 +675,85 @@ export function QuranReader({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="bg-taiz-navy/95 border-b border-white/10 text-white px-4 py-4 space-y-4 shadow-inner z-30 font-sans backdrop-blur-md"
+            className="bg-taiz-navy/95 border-b border-white/10 text-white px-3 py-2.5 space-y-2 shadow-inner z-30 font-sans backdrop-blur-md"
           >
-            <div className="max-w-2xl mx-auto space-y-3">
+            <div className="max-w-2xl mx-auto space-y-2">
               {/* Eye-safety back-themes */}
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 <button
                   onClick={() => setReaderTheme("day")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-text-primary ${
+                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all text-text-primary ${
                     readerTheme === "day"
                       ? "bg-surface-main border-taiz-royal"
-                      : "bg-surface-main/80 border-transparent"
+                      : "bg-surface-main/80 border-transparent hover:bg-surface-main"
                   }`}
                 >
-                  🎨 نهاراً
+                  <span>🎨 نهاراً</span>
                 </button>
                 <button
                   onClick={() => setReaderTheme("sepia")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-[#422F1E] ${
+                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all text-[#422F1E] ${
                     readerTheme === "sepia"
                       ? "bg-[#F4ECD8] border-[#7F6E5D]"
-                      : "bg-[#F4ECD8]/80 border-transparent"
+                      : "bg-[#F4ECD8]/80 border-transparent hover:bg-[#F4ECD8]"
                   }`}
                 >
-                  👁️ دافئ
+                  <span>👁️ دافئ</span>
                 </button>
                 <button
                   onClick={() => setReaderTheme("night")}
-                  className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-white ${
+                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all text-white ${
                     readerTheme === "night"
                       ? "bg-[#121214] border-taiz-sky"
-                      : "bg-[#121214]/85 border-transparent"
+                      : "bg-[#121214]/85 border-transparent hover:bg-[#121214]"
                   }`}
                 >
-                  🌙 ليلاً
+                  <span>🌙 ليلاً</span>
                 </button>
               </div>
 
               {/* Adjust font size */}
-              <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-white/50 font-bold">
+              <div className="flex items-center justify-between gap-2 pt-0.5">
+                <span className="text-[11px] text-white/70 font-bold font-cairo shrink-0">
                   حجم نص الدرس:
                 </span>
-                <div className="grid grid-cols-4 gap-1.5 text-xs text-text-primary">
+                <div className="grid grid-cols-4 gap-1 text-[11px] text-text-primary flex-1 max-w-[280px]">
                   <button
                     onClick={() => setFontSize("sm")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${
+                    className={`py-1 px-1.5 font-bold rounded-md transition ${
                       fontSize === "sm"
-                        ? "bg-taiz-royal text-white"
-                        : "bg-surface-main"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-surface-main hover:bg-surface-hover"
                     }`}
                   >
                     صغير
                   </button>
                   <button
                     onClick={() => setFontSize("md")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${
+                    className={`py-1 px-1.5 font-bold rounded-md transition ${
                       fontSize === "md"
-                        ? "bg-taiz-royal text-white"
-                        : "bg-surface-main"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-surface-main hover:bg-surface-hover"
                     }`}
                   >
                     متوسط
                   </button>
                   <button
                     onClick={() => setFontSize("lg")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${
+                    className={`py-1 px-1.5 font-bold rounded-md transition ${
                       fontSize === "lg"
-                        ? "bg-taiz-royal text-white"
-                        : "bg-surface-main"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-surface-main hover:bg-surface-hover"
                     }`}
                   >
                     كبير
                   </button>
                   <button
                     onClick={() => setFontSize("xl")}
-                    className={`py-1.5 px-2 font-bold rounded-lg ${
+                    className={`py-1 px-1.5 font-bold rounded-md transition ${
                       fontSize === "xl"
-                        ? "bg-taiz-royal text-white"
-                        : "bg-surface-main"
+                        ? "bg-emerald-600 text-white"
+                        : "bg-surface-main hover:bg-surface-hover"
                     }`}
                   >
                     مضاعف
@@ -761,15 +762,15 @@ export function QuranReader({
               </div>
 
               {/* Height and weight */}
-              <div className="grid grid-cols-2 gap-4 pt-1">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs text-white/50 font-bold">
-                    المسافة بين السطور:
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[11px] text-white/70 font-bold font-cairo shrink-0">
+                    المسافة:
                   </span>
                   <select
                     value={lineHeight}
                     onChange={(e) => setLineHeight(e.target.value as any)}
-                    className="p-2 rounded bg-black/20 text-sm border border-white/10 font-bold focus:outline-none"
+                    className="py-1 px-2 rounded-md bg-black/20 text-xs border border-white/10 font-bold focus:outline-none w-full"
                   >
                     <option value="compact">مضغوط</option>
                     <option value="relaxed">مريح</option>
@@ -777,16 +778,16 @@ export function QuranReader({
                   </select>
                 </div>
 
-                <div className="flex flex-col justify-end">
+                <div className="flex justify-end">
                   <button
                     onClick={() => setFontMedium(!fontMedium)}
-                    className={`p-2.5 rounded border text-xs font-bold transition ${
+                    className={`w-full py-1 px-2 rounded-md border text-[11px] font-bold transition font-cairo ${
                       fontMedium
-                        ? "bg-taiz-royal border-taiz-royal text-white"
-                        : "bg-black/20 border-white/10 text-white/70"
+                        ? "bg-emerald-600 border-emerald-600 text-white"
+                        : "bg-black/20 border-white/10 text-white/70 hover:bg-black/30"
                     }`}
                   >
-                    تفعيل خط عريض (Medium/Medium)
+                    خط عريض (Medium)
                   </button>
                 </div>
               </div>

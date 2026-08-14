@@ -34,6 +34,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../components/PullToRefresh";
 import { getEmbedUrl } from "../utils/embed";
+import { getRadioScheduleInfo } from "../utils/yemenTime";
 
 const getRelativeTimeArabic = (timestamp: any) => {
   if (!timestamp) return "منذ فترة";
@@ -123,6 +124,25 @@ const DEFAULT_CHANNELS: Partial<LiveStream>[] = [
     name: "الميادين", 
     iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%23D97706'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23F59E0B' stroke-width='2'/><path d='M25 45Q50 25 75 45Q50 40 25 45Z' fill='white'/><text x='50' y='62' font-family='sans-serif' font-weight='900' font-size='15' fill='white' text-anchor='middle'>الميادين</text><text x='50' y='78' font-family='sans-serif' font-weight='700' font-size='9' fill='%23FEF3C7' text-anchor='middle'>MAYADEEN</text></svg>", 
     streamUrl: "https://almayadeen.net/live",
+    type: "tv",
+    isActive: true 
+  },
+  { 
+    id: "rad-1", 
+    name: "إذاعة تعز FM", 
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%23D97706'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23F59E0B' stroke-width='2'/><path d='M30 40Q50 20 70 40' stroke='white' stroke-width='4' stroke-linecap='round'/><path d='M35 50Q50 35 65 50' stroke='white' stroke-width='4' stroke-linecap='round'/><circle cx='50' cy='62' r='8' fill='white'/><text x='50' y='88' font-family='sans-serif' font-weight='900' font-size='10' fill='white' text-anchor='middle'>إذاعة تعز FM</text></svg>", 
+    streamUrl: "https://dc5.serverse.com/proxy/pbmhbvxs/stream",
+    type: "radio",
+    description: "",
+    isActive: true 
+  },
+  { 
+    id: "rad-2", 
+    name: "إذاعة تعز العامة", 
+    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%230F172A'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23D97706' stroke-width='2'/><path d='M30 45Q50 25 70 45' stroke='%23F59E0B' stroke-width='4' stroke-linecap='round'/><circle cx='50' cy='60' r='8' fill='%23F59E0B'/><text x='50' y='86' font-family='sans-serif' font-weight='900' font-size='9' fill='%23F59E0B' text-anchor='middle'>إذاعة تعز</text></svg>", 
+    streamUrl: "http://168.119.10.136/proxy/taizradio?mp=/stream",
+    type: "radio",
+    description: "البث متوقف حالياً • يبدأ البث الإذاعي لإذاعة تعز يوميًا من الساعة الثامنة صباحًا وحتى الساعة العاشرة مساءً.",
     isActive: true 
   },
 ];
@@ -224,7 +244,9 @@ export function Watch() {
     stopStream: globalStopStream,
     togglePlay: globalTogglePlay,
     setVolume: globalSetVolume,
-    toggleMute: globalToggleMute
+    toggleMute: globalToggleMute,
+    streamError,
+    isOutsideBroadcastHours
   } = useLiveStream();
   
   const [activeTvId, setActiveTvId] = useState<string | null>("ch-1");
@@ -450,12 +472,7 @@ export function Watch() {
                   <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
 
                   {/* Top Bar inside TV Viewer */}
-                  <div className="relative z-10 flex items-center justify-between w-full">
-                    <div className="bg-gradient-to-r from-red-600 to-rose-600 text-white px-3.5 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 shadow-lg border border-white/20">
-                      <span className="w-2 h-2 bg-white rounded-full animate-ping" />
-                      <span>قناة تلفزيونية • مباشر</span>
-                    </div>
-
+                  <div className="relative z-10 flex items-center justify-end w-full">
                     <div className="flex items-center gap-3">
                       <div className="text-right max-w-[200px] sm:max-w-[260px]">
                         <h3 className="text-xs sm:text-sm font-black text-white leading-tight font-cairo truncate">
@@ -545,23 +562,30 @@ export function Watch() {
                         />
                       </div>
                       <div className="text-right min-w-0">
-                        <div className="inline-flex items-center gap-1.5 bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-0.5 rounded-full mb-1 border border-amber-500/30">
-                          <Radio className="w-3 h-3 text-amber-400" />
-                          <span>إذاعة صوتية</span>
-                        </div>
                         <h3 className="text-base sm:text-lg font-black text-white font-cairo truncate leading-tight">
-                          {activeRadioStation?.name || "الإذاعة الصوتية"}
+                          {activeRadioStation?.name || "الإذاعة"}
                         </h3>
-                        <p className="text-xs text-slate-300 font-medium font-cairo truncate mt-0.5">
-                          {activeRadioStation?.description || "بث إذاعي مباشر مستمر على مدار الساعة"}
-                        </p>
+                        {activeRadioStation?.description ? (
+                          <p className="text-xs text-slate-300 font-medium font-cairo truncate mt-0.5">
+                            {activeRadioStation.description}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
 
-                    <div className="shrink-0 bg-amber-500/10 border border-amber-500/30 text-amber-400 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2">
-                      <span className="w-2 h-2 bg-amber-400 rounded-full animate-ping" />
-                      <span className="hidden sm:inline">بث مباشر</span>
-                    </div>
+                    {(() => {
+                      const schedule = getRadioScheduleInfo(activeRadioStation?.streamUrl || activeRadioStation?.url);
+                      return (
+                        <div className={`shrink-0 border px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 ${
+                          schedule.isOpen 
+                            ? "bg-amber-500/10 border-amber-500/30 text-amber-400" 
+                            : "bg-slate-800/80 border-slate-700 text-slate-300"
+                        }`}>
+                          <span className={`w-2 h-2 rounded-full ${schedule.isOpen ? "bg-amber-400 animate-ping" : "bg-amber-400/60"}`} />
+                          <span className="hidden sm:inline">{schedule.isOpen ? "بث مباشر" : "08:00 ص - 10:00 م"}</span>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Animated Equalizer Waveform */}
@@ -590,30 +614,53 @@ export function Watch() {
                     
                     {/* Status Badge */}
                     <div className="text-right flex items-center gap-2">
-                      {activeStream?.id === activeRadioStation?.id ? (
-                        isGlobalLoading ? (
-                          <div className="flex items-center gap-2 text-amber-400 font-black text-xs font-cairo">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <span>جاري التحميل... أو الاتصال ضعيف</span>
-                          </div>
-                        ) : isGlobalPlaying ? (
-                          <div className="flex items-center gap-2 text-emerald-400 font-black text-xs font-cairo">
-                            <span className="relative flex h-2.5 w-2.5">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      {(() => {
+                        const schedule = getRadioScheduleInfo(activeRadioStation?.streamUrl || activeRadioStation?.url);
+                        const isCurrentActive = activeStream?.id === activeRadioStation?.id;
+                        
+                        if (isCurrentActive && isGlobalLoading) {
+                          return (
+                            <div className="flex items-center gap-2 text-amber-400 font-black text-xs font-cairo">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>جاري الاتصال بالبث الصوتي...</span>
+                            </div>
+                          );
+                        }
+                        
+                        if (isCurrentActive && isGlobalPlaying) {
+                          return (
+                            <div className="flex items-center gap-2 text-emerald-400 font-black text-xs font-cairo">
+                              <span className="relative flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                              </span>
+                              <span>جاري البث الصوتي المباشر الآن</span>
+                            </div>
+                          );
+                        }
+
+                        if (isCurrentActive && streamError) {
+                          return (
+                            <span className="text-amber-300 font-bold text-xs font-cairo">
+                              {streamError}
                             </span>
-                            <span>جاري البث الصوتي المباشر الآن</span>
-                          </div>
-                        ) : (
+                          );
+                        }
+
+                        if (!schedule.isOpen) {
+                          return (
+                            <span className="text-amber-300/90 text-xs font-bold font-cairo">
+                              {schedule.statusText}
+                            </span>
+                          );
+                        }
+
+                        return (
                           <span className="text-amber-400/90 text-xs font-bold font-cairo">
                             اضغط للاستماع للبث الإذاعي المباشر
                           </span>
-                        )
-                      ) : (
-                        <span className="text-amber-400/90 text-xs font-bold font-cairo">
-                          اضغط للاستماع للبث الإذاعي المباشر
-                        </span>
-                      )}
+                        );
+                      })()}
                     </div>
 
                     {/* Audio Controls */}
@@ -683,21 +730,25 @@ export function Watch() {
           </motion.div>
 
           {/* 2. CHANNELS / RADIOS SECTION */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-                  {channelTab === "tv" ? (
-                    <Tv className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                  ) : (
-                    <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                  )}
-                </div>
-                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
-                  {channelTab === "tv" ? "القنوات الفضائية المتاحة" : "الإذاعات الصوتية المتاحة"}
-                </h2>
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2 px-1 select-none" dir="rtl">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+                {channelTab === "tv" ? (
+                  <Tv className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                ) : (
+                  <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                )}
               </div>
-              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 font-cairo">
+              <div className="flex flex-col text-right">
+                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
+                  {channelTab === "tv" ? "القنوات الفضائية المتاحة" : "الإذاعات المتاحة"}
+                </h2>
+                <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">
+                  {channelTab === "tv" ? "اختر القناة للمشاهدة المباشرة" : "استمع إلى البث الإذاعي المباشر"}
+                </p>
+              </div>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
+              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 font-cairo shrink-0">
                 {displayChannels.length} {channelTab === "tv" ? "قنوات" : "إذاعات"}
               </span>
             </div>
@@ -724,7 +775,7 @@ export function Watch() {
                 }`}
               >
                 <Radio className="w-4 h-4" />
-                <span>الإذاعات الصوتية</span>
+                <span>الإذاعات المتاحة</span>
               </button>
             </div>
 
@@ -842,17 +893,21 @@ export function Watch() {
           </div>
 
           {/* 5. MOST WATCHED SECTION (الأكثر مشاهدة) */}
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-                  <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-current" />
-                </div>
-                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">الأكثر مشاهدة</h2>
+          <div className="space-y-2 pt-1 border-b border-slate-200/60 dark:border-slate-800/60 pb-3 mb-2">
+            <div className="flex items-center gap-2 px-1 select-none" dir="rtl">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+                <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-current" />
               </div>
+              <div className="flex flex-col text-right">
+                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">الأكثر مشاهدة</h2>
+                <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">الفيديوهات والتغطيات الأكثر رواجاً وتفاعلاً</p>
+              </div>
+              
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
+
               <button 
                 onClick={() => setShowAllMostViewed(!showAllMostViewed)}
-                className="text-[10px] sm:text-[11px] font-bold text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-2.5 py-1 rounded-full border border-taiz-sky/10 transition-all hover:scale-105"
+                className="text-[10px] sm:text-[11px] font-bold text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-2.5 py-1 rounded-full border border-taiz-sky/10 transition-all hover:scale-105 shrink-0"
               >
                 <span>{showAllMostViewed ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -930,17 +985,21 @@ export function Watch() {
           </div>
 
           {/* 6. LATEST VIDEOS SECTION (أحدث الفيديوهات) */}
-          <div className="space-y-2 pt-1">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[2.5]" />
-                </div>
-                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أحدث الفيديوهات</h2>
+          <div className="space-y-2 pt-1 pb-2">
+            <div className="flex items-center gap-2 px-1 select-none" dir="rtl">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[2.5]" />
               </div>
+              <div className="flex flex-col text-right">
+                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أحدث الفيديوهات</h2>
+                <p className="text-[10px] sm:text-[11px] text-amber-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
+              </div>
+              
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
+
               <button 
                 onClick={() => setShowAllLatest(!showAllLatest)}
-                className="text-[10px] sm:text-[11px] font-bold text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-2.5 py-1 rounded-full border border-taiz-sky/10 transition-all hover:scale-105"
+                className="text-[10px] sm:text-[11px] font-bold text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-2.5 py-1 rounded-full border border-taiz-sky/10 transition-all hover:scale-105 shrink-0"
               >
                 <span>{showAllLatest ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />

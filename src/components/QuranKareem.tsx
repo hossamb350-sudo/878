@@ -53,7 +53,7 @@ interface QuranProgressData {
 }
 
 const themeClasses = {
-  day: "bg-slate-50 text-slate-900 border-slate-200",
+  day: "bg-white text-slate-900 border-slate-200",
   night: "bg-[#121214] text-zinc-100 border-zinc-800",
   sepia: "bg-[#F4ECD8] text-[#422F1E] border-[#EADFCA]",
 };
@@ -202,7 +202,7 @@ export function QuranKareem() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-stone-950 font-sans min-h-0 relative">
+    <div className="flex-1 flex flex-col bg-white dark:bg-stone-950 font-sans min-h-0 relative">
       <AnimatePresence mode="wait">
         {!selectedSurah ? (
           // --- MAIN QURAN INTERFACE (LIST OR STATS) ---
@@ -217,7 +217,7 @@ export function QuranKareem() {
             <div className="flex border-b border-slate-200/50 dark:border-stone-800 bg-white dark:bg-stone-900 select-none">
               <button
                 onClick={() => setQuranTab("surahs")}
-                className={`flex-1 py-3 text-center font-black text-sm font-cairo transition-all relative ${
+                className={`flex-1 py-1.5 sm:py-2 text-center font-bold text-xs sm:text-[13px] font-cairo transition-all relative ${
                   quranTab === "surahs"
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -233,7 +233,7 @@ export function QuranKareem() {
               </button>
               <button
                 onClick={() => setQuranTab("progress")}
-                className={`flex-1 py-3 text-center font-black text-sm font-cairo transition-all relative flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-1.5 sm:py-2 text-center font-bold text-xs sm:text-[13px] font-cairo transition-all relative flex items-center justify-center gap-1.5 ${
                   quranTab === "progress"
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-slate-500 hover:text-slate-800 dark:hover:text-white"
@@ -241,7 +241,7 @@ export function QuranKareem() {
               >
                 <span>📊 لوحة متابعة تلاوتي</span>
                 {qProgress.bookmarks.length > 0 && (
-                  <span className="bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-sans font-bold">
+                  <span className="bg-amber-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-sans font-bold">
                     {qProgress.bookmarks.length}
                   </span>
                 )}
@@ -258,59 +258,81 @@ export function QuranKareem() {
               // --- SURAHS LIST VIEW ---
               <div className="flex-1 flex flex-col min-h-0">
                 {/* Search Box */}
-                <div className="p-4 bg-white dark:bg-stone-900 border-b border-slate-200/50 dark:border-stone-800">
+                <div className="py-2 px-3 sm:px-4 bg-white dark:bg-stone-900 border-b border-slate-200/50 dark:border-stone-800">
                   <div className="relative max-w-md mx-auto">
                     <input
                       type="text"
                       placeholder="ابحث باسم السورة، أو رقمها..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-slate-100 dark:bg-stone-800 border-none outline-none py-2.5 pr-10 pl-4 rounded-xl text-sm font-bold text-slate-800 dark:text-white placeholder:text-slate-400"
+                      className="w-full bg-slate-100 dark:bg-stone-800 border-none outline-none py-1.5 pr-8 pl-3 rounded-lg text-xs sm:text-[13px] font-medium text-slate-800 dark:text-white placeholder:text-slate-400"
                     />
-                    <Search className="w-5 h-5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
 
                 {/* Chapters Grid */}
-                <div className="flex-1 overflow-y-auto px-4 py-6 scrollbar-hide pb-28">
-                  <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="flex-1 overflow-y-auto px-4 py-4 scrollbar-hide pb-28">
+                  <div className="max-w-4xl mx-auto space-y-4">
+                    {/* Section Header */}
+                    <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-slate-50/90 dark:bg-stone-900/80 rounded-xl border-r-4 border-r-taiz-royal dark:border-r-taiz-sky border border-slate-200/80 dark:border-stone-800 select-none mb-1 shadow-2xs" dir="rtl">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-xs shrink-0 text-white">
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                        <div className="flex flex-col text-right">
+                          <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
+                            سور القرآن الكريم
+                          </h2>
+                          <p className="text-[10.5px] sm:text-[11px] text-amber-500 font-bold font-cairo">
+                            تلاوة واستماع لآيات الذكر الحكيم
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-slate-200/70 dark:border-stone-700 font-cairo shadow-2xs shrink-0">
+                        {filteredSurahs.length} سورة
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 sm:gap-3">
                     {filteredSurahs.length === 0 ? (
                       <div className="col-span-full text-center py-16">
                         <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                        <p className="text-slate-400 font-bold">لم يتم العثور على أي سورة مطابقة للبحث</p>
+                        <p className="text-slate-400 font-bold font-cairo">لم يتم العثور على أي سورة مطابقة للبحث</p>
                       </div>
                     ) : (
                       filteredSurahs.map((surah) => (
                         <button
                           key={surah.number}
                           onClick={() => setSelectedSurah(surah)}
-                          className="w-full bg-white dark:bg-stone-900 border border-slate-200/60 dark:border-stone-800 p-4 flex items-center justify-between text-right transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-stone-700 active:scale-[0.99] rounded-none shadow-sm group"
+                          className="w-full bg-white dark:bg-stone-900 border border-slate-200/60 dark:border-stone-800 p-2.5 sm:p-3 flex items-center justify-between text-right transition-all duration-300 hover:shadow-md hover:border-taiz-sky/40 dark:hover:border-taiz-sky/40 hover:-translate-y-0.5 active:scale-[0.99] rounded-[12px] sm:rounded-[14px] shadow-xs group"
                         >
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 shrink-0 flex items-center justify-center rounded-full bg-slate-50 dark:bg-stone-800 border border-slate-200/50 text-slate-500 font-bold text-sm font-mono group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/20 group-hover:text-emerald-600 transition-colors">
+                          <div className="flex items-center gap-2 sm:gap-2.5">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-stone-800 border border-slate-200/60 dark:border-stone-700 text-slate-700 dark:text-stone-300 font-bold text-[11px] sm:text-xs font-mono group-hover:bg-gradient-to-br group-hover:from-taiz-royal group-hover:to-taiz-sky group-hover:text-white group-hover:border-transparent transition-all shadow-xs">
                               {surah.number}
                             </div>
                             <div className="flex flex-col items-start">
-                              <span className="text-base font-black text-slate-800 dark:text-stone-100 font-cairo leading-snug group-hover:text-emerald-600 transition-colors">
+                              <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-stone-100 font-cairo leading-snug group-hover:text-taiz-sky transition-colors">
                                 {surah.name}
                               </span>
-                              <span className="text-[10px] text-slate-400 dark:text-stone-500 font-bold font-ibm">
+                              <span className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium font-cairo">
                                 {surah.englishName}
                               </span>
                             </div>
                           </div>
 
                           <div className="flex flex-col items-end gap-1">
-                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-full font-cairo">
+                            <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded-full font-cairo">
                               {getRevelationArabic(surah.revelationType)}
                             </span>
-                            <span className="text-[10px] text-slate-400 dark:text-stone-500 font-bold font-cairo">
+                            <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-stone-400 font-medium font-cairo">
                               {surah.numberOfAyahs} آية
                             </span>
                           </div>
                         </button>
                       ))
                     )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -542,7 +564,7 @@ export function QuranKareem() {
           >
             {/* Top Toolbar */}
             {!focusMode && (
-              <div className={`border-b py-3 px-4 flex items-center justify-between shrink-0 relative z-20 shadow-sm transition-colors duration-300 ${
+              <div className={`border-b py-1.5 px-3 sm:px-4 flex items-center justify-between shrink-0 relative z-20 shadow-xs transition-colors duration-300 ${
                 readerTheme === 'day' ? 'bg-white border-slate-200/50 text-slate-800' : 
                 readerTheme === 'sepia' ? 'bg-[#EADFCA] border-[#7F6E5D]/20 text-[#422F1E]' : 
                 'bg-[#1e1e21] border-stone-800 text-stone-100'
@@ -552,39 +574,39 @@ export function QuranKareem() {
                     setSelectedSurah(null);
                     setSurahDetail(null);
                   }}
-                  className="flex items-center gap-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-white transition font-bold text-sm font-cairo"
+                  className="flex items-center gap-1 text-slate-500 hover:text-slate-800 dark:hover:text-white transition font-bold text-xs sm:text-[13px] font-cairo"
                 >
-                  <ChevronRight className="w-5 h-5" />
+                  <ChevronRight className="w-4 h-4" />
                   <span>العودة للقائمة</span>
                 </button>
 
                 <div className="flex flex-col items-center">
-                  <span className="text-lg font-black font-cairo">
+                  <span className="text-sm sm:text-base font-bold font-cairo leading-tight">
                     سورة {selectedSurah.name}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-bold font-ibm">
+                  <span className="text-[9px] sm:text-[10px] text-amber-500 font-bold font-cairo leading-tight">
                     {selectedSurah.englishName} • {getRevelationArabic(selectedSurah.revelationType)} • {selectedSurah.numberOfAyahs} آية
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setFocusMode(true)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-xl transition duration-200 text-slate-500 dark:text-slate-300"
+                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-lg transition duration-200 text-slate-500 dark:text-slate-300"
                     title="وضع التركيز"
                   >
-                    <Maximize className="w-5 h-5" />
+                    <Maximize className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setShowSettings(!showSettings)}
-                    className={`p-2 rounded-xl transition duration-200 ${
+                    className={`p-1.5 rounded-lg transition duration-200 ${
                       showSettings
                         ? "bg-emerald-600 text-white"
                         : "hover:bg-slate-100 dark:hover:bg-stone-800 text-slate-500 dark:text-slate-300"
                     }`}
                     title="تنسيق الألوان والخط"
                   >
-                    <Sliders className="w-5 h-5" />
+                    <Sliders className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -597,89 +619,89 @@ export function QuranKareem() {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className={`border-b px-4 py-4 space-y-4 shadow-inner z-30 font-sans backdrop-blur-md ${
-                    readerTheme === 'day' ? 'bg-white border-slate-200/50' : 
+                  className={`border-b px-3 py-2.5 space-y-2 shadow-xs z-30 font-sans backdrop-blur-md ${
+                    readerTheme === 'day' ? 'bg-white border-slate-200/70' : 
                     readerTheme === 'sepia' ? 'bg-[#FCF6E5] border-[#E5DEC9]' : 
                     'bg-[#1a1a1c] border-stone-800'
                   }`}
                 >
-                  <div className="max-w-2xl mx-auto space-y-3">
+                  <div className="max-w-2xl mx-auto space-y-2">
                     {/* Eye-safety back-themes */}
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-3 gap-1.5">
                       <button
                         onClick={() => setReaderTheme("day")}
-                        className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-slate-800 ${
+                        className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                           readerTheme === "day"
-                            ? "bg-slate-100 border-emerald-600"
-                            : "bg-white border-slate-200/50"
+                            ? "bg-emerald-50 border-emerald-600 text-emerald-700 shadow-2xs"
+                            : "bg-white border-slate-200/70 text-slate-700 hover:bg-slate-50"
                         }`}
                       >
-                        🎨 نهاراً
+                        <span>🎨 نهاراً</span>
                       </button>
                       <button
                         onClick={() => setReaderTheme("sepia")}
-                        className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-[#422F1E] ${
+                        className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                           readerTheme === "sepia"
-                            ? "bg-[#F4ECD8] border-[#7F6E5D]"
-                            : "bg-[#F4ECD8]/80 border-transparent"
+                            ? "bg-[#F4ECD8] border-[#7F6E5D] text-[#422F1E] shadow-2xs"
+                            : "bg-[#F4ECD8]/70 border-transparent text-[#422F1E]/80 hover:bg-[#F4ECD8]"
                         }`}
                       >
-                        👁️ دافئ
+                        <span>👁️ دافئ</span>
                       </button>
                       <button
                         onClick={() => setReaderTheme("night")}
-                        className={`py-2 px-3 rounded-xl font-bold flex items-center justify-center gap-1.5 border text-white ${
+                        className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                           readerTheme === "night"
-                            ? "bg-[#121214] border-emerald-500"
-                            : "bg-[#121214]/85 border-transparent"
+                            ? "bg-[#121214] border-emerald-500 text-white shadow-2xs"
+                            : "bg-[#121214]/85 border-transparent text-zinc-300 hover:bg-[#121214]"
                         }`}
                       >
-                        🌙 ليلاً
+                        <span>🌙 ليلاً</span>
                       </button>
                     </div>
 
                     {/* Adjust font size */}
-                    <div className="flex flex-col gap-1.5">
-                      <span className="text-xs text-slate-500 dark:text-stone-400 font-bold">
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      <span className="text-[11px] text-slate-500 dark:text-stone-400 font-bold font-cairo shrink-0">
                         حجم نص الآيات:
                       </span>
-                      <div className="grid grid-cols-4 gap-1.5 text-xs">
+                      <div className="grid grid-cols-4 gap-1 text-[11px] flex-1 max-w-[280px]">
                         <button
                           onClick={() => setFontSize("sm")}
-                          className={`py-1.5 px-2 font-bold rounded-lg ${
+                          className={`py-1 px-1.5 font-bold rounded-md transition ${
                             fontSize === "sm"
                               ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-800 dark:bg-stone-800 dark:text-stone-200"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:text-stone-300"
                           }`}
                         >
                           صغير
                         </button>
                         <button
                           onClick={() => setFontSize("md")}
-                          className={`py-1.5 px-2 font-bold rounded-lg ${
+                          className={`py-1 px-1.5 font-bold rounded-md transition ${
                             fontSize === "md"
                               ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-800 dark:bg-stone-800 dark:text-stone-200"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:text-stone-300"
                           }`}
                         >
                           متوسط
                         </button>
                         <button
                           onClick={() => setFontSize("lg")}
-                          className={`py-1.5 px-2 font-bold rounded-lg ${
+                          className={`py-1 px-1.5 font-bold rounded-md transition ${
                             fontSize === "lg"
                               ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-800 dark:bg-stone-800 dark:text-stone-200"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:text-stone-300"
                           }`}
                         >
                           كبير
                         </button>
                         <button
                           onClick={() => setFontSize("xl")}
-                          className={`py-1.5 px-2 font-bold rounded-lg ${
+                          className={`py-1 px-1.5 font-bold rounded-md transition ${
                             fontSize === "xl"
                               ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-800 dark:bg-stone-800 dark:text-stone-200"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:text-stone-300"
                           }`}
                         >
                           مضاعف
@@ -688,15 +710,15 @@ export function QuranKareem() {
                     </div>
 
                     {/* Height and weight */}
-                    <div className="grid grid-cols-2 gap-4 pt-1">
-                      <div className="flex flex-col gap-1">
-                        <span className="text-xs text-slate-500 dark:text-stone-400 font-bold">
-                          المسافة بين السطور:
+                    <div className="grid grid-cols-2 gap-2 pt-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-slate-500 dark:text-stone-400 font-bold font-cairo shrink-0">
+                          المسافة:
                         </span>
                         <select
                           value={lineHeight}
                           onChange={(e) => setLineHeight(e.target.value as any)}
-                          className="p-2 rounded bg-slate-100 dark:bg-stone-800 text-sm border border-slate-200/50 dark:border-stone-700 font-bold focus:outline-none dark:text-stone-100"
+                          className="py-1 px-2 rounded-md bg-slate-100 dark:bg-stone-800 text-xs border border-slate-200/70 dark:border-stone-700 font-bold focus:outline-none dark:text-stone-100 w-full"
                         >
                           <option value="compact">مضغوط</option>
                           <option value="relaxed">مريح</option>
@@ -704,16 +726,16 @@ export function QuranKareem() {
                         </select>
                       </div>
 
-                      <div className="flex flex-col justify-end">
+                      <div className="flex justify-end">
                         <button
                           onClick={() => setFontMedium(!fontMedium)}
-                          className={`p-2.5 rounded border text-xs font-bold transition ${
+                          className={`w-full py-1 px-2 rounded-md border text-[11px] font-bold transition font-cairo ${
                             fontMedium
                               ? "bg-emerald-600 border-emerald-600 text-white"
-                              : "bg-slate-100 border-slate-200/50 text-slate-700 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-300"
+                              : "bg-slate-100 border-slate-200/70 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-300"
                           }`}
                         >
-                          تفعيل خط عريض (Medium)
+                          خط عريض (Medium)
                         </button>
                       </div>
                     </div>
@@ -736,7 +758,7 @@ export function QuranKareem() {
             )}
 
             {/* Main Content Area */}
-            <div className="flex-1 overflow-y-auto px-4 py-6 pb-44 scroll-smooth">
+            <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-2 sm:py-3 pb-36 scroll-smooth bg-white dark:bg-[#121214]">
               {loading && (
                 <div className="flex flex-col items-center justify-center py-24">
                   <Loader2 className="w-10 h-10 text-emerald-600 animate-spin mb-3" />
@@ -758,10 +780,10 @@ export function QuranKareem() {
               )}
 
               {surahDetail && (
-                <div className="max-w-2xl mx-auto space-y-8 pb-32">
+                <div className="max-w-2xl mx-auto space-y-2 sm:space-y-2.5 pb-28">
                   {/* Basmalah */}
                   {shouldShowBasmalah(selectedSurah.number) && (
-                    <div className={`text-center py-8 text-2xl sm:text-3xl font-ibm font-black tracking-wide select-none transition-colors duration-300 ${
+                    <div className={`text-center py-1 sm:py-1.5 text-xl sm:text-2xl font-ibm font-black tracking-wide select-none transition-colors duration-300 ${
                       readerTheme === 'day' ? 'text-slate-900' :
                       readerTheme === 'sepia' ? 'text-[#3D2C1E]' :
                       'text-zinc-100'
@@ -772,9 +794,9 @@ export function QuranKareem() {
 
                   {/* Verses Layout (Block/Continuous reading style with distinct verse numbers) */}
                   <div 
-                    className={`p-6 sm:p-10 border transition-all duration-300 rounded-[2.5rem] shadow-soft font-ibm ${
+                    className={`p-3.5 sm:p-5 border transition-all duration-300 rounded-[14px] sm:rounded-[18px] shadow-xs font-ibm ${
                       readerTheme === 'day' 
-                        ? 'bg-white border-slate-100 text-slate-800' 
+                        ? 'bg-white border-slate-200/70 text-slate-800' 
                         : readerTheme === 'sepia' 
                         ? 'bg-[#FCF9F2] border-[#E5DEC9] text-[#3D2C1E]' 
                         : 'bg-[#18181A] border-[#2E2E33] text-zinc-100'

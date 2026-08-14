@@ -43,7 +43,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { QuranReader } from "../components/QuranReader";
 import { QuranStats } from "../components/QuranStats";
 import { QuranKareem } from "../components/QuranKareem";
-import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData, sortQuranLessons } from "../data/staticQuranData";
+import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData, sortQuranLessons, formatLessonDisplayTitle } from "../data/staticQuranData";
 import { loadQuranMetadata, loadLessonContent } from "../data/importedQuranData";
 
 enum OperationType {
@@ -202,62 +202,79 @@ const formatLessonCount = (count: number) => {
 
 const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }: any) => {
   return (
-    <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-8 bg-white transition-colors duration-300" ref={scrollRef}>
-      <div className="max-w-[760px] mx-auto space-y-6 pb-12">
+    <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-4 bg-white transition-colors duration-300" ref={scrollRef}>
+      <div className="max-w-[760px] mx-auto space-y-4 pb-12">
+        {/* Distinct Section Header */}
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-slate-50/90 dark:bg-stone-900/80 rounded-xl border-r-4 border-r-taiz-royal dark:border-r-taiz-sky border border-slate-200/80 dark:border-stone-800 select-none mb-1 shadow-2xs" dir="rtl">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-xs shrink-0 text-white">
+              <Library className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col text-right">
+              <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
+                سلاسل هدي القرآن
+              </h2>
+              <p className="text-[10.5px] sm:text-[11px] text-amber-500 font-bold font-cairo">
+                دروس ومحاضرات منتقاة من هدي القرآن الكريم
+              </p>
+            </div>
+          </div>
+          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-slate-200/70 dark:border-stone-700 font-cairo shadow-2xs shrink-0">
+            {seriesList.length} سلاسل
+          </span>
+        </div>
+
         {seriesList.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Library className="w-16 h-16 text-stone-200 mb-4" />
-            <p className="text-text-muted font-bold">لا توجد سلاسل متاحة حالياً</p>
+            <p className="text-text-muted font-bold font-cairo">لا توجد سلاسل متاحة حالياً</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-2.5 sm:gap-3">
             {seriesList.sort((a: any, b: any) => a.order - b.order).map((series: any, idx: number) => {
               const count = lessonsList.filter((l: any) => l.seriesId === series.id).length;
               const seriesIndex = (idx + 1).toString().padStart(2, '0');
-              
-              // Duration logic (mocked if not available in series object)
-              const duration = series.duration || `${count * 2} ساعة`;
 
               return (
                 <motion.div
                   key={series.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
+                  transition={{ delay: idx * 0.04 }}
                   viewport={{ once: true }}
                 >
                   <button
                     onClick={() => onSelectSeries(series)}
-                    className="w-full group relative bg-white dark:bg-stone-900 rounded-[16px] md:rounded-[24px] p-2 md:p-4 flex items-center gap-2 md:gap-4 text-right transition-all duration-300 hover:shadow-xl hover:-translate-y-1 shadow-md border border-white/50 dark:border-stone-800"
+                    className="w-full group relative bg-white dark:bg-stone-900 rounded-[12px] sm:rounded-[14px] p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3 text-right transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 shadow-xs border border-slate-200/60 dark:border-slate-800/60 active:scale-[0.99]"
                     dir="rtl"
                   >
-                    {/* Left Side: Arrow Button */}
-                    <div className="shrink-0 flex items-center justify-center w-7 h-7 md:w-12 md:h-12 rounded-full bg-stone-50 dark:bg-stone-800 text-stone-400 group-hover:bg-red-700 group-hover:text-white transition-all shadow-inner">
-                      <ChevronLeft className="w-3.5 h-3.5 md:w-6 md:h-6" />
+                    {/* Right Side: Gradient Number Badge matching section icon container */}
+                    <div className="shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky text-white text-[11px] sm:text-xs font-bold shadow-xs group-hover:scale-105 transition-transform font-mono">
+                      {seriesIndex}
                     </div>
 
                     {/* Middle: Content */}
                     <div className="flex-1 flex flex-col items-start overflow-hidden min-w-0">
-                      <h3 className="text-[13px] md:text-xl font-black text-taiz-navy dark:text-white mb-0.5 line-clamp-1 transition-colors group-hover:text-taiz-royal font-cairo">
+                      <h3 className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white mb-0.5 line-clamp-1 transition-colors group-hover:text-taiz-sky font-cairo leading-tight">
                         {series.title?.replace("سلسلة ", "").replace("السلسلة ", "")}
                       </h3>
                       
-                      <span className="text-[8px] md:text-xs font-bold text-stone-400 dark:text-stone-500 mb-0.5 md:mb-2 font-ibm">
-                        دروس هدي القرآن
+                      <span className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 mb-0.5 font-cairo">
+                        دروس ومحاضرات هدي القرآن
                       </span>
                       
                       {series.description && (
-                        <p className="text-[9px] md:text-xs text-stone-500 dark:text-stone-400 leading-relaxed line-clamp-3 mb-1.5 md:mb-4 font-ibm w-full">
+                        <p className="text-[10px] sm:text-[11px] text-emerald-600/80 dark:text-emerald-400/80 leading-relaxed line-clamp-2 mb-1.5 font-cairo w-full">
                           {series.description}
                         </p>
                       )}
 
                       {/* Footer Info */}
-                      <div className="w-full flex items-center gap-2 md:gap-4 mt-auto pt-1.5 md:pt-4 border-t border-stone-50 dark:border-stone-800">
+                      <div className="w-full flex items-center gap-2 mt-auto pt-1.5 border-t border-slate-100 dark:border-slate-800/60">
                         {/* Lessons Count */}
-                        <div className="flex items-center gap-1 md:gap-2 px-1 md:px-3 py-0.5 md:py-1 bg-[#F1FDF6] dark:bg-emerald-950/20 rounded-full">
-                          <BookText className="w-2.5 md:w-4 h-2.5 md:h-4 text-[#10B981]" />
-                          <span className="text-[8px] md:text-xs font-bold text-[#10B981] font-cairo">
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/20">
+                          <BookText className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                          <span className="text-[10px] sm:text-[11px] font-bold font-cairo">
                             {formatLessonCount(count)}
                           </span>
                         </div>
@@ -265,17 +282,17 @@ const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }:
                         {/* Conditional Metadata for Al-Imran and Al-Ma'idah */}
                         {(series.title?.includes("آل عمران") || series.title?.includes("المائدة")) && (
                           <>
-                            <div className="w-px h-2.5 md:h-4 bg-stone-200 dark:bg-stone-800" />
-                            <div className="flex items-center gap-1 md:gap-2">
-                              <Scroll className="w-2.5 md:w-4 h-2.5 md:h-4 text-stone-400" />
-                              <span className="text-[8px] md:text-xs font-bold text-taiz-navy dark:text-stone-300 font-cairo">
+                            <div className="w-px h-2.5 bg-slate-200 dark:bg-slate-700" />
+                            <div className="flex items-center gap-1">
+                              <Scroll className="w-3 h-3 text-slate-400" />
+                              <span className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 font-cairo">
                                 {series.title?.includes("آل عمران") ? "200" : "120"} آية
                               </span>
                             </div>
-                            <div className="w-px h-2.5 md:h-4 bg-stone-200 dark:bg-stone-800" />
-                            <div className="flex items-center gap-1 md:gap-2">
-                              <Compass className="w-2.5 md:w-4 h-2.5 md:h-4 text-stone-400" />
-                              <span className="text-[8px] md:text-xs font-bold text-taiz-navy dark:text-stone-300 font-cairo">
+                            <div className="w-px h-2.5 bg-slate-200 dark:bg-slate-700" />
+                            <div className="flex items-center gap-1">
+                              <Compass className="w-3 h-3 text-slate-400" />
+                              <span className="text-[10px] sm:text-[11px] font-medium text-emerald-600 dark:text-emerald-400 font-cairo">
                                 مدنية
                               </span>
                             </div>
@@ -284,9 +301,9 @@ const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }:
                       </div>
                     </div>
 
-                    {/* Right Side: Circular Number Badge */}
-                    <div className="shrink-0 flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-taiz-navy text-white text-sm md:text-lg font-black shadow-md font-mono">
-                      {seriesIndex}
+                    {/* Left Side: Arrow Button */}
+                    <div className="shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 dark:bg-stone-800 text-slate-400 group-hover:bg-taiz-sky group-hover:text-white transition-all shadow-xs">
+                      <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                   </button>
                 </motion.div>
@@ -311,109 +328,85 @@ const LessonsView = ({
   );
   
   return (
-    <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-6 md:py-10 relative bg-white" ref={scrollRef}>
-      <div className="max-w-[760px] mx-auto space-y-8 pb-20">
-        {/* First: Header Card */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-stone-900 rounded-[24px] md:rounded-[32px] p-4 md:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-white/60 dark:border-stone-800/50 flex flex-col md:flex-row items-center gap-6 md:gap-10 relative overflow-hidden"
-        >
-          {/* Decorative left icon */}
-          <div className="hidden md:flex absolute left-8 top-1/2 -translate-y-1/2 w-20 h-20 rounded-full bg-stone-50 dark:bg-stone-800 items-center justify-center border border-stone-100 dark:border-stone-700">
-            <Library className="w-10 h-10 text-red-600/20" />
-          </div>
-
-          {/* Surah Title & Metadata */}
-          <div className="flex-1 text-center md:text-right space-y-4 md:space-y-6">
-            <h1 className="text-2xl md:text-4xl font-black text-taiz-navy dark:text-white font-cairo tracking-tight">
-              {selectedSeries?.title?.replace("سلسلة ", "").replace("السلسلة ", "")}
-            </h1>
-            
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 md:gap-6 pt-2 md:pt-4 border-t border-stone-100 dark:border-stone-800">
-              {/* Conditional Surah Metadata (Only for specific series) */}
-              {(selectedSeries?.title?.includes("آل عمران") || selectedSeries?.title?.includes("المائدة")) && (
-                <>
-                  {/* Verses Count */}
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-taiz-royal/5 flex items-center justify-center">
-                      <Scroll className="w-3 md:w-4 h-3 md:h-4 text-red-600" />
-                    </div>
-                    <span className="text-xs md:text-sm font-bold text-stone-500 dark:text-stone-400 font-ibm">
-                      {selectedSeries?.title?.includes("آل عمران") ? "200" : "120"} آية
-                    </span>
-                  </div>
-
-                  <div className="w-px h-4 bg-stone-200 dark:bg-stone-700 hidden md:block" />
-
-                  {/* Type */}
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 md:w-8 md:h-8 rounded-full bg-taiz-royal/5 flex items-center justify-center">
-                      <Compass className="w-3 md:w-4 h-3 md:h-4 text-red-600" />
-                    </div>
-                    <span className="text-xs md:text-sm font-bold text-stone-500 dark:text-stone-400 font-ibm">
-                      مدنية
-                    </span>
-                  </div>
-                </>
-              )}
+    <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-4 sm:py-6 relative bg-white" ref={scrollRef}>
+      <div className="max-w-[760px] mx-auto space-y-4 pb-20">
+        {/* Distinct Section Header */}
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-slate-50/90 dark:bg-stone-900/80 rounded-xl border-r-4 border-r-taiz-royal dark:border-r-taiz-sky border border-slate-200/80 dark:border-stone-800 select-none mb-1 shadow-2xs" dir="rtl">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-xs shrink-0 text-white">
+              <BookOpenCheck className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col text-right">
+              <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
+                دروس {selectedSeries?.title?.replace("سلسلة ", "").replace("السلسلة ", "") || "السلسلة"}
+              </h2>
+              <p className="text-[10.5px] sm:text-[11px] text-amber-500 font-bold font-cairo truncate">
+                {selectedSeries?.description || "قائمة المحاضرات والدروس العلمية"}
+              </p>
             </div>
           </div>
-        </motion.div>
+          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-slate-200/70 dark:border-stone-700 font-cairo shadow-2xs shrink-0">
+            {seriesLessons.length} دروس
+          </span>
+        </div>
 
         {/* Fourth: Lessons List */}
         {seriesLessons.length === 0 ? (
-          <p className="text-center text-text-muted py-20 font-bold bg-white/50 dark:bg-stone-900/50 rounded-3xl border border-dashed border-stone-200 dark:border-stone-800">
+          <p className="text-center text-text-muted py-20 font-bold bg-white/50 dark:bg-stone-900/50 rounded-3xl border border-dashed border-stone-200 dark:border-stone-800 font-cairo">
             لا توجد دروس في هذه السلسلة أو لم يتم إضافتها بعد.
           </p>
         ) : (
-          <div className="flex flex-col gap-4 md:gap-6">
+          <div className="flex flex-col gap-2.5 sm:gap-3">
             {seriesLessons.map((lesson: any, index: number) => {
               const progress = lessonProgress?.[lesson.id] || 0;
               const lessonNumber = (index + 1).toString().padStart(2, '0');
+              const displayTitle = formatLessonDisplayTitle(lesson.title, lesson.order, index, selectedSeries?.title);
               
               return (
                 <motion.div
                   key={lesson.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  transition={{ delay: index * 0.04 }}
                 >
                   <button
                     onClick={() => onNavigateToLesson(lesson, selectedSeries!)}
-                    className="w-full group relative bg-white dark:bg-stone-900 rounded-[24px] p-3 md:p-5 flex items-center gap-3 md:gap-6 text-right transition-all duration-300 hover:shadow-xl shadow-sm border border-stone-100 dark:border-stone-800 hover:-translate-y-1 active:scale-[0.97]"
+                    className="w-full group relative bg-white dark:bg-stone-900 rounded-[12px] sm:rounded-[14px] p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3 text-right transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 shadow-xs border border-slate-200/60 dark:border-slate-800/60 active:scale-[0.99]"
                     dir="rtl"
                   >
-                    {/* Left Side: Arrow Button */}
-                    <div className="shrink-0 flex items-center justify-center w-9 h-9 md:w-12 md:h-12 rounded-full bg-[#F7F8FC] dark:bg-stone-800 text-taiz-royal group-hover:bg-red-700 group-hover:text-white transition-all">
-                      <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
+                    {/* Right Side: Gradient Number Badge */}
+                    <div className="shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky text-white text-[11px] sm:text-xs font-bold shadow-xs group-hover:scale-105 transition-transform font-mono">
+                      {lessonNumber}
                     </div>
 
                     {/* Middle: Content */}
-                    <div className="flex-1 flex flex-col min-w-0 pr-1">
-                      <h3 className="text-[14px] font-black text-taiz-navy dark:text-white mb-0.5 line-clamp-1 group-hover:text-taiz-royal transition-colors font-cairo">
-                        {lesson.title}
+                    <div className="flex-1 flex flex-col items-start min-w-0">
+                      <h3 className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white mb-0.5 line-clamp-1 group-hover:text-taiz-sky transition-colors font-cairo leading-tight">
+                        {displayTitle}
                       </h3>
-                      <div className="flex items-center gap-1.5 mb-1 md:mb-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#2E9F75]/40" />
-                        <p className="text-[9px] md:text-xs text-[#7A7A7A] dark:text-stone-500 font-ibm line-clamp-1">
-                          يندرج ضمن: {selectedSeries?.title?.replace("سلسلة ", "").replace("السلسلة ", "")}
-                        </p>
+                      
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-[10px] sm:text-[11px] font-bold text-amber-500 font-cairo">
+                          ضمن: {selectedSeries?.title?.replace("سلسلة ", "").replace("السلسلة ", "")}
+                        </span>
                       </div>
 
-                      {/* AI-style description placeholder */}
-                      <p className="text-[9px] md:text-xs text-stone-400 dark:text-stone-600 line-clamp-1 font-tajawal italic">
-                        {lesson.content?.split('\n')[0]?.substring(0, 60)}...
-                      </p>
+                      {/* Excerpt */}
+                      {lesson.content && (
+                        <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 font-cairo mb-1 w-full">
+                          {lesson.content.split('\n')[0]}
+                        </p>
+                      )}
                       
                       {progress > 0 && (
-                        <div className="mt-3 w-full max-w-[120px]">
-                          <div className="flex items-center justify-between text-[9px] text-emerald-500 mb-1 font-bold">
+                        <div className="mt-1 w-full max-w-[130px]">
+                          <div className="flex items-center justify-between text-[10px] text-emerald-600 dark:text-emerald-400 mb-0.5 font-bold font-cairo">
+                            <span>نسبة الإنجاز</span>
                             <span>{Math.round(progress)}%</span>
                           </div>
-                          <div className="h-1 w-full bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden">
+                          <div className="h-1.5 w-full bg-slate-100 dark:bg-stone-800 rounded-full overflow-hidden">
                             <div 
-                              className="h-full bg-emerald-500 transition-all duration-500" 
+                              className="h-full bg-gradient-to-r from-emerald-600 to-emerald-400 transition-all duration-500 rounded-full" 
                               style={{ width: `${progress}%` }}
                             />
                           </div>
@@ -421,9 +414,9 @@ const LessonsView = ({
                       )}
                     </div>
 
-                    {/* Right Side: Circular Number Badge */}
-                    <div className="shrink-0 flex items-center justify-center w-10 h-10 md:w-14 md:h-14 rounded-full bg-taiz-navy text-white text-xs md:text-base font-black shadow-md font-mono">
-                      {lessonNumber}
+                    {/* Left Side: Arrow Button */}
+                    <div className="shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 dark:bg-stone-800 text-slate-400 group-hover:bg-taiz-sky group-hover:text-white transition-all shadow-xs">
+                      <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                   </button>
                 </motion.div>
@@ -448,52 +441,76 @@ const SyllabusesView = ({
   );
 
   return (
-    <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
-      <div className="grid gap-4 max-w-2xl mx-auto md:grid-cols-2">
-        {activeSyllabuses.length === 0 ? (
-          <p className="text-center text-text-muted py-10 col-span-full font-bold">
-            لا توجد مقررات دراسية حالية.
-          </p>
-        ) : (
-          activeSyllabuses.map((item: any) => {
-            const lesson = lessonsList.find((l: any) => l.id === item.lessonId) || {
-              id: item.lessonId,
-              title: item.lessonTitle || "درس مقرر",
-              seriesId: item.seriesId || "",
-              seriesTitle: item.seriesTitle || "",
-            };
-            return (
-              <button
-                key={item.id}
-                onClick={() => onSelectLesson(lesson)}
-                className="bg-surface-card p-5 rounded-3xl shadow-soft border-2 border-emerald-500/30 hover:border-emerald-500 transition text-right flex flex-col items-start gap-3 focus:outline-none relative overflow-hidden"
-              >
-                <div className="absolute -left-12 -top-12 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl" />
-                <div className="flex justify-between w-full items-start">
-                  <Calendar className="w-8 h-8 text-red-600 mb-2" />
-                  <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-black">
-                    المقرر الحالي
-                  </span>
-                </div>
-                <span className="text-lg font-black text-text-primary font-cairo">
-                  {lesson.title}
-                </span>
-                {item.expiresAt ? (
-                  <span className="text-xs text-text-secondary font-bold">
-                    ينتهي في: {new Date(item.expiresAt).toLocaleDateString("ar-YE")}
-                  </span>
-                ) : (
-                  item.startDate && item.endDate && (
-                    <span className="text-xs text-text-secondary font-bold">
-                      من {new Date(item.startDate).toLocaleDateString("ar-EG")} إلى{" "}
-                      {new Date(item.endDate).toLocaleDateString("ar-EG")}
+    <div className="flex-1 overflow-y-auto px-4 py-6 relative" ref={scrollRef}>
+      <div className="max-w-2xl mx-auto space-y-4">
+        {/* Distinct Section Header */}
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-slate-50/90 dark:bg-stone-900/80 rounded-xl border-r-4 border-r-taiz-royal dark:border-r-taiz-sky border border-slate-200/80 dark:border-stone-800 select-none mb-1 shadow-2xs" dir="rtl">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-xs shrink-0 text-white">
+              <Calendar className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col text-right">
+              <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
+                مقرر الدروس
+              </h2>
+              <p className="text-[10.5px] sm:text-[11px] text-amber-500 font-bold font-cairo">
+                المقررات الدراسية المحددة والبرامج التعليمية
+              </p>
+            </div>
+          </div>
+          <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-slate-200/70 dark:border-stone-700 font-cairo shadow-2xs shrink-0">
+            {activeSyllabuses.length} مقررات
+          </span>
+        </div>
+
+        <div className="grid gap-2.5 sm:gap-3 md:grid-cols-2">
+          {activeSyllabuses.length === 0 ? (
+            <p className="text-center text-text-muted py-10 col-span-full font-bold font-cairo">
+              لا توجد مقررات دراسية حالية.
+            </p>
+          ) : (
+            activeSyllabuses.map((item: any) => {
+              const lesson = lessonsList.find((l: any) => l.id === item.lessonId) || {
+                id: item.lessonId,
+                title: item.lessonTitle || "درس مقرر",
+                seriesId: item.seriesId || "",
+                seriesTitle: item.seriesTitle || "",
+              };
+              const displayTitle = formatLessonDisplayTitle(lesson.title, lesson.order, undefined, lesson.seriesTitle);
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onSelectLesson(lesson)}
+                  className="bg-white dark:bg-stone-900 p-2.5 sm:p-3 rounded-[12px] sm:rounded-[14px] shadow-xs border border-slate-200/60 dark:border-slate-800/60 hover:border-taiz-sky/40 hover:shadow-md transition-all duration-300 text-right flex flex-col items-start gap-2 focus:outline-none relative overflow-hidden group active:scale-[0.99]"
+                >
+                  <div className="flex justify-between w-full items-center">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center text-white shadow-xs">
+                      <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold font-cairo">
+                      المقرر الحالي
                     </span>
-                  )
-                )}
-              </button>
-            );
-          })
-        )}
+                  </div>
+                  <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white font-cairo group-hover:text-taiz-sky transition-colors">
+                    {displayTitle}
+                  </span>
+                  {item.expiresAt ? (
+                    <span className="text-[10px] sm:text-[11px] text-amber-500 font-bold font-cairo">
+                      ينتهي في: {new Date(item.expiresAt).toLocaleDateString("ar-YE")}
+                    </span>
+                  ) : (
+                    item.startDate && item.endDate && (
+                      <span className="text-[10px] sm:text-[11px] text-amber-500 font-bold font-cairo">
+                        من {new Date(item.startDate).toLocaleDateString("ar-EG")} إلى{" "}
+                        {new Date(item.endDate).toLocaleDateString("ar-EG")}
+                      </span>
+                    )
+                  )}
+                </button>
+              );
+            })
+          )}
+        </div>
       </div>
     </div>
   );
@@ -505,10 +522,30 @@ const ExcerptsView = ({
   onSelectExcerpt,
   scrollRef,
 }: any) => (
-  <div className="flex-1 overflow-y-auto px-4 py-8 relative" ref={scrollRef}>
+  <div className="flex-1 overflow-y-auto px-4 py-6 relative" ref={scrollRef}>
     <div className="space-y-4 max-w-lg mx-auto">
+      {/* Distinct Section Header */}
+      <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-slate-50/90 dark:bg-stone-900/80 rounded-xl border-r-4 border-r-taiz-royal dark:border-r-taiz-sky border border-slate-200/80 dark:border-stone-800 select-none mb-1 shadow-2xs" dir="rtl">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-xs shrink-0 text-white">
+            <Quote className="w-4 h-4" />
+          </div>
+          <div className="flex flex-col text-right">
+            <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
+              مقتطفات هدي القرآن
+            </h2>
+            <p className="text-[10.5px] sm:text-[11px] text-amber-500 font-bold font-cairo">
+              جواهر واقتباسات نورانية من هدي القرآن الكريم
+            </p>
+          </div>
+        </div>
+        <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-slate-200/70 dark:border-stone-700 font-cairo shadow-2xs shrink-0">
+          {excerptsList.length} مقتطف
+        </span>
+      </div>
+
       {excerptsList.length === 0 ? (
-        <p className="text-center text-text-muted py-10 font-bold">
+        <p className="text-center text-text-muted py-10 font-bold font-cairo">
           لا توجد مقتطفات متاحة.
         </p>
       ) : (
@@ -518,21 +555,21 @@ const ExcerptsView = ({
             <button
               key={item.id}
               onClick={() => onSelectExcerpt(item)}
-              className="w-full bg-surface-card p-4 rounded-2xl shadow-soft border border-border-light hover:border-taiz-royal/30 hover:shadow-strong transition text-right flex gap-4 focus:outline-none"
+              className="w-full bg-white dark:bg-stone-900 p-2.5 sm:p-3 rounded-[12px] sm:rounded-[14px] shadow-xs border border-slate-200/60 dark:border-slate-800/60 hover:border-taiz-sky/40 hover:shadow-md transition-all duration-300 text-right flex gap-2.5 sm:gap-3 focus:outline-none group active:scale-[0.99]"
             >
-              <div className="w-12 h-12 shrink-0 bg-taiz-royal/5 rounded-xl flex items-center justify-center">
-                <Quote className="w-5 h-5 text-red-600" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 bg-gradient-to-br from-taiz-royal to-taiz-sky rounded-lg flex items-center justify-center shadow-xs text-white">
+                <Quote className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              <div className="flex flex-col gap-1.5 flex-1 font-cairo">
-                <span className="text-sm font-black text-text-primary">
+              <div className="flex flex-col gap-0.5 flex-1 font-cairo min-w-0">
+                <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white group-hover:text-taiz-sky transition-colors">
                   {item.title}
                 </span>
                 {lesson && (
-                  <span className="text-xs text-taiz-royal font-bold">
+                  <span className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
                     من درس: {lesson.title}
                   </span>
                 )}
-                <span className="text-xs text-text-secondary line-clamp-2 leading-relaxed">
+                <span className="text-[10px] sm:text-[11px] text-emerald-600/80 dark:text-emerald-400/80 line-clamp-2 leading-relaxed">
                   {item.content}
                 </span>
               </div>
@@ -1727,27 +1764,27 @@ export function Quran() {
 
   return (
     <div
-      className="flex-1 w-full flex flex-col bg-gray-50 dark:bg-gray-950 font-sans rtl relative overflow-hidden"
+      className="flex-1 w-full flex flex-col bg-white dark:bg-gray-950 font-sans rtl relative overflow-hidden"
       dir="rtl"
     >
       {activeView !== "lesson-detail" && (
-        <div className="pt-4 pb-3 px-4 bg-white dark:bg-stone-900 border-b border-slate-200/50 dark:border-stone-800 sticky top-0 z-20 shadow-[0_4px_20px_rgba(0,0,0,0.01)] shrink-0 select-none">
-          <div className="max-w-[700px] mx-auto w-full flex items-center justify-between">
+        <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 shadow-soft shrink-0 select-none">
+          <div className="max-w-[760px] mx-auto w-full flex items-center justify-between px-1">
             {/* Right side: Menu & Title */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full transition-colors focus:outline-none"
+                className="p-1.5 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-lg transition-colors focus:outline-none"
               >
-                <Menu className="w-6 h-6 text-slate-800 dark:text-white" />
+                <Menu className="w-5 h-5 text-slate-800 dark:text-white" />
               </button>
               
-              <div className="flex items-center gap-2.5">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+              <div className="flex items-center gap-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-taiz-soft opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-taiz-sky"></span>
                 </span>
-                <span className="font-black text-base text-slate-800 dark:text-stone-100 font-cairo tracking-tight truncate max-w-[150px] sm:max-w-none">
+                <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-stone-100 font-cairo tracking-tight truncate max-w-[150px] sm:max-w-none">
                   {title}
                 </span>
               </div>
@@ -1757,9 +1794,9 @@ export function Quran() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsSearching(!isSearching)}
-                className={`p-2 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full transition-colors focus:outline-none ${isSearching ? 'text-red-600' : 'text-slate-800 dark:text-white'}`}
+                className={`p-1.5 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-lg transition-colors focus:outline-none ${isSearching ? 'text-red-600' : 'text-slate-800 dark:text-white'}`}
               >
-                {isSearching ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+                {isSearching ? <X className="w-4 h-4" /> : <Search className="w-4 h-4 text-slate-700 dark:text-stone-300" />}
               </button>
 
               {(activeView === "series" || activeView === "quran") ? (
@@ -1767,18 +1804,18 @@ export function Quran() {
                   <button 
                     onClick={() => setActiveView("series")}
                     title="الانتقال السريع إلى الدروس"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black shrink-0"
+                    className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-br from-taiz-royal to-taiz-sky hover:opacity-90 text-white rounded-lg border border-slate-200/50 shadow-sm transition-all duration-300 active:scale-95 group font-cairo text-xs font-bold shrink-0"
                   >
-                    <Library className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                    <Library className="w-3.5 h-3.5 text-white shrink-0" />
                     <span className="whitespace-nowrap">الدروس</span>
                   </button>
                 ) : (
                   <button 
                     onClick={() => setActiveView("quran")}
                     title="الانتقال السريع إلى القرآن الكريم"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-700 to-emerald-900 hover:from-emerald-800 hover:to-emerald-950 text-white rounded-full border border-emerald-800/10 shadow-[0_4px_12px_rgba(16,185,129,0.15)] transition-all duration-300 hover:scale-105 active:scale-95 group font-cairo text-xs font-black shrink-0"
+                    className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-br from-taiz-royal to-taiz-sky hover:opacity-90 text-white rounded-lg border border-slate-200/50 shadow-sm transition-all duration-300 active:scale-95 group font-cairo text-xs font-bold shrink-0"
                   >
-                    <BookOpen className="w-3.5 h-3.5 text-white/90 shrink-0" />
+                    <BookOpen className="w-3.5 h-3.5 text-white shrink-0" />
                     <span className="whitespace-nowrap">القرآن الكريم</span>
                   </button>
                 )
@@ -1790,9 +1827,9 @@ export function Quran() {
                     else if (activeView === "excerpt-detail") setActiveView("excerpts");
                     else if (activeView === "stats" || activeView === "leader") setActiveView("series");
                   }}
-                  className="p-2 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-full transition-colors focus:outline-none"
+                  className="p-1.5 hover:bg-slate-100 dark:hover:bg-stone-800 rounded-lg transition-colors focus:outline-none"
                 >
-                  <ChevronLeft className="w-6 h-6 text-slate-800 dark:text-white" />
+                  <ChevronLeft className="w-5 h-5 text-slate-800 dark:text-white" />
                 </button>
               )}
             </div>
@@ -1800,28 +1837,28 @@ export function Quran() {
 
           {/* Tab Switcher for Lessons / Holy Quran */}
           {(activeView === "series" || activeView === "quran") && !isSearching && (
-            <div className="bg-slate-100 dark:bg-stone-800/80 p-1 rounded-xl flex items-center gap-1 max-w-[700px] mx-auto w-full mt-2.5 border border-slate-200/60 dark:border-stone-700/50">
+            <div className="bg-slate-100 dark:bg-stone-800/80 p-1 rounded-xl flex items-center gap-1 max-w-[760px] mx-auto w-full mt-2 border border-slate-200/60 dark:border-stone-700/50">
               <button
                 onClick={() => setActiveView("series")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-black transition-all font-cairo ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold transition-all font-cairo ${
                   activeView === "series"
-                    ? "bg-white dark:bg-stone-900 text-emerald-700 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-stone-700"
+                    ? "bg-white dark:bg-stone-900 text-taiz-royal dark:text-taiz-sky shadow-sm border border-slate-200/50 dark:border-stone-700"
                     : "text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                <Library className="w-4 h-4 shrink-0" />
+                <Library className="w-3.5 h-3.5 shrink-0" />
                 <span className="whitespace-nowrap">دروس هدي القرآن</span>
               </button>
 
               <button
                 onClick={() => setActiveView("quran")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-black transition-all font-cairo ${
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-lg text-xs font-bold transition-all font-cairo ${
                   activeView === "quran"
-                    ? "bg-white dark:bg-stone-900 text-emerald-700 dark:text-emerald-400 shadow-sm border border-slate-200/50 dark:border-stone-700"
+                    ? "bg-white dark:bg-stone-900 text-taiz-royal dark:text-taiz-sky shadow-sm border border-slate-200/50 dark:border-stone-700"
                     : "text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-white"
                 }`}
               >
-                <BookOpen className="w-4 h-4 shrink-0" />
+                <BookOpen className="w-3.5 h-3.5 shrink-0" />
                 <span className="whitespace-nowrap">القرآن الكريم</span>
               </button>
             </div>

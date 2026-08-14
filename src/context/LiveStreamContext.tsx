@@ -1,6 +1,11 @@
-import React, { createContext, useContext, useState, useRef, useEffect } from "react";
+import React, { createContext, useContext, useState, useRef, useEffect, useCallback } from "react";
 import { Capacitor } from "@capacitor/core";
 import { LiveStream } from "../types";
+import { 
+  isTimedRadioStream, 
+  isStreamInBroadcastWindow, 
+  getRadioScheduleInfo 
+} from "../utils/yemenTime";
 
 interface LiveStreamContextType {
   activeStream: LiveStream | null;
@@ -18,6 +23,8 @@ interface LiveStreamContextType {
   setVolume: (val: number) => void;
   toggleMute: () => void;
   audioRef: React.RefObject<HTMLAudioElement | null>;
+  streamError: string | null;
+  isOutsideBroadcastHours: boolean;
 }
 
 const LiveStreamContext = createContext<LiveStreamContextType | undefined>(undefined);
@@ -30,22 +37,66 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
   const [volume, setVolumeState] = useState(1);
   const [isPlayingInHero, setIsPlayingInHero] = useState(false);
   const [isTopBarPinned, setIsTopBarPinned] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
+  const [isOutsideBroadcastHours, setIsOutsideBroadcastHours] = useState(false);
+  
+  const retryCountRef = useRef(0);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  // Check schedule info whenever activeStream changes or on clock tick
+  const checkSchedule = useCallback((stream: LiveStream | null) => {
+    if (!stream) {
+      setIsOutsideBroadcastHours(false);
+      return;
+    }
+    const src = stream.streamUrl || stream.url;
+    if (stream.type === "radio" && isTimedRadioStream(src)) {
+      const schedule = getRadioScheduleInfo(src);
+      setIsOutsideBroadcastHours(!schedule.isOpen);
+      if (!schedule.isOpen) {
+        setStreamError(schedule.statusText);
+      } else if (streamError && streamError.includes("يبدأ البث")) {
+        setStreamError(null);
+      }
+    } else {
+      setIsOutsideBroadcastHours(false);
+    }
+  }, [streamError]);
 
   const playStream = (stream: LiveStream) => {
     window.dispatchEvent(new CustomEvent("stop-quran-audio"));
     setActiveStream(stream);
+    setStreamError(null);
+    retryCountRef.current = 0;
+
+    const src = stream.streamUrl || stream.url;
+    if (stream.type === "radio" && isTimedRadioStream(src)) {
+      const schedule = getRadioScheduleInfo(src);
+      if (!schedule.isOpen) {
+        setIsOutsideBroadcastHours(true);
+        setStreamError(schedule.statusText);
+        setIsPlaying(false);
+        setIsLoading(false);
+        return;
+      }
+    }
+
+    setIsOutsideBroadcastHours(false);
     setIsPlaying(true);
   };
 
   const stopStream = () => {
     setIsPlaying(false);
+    setIsLoading(false);
     setActiveStream(null);
     setIsPlayingInHero(false);
     setIsTopBarPinned(false);
+    setStreamError(null);
+    retryCountRef.current = 0;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = "";
+      audioRef.current.load();
     }
   };
 
@@ -53,8 +104,25 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     if (activeStream) {
       if (!isPlaying) {
         window.dispatchEvent(new CustomEvent("stop-quran-audio"));
+        const src = activeStream.streamUrl || activeStream.url;
+        if (activeStream.type === "radio" && isTimedRadioStream(src)) {
+          const schedule = getRadioScheduleInfo(src);
+          if (!schedule.isOpen) {
+            setIsOutsideBroadcastHours(true);
+            setStreamError(schedule.statusText);
+            setIsPlaying(false);
+            return;
+          }
+        }
+        setStreamError(null);
+        retryCountRef.current = 0;
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(false);
+        if (audioRef.current) {
+          audioRef.current.pause();
+        }
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -84,6 +152,16 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener("stop-live-stream", handleStopLiveStream);
   }, []);
 
+  // Periodic Yemen Time check every 30 seconds for broadcast schedules
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (activeStream) {
+        checkSchedule(activeStream);
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [activeStream, checkSchedule]);
+
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -93,29 +171,73 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       if (activeStream.type === "radio") {
         let src = activeStream.streamUrl || activeStream.url;
         
-        // Proxy ALL radio streams on web to avoid mixed content blocking and bypass CORS/SSL
-        // Do NOT proxy on native Android/iOS as Capacitor runs locally and cannot resolve relative /api paths
+        // Check Yemen timezone broadcast schedule for timed radio
+        if (isTimedRadioStream(src) && !isStreamInBroadcastWindow(src)) {
+          setIsOutsideBroadcastHours(true);
+          setStreamError("البث متوقف حالياً • يبدأ البث الإذاعي لإذاعة تعز يوميًا من الساعة الثامنة صباحًا وحتى الساعة العاشرة مساءً.");
+          setIsLoading(false);
+          setIsPlaying(false);
+          audio.pause();
+          return;
+        }
+
+        setIsOutsideBroadcastHours(false);
+        setIsLoading(true);
+
+        // Proxy HTTP radio streams on web to prevent Mixed Content / CORS blocking
+        // On Native Android/iOS, connect directly to stream URL (supported via networkSecurityConfig)
         if (src && !src.startsWith('/api/proxy') && !Capacitor.isNativePlatform()) {
           src = `/api/proxy/stream?url=${encodeURIComponent(src)}`;
         }
 
         if (src) {
-          // Resolve relative proxy path to absolute so `audio.src !== src` comparison works reliably
           const absoluteSrc = src.startsWith("http") ? src : new URL(src, window.location.origin).href;
           if (audio.src !== absoluteSrc) {
             audio.src = absoluteSrc;
+            audio.load();
           }
         }
         
-        audio.play().catch(e => console.warn("Live stream playback failed:", e));
+        audio.play().catch(e => {
+          console.warn("Live stream playback notice:", e.message || e);
+        });
       } else {
-        // TV stream plays video/audio inside Watch page iframe; pause background audio element
+        // TV stream plays video inside Watch page iframe; pause background audio element
         audio.pause();
       }
     } else {
       audio.pause();
     }
   }, [isPlaying, activeStream]);
+
+  const handleAudioError = () => {
+    setIsLoading(false);
+    if (!activeStream) return;
+
+    const src = activeStream.streamUrl || activeStream.url;
+    if (activeStream.type === "radio" && isTimedRadioStream(src)) {
+      if (!isStreamInBroadcastWindow(src)) {
+        setIsOutsideBroadcastHours(true);
+        setStreamError("البث متوقف حالياً • يبدأ البث الإذاعي لإذاعة تعز يوميًا من الساعة الثامنة صباحًا وحتى الساعة العاشرة مساءً.");
+        setIsPlaying(false);
+        return;
+      }
+    }
+
+    // Inside broadcast window or 24/7 stream - retry once or show error
+    if (retryCountRef.current < 2 && isPlaying) {
+      retryCountRef.current += 1;
+      setTimeout(() => {
+        if (audioRef.current && isPlaying) {
+          audioRef.current.load();
+          audioRef.current.play().catch(() => {});
+        }
+      }, 2500);
+    } else {
+      setIsPlaying(false);
+      setStreamError("تعذر الاتصال بالبث المباشر حالياً");
+    }
+  };
 
   return (
     <LiveStreamContext.Provider
@@ -134,7 +256,9 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
         togglePlay,
         setVolume,
         toggleMute,
-        audioRef
+        audioRef,
+        streamError,
+        isOutsideBroadcastHours
       }}
     >
       {children}
@@ -142,13 +266,25 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       <audio 
         ref={audioRef} 
         className="hidden" 
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        preload="none"
+        onPlay={() => {
+          setIsPlaying(true);
+          setIsLoading(false);
+          setStreamError(null);
+          retryCountRef.current = 0;
+        }}
+        onPause={() => {
+          setIsPlaying(false);
+          setIsLoading(false);
+        }}
         onWaiting={() => setIsLoading(true)}
-        onPlaying={() => setIsLoading(false)}
+        onPlaying={() => {
+          setIsLoading(false);
+          setStreamError(null);
+        }}
         onStalled={() => setIsLoading(true)}
         onCanPlay={() => setIsLoading(false)}
-        onError={() => setIsLoading(false)}
+        onError={handleAudioError}
       />
     </LiveStreamContext.Provider>
   );

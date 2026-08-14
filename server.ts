@@ -506,7 +506,7 @@ app.post("/api/admin/generate-series-descriptions", async (req, res) => {
   }
 });
 
-// Stream Proxy API (For HTTP radio streams to avoid Mixed Content / CORS)
+// Stream Proxy API (For HTTP radio streams to avoid Mixed Content / CORS on Web browsers)
 app.get("/api/proxy/stream", async (req, res) => {
   const targetUrl = req.query.url as string;
   if (!targetUrl) {
@@ -514,21 +514,25 @@ app.get("/api/proxy/stream", async (req, res) => {
   }
 
   try {
+    const isHttps = targetUrl.startsWith("https://");
     const response = await axios({
       method: "get",
       url: targetUrl,
       responseType: "stream",
-      httpsAgent: new https.Agent({ rejectUnauthorized: false }), // Bypass SSL issues for some Android browsers
+      timeout: 10000,
+      validateStatus: (status) => status >= 200 && status < 400,
+      httpsAgent: isHttps ? new https.Agent({ rejectUnauthorized: false }) : undefined,
       headers: {
-        // Pass a generic user agent as some radio servers reject empty user agents
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "*/*",
+        "Icy-MetaData": "0"
       }
     });
 
-    // Copy relevant headers
-    if (response.headers["content-type"]) {
-      res.setHeader("Content-Type", String(response.headers["content-type"]));
-    }
+    // Copy relevant headers for HTML5 Audio playback
+    const contentType = response.headers["content-type"] || "audio/mpeg";
+    res.setHeader("Content-Type", String(contentType));
+
     if (response.headers["icy-metaint"]) {
       res.setHeader("icy-metaint", String(response.headers["icy-metaint"]));
     }
@@ -539,11 +543,26 @@ app.get("/api/proxy/stream", async (req, res) => {
     res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     res.setHeader("Pragma", "no-cache");
     res.setHeader("Expires", "0");
+    res.setHeader("Access-Control-Allow-Origin", "*");
 
     response.data.pipe(res);
+
+    // Cleanly close upstream stream when browser pauses or disconnects
+    req.on("close", () => {
+      if (response.data && !response.data.destroyed) {
+        response.data.destroy();
+      }
+    });
   } catch (error: any) {
-    console.error("Stream proxy error:", error.message);
-    res.status(500).json({ error: "Failed to proxy stream" });
+    const status = error.response?.status || 500;
+    if (status === 404) {
+      res.status(404).json({ error: "Stream offline or outside broadcast hours" });
+    } else {
+      console.warn("Stream proxy notice:", error.message || error);
+      res.status(status >= 400 && status < 600 ? status : 500).json({
+        error: "Failed to connect to stream"
+      });
+    }
   }
 });
 

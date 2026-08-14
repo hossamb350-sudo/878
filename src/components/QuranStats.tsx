@@ -13,6 +13,7 @@ import {
   Quote,
   BookMarked,
   MessageSquare,
+  Trophy,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { QuranLesson, QuranSeries } from "../types";
@@ -193,6 +194,23 @@ export function QuranStats({
             </div>
             <div className="p-3 bg-taiz-royal/10 rounded-xl text-taiz-royal shrink-0">
               <Calendar className="w-6 h-6 animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Distinct Section Header */}
+        <div className="flex items-center justify-between gap-3 px-3 py-2.5 bg-slate-50/90 dark:bg-stone-900/80 rounded-xl border-r-4 border-r-taiz-royal dark:border-r-taiz-sky border border-slate-200/80 dark:border-stone-800 select-none mb-1 shadow-2xs" dir="rtl">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-xs shrink-0 text-white">
+              <Trophy className="w-4 h-4" />
+            </div>
+            <div className="flex flex-col text-right">
+              <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
+                سجل القراءة والأنشطة
+              </h2>
+              <p className="text-[10.5px] sm:text-[11px] text-amber-500 font-bold font-cairo">
+                تفاصيل الدروس والملاحظات والعلامات المحفوظة
+              </p>
             </div>
           </div>
         </div>
