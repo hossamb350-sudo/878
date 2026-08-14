@@ -4,8 +4,8 @@ import android.Manifest;
 import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Build;
-import android.os.Handler;
 import android.os.Looper;
+import androidx.core.content.ContextCompat;
 import androidx.media3.common.MediaItem;
 import androidx.media3.common.MediaMetadata;
 import androidx.media3.common.Player;
@@ -20,7 +20,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.annotation.Permission;
 import com.getcapacitor.annotation.PermissionCallback;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
+
 import java.util.concurrent.ExecutionException;
 import android.util.Log;
 
@@ -42,28 +42,33 @@ public class RadioPlugin extends Plugin {
     private String pendingUrl = null;
     private String pendingName = null;
     private String pendingArtwork = null;
-    private Handler mainHandler;
 
     @Override
     public void load() {
         Log.d("RadioPlugin", "Loading Plugin");
-        mainHandler = new Handler(Looper.getMainLooper());
         
-        // Ensure MediaController is built and connected on the Main Thread
-        mainHandler.post(() -> {
+        // Ensure Builder is called on the Main Thread.
+        getActivity().runOnUiThread(() -> {
             SessionToken sessionToken = new SessionToken(getContext(),
                     new ComponentName(getContext(), RadioPlaybackService.class));
-                    
-            controllerFuture = new MediaController.Builder(getContext(), sessionToken).buildAsync();
+            
+            // 1. Explicitly set the ApplicationLooper to MainLooper so MediaController
+            // strictly enforces that all methods are called from the Main Thread.
+            controllerFuture = new MediaController.Builder(getContext(), sessionToken)
+                    .setApplicationLooper(Looper.getMainLooper())
+                    .buildAsync();
+            
+            // 2. IMPORTANT: Use ContextCompat.getMainExecutor(getContext()) instead of 
+            // MoreExecutors.directExecutor() to ensure the future completion callback 
+            // strictly runs on the Main Thread.
             controllerFuture.addListener(() -> {
                 try {
                     controller = controllerFuture.get();
-                    Log.d("RadioPlugin", "Controller connected");
+                    Log.d("RadioPlugin", "Controller connected on thread: " + Thread.currentThread().getName());
                     
                     controller.addListener(new Player.Listener() {
                         @Override
                         public void onPlaybackStateChanged(int playbackState) {
-                            Log.d("RadioPlugin", "State changed: " + playbackState);
                             if (playbackState == Player.STATE_BUFFERING) {
                                 notifyListeners("buffering", new JSObject());
                             } else if (playbackState == Player.STATE_ENDED) {
@@ -73,7 +78,6 @@ public class RadioPlugin extends Plugin {
 
                         @Override
                         public void onIsPlayingChanged(boolean isPlaying) {
-                            Log.d("RadioPlugin", "isPlaying changed: " + isPlaying);
                             if (isPlaying) {
                                 notifyListeners("playing", new JSObject());
                             } else {
@@ -85,16 +89,16 @@ public class RadioPlugin extends Plugin {
                         
                         @Override
                         public void onPlayerError(PlaybackException error) {
-                            Log.e("RadioPlugin", "Player error: " + error.getMessage());
+                            Log.e("RadioPlugin", "Player error", error);
                             JSObject ret = new JSObject();
                             ret.put("error", error.getMessage());
                             notifyListeners("error", ret);
                         }
                     });
                 } catch (ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
+                    Log.e("RadioPlugin", "Failed to connect to MediaController", e);
                 }
-            }, MoreExecutors.directExecutor());
+            }, ContextCompat.getMainExecutor(getContext())); 
         });
     }
 
@@ -109,7 +113,6 @@ public class RadioPlugin extends Plugin {
             return;
         }
 
-        // Request notification permission on Android 13+ if not granted yet
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (getPermissionState("notifications") != com.getcapacitor.PermissionState.GRANTED) {
                 pendingPlayCall = call;
@@ -135,9 +138,8 @@ public class RadioPlugin extends Plugin {
     }
 
     private void executePlay(PluginCall call, String url, String stationName, String artwork) {
-        if (mainHandler == null) mainHandler = new Handler(Looper.getMainLooper());
-        
-        mainHandler.post(() -> {
+        // MUST execute on Main Thread where MediaController was bound
+        getActivity().runOnUiThread(() -> {
             if (controller != null) {
                 if (!url.equals(currentUrl)) {
                     currentUrl = url;
@@ -168,9 +170,8 @@ public class RadioPlugin extends Plugin {
 
     @PluginMethod
     public void pause(PluginCall call) {
-        if (mainHandler == null) mainHandler = new Handler(Looper.getMainLooper());
-        
-        mainHandler.post(() -> {
+        // MUST execute on Main Thread where MediaController was bound
+        getActivity().runOnUiThread(() -> {
             if (controller != null) {
                 controller.pause();
                 call.resolve();
@@ -182,9 +183,8 @@ public class RadioPlugin extends Plugin {
 
     @PluginMethod
     public void stop(PluginCall call) {
-        if (mainHandler == null) mainHandler = new Handler(Looper.getMainLooper());
-        
-        mainHandler.post(() -> {
+        // MUST execute on Main Thread where MediaController was bound
+        getActivity().runOnUiThread(() -> {
             if (controller != null) {
                 controller.stop();
                 controller.clearMediaItems();
