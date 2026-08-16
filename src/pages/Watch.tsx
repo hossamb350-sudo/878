@@ -249,8 +249,18 @@ export function Watch() {
     isOutsideBroadcastHours
   } = useLiveStream();
   
-  const [activeTvId, setActiveTvId] = useState<string | null>("ch-1");
-  const [activeRadioId, setActiveRadioId] = useState<string | null>("rad-1");
+  const [activeTvId, setActiveTvId] = useState<string | null>(() => {
+    if (activeStream && (activeStream.type || "tv") === "tv") {
+      return activeStream.id || null;
+    }
+    return null;
+  });
+  const [activeRadioId, setActiveRadioId] = useState<string | null>(() => {
+    if (activeStream && activeStream.type === "radio") {
+      return activeStream.id || null;
+    }
+    return null;
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("الكل");
   const [sortOption, setSortOption] = useState<"newest" | "oldest" | "popular">("newest");
@@ -340,22 +350,37 @@ export function Watch() {
     return channelTab === "tv" ? tvChannels : radioChannels;
   }, [channelTab, tvChannels, radioChannels]);
 
+  // Sync selected channel/radio with global activeStream whenever activeStream changes
+  useEffect(() => {
+    if (activeStream) {
+      if ((activeStream.type || "tv") === "tv") {
+        setActiveTvId(activeStream.id || null);
+      } else if (activeStream.type === "radio") {
+        setActiveRadioId(activeStream.id || null);
+      }
+    }
+  }, [activeStream]);
+
   const activeTvChannel = useMemo(() => {
-    return tvChannels.find(c => c.id === activeTvId) || tvChannels[0];
+    if (activeTvId) {
+      const found = tvChannels.find(c => c.id === activeTvId || (c.name && c.name === activeTvId));
+      if (found) return found;
+    }
+    return tvChannels[0] || null;
   }, [tvChannels, activeTvId]);
 
   const activeRadioStation = useMemo(() => {
-    return radioChannels.find(c => c.id === activeRadioId) || radioChannels[0];
+    if (activeRadioId) {
+      const found = radioChannels.find(c => c.id === activeRadioId || (c.name && c.name === activeRadioId));
+      if (found) return found;
+    }
+    return radioChannels[0] || null;
   }, [radioChannels, activeRadioId]);
 
   useEffect(() => {
-    if (isScrolled && isPlayingInHero) {
-      setIsPlayingInHero(false);
-    }
-  }, [isScrolled, isPlayingInHero, setIsPlayingInHero]);
-
-  useEffect(() => {
-    if (!isGlobalPlaying && isPlayingInHero) {
+    if (isGlobalPlaying && !isPlayingInHero) {
+      setIsPlayingInHero(true);
+    } else if (!isGlobalPlaying && isPlayingInHero) {
       setIsPlayingInHero(false);
     }
   }, [isGlobalPlaying, isPlayingInHero, setIsPlayingInHero]);
@@ -424,6 +449,102 @@ export function Watch() {
       <div className="min-h-screen bg-white font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
         <div className="max-w-[760px] mx-auto space-y-3.5">
 
+          {/* 0. HEADER & TAB SWITCHER (MOVED TO TOP) */}
+          <div className="space-y-2.5 mb-4">
+            <div className="flex items-center gap-2 px-1 select-none" dir="rtl">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
+                {channelTab === "tv" ? (
+                  <Tv className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                ) : (
+                  <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                )}
+              </div>
+              <div className="flex flex-col text-right">
+                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
+                  {channelTab === "tv" ? "القنوات الفضائية المتاحة" : "الإذاعات المتاحة"}
+                </h2>
+                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">
+                  {channelTab === "tv" ? "اختر القناة للمشاهدة المباشرة" : "استمع إلى البث الإذاعي المباشر"}
+                </p>
+              </div>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
+            </div>
+
+            {/* TAB SWITCHER: TV vs RADIO - CREATIVE BROADCAST CAPSULE */}
+            <div className="relative p-1.5 rounded-2xl sm:rounded-3xl bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-inner flex items-center gap-1.5 select-none" dir="rtl">
+              {/* Tab 1: قنوات التلفزيون */}
+              <button
+                type="button"
+                onClick={() => setChannelTab("tv")}
+                className={`relative flex-1 py-2.5 sm:py-3 px-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer z-10 ${
+                  channelTab === "tv"
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                {channelTab === "tv" && (
+                  <motion.div
+                    layoutId="activeBroadcastPill"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 shadow-md shadow-slate-900/5 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-700/80 -z-10"
+                  />
+                )}
+                
+                {/* Live Pulse Dot for TV */}
+                <span className="relative flex h-2 w-2 shrink-0">
+                  {channelTab === "tv" && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  )}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    channelTab === "tv" ? "bg-red-600 dark:bg-red-500" : "bg-slate-300 dark:bg-slate-600"
+                  }`} />
+                </span>
+
+                <Tv className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-300 ${
+                  channelTab === "tv" ? "scale-110 text-red-600 dark:text-red-400" : "opacity-70"
+                }`} />
+
+                <span className="truncate">قنوات التلفزيون</span>
+              </button>
+
+              {/* Tab 2: الإذاعات المتاحة */}
+              <button
+                type="button"
+                onClick={() => setChannelTab("radio")}
+                className={`relative flex-1 py-2.5 sm:py-3 px-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer z-10 ${
+                  channelTab === "radio"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                {channelTab === "radio" && (
+                  <motion.div
+                    layoutId="activeBroadcastPill"
+                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                    className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 shadow-md shadow-slate-900/5 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-700/80 -z-10"
+                  />
+                )}
+
+                {/* Live Audio Wave Graphic for Radio */}
+                {channelTab === "radio" ? (
+                  <div className="flex items-end gap-0.5 h-3 shrink-0">
+                    <span className="w-0.5 h-2 bg-amber-500 rounded-full animate-pulse" style={{ animationDuration: '0.6s' }} />
+                    <span className="w-0.5 h-3 bg-amber-500 rounded-full animate-pulse" style={{ animationDuration: '0.9s' }} />
+                    <span className="w-0.5 h-1.5 bg-amber-500 rounded-full animate-pulse" style={{ animationDuration: '0.7s' }} />
+                  </div>
+                ) : (
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-300 dark:bg-slate-600 shrink-0" />
+                )}
+
+                <Radio className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-300 ${
+                  channelTab === "radio" ? "scale-110 text-amber-600 dark:text-amber-400" : "opacity-70"
+                }`} />
+
+                <span className="truncate">الإذاعات المتاحة</span>
+              </button>
+            </div>
+          </div>
+
           {/* 1. HERO SECTION: DEDICATED TV AND RADIO VIEWERS */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
@@ -433,27 +554,39 @@ export function Watch() {
             {channelTab === "tv" ? (
               /* ================= TV VIEWER ================= */
               <div className="space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-2 sm:h-2.5 w-2 sm:w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5 bg-red-600"></span>
-                    </span>
-                    <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-900 dark:text-white font-cairo leading-tight">البث التلفزيوني</h2>
-                  </div>
-                </div>
-
                 <div className="relative w-full aspect-video sm:aspect-[21/9] min-h-[240px] rounded-[28px] overflow-hidden bg-gradient-to-br from-[#061224] via-[#081b38] to-[#030914] border border-slate-800 shadow-[0_16px_40px_rgba(0,0,0,0.25)] flex flex-col justify-between p-4 sm:p-5 group">
                   
                   {/* Embedded Video Player Frame when Playing TV */}
                   {activeTvChannel && (activeTvChannel.url || activeTvChannel.streamUrl) && isPlayingInHero && activeStream?.id === activeTvChannel.id ? (
                     <div className="absolute inset-0 z-30 w-full h-full bg-black rounded-[28px] overflow-hidden flex flex-col items-center justify-center">
                       <iframe 
-                        src={getEmbedUrl(activeTvChannel.url || activeTvChannel.streamUrl, true) || undefined}
+                        src={getEmbedUrl(activeTvChannel.url || activeTvChannel.streamUrl, true, isGlobalMuted) || undefined}
                         className="w-full h-full border-0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
                         allowFullScreen
                       />
+
+                      {/* Top Left Channel Logo & HD Badge (Overlay on TV Stream) */}
+                      <div className="absolute top-2.5 left-2.5 z-40 flex items-center gap-1.5 bg-transparent pointer-events-none select-none drop-shadow-md" dir="ltr">
+                        <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-900/80 border border-white/30 p-0.5 shadow-sm shrink-0 flex items-center justify-center overflow-hidden">
+                          <img 
+                            src={activeTvChannel?.iconUrl || "/splash_first.png"} 
+                            alt={activeTvChannel?.name} 
+                            className="w-full h-full object-cover rounded-full"
+                            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                          />
+                        </div>
+                        <div className="text-right flex flex-col items-end">
+                          <h3 className="text-[11px] sm:text-xs font-black text-white leading-tight font-cairo drop-shadow-sm">
+                            {activeTvChannel?.name || "القناة التلفزيونية"}
+                          </h3>
+                          <span className="text-[8px] sm:text-[9px] font-bold text-emerald-400 flex items-center gap-1 mt-0.5 leading-none drop-shadow-sm">
+                            <span>جودة HD المرئية</span>
+                            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                          </span>
+                        </div>
+                      </div>
+
                       <button 
                         onClick={() => {
                           setIsPlayingInHero(false);
@@ -471,26 +604,25 @@ export function Watch() {
                   <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
                   <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
 
-                  {/* Top Bar inside TV Viewer */}
-                  <div className="relative z-10 flex items-center justify-end w-full">
-                    <div className="flex items-center gap-3">
-                      <div className="text-right max-w-[200px] sm:max-w-[260px]">
-                        <h3 className="text-xs sm:text-sm font-black text-white leading-tight font-cairo truncate">
-                          {activeTvChannel?.name || "القناة التلفزيونية"}
-                        </h3>
-                        <span className="text-[10px] font-bold text-emerald-400 flex items-center justify-end gap-1 mt-0.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                          <span>جودة HD المرئية</span>
-                        </span>
-                      </div>
-
-                      <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-white/10 backdrop-blur-xl border border-white/25 p-0.5 shadow-xl shrink-0 flex items-center justify-center overflow-hidden">
+                  {/* Top Bar inside TV Viewer (Top Left Badge) */}
+                  <div className="relative z-10 flex items-center justify-start w-full">
+                    <div className="flex items-center gap-1.5 bg-transparent drop-shadow-md select-none" dir="ltr">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-900/80 border border-white/30 p-0.5 shadow-sm shrink-0 flex items-center justify-center overflow-hidden">
                         <img 
                           src={activeTvChannel?.iconUrl || "/splash_first.png"} 
                           alt={activeTvChannel?.name} 
                           className="w-full h-full object-cover rounded-full"
                           onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                         />
+                      </div>
+                      <div className="text-right flex flex-col items-end">
+                        <h3 className="text-[11px] sm:text-xs font-black text-white leading-tight font-cairo truncate drop-shadow-sm">
+                          {activeTvChannel?.name || "القناة التلفزيونية"}
+                        </h3>
+                        <span className="text-[8px] sm:text-[9px] font-bold text-emerald-400 flex items-center gap-1 mt-0.5 leading-none drop-shadow-sm">
+                          <span>جودة HD المرئية</span>
+                          <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -516,337 +648,248 @@ export function Watch() {
                   {/* Bottom Bar */}
                   <div className="relative z-10 flex items-center justify-center w-full pt-1">
                     <p className="text-white/90 text-xs sm:text-sm font-black text-center font-cairo backdrop-blur-sm bg-black/30 px-4 py-1 rounded-full border border-white/10">
-                      انقر لتشغيل البث التلفزيوني المرئي
+                      انقر لتشغيل البث التلفزيوني المباشر
                     </p>
                   </div>
                 </div>
-
-                {/* TV Description */}
-                {activeTvChannel?.description && (
-                  <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl text-right shadow-xs space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-red-600 dark:text-red-400 font-cairo">
-                      <Info className="w-4 h-4 text-red-500 shrink-0" />
-                      <span>عن {activeTvChannel.name}</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium font-cairo leading-relaxed">
-                      {activeTvChannel.description}
-                    </p>
-                  </div>
-                )}
               </div>
             ) : (
               /* ================= RADIO VIEWER ================= */
-              <div className="space-y-2">
-                <div className="flex items-center justify-between px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="relative flex h-2 sm:h-2.5 w-2 sm:w-2.5">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 sm:h-2.5 w-2 sm:w-2.5 bg-amber-500"></span>
-                    </span>
-                    <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-900 dark:text-white font-cairo leading-tight">البث الإذاعي</h2>
-                  </div>
-                </div>
+              <div className="font-cairo" dir="rtl">
+                {/* Main Card */}
+                <div className="relative w-full rounded-[24px] overflow-hidden bg-[#fafafa] dark:bg-slate-900/90 border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex flex-col items-center pt-6 pb-5 px-4">
+                  {/* Dotted Pattern Background */}
+                  <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_2px,transparent_2px)] dark:bg-[radial-gradient(#334155_2px,transparent_2px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
 
-                <div className="relative w-full rounded-[28px] overflow-hidden bg-gradient-to-br from-[#0c162c] via-[#101e3b] to-[#070e1c] border border-amber-500/20 shadow-[0_16px_40px_rgba(0,0,0,0.3)] p-5 sm:p-6 space-y-5 text-white">
-                  {/* Subtle Background Soundwaves Grid */}
-                  <div className="absolute inset-0 bg-[radial-gradient(#f59e0b_1px,transparent_1px)] [background-size:16px_16px] opacity-10 pointer-events-none" />
-
-                  {/* Radio Header Info */}
-                  <div className="relative z-10 flex items-center justify-between gap-3 border-b border-white/10 pb-4">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-1 shrink-0 overflow-hidden shadow-lg">
-                        <img 
-                          src={activeRadioStation?.iconUrl || "/splash_first.png"} 
-                          alt={activeRadioStation?.name} 
-                          className="w-full h-full object-cover rounded-xl"
-                        />
-                      </div>
-                      <div className="text-right min-w-0">
-                        <h3 className="text-base sm:text-lg font-black text-white font-cairo truncate leading-tight">
-                          {activeRadioStation?.name || "الإذاعة"}
-                        </h3>
-                        {activeRadioStation?.description ? (
-                          <p className="text-xs text-slate-300 font-medium font-cairo truncate mt-0.5">
-                            {activeRadioStation.description}
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {(() => {
-                      const schedule = getRadioScheduleInfo(activeRadioStation?.streamUrl || activeRadioStation?.url);
-                      return (
-                        <div className={`shrink-0 border px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 ${
-                          schedule.isOpen 
-                            ? "bg-amber-500/10 border-amber-500/30 text-amber-400" 
-                            : "bg-slate-800/80 border-slate-700 text-slate-300"
-                        }`}>
-                          <span className={`w-2 h-2 rounded-full ${schedule.isOpen ? "bg-amber-400 animate-ping" : "bg-amber-400/60"}`} />
-                          <span className="hidden sm:inline">{schedule.isOpen ? "بث مباشر" : "08:00 ص - 10:00 م"}</span>
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Animated Equalizer Waveform */}
-                  <div className="relative z-10 flex items-center justify-center gap-1.5 h-10 py-1 opacity-90">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(i => (
-                      <motion.div
-                        key={i}
-                        className="w-1.5 sm:w-2 bg-gradient-to-t from-amber-600 via-amber-400 to-amber-300 rounded-full"
-                        animate={{ 
-                          height: (activeStream?.id === activeRadioStation?.id && isGlobalPlaying) 
-                            ? ["20%", "90%", "30%", "100%", "25%"] 
-                            : "15%" 
-                        }}
-                        transition={{ 
-                          repeat: Infinity, 
-                          duration: 0.9, 
-                          delay: i * 0.07, 
-                          ease: "easeInOut" 
-                        }}
-                      />
+                  {/* Vertical faded lines under logo */}
+                  <div className="absolute top-[90px] left-1/2 -translate-x-1/2 flex gap-[10px] h-[60px] opacity-30 dark:opacity-20 pointer-events-none">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="w-[2px] bg-gradient-to-b from-amber-300 to-transparent rounded-full" />
                     ))}
                   </div>
 
-                  {/* INTEGRATED RADIO AUDIO PLAYER CONTROLS */}
-                  <div className="relative z-10 bg-slate-900/80 backdrop-blur-xl border border-white/15 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl">
+                  {/* Logo Area */}
+                  <div className="relative z-10 flex items-center justify-center mb-4 mt-1">
+                    {/* Outer Dashed Circle */}
+                    <div className="absolute w-[120px] h-[120px] rounded-full border border-dashed border-amber-300 dark:border-amber-700/50 animate-[spin_30s_linear_infinite]" />
                     
-                    {/* Status Badge */}
-                    <div className="text-right flex items-center gap-2">
-                      {(() => {
-                        const schedule = getRadioScheduleInfo(activeRadioStation?.streamUrl || activeRadioStation?.url);
-                        const isCurrentActive = activeStream?.id === activeRadioStation?.id;
-                        
-                        if (isCurrentActive && isGlobalLoading) {
-                          return (
-                            <div className="flex items-center gap-2 text-amber-400 font-black text-xs font-cairo">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>جاري الاتصال بالبث الصوتي...</span>
-                            </div>
-                          );
-                        }
-                        
-                        if (isCurrentActive && isGlobalPlaying) {
-                          return (
-                            <div className="flex items-center gap-2 text-emerald-400 font-black text-xs font-cairo">
-                              <span className="relative flex h-2.5 w-2.5">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                              </span>
-                              <span>جاري البث الصوتي المباشر الآن</span>
-                            </div>
-                          );
-                        }
-
-                        if (isCurrentActive && streamError) {
-                          return (
-                            <span className="text-amber-300 font-bold text-xs font-cairo">
-                              {streamError}
-                            </span>
-                          );
-                        }
-
-                        if (!schedule.isOpen) {
-                          return (
-                            <span className="text-amber-300/90 text-xs font-bold font-cairo">
-                              {schedule.statusText}
-                            </span>
-                          );
-                        }
-
-                        return (
-                          <span className="text-amber-400/90 text-xs font-bold font-cairo">
-                            اضغط للاستماع للبث الإذاعي المباشر
-                          </span>
-                        );
-                      })()}
+                    {/* Dot on outer circle */}
+                    <div className="absolute w-[120px] h-[120px] rounded-full animate-[spin_30s_linear_infinite]">
+                      <div className="absolute top-1/2 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
                     </div>
 
-                    {/* Audio Controls */}
-                    <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                      {/* Volume Controls */}
-                      <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-1.5">
-                        <button 
-                          onClick={globalToggleMute}
-                          className="text-slate-300 hover:text-white transition-colors p-1"
-                          title={isGlobalMuted ? "إلغاء الكتم" : "كتم الصوت"}
-                        >
-                          {isGlobalMuted || globalVolume === 0 ? <VolumeX className="w-4 h-4 text-amber-400" /> : <Volume2 className="w-4 h-4 text-amber-400" />}
-                        </button>
-                        <input 
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={isGlobalMuted ? 0 : globalVolume}
-                          onChange={(e) => globalSetVolume(parseFloat(e.target.value))}
-                          className="w-20 sm:w-28 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                    {/* Inner Solid Circle */}
+                    <div className="absolute w-[94px] h-[94px] rounded-full border border-amber-200 dark:border-amber-800/60" />
+
+                    {/* Center Logo Card */}
+                    <div className="relative w-[72px] h-[72px] bg-white dark:bg-slate-800 rounded-full shadow-[0_10px_20px_rgba(0,0,0,0.06)] dark:shadow-black/50 p-1.5 z-20">
+                      <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center bg-white dark:bg-slate-700 relative">
+                        <img 
+                          src={activeRadioStation?.iconUrl || "/splash_first.png"} 
+                          alt={activeRadioStation?.name} 
+                          className="w-full h-full object-cover scale-110"
                         />
                       </div>
-
-                      {/* Main Play / Pause Button */}
-                      <button
-                        onClick={() => {
-                          if (activeStream?.id === activeRadioStation?.id) {
-                            globalTogglePlay();
-                            setIsPlayingInHero(true);
-                          } else if (activeRadioStation) {
-                            globalPlayStream(activeRadioStation);
-                            setIsPlayingInHero(true);
-                          }
-                        }}
-                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 flex items-center justify-center transition-all shadow-lg active:scale-95 shrink-0"
-                        title={activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? "إيقاف مؤقت" : "تشغيل الإذاعة"}
-                        disabled={activeStream?.id === activeRadioStation?.id && isGlobalLoading}
-                      >
-                        {activeStream?.id === activeRadioStation?.id && isGlobalLoading ? (
-                          <Loader2 className="w-6 h-6 animate-spin text-slate-800" />
-                        ) : activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? (
-                          <Pause className="w-6 h-6 fill-current" />
-                        ) : (
-                          <Play className="w-6 h-6 fill-current ml-0.5" />
-                        )}
-                      </button>
                     </div>
-
                   </div>
-                </div>
 
-                {/* Radio Description */}
-                {activeRadioStation?.description && (
-                  <div className="bg-slate-50 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800 p-3.5 sm:p-4 rounded-2xl text-right shadow-xs space-y-1">
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 font-cairo">
-                      <Radio className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>عن {activeRadioStation.name}</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium font-cairo leading-relaxed">
+                  {/* Radio Name */}
+                  <h3 className="relative z-10 text-2xl sm:text-[26px] font-black text-[#1e293b] dark:text-white mb-3 tracking-tight">
+                    {activeRadioStation?.name || "إذاعة تعز"}
+                  </h3>
+
+                  {/* Live Status Badge */}
+                  <div className="relative z-10 bg-[#fffbeb] dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-2 mb-4 shadow-sm border border-amber-100 dark:border-amber-800/50">
+                    <span>استماع مباشر</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_6px_rgba(245,158,11,0.6)]" />
+                  </div>
+
+                  {/* Description */}
+                  {activeRadioStation?.description && (
+                    <p className="relative z-10 text-center text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-medium max-w-[280px] sm:max-w-sm mb-5 leading-relaxed px-4">
                       {activeRadioStation.description}
                     </p>
+                  )}
+
+                  {/* Play/Listen Button */}
+                  <button className="relative z-10 bg-white dark:bg-slate-800 rounded-full p-1.5 pr-2 pl-4 shadow-[0_4px_15px_rgba(0,0,0,0.05)] dark:shadow-black/40 flex items-center justify-between min-w-[170px] border border-slate-100 dark:border-slate-700 mb-5 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300"
+                    onClick={() => {
+                      if (activeStream?.id === activeRadioStation?.id) {
+                        globalTogglePlay();
+                        setIsPlayingInHero(true);
+                      } else if (activeRadioStation) {
+                        globalPlayStream(activeRadioStation);
+                        setIsPlayingInHero(true);
+                      }
+                    }}
+                  >
+                    {/* Play Button Icon */}
+                    <div className="w-10 h-10 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/30 shrink-0">
+                      {activeStream?.id === activeRadioStation?.id && isGlobalLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-white" />
+                      ) : activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? (
+                        <Pause className="w-5 h-5 fill-current" />
+                      ) : (
+                        <Play className="w-5 h-5 fill-current translate-x-[-1px]" />
+                      )}
+                    </div>
+
+                    <span className="text-amber-600 dark:text-amber-500 font-bold text-sm px-3 flex-1 text-center">
+                      {activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? "إيقاف مؤقت" : "استمع الآن"}
+                    </span>
+
+                    {/* Equalizer / Loading */}
+                    <div className="flex items-end gap-0.5 h-4 shrink-0 opacity-80">
+                      {activeStream?.id === activeRadioStation?.id && isGlobalPlaying ? (
+                        <>
+                          <motion.div className="w-0.5 bg-amber-500 rounded-full" animate={{ height: ["40%", "100%", "60%", "100%", "40%"] }} transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut" }} />
+                          <motion.div className="w-0.5 bg-amber-500 rounded-full" animate={{ height: ["80%", "40%", "100%", "60%", "80%"] }} transition={{ repeat: Infinity, duration: 0.9, ease: "easeInOut" }} />
+                          <motion.div className="w-0.5 bg-amber-500 rounded-full" animate={{ height: ["50%", "90%", "30%", "80%", "50%"] }} transition={{ repeat: Infinity, duration: 0.7, ease: "easeInOut" }} />
+                        </>
+                      ) : activeStream?.id === activeRadioStation?.id && isGlobalLoading ? (
+                        <Loader2 className="w-3 h-3 text-amber-500 animate-spin" />
+                      ) : (
+                        <>
+                          <div className="w-0.5 h-2 bg-amber-500/40 rounded-full" />
+                          <div className="w-0.5 h-3 bg-amber-500/40 rounded-full" />
+                          <div className="w-0.5 h-1.5 bg-amber-500/40 rounded-full" />
+                        </>
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Volume Control */}
+                  <div className="relative z-10 flex items-center justify-between w-full max-w-[220px] px-2 gap-3 mb-5">
+                    <button 
+                      onClick={globalToggleMute}
+                      className="text-slate-500 hover:text-amber-500 transition-colors shrink-0"
+                      title={isGlobalMuted ? "إلغاء الكتم" : "كتم الصوت"}
+                    >
+                      {isGlobalMuted || globalVolume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </button>
+                    
+                    <div className="flex-1 flex items-center" dir="ltr">
+                      <input 
+                        type="range"
+                        min="0"
+                        max="1"
+                        step="0.01"
+                        value={isGlobalMuted ? 0 : globalVolume}
+                        onChange={(e) => globalSetVolume(parseFloat(e.target.value))}
+                        className="w-full h-1 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 outline-none focus:outline-none"
+                      />
+                    </div>
                   </div>
-                )}
+
+                  {/* MERGED RADIO CHANNELS */}
+                  <div className="relative z-10 w-full pt-3 mt-1">
+                    <div className="flex flex-wrap gap-2 w-full justify-center items-center">
+                      {radioChannels.map((ch) => {
+                        const isSelected = !!activeRadioStation && (activeRadioStation.id === ch.id || activeRadioStation.name === ch.name);
+                        return (
+                          <button
+                            key={ch.id || ch.name}
+                            onClick={() => {
+                              setActiveRadioId(ch.id || ch.name || null);
+                              globalPlayStream(ch);
+                              setIsPlayingInHero(true);
+                            }}
+                            className={`flex items-center gap-2 px-3.5 py-2 rounded-full border transition-all duration-300 cursor-pointer ${
+                              isSelected
+                                ? "bg-amber-500 text-white border-amber-500 shadow-md ring-2 ring-amber-500/30 scale-105"
+                                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                            }`}
+                          >
+                            <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-white shadow-sm border border-slate-100 dark:border-slate-600">
+                              <img
+                                src={ch.iconUrl || "/splash_first.png"}
+                                alt={ch.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <span className="text-xs font-bold whitespace-nowrap leading-none pt-0.5">
+                              {ch.name}
+                            </span>
+                            {isSelected && (
+                              <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-0.5" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>
 
-          {/* 2. CHANNELS / RADIOS SECTION */}
-          <div className="space-y-2.5">
-            <div className="flex items-center gap-2 px-1 select-none" dir="rtl">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-                {channelTab === "tv" ? (
-                  <Tv className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          {/* 2. CHANNELS SECTION (GRID - TV ONLY) */}
+          {channelTab === "tv" && (
+            <div className="space-y-2.5">
+              {/* CHANNELS GRID */}
+              <div className="grid grid-cols-3 xs:grid-cols-6 gap-2.5 w-full">
+                {displayChannels.length > 0 ? (
+                  displayChannels.map((ch) => {
+                    const isSelected = !!activeTvChannel && (activeTvChannel.id === ch.id || activeTvChannel.name === ch.name);
+                    return (
+                      <button
+                        key={ch.id || ch.name}
+                        onClick={() => {
+                          setActiveTvId(ch.id || ch.name || null);
+                          globalPlayStream(ch);
+                          setIsPlayingInHero(true);
+                          if (isScrolled) {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            const mainEl = document.querySelector('main');
+                            if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                          }
+                        }}
+                        className={`flex flex-col items-center justify-center py-3.5 px-2 rounded-[22px] border transition-all duration-200 cursor-pointer gap-2 relative ${
+                          isSelected 
+                            ? 'bg-red-50/90 dark:bg-red-950/40 border-red-500 shadow-md ring-2 ring-red-500/25 scale-[1.03]'
+                            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs hover:scale-[1.01]'
+                        }`}
+                      >
+                        {isSelected && (
+                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600 border border-white dark:border-slate-900" />
+                          </span>
+                        )}
+
+                        <div className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border shadow-xs flex items-center justify-center overflow-hidden shrink-0 transition-transform ${
+                          isSelected 
+                            ? 'border-red-500 bg-white ring-2 ring-red-500/20'
+                            : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
+                        }`}>
+                          <img 
+                            src={ch.iconUrl || "/splash_first.png"} 
+                            alt={ch.name} 
+                            className="w-full h-full object-cover rounded-full"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&q=80';
+                            }}
+                          />
+                        </div>
+
+                        <span className={`text-[12px] font-bold font-cairo truncate max-w-full text-center px-1 leading-tight ${
+                          isSelected 
+                            ? "text-red-700 dark:text-red-400 font-black"
+                            : "text-slate-700 dark:text-slate-300"
+                        }`}>
+                          {ch.name}
+                        </span>
+                      </button>
+                    );
+                  })
                 ) : (
-                  <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+                  <div className="col-span-full py-8 text-center text-xs font-bold text-slate-400">
+                    لا توجد قنوات متاحة حالياً
+                  </div>
                 )}
               </div>
-              <div className="flex flex-col text-right">
-                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
-                  {channelTab === "tv" ? "القنوات الفضائية المتاحة" : "الإذاعات المتاحة"}
-                </h2>
-                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">
-                  {channelTab === "tv" ? "اختر القناة للمشاهدة المباشرة" : "استمع إلى البث الإذاعي المباشر"}
-                </p>
-              </div>
-              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
-              <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 font-cairo shrink-0">
-                {displayChannels.length} {channelTab === "tv" ? "قنوات" : "إذاعات"}
-              </span>
             </div>
-
-            {/* TAB SWITCHER: TV vs RADIO */}
-            <div className="flex bg-slate-100 dark:bg-slate-800/80 p-1 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 shadow-xs">
-              <button
-                onClick={() => setChannelTab("tv")}
-                className={`flex-1 py-2.5 text-xs sm:text-sm font-black rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  channelTab === "tv" 
-                    ? "bg-white dark:bg-slate-900 text-red-600 dark:text-red-400 shadow-md border border-slate-200/80 dark:border-slate-800" 
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                <Tv className="w-4 h-4" />
-                <span>قنوات التلفزيون</span>
-              </button>
-              <button
-                onClick={() => setChannelTab("radio")}
-                className={`flex-1 py-2.5 text-xs sm:text-sm font-black rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${
-                  channelTab === "radio" 
-                    ? "bg-white dark:bg-slate-900 text-amber-500 dark:text-amber-400 shadow-md border border-slate-200/80 dark:border-slate-800" 
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                <Radio className="w-4 h-4" />
-                <span>الإذاعات المتاحة</span>
-              </button>
-            </div>
-
-            {/* CHANNELS GRID */}
-            <div className="grid grid-cols-3 xs:grid-cols-6 gap-2 w-full">
-              {displayChannels.length > 0 ? (
-                displayChannels.map((ch) => {
-                  const isSelected = channelTab === "tv" ? activeTvId === ch.id : activeRadioId === ch.id;
-                  return (
-                    <button
-                      key={ch.id}
-                      onClick={() => {
-                        if (channelTab === "tv") {
-                          setActiveTvId(ch.id!);
-                          globalPlayStream(ch);
-                          setIsPlayingInHero(true);
-                        } else {
-                          setActiveRadioId(ch.id!);
-                          globalPlayStream(ch);
-                          setIsPlayingInHero(true);
-                        }
-                        if (isScrolled) {
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                          const mainEl = document.querySelector('main');
-                          if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                      }}
-                      className={`flex flex-col items-center justify-center py-3 px-1 rounded-[20px] bg-white dark:bg-slate-900 border transition-all cursor-pointer gap-2 shadow-xs ${
-                        isSelected 
-                          ? (channelTab === "tv" 
-                              ? 'border-red-600 dark:border-red-500 bg-red-50/50 dark:bg-red-950/30 shadow-md ring-2 ring-red-600/20 scale-[1.03]'
-                              : 'border-amber-500 dark:border-amber-400 bg-amber-50/50 dark:bg-amber-950/30 shadow-md ring-2 ring-amber-500/20 scale-[1.03]')
-                          : 'border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                      }`}
-                    >
-                      <div className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 ${
-                        isSelected 
-                          ? (channelTab === "tv" ? 'border-red-500 bg-white' : 'border-amber-500 bg-white') 
-                          : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
-                      }`}>
-                        <img 
-                          src={ch.iconUrl || "/splash_first.png"} 
-                          alt={ch.name} 
-                          className="w-full h-full object-cover rounded-full"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&q=80';
-                          }}
-                        />
-                        {isSelected && (
-                          <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 ${
-                            channelTab === "tv" ? "bg-red-600" : "bg-amber-500"
-                          }`} />
-                        )}
-                      </div>
-                      <span className={`text-[11px] font-bold font-cairo truncate max-w-full text-center px-1 ${
-                        isSelected 
-                          ? (channelTab === "tv" ? "text-red-700 dark:text-red-400 font-black" : "text-amber-600 dark:text-amber-400 font-black") 
-                          : "text-slate-700 dark:text-slate-300"
-                      }`}>
-                        {ch.name}
-                      </span>
-                    </button>
-                  );
-                })
-              ) : (
-                <div className="col-span-full py-8 text-center text-xs font-bold text-slate-400">
-                  لا توجد {channelTab === "tv" ? "قنوات" : "إذاعات"} متاحة حالياً
-                </div>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* SECTION TITLE SEPARATOR: "المحتوى المرئي" */}
           <div className="relative flex items-center justify-center pt-1 pb-0.5 my-1">

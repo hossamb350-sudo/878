@@ -15,6 +15,8 @@ import {
 } from "firebase/firestore";
 import { Article, Author, Category } from "../types";
 import { CategoryService } from "../services/CategoryService";
+import { CategoryMultiSelect } from "./CategoryMultiSelect";
+import { QuickCategorySelector } from "./QuickCategorySelector";
 import { ImageUpload } from "./ImageUpload";
 import { 
   Calendar, 
@@ -266,6 +268,24 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
     }
   };
 
+  // Quick Inline Category Update
+  const handleQuickUpdateCategory = async (id: string, newCategory: string, allCategories: string[]) => {
+    try {
+      const docRef = doc(db, "articles", id);
+      const finalCats = allCategories && allCategories.length > 0 ? allCategories : [newCategory];
+      const updateData = {
+        category: newCategory,
+        categories: finalCats,
+        updatedAt: Date.now()
+      };
+      await updateDoc(docRef, updateData);
+      setArticles(prev => prev.map(a => a.id === id ? { ...a, ...updateData } : a));
+    } catch (error) {
+      console.error("Error updating article category:", error);
+      throw error;
+    }
+  };
+
   // Author Management Functions with Realtime Article Sync
   const handleSaveAuthor = async () => {
     if (!editingAuthorName.trim()) return alert("يرجى إدخال اسم الكاتب");
@@ -384,58 +404,69 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
 
   return (
     <div className="space-y-6 font-cairo text-right" dir="rtl">
-      {/* Top Banner Header */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950 p-6 sm:p-8 rounded-3xl text-white shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-amber-500/10 rounded-full filter blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full text-amber-300 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>إدارة المحتوى المتقدمة</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black">قسم المقالات والتحليلات</h1>
-            <p className="text-xs sm:text-sm text-slate-300 font-medium max-w-xl">
-              أنشئ مقالات احترافية مع دعم الكتاب، المعارض المتعددة للصور، والمزامنة التلقائية مع أبرز المواضيع.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={() => setMode("list")}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+      {/* Top Navigation Controls - Without background card */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+        {/* Navigation Tabs */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Tab 1: قائمة المقالات */}
+          <button
+            type="button"
+            onClick={() => setMode("list")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all duration-200 select-none cursor-pointer border ${
+              mode === "list"
+                ? "bg-amber-500 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/40 scale-[1.02]"
+                : "bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
+            }`}
+          >
+            <BookOpen className={`w-4 h-4 transition-transform duration-200 ${mode === "list" ? "scale-110" : "opacity-70"}`} />
+            <span>قائمة المقالات</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-black transition-colors ${
                 mode === "list"
-                  ? "bg-amber-500 text-white shadow-lg"
-                  : "bg-white/10 hover:bg-white/20 text-white backdrop-blur-md"
+                  ? "bg-slate-950 text-amber-400"
+                  : "bg-slate-100 dark:bg-slate-750 text-slate-600 dark:text-slate-300"
               }`}
             >
-              <BookOpen className="w-4 h-4" />
-              <span>قائمة المقالات ({articles.length})</span>
-            </button>
+              {articles.length}
+            </span>
+          </button>
 
-            <button
-              onClick={startNewWizard}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                mode === "wizard"
-                  ? "bg-amber-500 text-white shadow-lg"
-                  : "bg-amber-500/90 hover:bg-amber-500 text-white shadow-md"
-              }`}
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>إضافة مقال جديد</span>
-            </button>
+          {/* Tab 2: إضافة مقال جديد */}
+          <button
+            type="button"
+            onClick={startNewWizard}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all duration-200 select-none cursor-pointer border ${
+              mode === "wizard"
+                ? "bg-amber-500 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/40 scale-[1.02]"
+                : "bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
+            }`}
+          >
+            <PlusCircle className={`w-4 h-4 transition-transform duration-200 ${mode === "wizard" ? "scale-110" : "opacity-70"}`} />
+            <span>إضافة مقال جديد</span>
+          </button>
 
-            <button
-              onClick={() => setMode("authors")}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+          {/* Tab 3: إدارة الكتاب */}
+          <button
+            type="button"
+            onClick={() => setMode("authors")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black transition-all duration-200 select-none cursor-pointer border ${
+              mode === "authors"
+                ? "bg-amber-500 text-slate-950 border-amber-400 shadow-lg shadow-amber-500/25 ring-2 ring-amber-400/40 scale-[1.02]"
+                : "bg-white dark:bg-slate-850 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs"
+            }`}
+          >
+            <Users className={`w-4 h-4 transition-transform duration-200 ${mode === "authors" ? "scale-110" : "opacity-70"}`} />
+            <span>إدارة الكتاب</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-black transition-colors ${
                 mode === "authors"
-                  ? "bg-amber-500 text-white shadow-lg"
-                  : "bg-white/10 hover:bg-white/20 text-white backdrop-blur-md"
+                  ? "bg-slate-950 text-amber-400"
+                  : "bg-slate-100 dark:bg-slate-750 text-slate-600 dark:text-slate-300"
               }`}
             >
-              <Users className="w-4 h-4" />
-              <span>إدارة الكتاب ({authors.length})</span>
-            </button>
-          </div>
+              {authors.length}
+            </span>
+          </button>
         </div>
       </div>
 
@@ -526,10 +557,16 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
                         </span>
                       )}
 
-                      {/* Category Badge */}
-                      <span className="absolute bottom-2 right-2 bg-slate-950/80 text-amber-400 backdrop-blur-md text-[10px] font-black px-2.5 py-0.5 rounded-full border border-amber-500/20">
-                        {art.category}
-                      </span>
+                      {/* Quick Category Selector Badge */}
+                      <div className="absolute bottom-2 right-2 z-10">
+                        <QuickCategorySelector
+                          currentCategory={art.category}
+                          currentCategories={art.categories}
+                          itemTitle={art.title}
+                          size="xs"
+                          onUpdate={(newCat, allCats) => handleQuickUpdateCategory(art.id, newCat, allCats)}
+                        />
+                      </div>
                     </div>
 
                     {/* Card Content */}
@@ -737,79 +774,33 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
               </div>
 
               {/* Category & Featured Topics Linking */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300">
-                    تصنيفات المقال (يمكنك اختيار أكثر من تصنيف)
-                  </label>
-                  <button
-                    onClick={() => setShowAddCatInput(!showAddCatInput)}
-                    className="text-xs text-amber-500 hover:text-amber-600 font-bold flex items-center gap-1"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>إضافة تصنيف جديد</span>
-                  </button>
-                </div>
-
-                {showAddCatInput && (
-                  <div className="flex items-center gap-2 mb-3 bg-amber-500/10 p-2.5 rounded-xl border border-amber-500/30">
-                    <input
-                      type="text"
-                      placeholder="اسم التصنيف الجديد..."
-                      value={customCatName}
-                      onChange={(e) => setCustomCatName(e.target.value)}
-                      className="flex-1 bg-white dark:bg-slate-800 text-xs font-bold p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 outline-none"
-                    />
-                    <button
-                      onClick={handleAddCustomCategory}
-                      className="px-4 py-2.5 bg-amber-500 text-white text-xs font-bold rounded-lg hover:bg-amber-600"
-                    >
-                      حفظ
-                    </button>
-                  </div>
-                )}
-
-                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 dark:bg-slate-900/40 rounded-2xl border border-slate-200/80 dark:border-slate-800">
-                  {Array.from(new Set([
-                    "تحليلات",
-                    "مقالات رأي",
-                    "دراسات",
-                    "ثقافة وفكر",
-                    ...categories.map(c => c.name)
-                  ])).map((catName) => {
-                    const isSelected = categoriesList.includes(catName);
-                    const catColor = CategoryService.getFallbackColor(catName);
-                    return (
-                      <button
-                        key={catName}
-                        type="button"
-                        onClick={() => handleToggleCategory(catName)}
-                        style={isSelected ? {
-                          backgroundColor: `${catColor}15`,
-                          color: catColor,
-                          borderColor: `${catColor}B3`,
-                        } : {}}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer select-none flex items-center gap-1.5 ${
-                          isSelected
-                            ? "border-2 shadow-xs scale-[1.02] font-black"
-                            : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                        }`}
-                      >
-                        {isSelected ? (
-                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: catColor }} />
-                        ) : (
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600" />
-                        )}
-                        <span>{catName}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <p className="text-[11px] text-slate-400 font-medium">
-                  ملاحظة: اختيار التصنيفات يربط المقال تلقائياً بأبرز المواضيع والمصنفات المطابقة لتسميات التصانيف المحددة.
-                </p>
-              </div>
+              <CategoryMultiSelect
+                title="تصنيفات المقال"
+                accentColor="amber"
+                selectedCategories={categoriesList}
+                onChange={(newList) => {
+                  setCategoriesList(newList);
+                  if (newList.length > 0) {
+                    setCategory(newList[0]);
+                  } else {
+                    setCategory("");
+                  }
+                }}
+                presetSuggestions={[
+                  "تحليلات",
+                  "مقالات رأي",
+                  "دراسات",
+                  "ثقافة وفكر",
+                  "محلية",
+                  "تعبئة عامة",
+                  "أنشطة وزيارات",
+                  "مشاريع ومبادرات",
+                  "القوات المسلحة",
+                  "المولد النبوي الشريف",
+                  "مسيرات ووقفات"
+                ]}
+                helperText="ملاحظة: اختيار التصنيفات يربط المقال تلقائياً بأبرز المواضيع والمصنفات المطابقة لتسميات التصانيف المحددة."
+              />
 
               {/* Dates */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

@@ -517,8 +517,8 @@ export function ArticleDetail() {
         {/* Related Articles */}
         {relatedArticles.length > 0 && (
           <div className="border-t border-border-light pt-8 mt-8">
-             <h3 className="text-lg font-bold font-ibm mb-6 flex items-center gap-2 text-text-primary">
-                <div className="w-[4px] h-[18px] bg-taiz-sky rounded-[2px]"></div>
+             <h3 className="text-lg font-bold font-alexandria mb-4 flex items-center gap-2 text-text-primary">
+                <div className="w-1 h-5 bg-taiz-sky rounded-full"></div>
                 مقالات ذات صلة
              </h3>
              <div className="grid grid-cols-2 gap-4">
@@ -527,7 +527,7 @@ export function ArticleDetail() {
                      <div className="aspect-video rounded-none overflow-hidden mb-3">
                         <img src={a.imageUrl || a.authorPhoto} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                      </div>
-                     <h4 className="font-bold font-ibm text-xs text-text-primary line-clamp-2 leading-relaxed text-right">{a.title}</h4>
+                     <h4 className="font-bold font-alexandria text-xs sm:text-sm text-text-primary line-clamp-2 leading-snug text-right">{a.title}</h4>
                   </Link>
                 ))}
              </div>

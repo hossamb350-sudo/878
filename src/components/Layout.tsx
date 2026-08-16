@@ -543,7 +543,11 @@ export function Layout({ children }: { children?: React.ReactNode }) {
                   <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-900/90 border border-slate-800/90 shadow-inner">
                     <button 
                       onClick={toggleMute} 
-                      className="text-slate-400 hover:text-amber-400 transition-colors p-0.5 active:scale-90" 
+                      className={`p-0.5 rounded-lg transition-all active:scale-90 ${
+                        isMuted || volume === 0 
+                          ? "text-red-400 bg-red-500/10 hover:bg-red-500/20" 
+                          : "text-amber-400 hover:text-amber-300"
+                      }`}
                       title={isMuted ? "إلغاء كتم الصوت" : "كتم الصوت"}
                     >
                       {isMuted || volume === 0 ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
@@ -580,8 +584,8 @@ export function Layout({ children }: { children?: React.ReactNode }) {
             )}
           </AnimatePresence>
 
-          {/* Background TV Stream Player for background playback when floating top bar is active */}
-          {shouldShowTopBar && isLiveStreamPlaying && activeStream && activeStream.type !== "radio" && (
+          {/* Background TV Stream Player ONLY for other pages (never on Watch page to prevent duplicate audio) */}
+          {!isWatchPage && shouldShowTopBar && isLiveStreamPlaying && activeStream && activeStream.type !== "radio" && (
             <iframe
               src={getEmbedUrl(activeStream.streamUrl || activeStream.url, true, isMuted)}
               className="w-1 h-1 opacity-0 pointer-events-none fixed -top-[9999px] left-0 z-[-100]"
@@ -690,9 +694,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
                   <div className="mt-1 flex items-center justify-center h-1.5">
                     {isItemActive ? (
                       <div className="w-6 h-[3px] bg-[#F26522] rounded-full" />
-                    ) : (
-                      <div className="w-1.5 h-1.5 bg-[#F26522] rounded-full" />
-                    )}
+                    ) : null}
                   </div>
                 </div>
               </NavLink>

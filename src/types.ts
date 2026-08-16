@@ -47,10 +47,21 @@ export interface VideoItem {
   thumbnailUrl?: string;
   duration?: string;
   category?: string;
+  categories?: string[];
   views: number;
   order?: number;
   createdAt: number;
+  updatedAt?: number;
   isLeader?: boolean;
+  isFeatured?: boolean;
+  hijriDate?: string;
+  gregorianDate?: string;
+  authorId?: string;
+  authorName?: string;
+  authorPhoto?: string;
+  additionalImages?: string[];
+  tags?: string[];
+  platform?: string;
 }
 
 export interface LiveStream {

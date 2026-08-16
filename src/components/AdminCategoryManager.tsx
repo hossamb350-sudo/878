@@ -191,6 +191,26 @@ export const AdminCategoryManager: React.FC = () => {
     }
   };
 
+  const highlightMatch = (text: string, query: string) => {
+    if (!query.trim()) return text;
+    const trimmedQuery = query.trim();
+    const regex = new RegExp(`(${trimmedQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    const parts = text.split(regex);
+    return (
+      <>
+        {parts.map((part, i) => 
+          part.toLowerCase() === trimmedQuery.toLowerCase() ? (
+            <mark key={i} className="bg-yellow-200 dark:bg-yellow-800/80 text-black dark:text-white px-0.5 rounded font-black">
+              {part}
+            </mark>
+          ) : (
+            <span key={i}>{part}</span>
+          )
+        )}
+      </>
+    );
+  };
+
   const filteredCategories = categories.filter(c => 
     c.name.toLowerCase().includes(searchQuery.trim().toLowerCase()) ||
     (c.description && c.description.toLowerCase().includes(searchQuery.trim().toLowerCase()))
@@ -309,10 +329,17 @@ export const AdminCategoryManager: React.FC = () => {
 
         {/* Stats */}
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-          <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-700 dark:text-purple-300 text-xs font-bold">
-            <Layers className="w-4 h-4" />
-            <span>إجمالي التصنيفات: <strong className="font-black text-purple-900 dark:text-purple-100">{categories.length}</strong></span>
-          </div>
+          {searchQuery ? (
+            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-500/30 rounded-xl text-amber-700 dark:text-amber-300 text-xs font-bold">
+              <Search className="w-4 h-4 text-amber-500" />
+              <span>النتائج المطابقة: <strong className="font-black text-amber-900 dark:text-amber-100">{filteredCategories.length}</strong> من {categories.length}</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-4 py-2 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-700 dark:text-purple-300 text-xs font-bold">
+              <Layers className="w-4 h-4" />
+              <span>إجمالي التصنيفات: <strong className="font-black text-purple-900 dark:text-purple-100">{categories.length}</strong></span>
+            </div>
+          )}
 
           <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs font-bold">
             <Palette className="w-4 h-4" />
@@ -377,7 +404,7 @@ export const AdminCategoryManager: React.FC = () => {
 
                       <div>
                         <h4 className="font-black text-gray-900 dark:text-white text-base group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                          {cat.name}
+                          {highlightMatch(cat.name, searchQuery)}
                         </h4>
                         <span className="font-mono text-[10px] uppercase font-bold text-gray-400 tracking-wider">
                           {cat.color || "#3B82F6"}
@@ -407,7 +434,7 @@ export const AdminCategoryManager: React.FC = () => {
 
                   {cat.description && (
                     <p className="text-gray-500 dark:text-gray-400 text-xs font-bold line-clamp-2 mb-4 leading-relaxed bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-xl border border-gray-100/50 dark:border-gray-800">
-                      {cat.description}
+                      {highlightMatch(cat.description, searchQuery)}
                     </p>
                   )}
                 </div>

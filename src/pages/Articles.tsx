@@ -321,21 +321,8 @@ export function Articles() {
         {/* LATEST ARTICLES TOP NAVIGATION HEADER */}
         {/* Innovative Creative Dual Segmented Navigation Switcher */}
         <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800 shadow-soft">
-          <div className="max-w-[760px] mx-auto w-full flex items-center justify-between gap-2 px-1">
-            {/* Right side: Live Status Indicator */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 px-2.5 py-1 rounded-xl shadow-2xs">
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                </span>
-                <span className="font-bold text-[11px] sm:text-xs text-slate-800 dark:text-slate-100 font-cairo tracking-tight whitespace-nowrap">
-                  تحليلات ورؤى فكرية
-                </span>
-              </div>
-            </div>
-
-            {/* Left side: Premium Segmented Switcher Pills */}
+          <div className="max-w-[760px] mx-auto w-full flex items-center justify-center px-1">
+            {/* Premium Segmented Switcher Pills */}
             <div className="bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 flex items-center gap-1 shadow-inner select-none">
               {/* News Tab (Inactive) */}
               <Link
@@ -366,28 +353,6 @@ export function Articles() {
                 </span>
               </Link>
             </div>
-          </div>
-        </div>
-
-        {/* SEARCH INPUT BAR (Matching News/Quran Search style) */}
-        <div className="py-2 px-3 sm:px-4 bg-white dark:bg-slate-900 border-b border-slate-200/60 dark:border-slate-800/60 z-40">
-          <div className="relative max-w-md mx-auto">
-            <input 
-              type="text" 
-              placeholder="ابحث في المقالات والتحليلات..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 focus:border-taiz-sky focus:bg-white dark:focus:bg-slate-800 outline-none py-2 pr-9 pl-8 rounded-xl text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-100 placeholder:text-slate-400 font-cairo transition-all shadow-2xs"
-            />
-            <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2" />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
           </div>
         </div>
 

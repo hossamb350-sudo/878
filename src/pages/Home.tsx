@@ -585,21 +585,8 @@ export function Home() {
             {/* LATEST NEWS HEADER */}
             {/* Innovative Creative Dual Segmented Navigation Switcher */}
             <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800 shadow-soft">
-              <div className="max-w-[760px] mx-auto w-full flex items-center justify-between gap-2 px-1">
-                {/* Right side: Live Status Indicator */}
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 bg-slate-100/90 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700/80 px-2.5 py-1 rounded-xl shadow-2xs">
-                    <span className="relative flex h-2 w-2 shrink-0">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-[#D32027]"></span>
-                    </span>
-                    <span className="font-bold text-[11px] sm:text-xs text-slate-800 dark:text-slate-100 font-cairo tracking-tight whitespace-nowrap">
-                      تغطية إخبارية حية
-                    </span>
-                  </div>
-                </div>
-
-                {/* Left side: Premium Segmented Switcher Pills */}
+              <div className="max-w-[760px] mx-auto w-full flex items-center justify-center px-1">
+                {/* Premium Segmented Switcher Pills */}
                 <div className="bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 flex items-center gap-1 shadow-inner select-none">
                   {/* News Tab (Active) */}
                   <Link
