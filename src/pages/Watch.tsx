@@ -825,9 +825,9 @@ export function Watch() {
 
           {/* 2. CHANNELS SECTION (GRID - TV ONLY) */}
           {channelTab === "tv" && (
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {/* CHANNELS GRID */}
-              <div className="grid grid-cols-3 xs:grid-cols-6 gap-2.5 w-full">
+              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-2.5 w-full">
                 {displayChannels.length > 0 ? (
                   displayChannels.map((ch) => {
                     const isSelected = !!activeTvChannel && (activeTvChannel.id === ch.id || activeTvChannel.name === ch.name);
@@ -844,22 +844,22 @@ export function Watch() {
                             if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                           }
                         }}
-                        className={`flex flex-col items-center justify-center py-3.5 px-2 rounded-[22px] border transition-all duration-200 cursor-pointer gap-2 relative ${
+                        className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl sm:rounded-2xl border transition-all duration-200 cursor-pointer gap-1.5 relative ${
                           isSelected 
-                            ? 'bg-red-50/90 dark:bg-red-950/40 border-red-500 shadow-md ring-2 ring-red-500/25 scale-[1.03]'
-                            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs hover:scale-[1.01]'
+                            ? 'bg-red-50/90 dark:bg-red-950/40 border-red-500 shadow-sm ring-1.5 ring-red-500/20 scale-[1.02]'
+                            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs hover:scale-[1.01]'
                         }`}
                       >
                         {isSelected && (
-                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600 border border-white dark:border-slate-900" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white dark:border-slate-900" />
                           </span>
                         )}
 
-                        <div className={`relative w-11 h-11 sm:w-12 sm:h-12 rounded-full p-0.5 border shadow-xs flex items-center justify-center overflow-hidden shrink-0 transition-transform ${
+                        <div className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 transition-transform ${
                           isSelected 
-                            ? 'border-red-500 bg-white ring-2 ring-red-500/20'
+                            ? 'border-red-500 bg-white ring-1.5 ring-red-500/20'
                             : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
                         }`}>
                           <img 
@@ -872,7 +872,7 @@ export function Watch() {
                           />
                         </div>
 
-                        <span className={`text-[12px] font-bold font-cairo truncate max-w-full text-center px-1 leading-tight ${
+                        <span className={`text-[10px] sm:text-[11px] font-bold font-cairo truncate max-w-full text-center px-0.5 leading-tight ${
                           isSelected 
                             ? "text-red-700 dark:text-red-400 font-black"
                             : "text-slate-700 dark:text-slate-300"
