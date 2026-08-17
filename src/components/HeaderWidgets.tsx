@@ -169,35 +169,101 @@ export const HeaderWidgets: React.FC = () => {
   }, [apiHijriDate]);
 
   return (
-    <div className="w-full max-w-[760px] mx-auto select-none bg-white" dir="rtl">
+    <div className="w-full max-w-[760px] mx-auto select-none bg-transparent" dir="rtl">
+      {/* Top Accent Line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#D32027] to-red-500 z-50"></div>
+
       {/* 
-        Main Header: Platform Title (Right)
+        Main Header: Platform Title (Right) & Utilities (Left)
       */}
-      <div className="relative w-full bg-white px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between transition-all overflow-hidden">
+      <div className="relative w-full bg-transparent px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between transition-all overflow-hidden">
         
-        {/* Right Area (visually Right in RTL): Platform Text Title */}
-        <Link to="/" className="flex flex-col text-right items-start group transition-transform hover:scale-[1.01] active:scale-99">
-          <span className="text-slate-400 dark:text-slate-500 font-bold text-[10.5px] sm:text-[11.5px] md:text-xs leading-tight font-cairo">منصة تعز الإعلامية</span>
-          <span className="text-slate-400 dark:text-slate-500 font-semibold text-[7px] sm:text-[8px] md:text-[8.5px] leading-tight tracking-wider font-sans mt-0.5">TAIZ MEDIA PLATFORM</span>
+        {/* Right Area (visually Right in RTL): Platform Text Title with Logo Mark */}
+        <Link to="/" className="flex items-center gap-2 group transition-transform hover:scale-[1.01] active:scale-99">
+          {/* Logo Image */}
+          <div className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center overflow-hidden">
+            <img 
+              src="/logoh.png" 
+              alt="شعار منصة تعز الإعلامية" 
+              className="w-full h-full object-contain"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          
+          <div className="flex flex-col text-right items-start">
+            <span className="text-slate-700 font-bold text-[10.5px] sm:text-[11.5px] md:text-xs leading-tight font-cairo group-hover:text-slate-900 transition-colors">منصة تعز الإعلامية</span>
+            <span className="text-slate-400 font-semibold text-[7px] sm:text-[8px] md:text-[8.5px] leading-tight tracking-wider font-sans mt-0.5">TAIZ MEDIA PLATFORM</span>
+          </div>
         </Link>
+
+        {/* Left Area (visually Left in RTL): Utilities */}
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={() => setIsSearchOpen(true)}
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all"
+            title="بحث"
+          >
+            <Search className="w-4 h-4 sm:w-4.5 sm:h-4.5" strokeWidth={2} />
+          </button>
+        </div>
+
+        {/* Search Panel Overlay */}
+        <AnimatePresence>
+          {isSearchOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="absolute inset-0 bg-white/95 backdrop-blur-md z-40 px-3 flex items-center gap-2"
+            >
+              <form onSubmit={handleSearchSubmit} className="flex-1 flex items-center gap-2 relative">
+                <Search className="absolute right-3.5 w-4 h-4 text-slate-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="ابحث عن الأخبار أو الموضوعات..."
+                  className="w-full h-9 bg-slate-100 border-none rounded-full pr-10 pl-4 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#D32027]/20 transition-all font-cairo font-semibold shadow-inner"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="px-4 h-9 bg-[#D32027] text-white rounded-full font-bold font-cairo text-xs hover:bg-red-700 active:scale-95 transition-all cursor-pointer shadow-md"
+                >
+                  بحث
+                </button>
+              </form>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSearchOpen(false);
+                  setSearchQuery("");
+                }}
+                className="w-8 h-8 flex items-center justify-center bg-slate-100 text-slate-500 rounded-full hover:bg-slate-200 hover:text-slate-700 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* 
         Bottom Row: Widgets (Date, Prayer, Weather)
       */}
-      <div className="w-full bg-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2 overflow-hidden">
+      <div className="w-full bg-transparent px-2.5 sm:px-3.5 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2 overflow-hidden">
         
         {/* Date/Day Widget */}
         <Link 
           to="/calendar" 
           title="الذهاب إلى التقويم الهجري"
-          className="flex items-center gap-1.5 flex-1 hover:opacity-80 active:scale-95 transition-all cursor-pointer group min-w-0"
+          className="flex items-center gap-1.5 flex-1 hover:opacity-80 active:scale-95 transition-all cursor-pointer group min-w-0 bg-white/50 hover:bg-white/80 rounded-lg p-1"
         >
-          <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-2xs group-hover:border-[#D32027]/40 shrink-0">
+          <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white/80 border border-slate-200/60 flex items-center justify-center shadow-2xs group-hover:border-[#D32027]/40 shrink-0">
             <Calendar className="w-3.5 h-3.5 text-[#D32027]" />
           </div>
           <div className="flex flex-col text-right min-w-0">
-            <span className="text-slate-850 font-black text-[9.5px] sm:text-[10px] leading-tight font-cairo truncate">{dayName}</span>
+            <span className="text-slate-800 font-black text-[9.5px] sm:text-[10px] leading-tight font-cairo truncate">{dayName}</span>
             <span className="text-[#D32027] font-bold text-[8.5px] sm:text-[9px] leading-tight font-cairo mt-0.5 truncate">{hijriDate}</span>
           </div>
         </Link>
@@ -206,13 +272,13 @@ export const HeaderWidgets: React.FC = () => {
         <Link 
           to="/prayer-times" 
           title="الذهاب إلى مواقيت الصلاة"
-          className="flex items-center gap-1.5 flex-1 justify-center border-x border-slate-200/40 px-1.5 hover:opacity-80 active:scale-95 transition-all cursor-pointer group min-w-0"
+          className="flex items-center gap-1.5 flex-1 justify-center border-x border-slate-200/40 px-1.5 hover:opacity-80 active:scale-95 transition-all cursor-pointer group min-w-0 bg-white/50 hover:bg-white/80 rounded-lg p-1 mx-0.5"
         >
-          <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-2xs group-hover:border-emerald-500/40 shrink-0">
+          <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white/80 border border-slate-200/60 flex items-center justify-center shadow-2xs group-hover:border-emerald-500/40 shrink-0">
             <Clock className="w-3.5 h-3.5 text-emerald-600" />
           </div>
           <div className="flex flex-col text-right min-w-0">
-            <span className="text-slate-850 font-black text-[9.5px] sm:text-[10px] leading-tight font-cairo truncate">{nextPrayerInfo.name}</span>
+            <span className="text-slate-800 font-black text-[9.5px] sm:text-[10px] leading-tight font-cairo truncate">{nextPrayerInfo.name}</span>
             <span className="text-emerald-600 font-bold text-[9px] sm:text-[9.5px] leading-tight font-sans tracking-wider mt-0.5 truncate">{nextPrayerInfo.countdown}</span>
           </div>
         </Link>
@@ -221,14 +287,14 @@ export const HeaderWidgets: React.FC = () => {
         <Link 
           to="/weather" 
           title="الذهاب إلى حالة الطقس"
-          className="flex items-center gap-1.5 flex-1 justify-end hover:opacity-80 active:scale-95 transition-all cursor-pointer group min-w-0"
+          className="flex items-center gap-1.5 flex-1 justify-end hover:opacity-80 active:scale-95 transition-all cursor-pointer group min-w-0 bg-white/50 hover:bg-white/80 rounded-lg p-1"
         >
-          <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white border border-slate-200/60 flex items-center justify-center shadow-2xs group-hover:border-sky-500/40 shrink-0">
-            <weatherDisplay.icon className="w-3.5 h-3.5 text-sky-500" />
-          </div>
-          <div className="flex flex-col text-right min-w-0">
-            <span className="text-slate-850 font-black text-[9.5px] sm:text-[10px] leading-tight font-cairo truncate">الطقس الآن</span>
+          <div className="flex flex-col text-right min-w-0 items-end">
+            <span className="text-slate-800 font-black text-[9.5px] sm:text-[10px] leading-tight font-cairo truncate">الطقس الآن</span>
             <span className="text-sky-500 font-bold text-[8.5px] sm:text-[9px] leading-tight font-cairo mt-0.5 truncate">{weatherDisplay.text}</span>
+          </div>
+          <div className="w-6.5 h-6.5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-white/80 border border-slate-200/60 flex items-center justify-center shadow-2xs group-hover:border-sky-500/40 shrink-0">
+            <weatherDisplay.icon className="w-3.5 h-3.5 text-sky-500" />
           </div>
         </Link>
       </div>

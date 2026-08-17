@@ -483,10 +483,10 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       <UrgentNewsBanner />
 
       {/* Platform Logo & Widgets Area */}
-      <div className="w-full bg-white relative z-30">
+      <div className="w-full bg-white relative z-30 border-b border-slate-200/40">
           <HeaderWidgets />
           {/* Visual Separator: thin crisp border with no extra vertical spacing */}
-          <div className="w-full border-b border-slate-200/40" />
+          <div className="w-full" />
           
           {/* Global Ultra-Tech Luxury Floating Audio/Video Capsule for Live Streams */}
           <AnimatePresence mode="wait">
