@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
-import { SyncService } from "../services/SyncService";
-import { CategoryService } from "../services/CategoryService";
-import { NewsItem, VideoItem, LeaderContent, Article } from "../types";
-import { CategoryBadges } from "../components/CategoryBadges";
+import { db } from "../../firebase";
+import { SyncService } from "../../services/SyncService";
+import { CategoryService } from "../../services/CategoryService";
+import { NewsItem, VideoItem, LeaderContent, Article } from "../../types";
+import { CategoryBadges } from "../../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen, Star } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { PullToRefresh } from "../components/PullToRefresh";
-import { FeaturedTopicsSlider } from "../components/FeaturedTopicsSlider";
+import { PullToRefresh } from "../../components/PullToRefresh";
+import { FeaturedTopicsSlider } from "../../components/FeaturedTopicsSlider";
 
 function getRelativeArabicTime(timestamp: number): string {
   const diffMs = Date.now() - timestamp;

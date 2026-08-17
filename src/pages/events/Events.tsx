@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { SyncService } from "../services/SyncService";
-import { EventItem } from "../types";
+import { SyncService } from "../../services/SyncService";
+import { EventItem } from "../../types";
 import {
   format,
   differenceInDays,
@@ -36,9 +36,9 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { BASE_EVENTS } from "../data/staticEvents";
-import { ModernEventCard } from "../components/ModernEventCard";
-import { PullToRefresh } from "../components/PullToRefresh";
+import { BASE_EVENTS } from "../../data/staticEvents";
+import { ModernEventCard } from "../../components/ModernEventCard";
+import { PullToRefresh } from "../../components/PullToRefresh";
 
 const HIJRI_MONTHS = [
   { id: 1, name: "محرم" },

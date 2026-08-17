@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { SyncService } from "../services/SyncService";
-import { LeaderContent } from "../types";
+import { SyncService } from "../../services/SyncService";
+import { LeaderContent } from "../../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Search, Play, Calendar, Eye, FileText, Video as VideoIcon } from "lucide-react";

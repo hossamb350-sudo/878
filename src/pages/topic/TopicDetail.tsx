@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
-import { db } from "../firebase";
-import { FeaturedTopic, NewsItem, VideoItem, Article } from "../types";
+import { db } from "../../firebase";
+import { FeaturedTopic, NewsItem, VideoItem, Article } from "../../types";
 import { 
   ArrowRight, 
   Tag, 

@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
-import { Article } from "../types";
+import { db } from "../../firebase";
+import { Article } from "../../types";
 import { motion } from "motion/react";
 import { Search, Star, Bookmark, ChevronLeft, CalendarDays, Newspaper, BookOpen, X, LayoutGrid, List } from "lucide-react";
-import { CategoryBadges } from "../components/CategoryBadges";
+import { CategoryBadges } from "../../components/CategoryBadges";
 
 // Dynamic title font size helper based on title character length
 function getDynamicArticleTitleStyle(title: string = "", mode: "grid" | "list" = "grid") {

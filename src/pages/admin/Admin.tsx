@@ -1,5 +1,5 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
-import { ImageUpload } from "../components/ImageUpload";
+import { ImageUpload } from "../../components/ImageUpload";
 import {
   signInWithPopup,
   GoogleAuthProvider,
@@ -8,8 +8,8 @@ import {
   signInWithCredential,
   User as FirebaseUser,
 } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { CategoryService } from "../services/CategoryService";
+import { auth, db } from "../../firebase";
+import { CategoryService } from "../../services/CategoryService";
 import { Capacitor } from "@capacitor/core";
 
 const isProd = import.meta.env.PROD;
@@ -99,29 +99,29 @@ import {
   UserProfile,
   LeaderContent,
   SocialLink,
-} from "../types";
+} from "../../types";
 import { motion, AnimatePresence } from "motion/react";
-import { SyncService, handleFirestoreError } from "../services/SyncService";
-import { GitHubClient } from "../services/githubClient";
+import { SyncService, handleFirestoreError } from "../../services/SyncService";
+import { GitHubClient } from "../../services/githubClient";
 import { del as delIDB } from "idb-keyval";
-import { PushNotificationService } from "../services/PushNotificationService";
-import { AuthModals } from "../components/AuthModals";
+import { PushNotificationService } from "../../services/PushNotificationService";
+import { AuthModals } from "../../components/AuthModals";
 
-import { FavoritesList } from "../components/FavoritesList";
-import { UserProfileSection } from "../components/UserProfileSection";
+import { FavoritesList } from "../../components/FavoritesList";
+import { UserProfileSection } from "../../components/UserProfileSection";
 
-import { AdminNewsWizard } from "../components/AdminNewsWizard";
-import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES, sortQuranLessons } from "../data/staticQuranData";
-import { AdminCategoryManager } from "../components/AdminCategoryManager";
-import { AdminArticles } from "../components/AdminArticles";
-import { AdminVideos } from "../components/AdminVideos";
-import { AdminOnlineUsers } from "../components/AdminOnlineUsers";
-import { AdminRegisteredUsers } from "../components/AdminRegisteredUsers";
-import { AdminVersionLock } from "../components/AdminVersionLock";
-import { AdminFeaturedTopics } from "../components/AdminFeaturedTopics";
-import { AdminLiveChannels } from "../components/AdminLiveChannels";
-import { OnlineUsersConfig, RegisteredUsersConfig } from "../services/OnlineUsersService";
-import { ContactUsSection } from "../components/ContactUsSection";
+import { AdminNewsWizard } from "../../components/AdminNewsWizard";
+import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES, sortQuranLessons } from "../../data/staticQuranData";
+import { AdminCategoryManager } from "../../components/AdminCategoryManager";
+import { AdminArticles } from "../../components/AdminArticles";
+import { AdminVideos } from "../../components/AdminVideos";
+import { AdminOnlineUsers } from "../../components/AdminOnlineUsers";
+import { AdminRegisteredUsers } from "../../components/AdminRegisteredUsers";
+import { AdminVersionLock } from "../../components/AdminVersionLock";
+import { AdminFeaturedTopics } from "../../components/AdminFeaturedTopics";
+import { AdminLiveChannels } from "../../components/AdminLiveChannels";
+import { OnlineUsersConfig, RegisteredUsersConfig } from "../../services/OnlineUsersService";
+import { ContactUsSection } from "../../components/ContactUsSection";
 
 const OldContactUsSection = () => {
   const [links, setLinks] = useState<SocialLink[]>([]);
@@ -3824,7 +3824,7 @@ import {
   QuranLesson,
   QuranSyllabus,
   QuranExcerpt,
-} from "../types";
+} from "../../types";
 
 function AdminQuran() {
   const [subTab, setSubTab] = useState<"syllabuses" | "series" | "lessons" | "excerpts">("syllabuses");

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { SyncService } from "../services/SyncService";
-import { VideoItem, LiveStream, ChannelDisplayMode, LiveStreamSettings } from "../types";
-import { CategoryBadges } from "../components/CategoryBadges";
+import { SyncService } from "../../services/SyncService";
+import { VideoItem, LiveStream, ChannelDisplayMode, LiveStreamSettings } from "../../types";
+import { CategoryBadges } from "../../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { 
@@ -37,11 +37,11 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { PullToRefresh } from "../components/PullToRefresh";
-import { getEmbedUrl } from "../utils/embed";
-import { getRadioScheduleInfo } from "../utils/yemenTime";
+import { PullToRefresh } from "../../components/PullToRefresh";
+import { getEmbedUrl } from "../../utils/embed";
+import { getRadioScheduleInfo } from "../../utils/yemenTime";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 
 const getRelativeTimeArabic = (timestamp: any) => {
   if (!timestamp) return "منذ فترة";
@@ -231,7 +231,7 @@ const fallbackLatest: VideoItem[] = [
   }
 ];
 
-import { useLiveStream } from "../context/LiveStreamContext";
+import { useLiveStream } from "../../context/LiveStreamContext";
 
 export function Watch() {
   const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
