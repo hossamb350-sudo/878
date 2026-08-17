@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { collection, query, getDocs } from "firebase/firestore";
-import { db } from "../../firebase";
-import { SyncService } from "../../services/SyncService";
-import { NewsItem } from "../../types";
+import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
+import { NewsItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Search as SearchIcon, Eye } from "lucide-react";

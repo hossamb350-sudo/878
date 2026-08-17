@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import { db } from "../../firebase";
-import { SyncService } from "../../services/SyncService";
-import { VideoItem } from "../../types";
+import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
+import { VideoItem } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { 
@@ -11,8 +11,8 @@ import {
   Maximize, Monitor, Volume2, Settings, Video as VideoIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { getShareableUrl } from "../../config/apiConfig";
-import { useLiveStream } from "../../context/LiveStreamContext";
+import { getShareableUrl } from "../config/apiConfig";
+import { useLiveStream } from "../context/LiveStreamContext";
 
 export function WatchItem() {
   const { id } = useParams();

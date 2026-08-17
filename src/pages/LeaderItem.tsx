@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import { db } from "../../firebase";
-import { LeaderContent } from "../../types";
+import { db } from "../firebase";
+import { LeaderContent } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { 
@@ -28,8 +28,8 @@ import {
   Video as VideoIcon
 } from "lucide-react";
 import { motion } from "motion/react";
-import { getShareableUrl } from "../../config/apiConfig";
-import { useLiveStream } from "../../context/LiveStreamContext";
+import { getShareableUrl } from "../config/apiConfig";
+import { useLiveStream } from "../context/LiveStreamContext";
 
 // Helper function to translate standard video links into embeddable URLs
 const getEmbedUrl = (url: string, autoPlay: boolean = false) => {

@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import { db } from "../../firebase";
-import { SyncService } from "../../services/SyncService";
-import { NewsItem } from "../../types";
+import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
+import { NewsItem } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ArrowRight, 
@@ -29,8 +29,8 @@ import {
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { getShareableUrl } from "../../config/apiConfig";
-import { CategoryBadges } from "../../components/CategoryBadges";
+import { getShareableUrl } from "../config/apiConfig";
+import { CategoryBadges } from "../components/CategoryBadges";
 
 export function NewsDetail() {
   const { id } = useParams();

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../../firebase";
+import { db } from "../firebase";
 import { ArrowRight, Edit, Trash2, Calendar, Clock, Image, Save, X, Info } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
