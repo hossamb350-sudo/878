@@ -89,21 +89,20 @@ export function ArticleDetail() {
         } : null);
       }
     });
-    
+    return () => unsub();
+  }, [article?.authorId]);
+
   useEffect(() => {
     if (article) {
       updateMetadata({
         title: article.title,
         description: "",
-        imageUrl: article.imageUrl || "" || "",
+        imageUrl: article.imageUrl || "",
         type: "article",
         path: window.location.pathname
       });
     }
   }, [article]);
-
-  return () => unsub();
-  }, [article?.authorId]);
 
   // Auto slide interval for the article hero card
   useEffect(() => {

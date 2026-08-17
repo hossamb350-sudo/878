@@ -100,25 +100,24 @@ export function TopicDetail() {
       setContentLoading(false);
     }
 
-    
-  useEffect(() => {
-    if (topic) {
-      updateMetadata({
-        title: topic.title,
-        description: "",
-        imageUrl: topic.imageUrl || "" || "",
-        type: "website",
-        path: window.location.pathname
-      });
-    }
-  }, [topic]);
-
-  return () => {
+    return () => {
       unsubNews();
       unsubVideos();
       unsubArticles();
     };
   }, []);
+
+  useEffect(() => {
+    if (topic) {
+      updateMetadata({
+        title: topic.title,
+        description: "",
+        imageUrl: topic.imageUrl || "",
+        type: "website",
+        path: window.location.pathname
+      });
+    }
+  }, [topic]);
 
   // Category Target Array from Topic
   const topicCategories = useMemo(() => {

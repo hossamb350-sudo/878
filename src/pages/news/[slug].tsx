@@ -123,25 +123,25 @@ export function NewsDetail() {
     window.addEventListener("popstate", handlePopState);
     window.addEventListener("hashchange", handlePopState);
     window.addEventListener("close-modal-gallery", handleCustomClose);
-    
-  useEffect(() => {
-    if (news) {
-      updateMetadata({
-        title: news.title,
-        description: news.shortDescription || "" || "",
-        imageUrl: news.imageUrl || "" || "",
-        type: "article",
-        path: window.location.pathname
-      });
-    }
-  }, [news]);
 
-  return () => {
+    return () => {
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("hashchange", handlePopState);
       window.removeEventListener("close-modal-gallery", handleCustomClose);
     };
   }, []);
+
+  useEffect(() => {
+    if (news) {
+      updateMetadata({
+        title: news.title,
+        description: news.shortDescription || "",
+        imageUrl: news.imageUrl || "",
+        type: "article",
+        path: window.location.pathname
+      });
+    }
+  }, [news]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

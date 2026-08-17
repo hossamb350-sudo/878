@@ -116,7 +116,9 @@ export function LeaderItem() {
       }
     };
     window.addEventListener('message', handleMessage);
-    
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handlePlayVideo]);
+
   useEffect(() => {
     if (content) {
       updateMetadata({
@@ -128,13 +130,10 @@ export function LeaderItem() {
       });
     }
   }, [content]);
-
-  return () => window.removeEventListener('message', handleMessage);
-  }, [handlePlayVideo]);
   
   // Custom reading preferences
   const [fontSize, setFontSize] = useState<number>(() => {
-    const saved = localStorage.getItem("content?_font_size");
+    const saved = localStorage.getItem("leader_font_size");
     return saved ? parseInt(saved, 10) : 18;
   });
   

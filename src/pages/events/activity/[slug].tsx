@@ -140,8 +140,6 @@ export function ActivityDetail() {
     }
   };
 
-  if (loading) {
-    
   useEffect(() => {
     if (activity) {
       updateMetadata({
@@ -154,7 +152,8 @@ export function ActivityDetail() {
     }
   }, [activity]);
 
-  return (
+  if (loading) {
+    return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 bg-surface-main">
         <div className="relative w-12 h-12">
           <div className="absolute inset-0 rounded-full border-4 border-taiz-navy/10 border-t-taiz-royal animate-spin"></div>

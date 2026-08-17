@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { updateMetadata } from "../../utils/metadata";
-import { extractIdFromSlug, generateSlug } from "../../utils/routes";
+import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -50,21 +50,20 @@ export function WatchItem() {
       }
     };
     window.addEventListener('message', handleMessage);
-    
+    return () => window.removeEventListener('message', handleMessage);
+  }, [handlePlayVideo]);
+
   useEffect(() => {
     if (video) {
       updateMetadata({
         title: video.title,
-        description: video.description || "" || "",
-        imageUrl: video.thumbnailUrl || "" || "",
+        description: video.description || "",
+        imageUrl: video.thumbnailUrl || "",
         type: "video.other",
         path: window.location.pathname
       });
     }
   }, [video]);
-
-  return () => window.removeEventListener('message', handleMessage);
-  }, [handlePlayVideo]);
 
   useEffect(() => {
     if (video) {
