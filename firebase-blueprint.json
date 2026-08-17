@@ -31,11 +31,20 @@
     },
     "LiveStream": {
       "title": "LiveStream Settings",
-      "description": "Current live stream properties",
+      "description": "Current live stream properties and channels",
       "type": "object",
       "properties": {
+        "name": { "type": "string" },
         "url": { "type": "string" },
-        "isActive": { "type": "boolean" }
+        "streamUrl": { "type": "string" },
+        "iconUrl": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["tv", "radio"] },
+        "isActive": { "type": "boolean" },
+        "order": { "type": "number" },
+        "badge": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
       },
       "required": ["isActive"]
     },

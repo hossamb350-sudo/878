@@ -214,7 +214,7 @@ const SeriesView = ({ seriesList, lessonsList = [], onSelectSeries, scrollRef }:
               <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
                 سلاسل هدي القرآن
               </h2>
-              <p className="text-[10.5px] sm:text-[11px] text-orange-500 font-bold font-cairo">
+              <p className="text-[10.5px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">
                 دروس ومحاضرات هدي القرآن الكريم
               </p>
             </div>
@@ -324,7 +324,7 @@ const LessonsView = ({
               <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
                 دروس {selectedSeries?.title?.replace("سلسلة ", "").replace("السلسلة ", "") || "السلسلة"}
               </h2>
-              <p className="text-[10.5px] sm:text-[11px] text-orange-500 font-bold font-cairo truncate">
+              <p className="text-[10.5px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo truncate">
                 {selectedSeries?.description || "قائمة المحاضرات والدروس العلمية"}
               </p>
             </div>
@@ -431,7 +431,7 @@ const SyllabusesView = ({
               <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
                 مقرر الدروس
               </h2>
-              <p className="text-[10.5px] sm:text-[11px] text-orange-500 font-bold font-cairo">
+              <p className="text-[10.5px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">
                 المقررات الدراسية المحددة والبرامج التعليمية
               </p>
             </div>
@@ -512,7 +512,7 @@ const ExcerptsView = ({
             <h2 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
               مقتطفات هدي القرآن
             </h2>
-            <p className="text-[10.5px] sm:text-[11px] text-orange-500 font-bold font-cairo">
+            <p className="text-[10.5px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">
               جواهر واقتباسات نورانية من هدي القرآن الكريم
             </p>
           </div>

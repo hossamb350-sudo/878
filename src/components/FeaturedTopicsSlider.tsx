@@ -59,7 +59,7 @@ export function FeaturedTopicsSlider() {
         </div>
         <div className="flex flex-col">
           <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أبرز المواضيع</h3>
-          <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">تغطيات شاملة لأبرز الأحداث.</p>
+          <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">تغطيات شاملة لأبرز الأحداث.</p>
         </div>
         <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2"></div>
         
@@ -87,14 +87,14 @@ export function FeaturedTopicsSlider() {
         <div 
           ref={scrollRef}
           onScroll={() => { if (!hasScrolled) setHasScrolled(true); }}
-          className="flex overflow-x-auto gap-2.5 sm:gap-3 pb-2 px-3 sm:px-4 snap-x snap-mandatory hide-scrollbar touch-pan-x"
-          style={{ scrollBehavior: 'smooth', direction: 'rtl' }}
+          className="flex overflow-x-auto gap-2.5 sm:gap-3 pb-2 px-3 sm:px-4 snap-x snap-mandatory hide-scrollbar overscroll-x-contain"
+          style={{ scrollBehavior: 'smooth', direction: 'rtl', WebkitOverflowScrolling: 'touch' }}
         >
           {topics.map((topic, index) => (
             <Link
               key={topic.id}
               to={`/topic/${topic.id}`}
-              className="block relative flex-none w-[140px] sm:w-[165px] md:w-[190px] h-[170px] sm:h-[200px] rounded-[14px] sm:rounded-[16px] overflow-hidden snap-start border border-black/5 dark:border-white/10 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.96] active:brightness-95 transition-all duration-300 ease-out group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
+              className="block relative flex-none w-[140px] sm:w-[165px] md:w-[190px] h-[170px] sm:h-[200px] rounded-[14px] sm:rounded-[16px] overflow-hidden snap-start border border-black/5 dark:border-white/10 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.96] active:brightness-95 transition-all duration-300 ease-out group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky"
               style={{ transform: 'translateZ(0)' }}
             >
               {/* Background Image */}

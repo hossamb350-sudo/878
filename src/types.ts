@@ -73,7 +73,21 @@ export interface LiveStream {
   streamUrl?: string;
   type?: "tv" | "radio";
   isActive: boolean;
+  order?: number;
+  badge?: string;
   createdAt?: number;
+  updatedAt?: number;
+}
+
+export type ChannelDisplayMode = "grid" | "carousel" | "cards" | "compact";
+
+export interface LiveStreamSettings {
+  tvDisplayMode?: ChannelDisplayMode;
+  showBadges?: boolean;
+  showChannelCount?: boolean;
+  defaultTvChannelId?: string;
+  defaultRadioChannelId?: string;
+  updatedAt?: number;
 }
 
 export interface LeaderContent {

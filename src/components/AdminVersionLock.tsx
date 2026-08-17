@@ -124,7 +124,7 @@ export const AdminVersionLock: React.FC<AdminVersionLockProps> = ({ isAdmin = tr
           </div>
           <div className="flex flex-col text-right">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إصدارات التطبيق وقفل التحديث</h3>
-            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">تحكم في إصدارات تطبيق الأندرويد وفرض التحديث الإجباري</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">تحكم في إصدارات تطبيق الأندرويد وفرض التحديث الإجباري</p>
           </div>
         </div>
         

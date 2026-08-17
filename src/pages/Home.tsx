@@ -585,22 +585,22 @@ export function Home() {
             {/* LATEST NEWS HEADER */}
             {/* Innovative Creative Dual Segmented Navigation Switcher */}
             <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800 shadow-soft">
-              <div className="max-w-[760px] mx-auto w-full flex items-center justify-center px-1">
-                {/* Premium Segmented Switcher Pills */}
-                <div className="bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 flex items-center gap-1 shadow-inner select-none">
+              <div className="max-w-[760px] mx-auto w-full px-1">
+                {/* Premium Segmented Switcher Pills (Full Width) */}
+                <div className="w-full bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 grid grid-cols-2 gap-1 shadow-inner select-none">
                   {/* News Tab (Active) */}
                   <Link
                     to="/"
                     title="قسم الأخبار والتقارير"
-                    className="relative flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-black font-cairo transition-all duration-300 active:scale-95 text-white"
+                    className="relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-black font-cairo transition-all duration-300 active:scale-95 text-white"
                   >
                     <motion.div
                       layoutId="news-articles-tab-pill"
                       className="absolute inset-0 bg-gradient-to-r from-taiz-royal via-taiz-sky to-taiz-royal rounded-lg sm:rounded-xl shadow-xs border border-taiz-sky/20"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
-                    <span className="relative z-10 flex items-center gap-1.5">
-                      <Newspaper className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                    <span className="relative z-10 flex items-center justify-center gap-1.5">
+                      <Newspaper className="w-4 h-4 text-amber-300 animate-pulse" />
                       <span className="whitespace-nowrap">الأخبار والتقارير</span>
                     </span>
                   </Link>
@@ -609,10 +609,10 @@ export function Home() {
                   <Link
                     to="/articles"
                     title="قسم المقالات والآراء"
-                    className="relative flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-cairo transition-all duration-300 active:scale-95 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
+                    className="relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold font-cairo transition-all duration-300 active:scale-95 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
                   >
-                    <span className="relative z-10 flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 group-hover:text-taiz-sky transition-colors" />
+                    <span className="relative z-10 flex items-center justify-center gap-1.5">
+                      <BookOpen className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-taiz-sky transition-colors" />
                       <span className="whitespace-nowrap">مقالات وآراء</span>
                     </span>
                   </Link>
@@ -641,7 +641,7 @@ export function Home() {
                       </div>
                       <div className="flex flex-col text-right">
                         <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight group-hover:text-taiz-sky transition-colors">أحدث الفيديوهات</h2>
-                        <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
+                        <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
                       </div>
                     </Link>
                     
@@ -657,47 +657,56 @@ export function Home() {
                     </div>
                   </div>
                   
-                  <div className="flex overflow-x-auto gap-3 pb-1 snap-x hide-scrollbar relative z-10" style={{ scrollbarWidth: 'none' }}>
-                    {videos.map(video => (
-                       <Link 
-                         id={`home-video-${video.id}`}
-                         key={video.id} 
-                         to={video.isLeader ? `/leader/${video.id}` : `/watch/${video.id}`} 
-                         className="snap-start shrink-0 w-[240px] sm:w-[280px] group block outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky rounded-[12px]"
+                  <div className="flex overflow-x-auto gap-3 pb-2 snap-x hide-scrollbar relative z-10 overscroll-x-contain" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                    {videos.map((video, vIdx) => (
+                       <motion.div
+                         key={video.id}
+                         initial={{ opacity: 0, y: 14 }}
+                         whileInView={{ opacity: 1, y: 0 }}
+                         viewport={{ once: true, amount: 0.15 }}
+                         transition={{ duration: 0.45, delay: vIdx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                         whileHover={{ y: -4, transition: { duration: 0.25, ease: "easeOut" } }}
+                         className="snap-start shrink-0 w-[240px] sm:w-[280px]"
                        >
-                          <div className="relative h-[135px] sm:h-[155px] rounded-[12px] overflow-hidden bg-gray-900 shadow-sm group-hover:shadow-lg group-hover:-translate-y-1 active:scale-95 transition-all duration-300 border border-slate-200/50">
-                             {video.thumbnailUrl ? (
-                                <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                             ) : (
-                                <div className="w-full h-full bg-gray-800"></div>
-                             )}
-                             <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-                             
-                             <div className="absolute top-2 right-2 z-30">
-                                <CategoryBadges category={video.category || "فيديو"} isSecondary={true} className="drop-shadow-sm" />
-                             </div>
-                             
-                             <div className="absolute inset-0 flex items-center justify-center z-20">
-                                <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full group-hover:scale-110 group-active:scale-90 transition-transform border border-white/40 shadow-lg">
-                                   <PlayCircle className="w-6 h-6 text-white ml-0.5" />
-                                </div>
-                             </div>
-                             
-                             <div className="absolute bottom-0 left-0 right-0 p-3 z-10 text-right">
-                                <h4 className="text-white text-[12px] sm:text-[13px] font-bold leading-[1.4] line-clamp-3 transition-colors font-cairo" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
-                                  {video.title}
-                                </h4>
-                             </div>
-                             
-                             {video.duration && (
-                               <div className="absolute bottom-2 left-2 z-30">
-                                 <span className="bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
-                                    {video.duration}
-                                 </span>
+                         <Link 
+                           id={`home-video-${video.id}`}
+                           to={video.isLeader ? `/leader/${video.id}` : `/watch/${video.id}`} 
+                           className="group block outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky rounded-[12px] h-full"
+                         >
+                            <div className="relative h-[135px] sm:h-[155px] rounded-[12px] overflow-hidden bg-gray-900 shadow-sm group-hover:shadow-lg active:scale-95 transition-all duration-300 border border-slate-200/50">
+                               {video.thumbnailUrl ? (
+                                  <img src={video.thumbnailUrl} alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                               ) : (
+                                  <div className="w-full h-full bg-gray-800"></div>
+                               )}
+                               <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+                               
+                               <div className="absolute top-2 right-2 z-30">
+                                  <CategoryBadges category={video.category || "فيديو"} isSecondary={true} className="drop-shadow-sm" />
                                </div>
-                             )}
-                          </div>
-                       </Link>
+                               
+                               <div className="absolute inset-0 flex items-center justify-center z-20">
+                                  <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full group-hover:scale-110 group-active:scale-90 transition-transform border border-white/40 shadow-lg">
+                                     <PlayCircle className="w-6 h-6 text-white ml-0.5" />
+                                  </div>
+                               </div>
+                               
+                               <div className="absolute bottom-0 left-0 right-0 p-3 z-10 text-right">
+                                  <h4 className="text-white text-[12px] sm:text-[13px] font-bold leading-[1.4] line-clamp-3 transition-colors font-cairo" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                                    {video.title}
+                                  </h4>
+                               </div>
+                               
+                               {video.duration && (
+                                 <div className="absolute bottom-2 left-2 z-30">
+                                   <span className="bg-black/60 text-white text-[10px] px-1.5 py-0.5 rounded">
+                                      {video.duration}
+                                   </span>
+                                 </div>
+                               )}
+                            </div>
+                         </Link>
+                       </motion.div>
                     ))}
                   </div>
                 </div>
@@ -711,7 +720,7 @@ export function Home() {
               </div>
               <div className="flex flex-col">
                 <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أخبار وتقارير</h3>
-                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">تغطية إخبارية مفصلة للأحداث</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">تغطية إخبارية مفصلة للأحداث</p>
               </div>
               <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-4"></div>
             </div>
@@ -719,12 +728,20 @@ export function Home() {
             {/* LIST OF OTHER POSTS */}
             <div className="flex flex-col">
               {news.map((item, index) => (
-                <motion.div key={item.id} className="relative" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: index * 0.05, ease: "easeOut" }}>
+                <motion.div 
+                  key={item.id} 
+                  className="relative" 
+                  initial={{ opacity: 0, y: 18 }} 
+                  whileInView={{ opacity: 1, y: 0 }} 
+                  viewport={{ once: true, amount: 0.12 }}
+                  transition={{ duration: 0.45, delay: Math.min(index * 0.04, 0.2), ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ y: -3, transition: { duration: 0.25, ease: "easeOut" } }}
+                >
                   {item.isFeaturedLayout ? (
                     <div className="px-2 sm:px-3">
                       <Link 
                         to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
-                        className="block relative w-full h-[320px] sm:h-[350px] rounded-[18px] sm:rounded-[22px] overflow-hidden border border-black/5 dark:border-white/10 shadow-md hover:shadow-lg hover:-translate-y-0.5 active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out mb-3 select-none group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
+                        className="block relative w-full h-[320px] sm:h-[350px] rounded-[18px] sm:rounded-[22px] overflow-hidden border border-black/5 dark:border-white/10 shadow-md hover:shadow-xl active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out mb-3 select-none group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
                         style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                       >
                         {item.imageUrl ? (
@@ -795,13 +812,13 @@ export function Home() {
                         <div className="relative w-[110px] sm:w-[130px] h-full shrink-0 bg-gray-100 overflow-hidden">
                            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
                            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
-                           <div className="absolute bottom-0 left-0 right-0 flex justify-center z-10 pointer-events-none pb-0">
+                           <div className="absolute bottom-1.5 inset-x-1 flex justify-center z-10 pointer-events-none">
                              <CategoryBadges item={item} isSecondary={true} className="drop-shadow-md" />
                            </div>
                         </div>
                       ) : (
                         <div className="relative w-[110px] sm:w-[130px] h-full shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center">
-                           <div className="absolute bottom-0 left-0 right-0 flex justify-center z-10 pointer-events-none pb-0">
+                           <div className="absolute bottom-1.5 inset-x-1 flex justify-center z-10 pointer-events-none">
                              <CategoryBadges item={item} isSecondary={true} className="drop-shadow-md" />
                            </div>
                         </div>

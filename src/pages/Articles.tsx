@@ -321,17 +321,17 @@ export function Articles() {
         {/* LATEST ARTICLES TOP NAVIGATION HEADER */}
         {/* Innovative Creative Dual Segmented Navigation Switcher */}
         <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800 shadow-soft">
-          <div className="max-w-[760px] mx-auto w-full flex items-center justify-center px-1">
-            {/* Premium Segmented Switcher Pills */}
-            <div className="bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 flex items-center gap-1 shadow-inner select-none">
+          <div className="max-w-[760px] mx-auto w-full px-1">
+            {/* Premium Segmented Switcher Pills (Full Width) */}
+            <div className="w-full bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 grid grid-cols-2 gap-1 shadow-inner select-none">
               {/* News Tab (Inactive) */}
               <Link
                 to="/"
                 title="قسم الأخبار والتقارير"
-                className="relative flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold font-cairo transition-all duration-300 active:scale-95 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
+                className="relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold font-cairo transition-all duration-300 active:scale-95 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
               >
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <Newspaper className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 group-hover:text-taiz-sky transition-colors" />
+                <span className="relative z-10 flex items-center justify-center gap-1.5">
+                  <Newspaper className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-taiz-sky transition-colors" />
                   <span className="whitespace-nowrap">الأخبار والتقارير</span>
                 </span>
               </Link>
@@ -340,15 +340,15 @@ export function Articles() {
               <Link
                 to="/articles"
                 title="قسم المقالات والآراء"
-                className="relative flex items-center gap-1.5 px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-black font-cairo transition-all duration-300 active:scale-95 text-white"
+                className="relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-black font-cairo transition-all duration-300 active:scale-95 text-white"
               >
                 <motion.div
                   layoutId="news-articles-tab-pill"
                   className="absolute inset-0 bg-gradient-to-r from-taiz-royal via-taiz-sky to-taiz-royal rounded-lg sm:rounded-xl shadow-xs border border-taiz-sky/20"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
-                <span className="relative z-10 flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                <span className="relative z-10 flex items-center justify-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-amber-300 animate-pulse" />
                   <span className="whitespace-nowrap">مقالات وآراء</span>
                 </span>
               </Link>
@@ -370,7 +370,7 @@ export function Articles() {
           </div>
           <div className="flex flex-col">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أحدث المقالات</h3>
-            <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">تحليلات ورؤى فكرية وسياسية متميزة</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">تحليلات ورؤى فكرية وسياسية متميزة</p>
           </div>
           <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-4"></div>
 
@@ -404,21 +404,23 @@ export function Articles() {
                   <motion.div 
                     key={article.id} 
                     className="relative" 
-                    initial={{ opacity: 0, y: 10 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    transition={{ duration: 0.3, delay: idx * 0.04, ease: "easeOut" }}
+                    initial={{ opacity: 0, y: 16 }} 
+                    whileInView={{ opacity: 1, y: 0 }} 
+                    viewport={{ once: true, amount: 0.12 }}
+                    transition={{ duration: 0.45, delay: Math.min(idx * 0.04, 0.2), ease: [0.22, 1, 0.36, 1] }}
+                    whileHover={{ y: -3, transition: { duration: 0.25, ease: "easeOut" } }}
                   >
                     <Link
                       to={`/articles/${article.id}`} 
-                      className="flex items-center bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft mx-2 sm:mx-3 mb-2 overflow-hidden group relative hover:shadow-medium hover:bg-slate-50/50 dark:hover:bg-slate-800/50 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 ease-out h-[105px] sm:h-[120px] will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
+                      className="flex items-center bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft mx-2 sm:mx-3 mb-2 overflow-hidden group relative hover:shadow-medium hover:bg-slate-50/50 dark:hover:bg-slate-800/50 active:scale-[0.98] transition-all duration-300 ease-out h-[105px] sm:h-[120px] will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
                       style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                     >
                       {/* Right Side Compact Image */}
                       <div className="relative w-[110px] sm:w-[130px] h-full shrink-0 bg-gray-100 dark:bg-slate-800 overflow-hidden">
                         <img src={coverSource} alt={article.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
-                        <div className="absolute bottom-1 left-0 right-0 flex justify-center z-10 pointer-events-none">
-                          <CategoryBadges item={article} isSecondary={true} />
+                        <div className="absolute bottom-1.5 inset-x-1 flex justify-center z-10 pointer-events-none">
+                          <CategoryBadges item={article} isSecondary={true} className="drop-shadow-md" />
                         </div>
                       </div>
 

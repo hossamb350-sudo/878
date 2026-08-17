@@ -665,7 +665,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_25px_rgba(0,0,0,0.06)] border-t border-slate-100 z-40 pb-safe transition-transform duration-300 h-[62px] sm:h-[66px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
         <div className="grid grid-cols-6 w-full max-w-2xl mx-auto h-full px-0.5 relative">
           {[
-            { to: "/", icon: NewsNavIcon, label: "الأخبار" },
+            { to: "/", icon: NewsNavIcon, label: "الرئيسية" },
             { to: "/watch", icon: MediaNavIcon, label: "ميديا" },
             { to: "/leader", icon: LeaderNavIcon, label: "السيد القائد" },
             { to: "/quran", icon: QuranNavIcon, label: "هدي القرآن" },

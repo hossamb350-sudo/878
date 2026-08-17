@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { SyncService } from "../services/SyncService";
-import { VideoItem, LiveStream } from "../types";
+import { VideoItem, LiveStream, ChannelDisplayMode, LiveStreamSettings } from "../types";
 import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -16,6 +16,7 @@ import {
   X, 
   Flame, 
   ChevronLeft,
+  ChevronRight,
   Star,
   Building2,
   Shield,
@@ -28,13 +29,19 @@ import {
   Volume2,
   VolumeX,
   Info,
-  Loader2
+  Loader2,
+  LayoutGrid,
+  CreditCard,
+  Layers,
+  Check
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../components/PullToRefresh";
 import { getEmbedUrl } from "../utils/embed";
 import { getRadioScheduleInfo } from "../utils/yemenTime";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
 
 const getRelativeTimeArabic = (timestamp: any) => {
   if (!timestamp) return "منذ فترة";
@@ -268,10 +275,15 @@ export function Watch() {
   const [showAllMostViewed, setShowAllMostViewed] = useState(false);
   const [showAllLatest, setShowAllLatest] = useState(false);
 
+  const [tvDisplayMode, setTvDisplayMode] = useState<ChannelDisplayMode>("grid");
+  const [showBadges, setShowBadges] = useState<boolean>(true);
+  const [showChannelCount, setShowChannelCount] = useState<boolean>(true);
+
   // Temporary states for modal
   const [tempSort, setTempSort] = useState<"newest" | "oldest" | "popular">("newest");
 
   const activeVideoRef = useRef<HTMLDivElement>(null);
+  const carouselRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -284,11 +296,18 @@ export function Watch() {
       }
     };
 
+    // 1. Sync Channels with smart order sorting
     const unsubChannelsPromise = SyncService.syncCollection<LiveStream>("livestreams", (dbChannels) => {
       if (!active) return;
       const activeChannels = dbChannels.filter(c => c.isActive);
       if (activeChannels.length > 0) {
-        activeChannels.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        // Sort by custom order primarily, then by createdAt
+        activeChannels.sort((a, b) => {
+          const orderA = a.order !== undefined && a.order !== null ? a.order : 999;
+          const orderB = b.order !== undefined && b.order !== null ? b.order : 999;
+          if (orderA !== orderB) return orderA - orderB;
+          return (b.createdAt || 0) - (a.createdAt || 0);
+        });
         setChannels(activeChannels);
         const tv = activeChannels.filter(c => (c.type || "tv") === "tv");
         const radio = activeChannels.filter(c => c.type === "radio");
@@ -301,6 +320,18 @@ export function Watch() {
       checkLoading();
     }, { orderByField: "createdAt", orderDirection: "desc" });
 
+    // 2. Subscribe to Global LiveStream Display Settings
+    const unsubSettings = onSnapshot(doc(db, "settings", "livestream"), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data() as LiveStreamSettings;
+        if (data.tvDisplayMode) setTvDisplayMode(data.tvDisplayMode);
+        if (data.showBadges !== undefined) setShowBadges(data.showBadges);
+        if (data.showChannelCount !== undefined) setShowChannelCount(data.showChannelCount);
+      }
+    }, (err) => {
+      console.warn("Could not read livestream settings:", err);
+    });
+
     const unsubVideosPromise = SyncService.syncCollection<VideoItem>("videos", (videoData) => {
       if (!active) return;
       setRawVideos(videoData);
@@ -312,6 +343,7 @@ export function Watch() {
       active = false;
       unsubChannelsPromise.then(unsub => unsub());
       unsubVideosPromise.then(unsub => unsub());
+      unsubSettings();
     };
   }, []);
 
@@ -450,98 +482,123 @@ export function Watch() {
         <div className="max-w-[760px] mx-auto space-y-3.5">
 
           {/* 0. HEADER & TAB SWITCHER (MOVED TO TOP) */}
-          <div className="space-y-2.5 mb-4">
-            <div className="flex items-center gap-2 px-1 select-none" dir="rtl">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-                {channelTab === "tv" ? (
-                  <Tv className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                ) : (
-                  <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                )}
-              </div>
-              <div className="flex flex-col text-right">
-                <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
-                  {channelTab === "tv" ? "القنوات الفضائية المتاحة" : "الإذاعات المتاحة"}
-                </h2>
-                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">
-                  {channelTab === "tv" ? "اختر القناة للمشاهدة المباشرة" : "استمع إلى البث الإذاعي المباشر"}
-                </p>
-              </div>
-              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
-            </div>
-
-            {/* TAB SWITCHER: TV vs RADIO - CREATIVE BROADCAST CAPSULE */}
-            <div className="relative p-1.5 rounded-2xl sm:rounded-3xl bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-inner flex items-center gap-1.5 select-none" dir="rtl">
-              {/* Tab 1: قنوات التلفزيون */}
-              <button
-                type="button"
-                onClick={() => setChannelTab("tv")}
-                className={`relative flex-1 py-2.5 sm:py-3 px-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer z-10 ${
-                  channelTab === "tv"
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                {channelTab === "tv" && (
-                  <motion.div
-                    layoutId="activeBroadcastPill"
-                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                    className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 shadow-md shadow-slate-900/5 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-700/80 -z-10"
-                  />
-                )}
-                
-                {/* Live Pulse Dot for TV */}
-                <span className="relative flex h-2 w-2 shrink-0">
+          <div className="space-y-2 mb-3">
+            {/* TAB SWITCHER: TV vs RADIO - COMPACT LUXURY BROADCAST CAPSULE */}
+            <div className="relative p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-inner select-none" dir="rtl">
+              <div className="flex items-center gap-1 relative z-10">
+                {/* Tab 1: قنوات التلفزيون */}
+                <button
+                  type="button"
+                  id="tab-switcher-tv"
+                  onClick={() => setChannelTab("tv")}
+                  className={`relative flex-1 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-between gap-1.5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 active:scale-[0.98] ${
+                    channelTab === "tv"
+                      ? "text-red-600 dark:text-red-400"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+                  }`}
+                >
                   {channelTab === "tv" && (
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                    <motion.div
+                      layoutId="activeBroadcastPill"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                      className="absolute inset-0 rounded-xl bg-white dark:bg-slate-800 shadow-md shadow-slate-900/10 dark:shadow-black/50 border border-slate-200/80 dark:border-slate-700/80 -z-10"
+                    />
                   )}
-                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                    channelTab === "tv" ? "bg-red-600 dark:bg-red-500" : "bg-slate-300 dark:bg-slate-600"
-                  }`} />
-                </span>
+                  
+                  {/* Right Side: Icon & Title */}
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center transition-all ${
+                      channelTab === "tv"
+                        ? "bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 shadow-2xs"
+                        : "bg-slate-200/60 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400"
+                    }`}>
+                      <Tv className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                        channelTab === "tv" ? "scale-110" : ""
+                      }`} />
+                    </div>
 
-                <Tv className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-300 ${
-                  channelTab === "tv" ? "scale-110 text-red-600 dark:text-red-400" : "opacity-70"
-                }`} />
-
-                <span className="truncate">قنوات التلفزيون</span>
-              </button>
-
-              {/* Tab 2: الإذاعات المتاحة */}
-              <button
-                type="button"
-                onClick={() => setChannelTab("radio")}
-                className={`relative flex-1 py-2.5 sm:py-3 px-3 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer z-10 ${
-                  channelTab === "radio"
-                    ? "text-amber-600 dark:text-amber-400"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                }`}
-              >
-                {channelTab === "radio" && (
-                  <motion.div
-                    layoutId="activeBroadcastPill"
-                    transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                    className="absolute inset-0 rounded-xl sm:rounded-2xl bg-white dark:bg-slate-800 shadow-md shadow-slate-900/5 dark:shadow-black/40 border border-slate-200/80 dark:border-slate-700/80 -z-10"
-                  />
-                )}
-
-                {/* Live Audio Wave Graphic for Radio */}
-                {channelTab === "radio" ? (
-                  <div className="flex items-end gap-0.5 h-3 shrink-0">
-                    <span className="w-0.5 h-2 bg-amber-500 rounded-full animate-pulse" style={{ animationDuration: '0.6s' }} />
-                    <span className="w-0.5 h-3 bg-amber-500 rounded-full animate-pulse" style={{ animationDuration: '0.9s' }} />
-                    <span className="w-0.5 h-1.5 bg-amber-500 rounded-full animate-pulse" style={{ animationDuration: '0.7s' }} />
+                    <span className="text-xs sm:text-sm font-black font-cairo leading-none">
+                      قنوات التلفزيون
+                    </span>
                   </div>
-                ) : (
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-300 dark:bg-slate-600 shrink-0" />
-                )}
 
-                <Radio className={`w-4 h-4 sm:w-4.5 sm:h-4.5 transition-transform duration-300 ${
-                  channelTab === "radio" ? "scale-110 text-amber-600 dark:text-amber-400" : "opacity-70"
-                }`} />
+                  {/* Left Side: Live Indicator & Badge */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`text-[8.5px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-[5px] border ${
+                      channelTab === "tv" 
+                        ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20" 
+                        : "bg-slate-200/70 dark:bg-slate-800 text-slate-500 border-slate-300/40 dark:border-slate-700"
+                    }`}>
+                      HD
+                    </span>
+                    <span className="relative flex h-2 w-2 shrink-0">
+                      {channelTab === "tv" && (
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      )}
+                      <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                        channelTab === "tv" ? "bg-red-600 dark:bg-red-500 shadow-[0_0_8px_rgba(220,38,38,0.6)]" : "bg-slate-300 dark:bg-slate-600"
+                      }`} />
+                    </span>
+                  </div>
+                </button>
 
-                <span className="truncate">الإذاعات المتاحة</span>
-              </button>
+                {/* Tab 2: الإذاعات المتاحة */}
+                <button
+                  type="button"
+                  id="tab-switcher-radio"
+                  onClick={() => setChannelTab("radio")}
+                  className={`relative flex-1 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-between gap-1.5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-[0.98] ${
+                    channelTab === "radio"
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+                  }`}
+                >
+                  {channelTab === "radio" && (
+                    <motion.div
+                      layoutId="activeBroadcastPill"
+                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                      className="absolute inset-0 rounded-xl bg-white dark:bg-slate-800 shadow-md shadow-slate-900/10 dark:shadow-black/50 border border-slate-200/80 dark:border-slate-700/80 -z-10"
+                    />
+                  )}
+                  
+                  {/* Right Side: Icon & Title */}
+                  <div className="flex items-center gap-2">
+                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center transition-all ${
+                      channelTab === "radio"
+                        ? "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 shadow-2xs"
+                        : "bg-slate-200/60 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400"
+                    }`}>
+                      <Radio className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                        channelTab === "radio" ? "scale-110" : ""
+                      }`} />
+                    </div>
+
+                    <span className="text-xs sm:text-sm font-black font-cairo leading-none">
+                      الإذاعات المتاحة
+                    </span>
+                  </div>
+
+                  {/* Left Side: Audio Waves & FM Badge */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <span className={`text-[8.5px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-[5px] border ${
+                      channelTab === "radio" 
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" 
+                        : "bg-slate-200/70 dark:bg-slate-800 text-slate-500 border-slate-300/40 dark:border-slate-700"
+                    }`}>
+                      FM
+                    </span>
+                    {channelTab === "radio" ? (
+                      <div className="flex items-end gap-0.5 h-3 shrink-0">
+                        <span className="w-0.5 h-2 bg-amber-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(245,158,11,0.5)]" style={{ animationDuration: '0.6s' }} />
+                        <span className="w-0.5 h-3 bg-amber-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(245,158,11,0.5)]" style={{ animationDuration: '0.9s' }} />
+                        <span className="w-0.5 h-1.5 bg-amber-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(245,158,11,0.5)]" style={{ animationDuration: '0.7s' }} />
+                      </div>
+                    ) : (
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-300 dark:bg-slate-600 shrink-0" />
+                    )}
+                  </div>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -823,13 +880,286 @@ export function Watch() {
             )}
           </motion.div>
 
-          {/* 2. CHANNELS SECTION (GRID - TV ONLY) */}
+          {/* 2. CHANNELS SECTION (MULTI-MODE - TV ONLY) */}
           {channelTab === "tv" && (
-            <div className="space-y-2">
-              {/* CHANNELS GRID */}
-              <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-2.5 w-full">
-                {displayChannels.length > 0 ? (
-                  displayChannels.map((ch) => {
+            <div className="space-y-2.5">
+              {/* View Mode Selector Icons */}
+              <div className="flex items-center justify-end px-1">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                  <button
+                    onClick={() => setTvDisplayMode("grid")}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      tvDisplayMode === "grid" 
+                        ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-2xs" 
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    }`}
+                    title="عرض شبكي"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => setTvDisplayMode("carousel")}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      tvDisplayMode === "carousel" 
+                        ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-2xs" 
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    }`}
+                    title="عرض شريط تمرير أفقي"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => setTvDisplayMode("cards")}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      tvDisplayMode === "cards" 
+                        ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-2xs" 
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    }`}
+                    title="عرض بطاقات فاخرة"
+                  >
+                    <CreditCard className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    onClick={() => setTvDisplayMode("compact")}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      tvDisplayMode === "compact" 
+                        ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-2xs" 
+                        : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    }`}
+                    title="عرض كبسولات مدمجة"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* 1. GRID LAYOUT MODE */}
+              {tvDisplayMode === "grid" && (
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2 sm:gap-2.5 w-full">
+                  {displayChannels.length > 0 ? (
+                    displayChannels.map((ch) => {
+                      const isSelected = !!activeTvChannel && (activeTvChannel.id === ch.id || activeTvChannel.name === ch.name);
+                      return (
+                        <button
+                          key={ch.id || ch.name}
+                          onClick={() => {
+                            setActiveTvId(ch.id || ch.name || null);
+                            globalPlayStream(ch);
+                            setIsPlayingInHero(true);
+                            if (isScrolled) {
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              const mainEl = document.querySelector('main');
+                              if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                          }}
+                          className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl sm:rounded-2xl border transition-all duration-200 cursor-pointer gap-1.5 relative ${
+                            isSelected 
+                              ? 'bg-red-50/90 dark:bg-red-950/40 border-red-500 shadow-sm ring-1.5 ring-red-500/20 scale-[1.02]'
+                              : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs hover:scale-[1.01]'
+                          }`}
+                        >
+                          {isSelected && (
+                            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white dark:border-slate-900" />
+                            </span>
+                          )}
+
+                          {showBadges && ch.badge && (
+                            <span className="absolute -top-1.5 left-1 text-[8px] font-black px-1.5 py-0.2 rounded-full bg-red-600 text-white shadow-2xs">
+                              {ch.badge}
+                            </span>
+                          )}
+
+                          <div className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 transition-transform ${
+                            isSelected 
+                              ? 'border-red-500 bg-white ring-1.5 ring-red-500/20'
+                              : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
+                          }`}>
+                            <img 
+                              src={ch.iconUrl || "/splash_first.png"} 
+                              alt={ch.name} 
+                              className="w-full h-full object-cover rounded-full"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&q=80';
+                              }}
+                            />
+                          </div>
+
+                          <span className={`text-[10px] sm:text-[11px] font-bold font-cairo truncate max-w-full text-center px-0.5 leading-tight ${
+                            isSelected 
+                              ? "text-red-700 dark:text-red-400 font-black"
+                              : "text-slate-700 dark:text-slate-300"
+                          }`}>
+                            {ch.name}
+                          </span>
+                        </button>
+                      );
+                    })
+                  ) : (
+                    <div className="col-span-full py-8 text-center text-xs font-bold text-slate-400">
+                      لا توجد قنوات متاحة حالياً
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 2. CAROUSEL / SLIDER LAYOUT MODE */}
+              {tvDisplayMode === "carousel" && (
+                <div className="relative group w-full">
+                  {/* Left & Right Scroll Buttons */}
+                  <button
+                    onClick={() => {
+                      if (carouselRef.current) {
+                        carouselRef.current.scrollBy({ left: -200, behavior: "smooth" });
+                      }
+                    }}
+                    className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-white shadow-md border border-slate-200 dark:border-slate-700 hidden sm:flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      if (carouselRef.current) {
+                        carouselRef.current.scrollBy({ left: 200, behavior: "smooth" });
+                      }
+                    }}
+                    className="absolute -left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-white shadow-md border border-slate-200 dark:border-slate-700 hidden sm:flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div
+                    ref={carouselRef}
+                    className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-2 px-1 scroll-smooth snap-x"
+                  >
+                    {displayChannels.map((ch) => {
+                      const isSelected = !!activeTvChannel && (activeTvChannel.id === ch.id || activeTvChannel.name === ch.name);
+                      return (
+                        <button
+                          key={ch.id || ch.name}
+                          onClick={() => {
+                            setActiveTvId(ch.id || ch.name || null);
+                            globalPlayStream(ch);
+                            setIsPlayingInHero(true);
+                            if (isScrolled) {
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                              const mainEl = document.querySelector('main');
+                              if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                          }}
+                          className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl border transition-all duration-200 shrink-0 cursor-pointer snap-start ${
+                            isSelected
+                              ? "bg-red-500 text-white border-red-500 shadow-md ring-2 ring-red-500/20 scale-[1.03]"
+                              : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
+                          }`}
+                        >
+                          <div className="w-7 h-7 rounded-full bg-white overflow-hidden shrink-0 shadow-2xs border border-slate-100 dark:border-slate-700">
+                            <img
+                              src={ch.iconUrl || "/splash_first.png"}
+                              alt={ch.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+
+                          <div className="flex flex-col text-right">
+                            <span className="text-xs font-bold font-cairo whitespace-nowrap leading-tight">
+                              {ch.name}
+                            </span>
+                            {showBadges && ch.badge && (
+                              <span className={`text-[9px] font-black ${
+                                isSelected ? "text-red-100" : "text-red-600 dark:text-red-400"
+                              }`}>
+                                {ch.badge}
+                              </span>
+                            )}
+                          </div>
+
+                          {isSelected && (
+                            <span className="w-2 h-2 rounded-full bg-white animate-pulse mr-1" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 3. LUXURY CARDS LAYOUT MODE */}
+              {tvDisplayMode === "cards" && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 w-full">
+                  {displayChannels.map((ch) => {
+                    const isSelected = !!activeTvChannel && (activeTvChannel.id === ch.id || activeTvChannel.name === ch.name);
+                    return (
+                      <div
+                        key={ch.id || ch.name}
+                        onClick={() => {
+                          setActiveTvId(ch.id || ch.name || null);
+                          globalPlayStream(ch);
+                          setIsPlayingInHero(true);
+                          if (isScrolled) {
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                            const mainEl = document.querySelector('main');
+                            if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+                          }
+                        }}
+                        className={`p-3.5 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-3 cursor-pointer relative overflow-hidden ${
+                          isSelected
+                            ? "bg-red-50/80 dark:bg-red-950/40 border-red-500 shadow-md ring-2 ring-red-500/20"
+                            : "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-red-300 dark:hover:border-slate-700 shadow-2xs"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-11 h-11 rounded-2xl p-0.5 border flex items-center justify-center overflow-hidden shrink-0 shadow-sm ${
+                            isSelected
+                              ? "border-red-500 bg-white ring-2 ring-red-500/30"
+                              : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                          }`}>
+                            <img
+                              src={ch.iconUrl || "/splash_first.png"}
+                              alt={ch.name}
+                              className="w-full h-full object-cover rounded-xl"
+                            />
+                          </div>
+
+                          <div className="space-y-0.5 text-right">
+                            <div className="flex items-center gap-1.5">
+                              <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white font-cairo">
+                                {ch.name}
+                              </h4>
+                              {showBadges && ch.badge && (
+                                <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400">
+                                  {ch.badge}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-cairo line-clamp-1 max-w-[170px]">
+                              {ch.description || "بث مباشر عالي الجودة HD"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected
+                            ? "bg-red-600 text-white shadow-md shadow-red-600/30 animate-pulse"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                        }`}>
+                          <Play className="w-3.5 h-3.5 fill-current" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* 4. COMPACT PILLS LAYOUT MODE */}
+              {tvDisplayMode === "compact" && (
+                <div className="flex flex-wrap gap-2 w-full justify-center items-center py-1">
+                  {displayChannels.map((ch) => {
                     const isSelected = !!activeTvChannel && (activeTvChannel.id === ch.id || activeTvChannel.name === ch.name);
                     return (
                       <button
@@ -844,50 +1174,37 @@ export function Watch() {
                             if (mainEl) mainEl.scrollTo({ top: 0, behavior: 'smooth' });
                           }
                         }}
-                        className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl sm:rounded-2xl border transition-all duration-200 cursor-pointer gap-1.5 relative ${
-                          isSelected 
-                            ? 'bg-red-50/90 dark:bg-red-950/40 border-red-500 shadow-sm ring-1.5 ring-red-500/20 scale-[1.02]'
-                            : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs hover:scale-[1.01]'
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-full border transition-all duration-200 cursor-pointer ${
+                          isSelected
+                            ? "bg-red-600 text-white border-red-600 shadow-md ring-2 ring-red-600/20 scale-[1.03]"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50"
                         }`}
                       >
-                        {isSelected && (
-                          <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white dark:border-slate-900" />
-                          </span>
-                        )}
-
-                        <div className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 transition-transform ${
-                          isSelected 
-                            ? 'border-red-500 bg-white ring-1.5 ring-red-500/20'
-                            : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
-                        }`}>
-                          <img 
-                            src={ch.iconUrl || "/splash_first.png"} 
-                            alt={ch.name} 
-                            className="w-full h-full object-cover rounded-full"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=120&q=80';
-                            }}
+                        <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-white border border-slate-100">
+                          <img
+                            src={ch.iconUrl || "/splash_first.png"}
+                            alt={ch.name}
+                            className="w-full h-full object-cover"
                           />
                         </div>
-
-                        <span className={`text-[10px] sm:text-[11px] font-bold font-cairo truncate max-w-full text-center px-0.5 leading-tight ${
-                          isSelected 
-                            ? "text-red-700 dark:text-red-400 font-black"
-                            : "text-slate-700 dark:text-slate-300"
-                        }`}>
+                        <span className="text-xs font-bold font-cairo whitespace-nowrap leading-none">
                           {ch.name}
                         </span>
+                        {showBadges && ch.badge && (
+                          <span className={`text-[8.5px] font-black px-1.5 py-0.5 rounded-full ${
+                            isSelected ? "bg-white/20 text-white" : "bg-red-100 text-red-600"
+                          }`}>
+                            {ch.badge}
+                          </span>
+                        )}
+                        {isSelected && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                        )}
                       </button>
                     );
-                  })
-                ) : (
-                  <div className="col-span-full py-8 text-center text-xs font-bold text-slate-400">
-                    لا توجد قنوات متاحة حالياً
-                  </div>
-                )}
-              </div>
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -943,7 +1260,7 @@ export function Watch() {
               </div>
               <div className="flex flex-col text-right">
                 <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">الأكثر مشاهدة</h2>
-                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">الفيديوهات والتغطيات الأكثر رواجاً وتفاعلاً</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">الفيديوهات والتغطيات الأكثر رواجاً وتفاعلاً</p>
               </div>
               
               <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
@@ -959,70 +1276,79 @@ export function Watch() {
 
             {/* 2x2 Grid Layout identical to Latest Videos */}
             <div className="grid grid-cols-2 gap-3">
-              {(showAllMostViewed ? mostViewedList : mostViewedList.slice(0, 4)).map((vid) => (
-                <Link
+              {(showAllMostViewed ? mostViewedList : mostViewedList.slice(0, 4)).map((vid, vIdx) => (
+                <motion.div
                   key={vid.id}
-                  to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
-                  className="group flex flex-col bg-white rounded-[14px] border border-slate-200/80 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5"
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.12 }}
+                  transition={{ duration: 0.45, delay: vIdx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ y: -4, transition: { duration: 0.25, ease: "easeOut" } }}
+                  className="h-full"
                 >
-                  {/* Thumbnail Image */}
-                  <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
-                    <img 
-                      src={vid.thumbnailUrl || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=500&q=80"} 
-                      alt={vid.title} 
-                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                    />
+                  <Link
+                    to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
+                    className="group flex flex-col bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5 h-full"
+                  >
+                    {/* Thumbnail Image */}
+                    <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
+                      <img 
+                        src={vid.thumbnailUrl || "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=500&q=80"} 
+                        alt={vid.title} 
+                        className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                      />
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-                    {/* Category Pill Tag */}
-                    {vid.category && (
-                      <div className="absolute top-2 right-2 z-10">
-                        <CategoryBadges category={vid.category} isSecondary={true} className="drop-shadow-sm" />
+                      {/* Category Pill Tag */}
+                      {vid.category && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <CategoryBadges category={vid.category} isSecondary={true} className="drop-shadow-sm" />
+                        </div>
+                      )}
+
+                      {/* Play Button Icon */}
+                      <div className="absolute inset-0 flex items-center justify-center z-10">
+                        <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-taiz-sky shadow-md transition-all border border-white/40">
+                          <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                        </div>
                       </div>
-                    )}
 
-                    {/* Play Button Icon */}
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-taiz-sky shadow-md transition-all border border-white/40">
-                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                      </div>
+                      {/* Duration Badge */}
+                      {vid.duration && (
+                        <div className="absolute bottom-2 right-2 z-10">
+                          <span className="bg-black/80 backdrop-blur-md text-white text-[8.5px] font-mono font-bold px-1.5 py-0.5 rounded-md border border-white/20">
+                            {vid.duration}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Duration Badge */}
-                    {vid.duration && (
-                      <div className="absolute bottom-2 right-2 z-10">
-                        <span className="bg-black/80 backdrop-blur-md text-white text-[8.5px] font-mono font-bold px-1.5 py-0.5 rounded-md border border-white/20">
-                          {vid.duration}
+                    {/* Card Details */}
+                    <div className="flex flex-col justify-between flex-1 space-y-2">
+                      {/* Formatted Title */}
+                      <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-taiz-sky transition-colors min-h-[2.4em] flex items-start font-cairo">
+                        {vid.title}
+                      </h3>
+
+                      {/* Bottom Metadata: Views count in brand color + Date */}
+                      <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
+                        {/* Views Badge */}
+                        <span className="flex items-center gap-1 text-taiz-sky font-black">
+                          <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
+                          <span>{formatViewsArabic(vid.views)} مشاهدة</span>
+                        </span>
+
+                        {/* Time ago */}
+                        <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold">
+                          <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{getRelativeTimeArabic(vid.createdAt)}</span>
                         </span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Card Details */}
-                  <div className="flex flex-col justify-between flex-1 space-y-2">
-                    {/* Formatted Title */}
-                    <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-taiz-sky transition-colors min-h-[2.4em] flex items-start font-cairo">
-                      {vid.title}
-                    </h3>
-
-                    {/* Bottom Metadata: Views count in brand color + Date */}
-                    <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
-                      {/* Views Badge */}
-                      <span className="flex items-center gap-1 text-taiz-sky font-black">
-                        <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
-                        <span>{formatViewsArabic(vid.views)} مشاهدة</span>
-                      </span>
-
-                      {/* Time ago */}
-                      <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold">
-                        <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span>{getRelativeTimeArabic(vid.createdAt)}</span>
-                      </span>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           </div>
@@ -1035,7 +1361,7 @@ export function Watch() {
               </div>
               <div className="flex flex-col text-right">
                 <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أحدث الفيديوهات</h2>
-                <p className="text-[10px] sm:text-[11px] text-orange-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
               </div>
               
               <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
@@ -1051,70 +1377,79 @@ export function Watch() {
 
             {/* 2x2 Grid Layout */}
             <div className="grid grid-cols-2 gap-3">
-              {(showAllLatest ? latestList : latestList.slice(0, 4)).map((vid) => (
-                <Link
+              {(showAllLatest ? latestList : latestList.slice(0, 4)).map((vid, vIdx) => (
+                <motion.div
                   key={vid.id}
-                  to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
-                  className="group flex flex-col bg-white rounded-[14px] border border-slate-200/80 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5"
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.12 }}
+                  transition={{ duration: 0.45, delay: vIdx * 0.05, ease: [0.22, 1, 0.36, 1] }}
+                  whileHover={{ y: -4, transition: { duration: 0.25, ease: "easeOut" } }}
+                  className="h-full"
                 >
-                  {/* Thumbnail Image */}
-                  <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
-                    <img 
-                      src={vid.thumbnailUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=500&q=80"} 
-                      alt={vid.title} 
-                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
-                    />
+                  <Link
+                    to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
+                    className="group flex flex-col bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5 h-full"
+                  >
+                    {/* Thumbnail Image */}
+                    <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
+                      <img 
+                        src={vid.thumbnailUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&w=500&q=80"} 
+                        alt={vid.title} 
+                        className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                      />
 
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                      {/* Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
 
-                    {/* Category Pill Tag */}
-                    {vid.category && (
-                      <div className="absolute top-2 right-2 z-10">
-                        <CategoryBadges category={vid.category} isSecondary={true} className="drop-shadow-sm" />
+                      {/* Category Pill Tag */}
+                      {vid.category && (
+                        <div className="absolute top-2 right-2 z-10">
+                          <CategoryBadges category={vid.category} isSecondary={true} className="drop-shadow-sm" />
+                        </div>
+                      )}
+
+                      {/* Play Button Icon */}
+                      <div className="absolute inset-0 flex items-center justify-center z-10">
+                        <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-taiz-sky shadow-md transition-all border border-white/40">
+                          <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
+                        </div>
                       </div>
-                    )}
 
-                    {/* Play Button Icon */}
-                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                      <div className="w-8 h-8 rounded-full bg-white/30 backdrop-blur-md text-white flex items-center justify-center group-hover:scale-110 group-hover:bg-taiz-sky shadow-md transition-all border border-white/40">
-                        <Play className="w-3.5 h-3.5 fill-current ml-0.5" />
-                      </div>
+                      {/* Duration Badge */}
+                      {vid.duration && (
+                        <div className="absolute bottom-2 right-2 z-10">
+                          <span className="bg-black/80 backdrop-blur-md text-white text-[8.5px] font-mono font-bold px-1.5 py-0.5 rounded-md border border-white/20">
+                            {vid.duration}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Duration Badge */}
-                    {vid.duration && (
-                      <div className="absolute bottom-2 right-2 z-10">
-                        <span className="bg-black/80 backdrop-blur-md text-white text-[8.5px] font-mono font-bold px-1.5 py-0.5 rounded-md border border-white/20">
-                          {vid.duration}
+                    {/* Card Details */}
+                    <div className="flex flex-col justify-between flex-1 space-y-2">
+                      {/* Formatted Title */}
+                      <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-taiz-sky transition-colors min-h-[2.4em] flex items-start font-cairo">
+                        {vid.title}
+                      </h3>
+
+                      {/* Bottom Metadata: Views count in brand color + Date */}
+                      <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
+                        {/* Views Badge */}
+                        <span className="flex items-center gap-1 text-taiz-sky font-black">
+                          <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
+                          <span>{formatViewsArabic(vid.views)} مشاهدة</span>
+                        </span>
+
+                        {/* Time ago */}
+                        <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold">
+                          <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                          <span>{getRelativeTimeArabic(vid.createdAt)}</span>
                         </span>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Card Details */}
-                  <div className="flex flex-col justify-between flex-1 space-y-2">
-                    {/* Formatted Title */}
-                    <h3 className="text-slate-900 dark:text-white font-medium text-[11.5px] sm:text-xs leading-snug text-right line-clamp-2 group-hover:text-taiz-sky transition-colors min-h-[2.4em] flex items-start font-cairo">
-                      {vid.title}
-                    </h3>
-
-                    {/* Bottom Metadata: Views count in brand color + Date */}
-                    <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
-                      {/* Views Badge */}
-                      <span className="flex items-center gap-1 text-taiz-sky font-black">
-                        <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
-                        <span>{formatViewsArabic(vid.views)} مشاهدة</span>
-                      </span>
-
-                      {/* Time ago */}
-                      <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold">
-                        <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                        <span>{getRelativeTimeArabic(vid.createdAt)}</span>
-                      </span>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </motion.div>
               ))}
             </div>
           </div>
