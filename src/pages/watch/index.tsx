@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
-import { SyncService } from "../services/SyncService";
-import { VideoItem, LiveStream, ChannelDisplayMode, LiveStreamSettings } from "../types";
-import { CategoryBadges } from "../components/CategoryBadges";
+import { SyncService } from "../../services/SyncService";
+import { VideoItem, LiveStream, ChannelDisplayMode, LiveStreamSettings } from "../../types";
+import { CategoryBadges } from "../../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { 
@@ -35,13 +35,14 @@ import {
   Layers,
   Check
 } from "lucide-react";
+import { routes, generateSlug } from "../../utils/routes";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { PullToRefresh } from "../components/PullToRefresh";
-import { getEmbedUrl } from "../utils/embed";
-import { getRadioScheduleInfo } from "../utils/yemenTime";
+import { PullToRefresh } from "../../components/PullToRefresh";
+import { getEmbedUrl } from "../../utils/embed";
+import { getRadioScheduleInfo } from "../../utils/yemenTime";
 import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../../firebase";
 
 const getRelativeTimeArabic = (timestamp: any) => {
   if (!timestamp) return "منذ فترة";
@@ -231,7 +232,7 @@ const fallbackLatest: VideoItem[] = [
   }
 ];
 
-import { useLiveStream } from "../context/LiveStreamContext";
+import { useLiveStream } from "../../context/LiveStreamContext";
 
 export function Watch() {
   const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
@@ -1287,7 +1288,7 @@ export function Watch() {
                   className="h-full"
                 >
                   <Link
-                    to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
+                    to={vid.isLeader ? routes.leaderItem(generateSlug(vid.title || "", vid.id)) : routes.watchItem(generateSlug(vid.title || "", vid.id))}
                     className="group flex flex-col bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5 h-full"
                   >
                     {/* Thumbnail Image */}
@@ -1388,7 +1389,7 @@ export function Watch() {
                   className="h-full"
                 >
                   <Link
-                    to={vid.isLeader ? `/leader/${vid.id}` : `/watch/${vid.id}`}
+                    to={vid.isLeader ? routes.leaderItem(generateSlug(vid.title || "", vid.id)) : routes.watchItem(generateSlug(vid.title || "", vid.id))}
                     className="group flex flex-col bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5 h-full"
                   >
                     {/* Thumbnail Image */}

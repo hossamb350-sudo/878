@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
+import { updateMetadata } from "../../utils/metadata";
+import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import { db } from "../firebase";
-import { SyncService } from "../services/SyncService";
-import { NewsItem } from "../types";
+import { db } from "../../firebase";
+import { SyncService } from "../../services/SyncService";
+import { NewsItem } from "../../types";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ArrowRight, 
@@ -29,11 +31,12 @@ import {
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { getShareableUrl } from "../config/apiConfig";
-import { CategoryBadges } from "../components/CategoryBadges";
+import { getShareableUrl } from "../../config/apiConfig";
+import { CategoryBadges } from "../../components/CategoryBadges";
 
 export function NewsDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
+  const id = extractIdFromSlug(slug || "");
   const navigate = useNavigate();
   const [news, setNews] = useState<NewsItem | null>(null);
   const [related, setRelated] = useState<NewsItem[]>([]);
@@ -120,7 +123,20 @@ export function NewsDetail() {
     window.addEventListener("popstate", handlePopState);
     window.addEventListener("hashchange", handlePopState);
     window.addEventListener("close-modal-gallery", handleCustomClose);
-    return () => {
+    
+  useEffect(() => {
+    if (news) {
+      updateMetadata({
+        title: news.title,
+        description: news.shortDescription || "" || "",
+        imageUrl: news.imageUrl || "" || "",
+        type: "article",
+        path: window.location.pathname
+      });
+    }
+  }, [news]);
+
+  return () => {
       window.removeEventListener("popstate", handlePopState);
       window.removeEventListener("hashchange", handlePopState);
       window.removeEventListener("close-modal-gallery", handleCustomClose);
@@ -254,7 +270,7 @@ export function NewsDetail() {
   };
 
   const handleShare = async (platform: string) => {
-    const url = getShareableUrl(`/news/${id || news?.id}`);
+    const url = getShareableUrl(`/${"news"}/${generateSlug(news?.title || "", news?.id || id)}`);
     const text = news?.title || "";
 
     if (platform === "copy") {
@@ -628,7 +644,7 @@ export function NewsDetail() {
                 {related.map(rItem => (
                   <Link 
                     key={rItem.id} 
-                    to={`/news/${rItem.id}`} 
+                    to={routes.news(generateSlug(rItem.title || "", rItem.id))} 
                     className="group flex gap-3 bg-surface-card rounded-xl p-3 border border-border-light hover:border-taiz-sky/30 transition-all shadow-soft"
                   >
                      <div className="w-24 h-20 rounded-lg overflow-hidden shrink-0 bg-slate-100">

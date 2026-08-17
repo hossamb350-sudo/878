@@ -1,0 +1,11 @@
+const fs = require('fs');
+let code = fs.readFileSync('src/pages/leader/[slug].tsx', 'utf8');
+code = code.replace(/leader\.title/g, 'content.title');
+code = code.replace(/leader\.shortDescription/g, '""');
+code = code.replace(/leader\.description/g, 'content.description');
+code = code.replace(/leader\.imageUrl/g, '""');
+code = code.replace(/leader\.thumbnailUrl/g, 'content.thumbnailUrl');
+code = code.replace(/leader\)/g, 'content)');
+code = code.replace(/\[leader\]/g, '[content]');
+code = code.replace(/if \(leader\)/g, 'if (content)');
+fs.writeFileSync('src/pages/leader/[slug].tsx', code);

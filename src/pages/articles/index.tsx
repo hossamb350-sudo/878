@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { routes, generateSlug } from "../../utils/routes";
 import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
-import { Article } from "../types";
+import { db } from "../../firebase";
+import { Article } from "../../types";
 import { motion } from "motion/react";
 import { Search, Star, Bookmark, ChevronLeft, CalendarDays, Newspaper, BookOpen, X, LayoutGrid, List } from "lucide-react";
-import { CategoryBadges } from "../components/CategoryBadges";
+import { CategoryBadges } from "../../components/CategoryBadges";
 
 // Dynamic title font size helper based on title character length
 function getDynamicArticleTitleStyle(title: string = "", mode: "grid" | "list" = "grid") {
@@ -95,7 +96,7 @@ function FeaturedArticlesSlider({ featuredList }: { featuredList: Article[] }) {
             }}
             className="w-full h-full absolute top-0 left-0 cursor-grab active:cursor-grabbing"
           >
-            <Link to={`/articles/${currentArticle.id}`} className="block w-full h-full relative group">
+            <Link to={routes.article(generateSlug(currentArticle.title || "", currentArticle.id))} className="block w-full h-full relative group">
               {currentArticle.imageUrl ? (
                 <img 
                   src={currentArticle.imageUrl} 
@@ -411,7 +412,7 @@ export function Articles() {
                     whileHover={{ y: -3, transition: { duration: 0.25, ease: "easeOut" } }}
                   >
                     <Link
-                      to={`/articles/${article.id}`} 
+                      to={routes.article(generateSlug(article.title || "", article.id))} 
                       className="flex items-center bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft mx-2 sm:mx-3 mb-2 overflow-hidden group relative hover:shadow-medium hover:bg-slate-50/50 dark:hover:bg-slate-800/50 active:scale-[0.98] transition-all duration-300 ease-out h-[105px] sm:h-[120px] will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
                       style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                     >
@@ -467,7 +468,7 @@ export function Articles() {
               {displayLatest.map((article, idx) => (
                 <motion.div key={article.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.03 }}>
                   <Link 
-                    to={`/articles/${article.id}`} 
+                    to={routes.article(generateSlug(article.title || "", article.id))} 
                     className="block group bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 overflow-hidden shadow-soft hover:shadow-medium hover:-translate-y-0.5 transition-all duration-300 h-[260px] flex flex-col justify-between"
                   >
                     <div className="relative w-full h-[115px] shrink-0 bg-slate-100 dark:bg-slate-800 overflow-hidden">

@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { collection, query, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
-import { SyncService } from "../services/SyncService";
-import { NewsItem } from "../types";
+import { db } from "../../firebase";
+import { SyncService } from "../../services/SyncService";
+import { NewsItem } from "../../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { routes, generateSlug } from "../../utils/routes";
 import { Search as SearchIcon, Eye } from "lucide-react";
 
 export function Search() {
@@ -57,7 +58,7 @@ export function Search() {
           {results.map(item => (
             <Link 
               key={item.id} 
-              to={`/news/${item.id}`} 
+              to={routes.news(generateSlug(item.title || "", item.id))} 
               className="flex items-center bg-white rounded-r-2xl rounded-l-none shadow-sm group relative transition-all hover:shadow-md h-[110px] sm:h-[130px]"
               style={{ direction: 'rtl' }}
             >

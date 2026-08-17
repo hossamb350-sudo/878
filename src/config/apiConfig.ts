@@ -1,4 +1,5 @@
 import { Capacitor } from "@capacitor/core";
+import { BASE_URL } from "../utils/routes";
 
 const isProd = (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.PROD) ?? (process.env.NODE_ENV === "production");
 export const DEV_URL = "https://ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app";
@@ -8,21 +9,9 @@ export const API_BASE = Capacitor.isNativePlatform() ? (isProd ? PROD_URL : DEV_
 
 // Generate a public, shareable URL for mobile and web platforms
 export function getShareableUrl(currentPath?: string): string {
-  const envUrl = typeof import.meta !== "undefined" && import.meta.env ? import.meta.env.VITE_PUBLIC_SITE_URL : undefined;
-  
-  let siteBase = "";
-  if (envUrl && envUrl.trim() !== "") {
-    siteBase = envUrl.trim().replace(/\/+$/, "");
-  } else if (typeof window !== "undefined" && window.location && window.location.origin && !window.location.origin.includes("localhost") && !window.location.origin.startsWith("capacitor://")) {
-    siteBase = window.location.origin;
-  } else {
-    siteBase = PROD_URL;
-  }
-
   const path = currentPath || (typeof window !== "undefined" ? window.location.pathname + window.location.search : "");
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-
-  return `${siteBase}${cleanPath}`;
+  return `${BASE_URL}${cleanPath}`;
 }
 
 // A robust fetch that handles cold-starts, retries, and environment URL fallbacks on mobile

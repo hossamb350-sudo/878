@@ -5,23 +5,23 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Layout } from "./components/Layout";
-import { Home } from "./pages/Home";
-import { NewsDetail } from "./pages/NewsDetail";
-import { Watch } from "./pages/Watch";
-import { Leader } from "./pages/Leader";
-import { LeaderItem } from "./pages/LeaderItem";
-import { WatchItem } from "./pages/WatchItem";
-import { Quran } from "./pages/Quran";
-import { Events } from "./pages/Events";
-import { Articles } from "./pages/Articles";
-import { ArticleDetail } from "./pages/ArticleDetail";
-import { Admin } from "./pages/Admin";
-import { ActivityDetail } from "./pages/ActivityDetail";
-import { Search } from "./pages/Search";
-import { WeatherDetail } from "./pages/WeatherDetail";
-import { PrayerTimesDetail } from "./pages/PrayerTimesDetail";
-import CalendarDetail from "./pages/CalendarDetail";
-import { TopicDetail } from "./pages/TopicDetail";
+import { Home } from "./pages/home";
+import { NewsDetail } from "./pages/news/[slug]";
+import { Watch } from "./pages/watch";
+import { Leader } from "./pages/leader";
+import { LeaderItem } from "./pages/leader/[slug]";
+import { WatchItem } from "./pages/watch/[slug]";
+import { Quran } from "./pages/quran";
+import { Events } from "./pages/events";
+import { Articles } from "./pages/articles";
+import { ArticleDetail } from "./pages/articles/[slug]";
+import { Admin } from "./pages/admin";
+import { ActivityDetail } from "./pages/events/activity/[slug]";
+import { Search } from "./pages/search";
+import { WeatherDetail } from "./pages/weather";
+import { PrayerTimesDetail } from "./pages/prayer-times";
+import CalendarDetail from "./pages/calendar";
+import { TopicDetail } from "./pages/topic/[slug]";
 import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
@@ -37,6 +37,8 @@ import { AppVersionConfig } from "./types";
 import { CategoryService } from "./services/CategoryService";
 import { AlertTriangle, Download } from "lucide-react";
 
+import NotFound from "./pages/NotFound";
+
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -46,22 +48,23 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route index element={<Home />} />
         <Route path="search" element={<Search />} />
-        <Route path="news/:id" element={<NewsDetail />} />
+        <Route path="news/:slug" element={<NewsDetail />} />
         <Route path="articles" element={<Articles />} />
-        <Route path="articles/:id" element={<ArticleDetail />} />
+        <Route path="articles/:slug" element={<ArticleDetail />} />
         <Route path="watch" element={<Watch />} />
-        <Route path="watch/:id" element={<WatchItem />} />
+        <Route path="watch/:slug" element={<WatchItem />} />
         <Route path="leader" element={<Leader />} />
-        <Route path="leader/:id" element={<LeaderItem />} />
+        <Route path="leader/:slug" element={<LeaderItem />} />
         <Route path="quran" element={<Quran />} />
         <Route path="events" element={<Events />} />
-        <Route path="events/activity/:id" element={<ActivityDetail />} />
+        <Route path="events/activity/:slug" element={<ActivityDetail />} />
         <Route path="weather" element={<WeatherDetail />} />
         <Route path="prayer-times" element={<PrayerTimesDetail />} />
         <Route path="calendar" element={<CalendarDetail />} />
         <Route path="calendar/:month/:year" element={<CalendarDetail />} />
-        <Route path="topic/:id" element={<TopicDetail />} />
+        <Route path="topic/:slug" element={<TopicDetail />} />
         <Route path="admin" element={<Admin />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
   );

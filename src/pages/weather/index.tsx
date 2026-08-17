@@ -9,7 +9,7 @@ import {
   TrendingUp, Sliders, Wind as WindIcon, HeartPulse, ChevronRight
 } from "lucide-react";
 
-import { fetchWeatherData } from "../utils/weatherApi";
+import { fetchWeatherData } from "../../utils/weatherApi";
 
 // --- TIME PERIOD OF DAY ENGINE ---
 export type TimePeriod = "dawn" | "morning" | "noon" | "afternoon" | "sunset" | "evening" | "night";

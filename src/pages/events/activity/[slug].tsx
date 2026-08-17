@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { updateMetadata } from "../../../utils/metadata";
+import { extractIdFromSlug, generateSlug } from "../../../utils/routes";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "../../../firebase";
 import { ArrowRight, Edit, Trash2, Calendar, Clock, Image, Save, X, Info } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export function ActivityDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
+  const id = extractIdFromSlug(slug || "");
   const navigate = useNavigate();
   const [activity, setActivity] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -138,7 +141,20 @@ export function ActivityDetail() {
   };
 
   if (loading) {
-    return (
+    
+  useEffect(() => {
+    if (activity) {
+      updateMetadata({
+        title: activity.title,
+        description: activity.shortDescription || activity.description || "",
+        imageUrl: activity.imageUrl || activity.thumbnailUrl || "",
+        type: "article",
+        path: window.location.pathname
+      });
+    }
+  }, [activity]);
+
+  return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 bg-surface-main">
         <div className="relative w-12 h-12">
           <div className="absolute inset-0 rounded-full border-4 border-taiz-navy/10 border-t-taiz-royal animate-spin"></div>

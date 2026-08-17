@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from "react";
+import { updateMetadata } from "../../utils/metadata";
+import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
-import { Article } from "../types";
+import { db } from "../../firebase";
+import { Article } from "../../types";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ArrowRight, 
@@ -27,11 +29,12 @@ import {
   Newspaper
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
-import { getShareableUrl } from "../config/apiConfig";
-import { CategoryBadges } from "../components/CategoryBadges";
+import { getShareableUrl } from "../../config/apiConfig";
+import { CategoryBadges } from "../../components/CategoryBadges";
 
 export function ArticleDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
+  const id = extractIdFromSlug(slug || "");
   const navigate = useNavigate();
   const [article, setArticle] = useState<Article | null>(null);
   const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
@@ -86,7 +89,20 @@ export function ArticleDetail() {
         } : null);
       }
     });
-    return () => unsub();
+    
+  useEffect(() => {
+    if (article) {
+      updateMetadata({
+        title: article.title,
+        description: "",
+        imageUrl: article.imageUrl || "" || "",
+        type: "article",
+        path: window.location.pathname
+      });
+    }
+  }, [article]);
+
+  return () => unsub();
   }, [article?.authorId]);
 
   // Auto slide interval for the article hero card
@@ -251,7 +267,7 @@ export function ArticleDetail() {
   }, [id]);
 
   const handleShare = async (platform: string) => {
-    const url = getShareableUrl(`/articles/${id || article?.id}`);
+    const url = getShareableUrl(`/${"article"}/${generateSlug(article?.title || "", article?.id || id)}`);
     const text = article?.title || "";
 
     if (platform === "copy") {
@@ -523,7 +539,7 @@ export function ArticleDetail() {
              </h3>
              <div className="grid grid-cols-2 gap-4">
                 {relatedArticles.map(a => (
-                  <Link key={a.id} to={`/articles/${a.id}`} className="group block bg-white rounded-none p-3 border border-border-light hover:border-taiz-sky/30 hover:bg-slate-50 transition-all shadow-soft">
+                  <Link key={a.id} to={routes.article(generateSlug(a.title || "", a.id))} className="group block bg-white rounded-none p-3 border border-border-light hover:border-taiz-sky/30 hover:bg-slate-50 transition-all shadow-soft">
                      <div className="aspect-video rounded-none overflow-hidden mb-3">
                         <img src={a.imageUrl || a.authorPhoto} alt={a.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                      </div>

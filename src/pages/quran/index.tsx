@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import { auth, db } from "../../firebase";
 import { useSearchParams } from "react-router-dom";
 import {
   QuranSeries,
@@ -9,8 +9,8 @@ import {
   QuranSyllabus,
   QuranExcerpt,
   QuranLastRead,
-} from "../types";
-import { SyncService } from "../services/SyncService";
+} from "../../types";
+import { SyncService } from "../../services/SyncService";
 import {
   Menu,
   Info,
@@ -40,11 +40,11 @@ import {
   Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { QuranReader } from "../components/QuranReader";
-import { QuranStats } from "../components/QuranStats";
-import { QuranKareem } from "../components/QuranKareem";
-import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData, sortQuranLessons, formatLessonDisplayTitle } from "../data/staticQuranData";
-import { loadQuranMetadata, loadLessonContent } from "../data/importedQuranData";
+import { QuranReader } from "../../components/QuranReader";
+import { QuranStats } from "../../components/QuranStats";
+import { QuranKareem } from "../../components/QuranKareem";
+import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData, sortQuranLessons, formatLessonDisplayTitle } from "../../data/staticQuranData";
+import { loadQuranMetadata, loadLessonContent } from "../../data/importedQuranData";
 
 enum OperationType {
   CREATE = "create",
