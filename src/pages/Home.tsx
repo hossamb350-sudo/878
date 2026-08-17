@@ -1,18 +1,17 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { routes, generateSlug } from "../../utils/routes";
 import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase";
-import { SyncService } from "../../services/SyncService";
-import { CategoryService } from "../../services/CategoryService";
-import { NewsItem, VideoItem, LeaderContent, Article } from "../../types";
-import { CategoryBadges } from "../../components/CategoryBadges";
+import { db } from "../firebase";
+import { SyncService } from "../services/SyncService";
+import { CategoryService } from "../services/CategoryService";
+import { NewsItem, VideoItem, LeaderContent, Article } from "../types";
+import { CategoryBadges } from "../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen, Star } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { PullToRefresh } from "../../components/PullToRefresh";
-import { FeaturedTopicsSlider } from "../../components/FeaturedTopicsSlider";
+import { PullToRefresh } from "../components/PullToRefresh";
+import { FeaturedTopicsSlider } from "../components/FeaturedTopicsSlider";
 
 function getRelativeArabicTime(timestamp: number): string {
   const diffMs = Date.now() - timestamp;
@@ -149,7 +148,7 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
               }}
               className="w-full h-full absolute top-0 left-0 cursor-grab active:cursor-grabbing"
             >
-              <Link to={currentItem.isLeader ? routes.leaderItem(generateSlug(currentItem.title || "", currentItem.id)) : routes.news(generateSlug(currentItem.title || "", currentItem.id))} className="block w-full h-full relative group">
+              <Link to={currentItem.isLeader ? `/leader/${currentItem.id}` : `/news/${currentItem.id}`} className="block w-full h-full relative group">
                 {currentItem.imageUrl ? (
                   <img 
                     src={currentItem.imageUrl} 
@@ -671,7 +670,7 @@ export function Home() {
                        >
                          <Link 
                            id={`home-video-${video.id}`}
-                           to={video.isLeader ? routes.leaderItem(generateSlug(video.title || "", video.id)) : routes.watchItem(generateSlug(video.title || "", video.id))} 
+                           to={video.isLeader ? `/leader/${video.id}` : `/watch/${video.id}`} 
                            className="group block outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky rounded-[12px] h-full"
                          >
                             <div className="relative h-[135px] sm:h-[155px] rounded-[12px] overflow-hidden bg-gray-900 shadow-sm group-hover:shadow-lg active:scale-95 transition-all duration-300 border border-slate-200/50">
@@ -741,7 +740,7 @@ export function Home() {
                   {item.isFeaturedLayout ? (
                     <div className="px-2 sm:px-3">
                       <Link 
-                        to={item.isLeader ? routes.leaderItem(generateSlug(item.title || "", item.id)) : routes.news(generateSlug(item.title || "", item.id))} 
+                        to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
                         className="block relative w-full h-[320px] sm:h-[350px] rounded-[18px] sm:rounded-[22px] overflow-hidden border border-black/5 dark:border-white/10 shadow-md hover:shadow-xl active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out mb-3 select-none group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
                         style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                       >
@@ -804,7 +803,7 @@ export function Home() {
                     </div>
                   ) : (
                     <Link
-                      to={item.isLeader ? routes.leaderItem(generateSlug(item.title || "", item.id)) : routes.news(generateSlug(item.title || "", item.id))} 
+                      to={item.isLeader ? `/leader/${item.id}` : `/news/${item.id}`} 
                       className="flex items-center bg-white rounded-[14px] border border-slate-200/80 shadow-soft mx-2 sm:mx-3 mb-2 overflow-hidden group relative hover:shadow-medium hover:bg-slate-50/50 hover:-translate-y-0.5 active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out h-[105px] sm:h-[120px] will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
                       style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                     >
@@ -875,7 +874,7 @@ export function Home() {
         >
           {/* Featured Article in Tab */}
           {articles.length > 0 && (
-            <Link to={routes.article(generateSlug(articles[0].title || '', articles[0].id))} className="block group">
+            <Link to={`/articles/${articles[0].id}`} className="block group">
               <div className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-xl border border-border-light">
                 {articles[0].imageUrl ? (
                   <img src={articles[0].imageUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt="" />
@@ -927,7 +926,7 @@ export function Home() {
             {articles.slice(1).map((article, idx) => (
               <Link 
                 key={article.id} 
-                to={routes.article(generateSlug(article.title || '', article.id))} 
+                to={`/articles/${article.id}`} 
                 className="flex items-center gap-4 p-3 bg-white rounded-[14px] border border-slate-200/80 shadow-soft hover:shadow-medium hover:bg-slate-50/50 transition-all duration-300"
               >
                 <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 shrink-0">

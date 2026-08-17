@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { updateMetadata } from "../../utils/metadata";
-import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
-import { db } from "../../firebase";
-import { FeaturedTopic, NewsItem, VideoItem, Article } from "../../types";
+import { db } from "../firebase";
+import { FeaturedTopic, NewsItem, VideoItem, Article } from "../types";
 import { 
   ArrowRight, 
   Tag, 
@@ -25,8 +23,7 @@ import { ar } from "date-fns/locale";
 import { motion, AnimatePresence } from "motion/react";
 
 export function TopicDetail() {
-  const { slug } = useParams<{ slug: string }>();
-  const id = extractIdFromSlug(slug || "");
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
   const [topic, setTopic] = useState<FeaturedTopic | null>(null);
@@ -100,20 +97,7 @@ export function TopicDetail() {
       setContentLoading(false);
     }
 
-    
-  useEffect(() => {
-    if (topic) {
-      updateMetadata({
-        title: topic.title,
-        description: "",
-        imageUrl: topic.imageUrl || "" || "",
-        type: "website",
-        path: window.location.pathname
-      });
-    }
-  }, [topic]);
-
-  return () => {
+    return () => {
       unsubNews();
       unsubVideos();
       unsubArticles();
@@ -347,7 +331,7 @@ export function TopicDetail() {
                   {matchedNews.map((item) => (
                     <Link
                       key={item.id}
-                      to={routes.news(generateSlug(item.title || "", item.id))}
+                      to={`/news/${item.id}`}
                       className="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/50 transition-all duration-300 shadow-xs hover:shadow-lg flex flex-col justify-between"
                     >
                       <div>
@@ -413,7 +397,7 @@ export function TopicDetail() {
                   {matchedVideos.map((vid) => (
                     <Link
                       key={vid.id}
-                      to={routes.watchItem(generateSlug(vid.title || "", vid.id))}
+                      to={`/watch/${vid.id}`}
                       className="group bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800 hover:border-red-500/50 transition-all duration-300 shadow-xs hover:shadow-lg flex flex-col justify-between"
                     >
                       <div>
@@ -486,7 +470,7 @@ export function TopicDetail() {
                   {matchedArticles.map((art) => (
                     <Link
                       key={art.id}
-                      to={routes.article(generateSlug(art.title || "", art.id))}
+                      to={`/articles/${art.id}`}
                       className="group bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 hover:border-blue-500/50 transition-all duration-300 shadow-xs hover:shadow-lg flex items-center gap-4"
                     >
                       <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-slate-100 dark:bg-slate-800 shrink-0 overflow-hidden">

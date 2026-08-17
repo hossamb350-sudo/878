@@ -1,10 +1,8 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { updateMetadata } from "../../utils/metadata";
-import { extractIdFromSlug, generateSlug } from "../../utils/routes";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import { db } from "../../firebase";
-import { LeaderContent } from "../../types";
+import { db } from "../firebase";
+import { LeaderContent } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { 
@@ -30,8 +28,8 @@ import {
   Video as VideoIcon
 } from "lucide-react";
 import { motion } from "motion/react";
-import { getShareableUrl } from "../../config/apiConfig";
-import { useLiveStream } from "../../context/LiveStreamContext";
+import { getShareableUrl } from "../config/apiConfig";
+import { useLiveStream } from "../context/LiveStreamContext";
 
 // Helper function to translate standard video links into embeddable URLs
 const getEmbedUrl = (url: string, autoPlay: boolean = false) => {
@@ -86,8 +84,7 @@ const getEmbedUrl = (url: string, autoPlay: boolean = false) => {
 };
 
 export function LeaderItem() {
-  const { slug } = useParams();
-  const id = extractIdFromSlug(slug || "");
+  const { id } = useParams();
   const navigate = useNavigate();
   const { stopStream } = useLiveStream();
   const [content, setContent] = useState<LeaderContent | null>(null);
@@ -116,25 +113,12 @@ export function LeaderItem() {
       }
     };
     window.addEventListener('message', handleMessage);
-    
-  useEffect(() => {
-    if (content) {
-      updateMetadata({
-        title: content.title,
-        description: content.description || "",
-        imageUrl: content.thumbnailUrl || "",
-        type: "article",
-        path: window.location.pathname
-      });
-    }
-  }, [content]);
-
-  return () => window.removeEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, [handlePlayVideo]);
   
   // Custom reading preferences
   const [fontSize, setFontSize] = useState<number>(() => {
-    const saved = localStorage.getItem("content?_font_size");
+    const saved = localStorage.getItem("leader_font_size");
     return saved ? parseInt(saved, 10) : 18;
   });
   
@@ -182,9 +166,9 @@ export function LeaderItem() {
     } else {
       favs.push({
         id: content.id,
-        type: "content?",
+        type: "leader",
         title: content.title,
-        imageUrl: content.thumbnailUrl || "",
+        imageUrl: content.thumbnailUrl,
         savedAt: Date.now()
       });
       setIsFavorited(true);
@@ -193,7 +177,7 @@ export function LeaderItem() {
   };
 
   useEffect(() => {
-    localStorage.setItem("content?_font_size", fontSize.toString());
+    localStorage.setItem("leader_font_size", fontSize.toString());
   }, [fontSize]);
 
   useEffect(() => {
@@ -201,7 +185,7 @@ export function LeaderItem() {
     
     const fetchLeaderContent = async () => {
       try {
-        const docRef = doc(db, "content?", id);
+        const docRef = doc(db, "leader", id);
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
@@ -243,7 +227,7 @@ export function LeaderItem() {
   const handleCopyText = async () => {
     if (!content) return;
     try {
-      await navigator.clipboard.writeText(content.title + "\n\n" + content?.content);
+      await navigator.clipboard.writeText(content.title + "\n\n" + content.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -253,7 +237,7 @@ export function LeaderItem() {
 
   const shareText = () => {
     if (!content) return;
-    const shareableUrl = getShareableUrl(`/content?/${id || content.id}`);
+    const shareableUrl = getShareableUrl(`/leader/${id || content.id}`);
     if (navigator.share) {
       navigator.share({
         title: content.title,
@@ -316,7 +300,7 @@ export function LeaderItem() {
     return { mDate, mTime, hDate };
   };
 
-  const { mDate, mTime, hDate } = formatPublishInfo(content?.createdAt);
+  const { mDate, mTime, hDate } = formatPublishInfo(content.createdAt);
 
   const renderParagraph = (text: string, idx: number) => {
     if (!text.trim()) return null;
@@ -387,11 +371,11 @@ export function LeaderItem() {
 
       <article className="w-full">
         {/* Edge-to-Edge Header */}
-        {content?.type === "video" ? (
+        {content.type === "video" ? (
           <div className="w-full relative aspect-video bg-black overflow-hidden group">
             {isVideoPlaying ? (
               <iframe 
-                src={getEmbedUrl(content?.content, true)} 
+                src={getEmbedUrl(content.content, true)} 
                 className="w-full h-full border-0"
                 allowFullScreen
                 allow="autoplay; encrypted-media; picture-in-picture"
@@ -475,7 +459,7 @@ export function LeaderItem() {
         )}
 
         {/* Title area & Content */}
-        {content?.type === "video" ? (
+        {content.type === "video" ? (
           <div className="max-w-[800px] mx-auto">
             <div className="px-5 sm:px-8 pb-6 pt-6 border-b border-stone-100 dark:border-stone-800">
               {/* Back Button Above Title */}
@@ -505,7 +489,7 @@ export function LeaderItem() {
                 <span className="text-stone-200 dark:text-stone-700">|</span>
                 <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
                   <Eye className="w-3 h-3 text-red-600 shrink-0" />
-                  <span>{((content?.views || 0) + 1).toLocaleString('ar-EG')} مشاهدة</span>
+                  <span>{((content.views || 0) + 1).toLocaleString('ar-EG')} مشاهدة</span>
                 </span>
               </div>
             </div>
@@ -566,7 +550,7 @@ export function LeaderItem() {
                   <span className="text-stone-200 dark:text-stone-700">|</span>
                   <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
                     <Eye className="w-3 h-3 text-red-600 shrink-0" />
-                    <span>{(content?.views || 0) + 1} مشاهدة</span>
+                    <span>{(content.views || 0) + 1} مشاهدة</span>
                   </span>
                 </div>
             </div>
@@ -618,7 +602,7 @@ export function LeaderItem() {
                         lineHeight: 1.8,
                       }}
                     >
-                      {content?.content.split("\n").map((para, pIdx) => renderParagraph(para, pIdx))}
+                      {content.content.split("\n").map((para, pIdx) => renderParagraph(para, pIdx))}
                     </div>
 
                     <div className="flex gap-3 pt-8 border-t border-stone-100 dark:border-stone-800 mt-12">

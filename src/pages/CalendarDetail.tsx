@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { SyncService } from "../../services/SyncService";
-import { EventItem, ActivityItem } from "../../types";
-import { BASE_EVENTS } from "../../data/staticEvents";
+import { SyncService } from "../services/SyncService";
+import { EventItem, ActivityItem } from "../types";
+import { BASE_EVENTS } from "../data/staticEvents";
 import { 
   ChevronRight, 
   ChevronLeft, 

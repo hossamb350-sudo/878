@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { routes, generateSlug } from "../utils/routes";
 import { Bookmark, FileText, User, Trash2, Video, BookOpen, Layers } from "lucide-react";
 import { FavoriteItem } from "../types";
 
@@ -130,10 +129,10 @@ export function FavoritesList() {
 
 function FavoriteItemCard({ item, onRemove }: { item: FavoriteItem; onRemove: (id: string) => void }) {
   const linkTo = 
-    item.type === "news" ? routes.news(generateSlug(item.title || "", item.id)) 
-    : item.type === "article" ? routes.article(generateSlug(item.title || "", item.id)) 
-    : item.type === "watch" ? routes.watchItem(generateSlug(item.title || "", item.id)) 
-    : routes.leaderItem(generateSlug(item.title || "", item.id));
+    item.type === "news" ? `/news/${item.id}` 
+    : item.type === "article" ? `/articles/${item.id}` 
+    : item.type === "watch" ? `/watch/${item.id}` 
+    : `/leader/${item.id}`;
 
   const badgeConfig = {
     news: { label: "خبر", bg: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800", icon: FileText },

@@ -1,10 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
-import { SyncService } from "../../services/SyncService";
-import { LeaderContent } from "../../types";
+import { SyncService } from "../services/SyncService";
+import { LeaderContent } from "../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { Search, Play, Calendar, Eye, FileText, Video as VideoIcon } from "lucide-react";
-import { routes, generateSlug } from "../../utils/routes";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -170,7 +169,7 @@ export function Leader() {
                     className="w-full"
                   >
                     <Link
-                      to={routes.leaderItem(generateSlug(item.title || "", item.id))}
+                      to={`/leader/${item.id}`}
                       className="group relative w-full min-h-[210px] sm:min-h-[225px] rounded-[24px] overflow-hidden bg-gradient-to-l from-[#07152B] via-[#0B2545] to-[#0A3323] border border-[#D4AF37]/35 shadow-[0_10px_25px_rgba(7,21,43,0.15)] flex items-stretch transition-all duration-300 block"
                     >
                       {/* Decorative Frame Elements */}

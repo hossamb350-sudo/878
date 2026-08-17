@@ -1,4 +1,3 @@
-import { routes, generateSlug } from "../utils/routes";
 import React, { useState, useEffect } from "react";
 import { 
   PlusCircle, Plus, List, ChevronDown, FileText, Edit, Trash2, ArrowRight, 
@@ -1591,7 +1590,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                               {/* Actions */}
                               <div className={`flex items-center justify-end gap-2 ${viewMode === 'grid' ? 'mt-4 pt-4 border-t border-gray-100 dark:border-gray-700' : 'mt-2'}`}>
                                 <a 
-                                  href={routes.news(generateSlug(item.title || "", item.id))} 
+                                  href={`/news/${item.id}`} 
                                   target="_blank" 
                                   rel="noopener noreferrer" 
                                   className="p-2 bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 rounded-lg transition-all" 

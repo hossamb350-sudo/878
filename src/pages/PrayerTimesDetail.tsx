@@ -5,7 +5,7 @@ import {
   MapPin, Calendar, ChevronLeft, 
   Sun, Moon, Check, ArrowRight
 } from "lucide-react";
-import { PrayerBackgroundEffect } from "../../components/PrayerBackgroundEffect";
+import { PrayerBackgroundEffect } from "../components/PrayerBackgroundEffect";
 
 // ==========================================
 // 1. DISTINCT CUSTOM PRAYER ICONS FOR EACH PRAYER
