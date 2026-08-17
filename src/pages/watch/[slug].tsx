@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
+import { updateMetadata } from "../../utils/metadata";
+import { extractIdFromSlug, generateSlug } from "../../utils/routes";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import { db } from "../firebase";
-import { SyncService } from "../services/SyncService";
-import { VideoItem } from "../types";
+import { db } from "../../firebase";
+import { SyncService } from "../../services/SyncService";
+import { VideoItem } from "../../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { 
@@ -11,11 +13,12 @@ import {
   Maximize, Monitor, Volume2, Settings, Video as VideoIcon
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { getShareableUrl } from "../config/apiConfig";
-import { useLiveStream } from "../context/LiveStreamContext";
+import { getShareableUrl } from "../../config/apiConfig";
+import { useLiveStream } from "../../context/LiveStreamContext";
 
 export function WatchItem() {
-  const { id } = useParams();
+  const { slug } = useParams();
+  const id = extractIdFromSlug(slug || "");
   const navigate = useNavigate();
   const { stopStream } = useLiveStream();
   const [video, setVideo] = useState<VideoItem | null>(null);
@@ -47,7 +50,20 @@ export function WatchItem() {
       }
     };
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+    
+  useEffect(() => {
+    if (video) {
+      updateMetadata({
+        title: video.title,
+        description: video.description || "" || "",
+        imageUrl: video.thumbnailUrl || "" || "",
+        type: "video.other",
+        path: window.location.pathname
+      });
+    }
+  }, [video]);
+
+  return () => window.removeEventListener('message', handleMessage);
   }, [handlePlayVideo]);
 
   useEffect(() => {
@@ -339,7 +355,7 @@ export function WatchItem() {
               {recentVideos.map((vid) => (
                 <Link 
                   key={vid.id}
-                  to={`/watch/${vid.id}`} 
+                  to={routes.watchItem(generateSlug(vid.title || "", vid.id))} 
                   className="flex-shrink-0 w-[75vw] sm:w-[320px] group block"
                 >
                   <div className="relative aspect-video rounded-2xl overflow-hidden bg-slate-100 mb-3.5">
