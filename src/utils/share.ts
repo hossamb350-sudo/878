@@ -10,54 +10,6 @@ export interface ShareOptions {
 }
 
 /**
- * Fallback to legacy document.execCommand('copy') when Clipboard API is blocked or document lacks focus.
- */
-export function copyTextFallback(text: string): boolean {
-  try {
-    const textArea = document.createElement("textarea");
-    textArea.value = text;
-    
-    // Position out of view
-    textArea.style.position = "fixed";
-    textArea.style.top = "0";
-    textArea.style.left = "0";
-    textArea.style.width = "2em";
-    textArea.style.height = "2em";
-    textArea.style.padding = "0";
-    textArea.style.border = "none";
-    textArea.style.outline = "none";
-    textArea.style.boxShadow = "none";
-    textArea.style.background = "transparent";
-    
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    const successful = document.execCommand("copy");
-    document.body.removeChild(textArea);
-    return !!successful;
-  } catch (err) {
-    console.error("copyTextFallback failed:", err);
-    return false;
-  }
-}
-
-/**
- * Robustly copy text to clipboard trying the Clipboard API, and falling back to execCommand if not focused.
- */
-export async function safeCopyToClipboard(text: string): Promise<boolean> {
-  if (typeof navigator.clipboard !== "undefined" && typeof navigator.clipboard.writeText === "function") {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (err) {
-      console.warn("navigator.clipboard.writeText failed, attempting legacy fallback...", err);
-    }
-  }
-  return copyTextFallback(text);
-}
-
-/**
  * Perform a native share action, or fall back if not supported.
  * Returns true if native share succeeded/was triggered, false if clipboard fallback was used.
  */
@@ -149,6 +101,12 @@ export async function shareContent(options: ShareOptions): Promise<{ success: bo
   }
   
   // 4. Fallback to Copy to Clipboard
-  const copied = await safeCopyToClipboard(shareableUrl);
-  return { success: copied, native: false };
+  try {
+    await navigator.clipboard.writeText(shareableUrl);
+    return { success: true, native: false };
+  } catch (clipboardErr) {
+    console.error("Clipboard copy failed", clipboardErr);
+    // Absolute fallback
+    return { success: false, native: false };
+  }
 }

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { updateMetadata } from "../../utils/metadata";
 import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
-import { shareContent, safeCopyToClipboard } from "../../utils/share";
+import { shareContent } from "../../utils/share";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -28,7 +28,6 @@ import {
   ChevronLeft,
   Clock,
   Send,
-  Link2,
   Newspaper
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -289,7 +288,7 @@ export function ArticleDetail() {
     const text = article?.title || "";
 
     if (platform === "copy") {
-      await safeCopyToClipboard(url);
+      await navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       return;
@@ -335,10 +334,11 @@ export function ArticleDetail() {
 
   return (
     <div className="min-h-screen bg-white text-text-primary pb-32 font-sans" dir="rtl">
-      {/* Top Nav with matching light background */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-soft px-4 h-16 flex items-center justify-between text-text-primary">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary">
-          <ArrowRight className="w-6 h-6 text-taiz-sky" />
+      {/* Inline Top Navigation Actions */}
+      <div className="max-w-[760px] mx-auto w-full px-4 pt-4 sm:pt-6 flex justify-between items-center text-text-primary" dir="rtl">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary flex items-center gap-1.5 font-bold text-xs font-alexandria">
+          <ArrowRight className="w-5 h-5 text-taiz-sky" />
+          <span>رجوع</span>
         </button>
         <div className="flex items-center gap-2">
           <button 
@@ -346,16 +346,16 @@ export function ArticleDetail() {
             title={isBookmarked ? "إزالة من المفضلة" : "حفظ في المفضلة"}
             className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-taiz-sky bg-taiz-sky/10" : "hover:bg-slate-200/50 text-text-primary"}`}
           >
-            <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
+            <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
           </button>
           <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors relative text-text-primary">
-            {copied ? <Check className="w-6 h-6 text-emerald-600" /> : <Share2 className="w-6 h-6" />}
+            {copied ? <Check className="w-5 h-5 text-emerald-600" /> : <Share2 className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
       {/* Article Title Section Above the Slider */}
-      <div className="max-w-[760px] mx-auto w-full px-4 pt-5 sm:pt-8 pb-3 sm:pb-5 text-right border-b border-slate-100/40 dark:border-stone-800/20" dir="rtl">
+      <div className="max-w-[760px] mx-auto w-full px-4 pt-3 sm:pt-4 pb-2 text-right border-b border-slate-100/40 dark:border-stone-800/20" dir="rtl">
         <h1 className="font-extrabold text-[20px] sm:text-[24px] md:text-[26px] text-slate-900 dark:text-white leading-[1.45] font-cairo">
           {article.title}
         </h1>
@@ -363,12 +363,12 @@ export function ArticleDetail() {
 
       {/* Render Image Gallery Slider ONLY if article has images */}
       {allImages.length > 0 && (
-        <div className="max-w-[760px] mx-auto w-full px-0 pt-4 sm:pt-6 pb-2">
+        <div className="max-w-[760px] mx-auto w-full px-0 pt-2.5 sm:pt-3.5 pb-1">
           {/* Featured Article Card Header - Integrated Slider with horizontal controls */}
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative w-full h-[320px] sm:h-[400px] md:h-[450px] overflow-hidden bg-slate-900 mb-3 select-none group rounded-2xl shadow-md border border-slate-200/20 dark:border-slate-800/80"
+            className="relative w-full h-[320px] sm:h-[400px] md:h-[450px] overflow-hidden bg-slate-900 mb-2 select-none group rounded-2xl shadow-md border border-slate-200/20 dark:border-slate-800/80"
           >
             {/* Horizontal Swiping Container */}
             <div 
@@ -437,7 +437,7 @@ export function ArticleDetail() {
 
           {/* Dynamic Image Thumbnails underneath Slider */}
           {allImages.length > 1 && (
-            <div className="px-4 sm:px-5 mb-4 flex items-center justify-center w-full">
+            <div className="px-4 sm:px-5 mb-2.5 flex items-center justify-center w-full">
               <div ref={thumbnailContainerRef} className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
                 {allImages.map((img, idx) => (
                   <button
@@ -459,9 +459,9 @@ export function ArticleDetail() {
         </div>
       )}
 
-      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5 mt-4">
+      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5 mt-1.5">
         {/* Article Metadata Card - Re-designed, Elegant, Structured */}
-        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-xs mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 font-cairo text-right" dir="rtl">
+        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-xs mb-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 font-cairo text-right" dir="rtl">
           {/* Author info with author avatar, prefix badge & name */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="relative">
@@ -514,7 +514,7 @@ export function ArticleDetail() {
           </div>
         </div>
         {/* Floating Interaction Bar (شريط التفاعل) matching screenshot */}
-        <div className="my-6 bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 rounded-full px-6 py-2.5 shadow-sm flex items-center justify-between max-w-xl mx-auto backdrop-blur-sm">
+        <div className="my-2.5 bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 rounded-full px-6 py-2.5 shadow-sm flex items-center justify-between max-w-xl mx-auto backdrop-blur-sm">
           {/* Social Share Icons */}
           <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
             <button onClick={() => handleShare("facebook")} className="hover:text-blue-600 transition-colors p-1" title="مشاركة عبر فيسبوك">
@@ -530,13 +530,6 @@ export function ArticleDetail() {
             </button>
             <button onClick={() => handleShare("telegram")} className="hover:text-sky-400 transition-colors p-1" title="مشاركة عبر تليجرام">
               <Send className="w-[18px] h-[18px]" />
-            </button>
-            <button 
-              onClick={() => handleShare("copy")} 
-              className={`transition-colors p-1 flex items-center justify-center ${copied ? 'text-emerald-500' : 'hover:text-slate-900 dark:hover:text-white'}`}
-              title="نسخ رابط المشاركة"
-            >
-              {copied ? <Check className="w-[18px] h-[18px]" /> : <Link2 className="w-[18px] h-[18px]" />}
             </button>
           </div>
 

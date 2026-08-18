@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { updateMetadata } from "../../utils/metadata";
 import { extractIdFromSlug, generateSlug } from "../../utils/routes";
-import { shareContent, safeCopyToClipboard } from "../../utils/share";
+import { shareContent } from "../../utils/share";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -243,7 +243,7 @@ export function LeaderItem() {
   const handleCopyText = async () => {
     if (!content) return;
     try {
-      await safeCopyToClipboard(content.title + "\n\n" + content?.content);
+      await navigator.clipboard.writeText(content.title + "\n\n" + content?.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
