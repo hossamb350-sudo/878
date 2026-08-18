@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { updateMetadata } from "../../utils/metadata";
 import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
+import { shareContent } from "../../utils/share";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -168,17 +169,15 @@ export function WatchItem() {
     fetchVideoAndSuggestions();
   }, [id]);
 
-  const handleShare = () => {
+  const handleShare = async () => {
     if (!video) return;
-    const shareableUrl = getShareableUrl(`/watch/${id || video.id}`);
-    if (navigator.share) {
-      navigator.share({
-        title: video.title,
-        text: `شاهد: ${video.title}\nعبر منصة تغذية شاهد الإعلامية`,
-        url: shareableUrl
-      }).catch(err => console.debug("Share failed", err));
-    } else {
-      navigator.clipboard.writeText(shareableUrl);
+    const res = await shareContent({
+      title: video.title,
+      type: "video",
+      id: video.id || id,
+      imageUrl: video.thumbnailUrl
+    });
+    if (res.success && !res.native) {
       setShareSuccess(true);
       setTimeout(() => setShareSuccess(false), 2000);
     }

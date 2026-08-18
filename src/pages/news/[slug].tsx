@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { updateMetadata } from "../../utils/metadata";
 import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
+import { shareContent, safeCopyToClipboard } from "../../utils/share";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -26,6 +27,8 @@ import {
   ChevronLeft,
   Calendar,
   Newspaper,
+  Send,
+  Link2,
   X
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -270,18 +273,33 @@ export function NewsDetail() {
   };
 
   const handleShare = async (platform: string) => {
-    const url = getShareableUrl(`/${"news"}/${generateSlug(news?.title || "", news?.id || id)}`);
-    const text = news?.title || "";
-
-    if (platform === "copy") {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-      return;
-    }
+    if (!news) return;
 
     if (platform === "print") {
       window.print();
+      return;
+    }
+
+    // Try Web Share API first for all share actions (if supported)
+    if (typeof navigator.share !== "undefined") {
+      const res = await shareContent({
+        title: news.title,
+        type: "news",
+        id: news.id || id,
+        imageUrl: news.imageUrl
+      });
+      if (res.native) {
+        return; // Native share successful
+      }
+    }
+
+    const url = getShareableUrl(`/news/${news?.id || id}`);
+    const text = news?.title || "";
+
+    if (platform === "copy") {
+      await safeCopyToClipboard(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
       return;
     }
 
@@ -296,8 +314,13 @@ export function NewsDetail() {
       case "whatsapp":
         shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
         break;
+      case "telegram":
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
     }
-    window.open(shareUrl, "_blank");
+    if (shareUrl) {
+      window.open(shareUrl, "_blank");
+    }
   };
 
   const formatPublishInfo = (timestamp: number) => {
@@ -361,22 +384,6 @@ export function NewsDetail() {
           <ArrowRight className="w-5 h-5 text-taiz-sky" />
           <span>رجوع</span>
         </button>
-
-        <div className="flex items-center gap-1">
-          <button 
-            onClick={toggleBookmark}
-            className={`p-2 rounded-full transition-colors ${isBookmarked ? "text-taiz-sky bg-taiz-sky/10" : "hover:bg-slate-100 text-text-primary"}`}
-            title="حفظ الخبر"
-          >
-            <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
-          </button>
-          <button onClick={() => handleShare("print")} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-text-primary" title="طباعة المقال">
-            <Printer className="w-5 h-5" />
-          </button>
-          <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-100 rounded-full transition-colors relative text-text-primary" title="نسخ الرابط">
-            {copied ? <Check className="w-5 h-5 text-emerald-600" /> : <Share2 className="w-5 h-5" />}
-          </button>
-        </div>
       </div>
       <div className="max-w-[760px] mx-auto w-full px-4 pt-5 sm:pt-8 pb-3 sm:pb-5 text-right border-b border-slate-100/40 dark:border-stone-800/20" dir="rtl">
         <h1 className="font-extrabold text-[20px] sm:text-[24px] md:text-[26px] text-slate-900 dark:text-white leading-[1.45] font-cairo">
@@ -559,10 +566,12 @@ export function NewsDetail() {
             </button>
             <button 
               onClick={() => handleShare("twitter")} 
-              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-sky-500 transition-all duration-200"
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-black dark:hover:text-white transition-all duration-200"
               title="مشاركة عبر إكس"
             >
-              <Twitter className="w-4.5 h-4.5" />
+              <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
             </button>
             <button 
               onClick={() => handleShare("facebook")} 
@@ -570,6 +579,24 @@ export function NewsDetail() {
               title="مشاركة عبر فيسبوك"
             >
               <Facebook className="w-4.5 h-4.5" />
+            </button>
+            <button 
+              onClick={() => handleShare("telegram")} 
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-sky-400 transition-all duration-200"
+              title="مشاركة عبر تليجرام"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => handleShare("copy")} 
+              className={`w-9 h-9 rounded-full border flex items-center justify-center transition-all duration-200 ${
+                copied 
+                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-500" 
+                  : "border-slate-200 dark:border-stone-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-slate-900 dark:hover:text-white"
+              }`}
+              title="نسخ رابط المشاركة"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
             </button>
           </div>
         </div>

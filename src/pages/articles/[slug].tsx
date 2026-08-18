@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { updateMetadata } from "../../utils/metadata";
 import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
+import { shareContent, safeCopyToClipboard } from "../../utils/share";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment, collection, query, where, limit, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -26,6 +27,8 @@ import {
   ChevronRight,
   ChevronLeft,
   Clock,
+  Send,
+  Link2,
   Newspaper
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -266,11 +269,27 @@ export function ArticleDetail() {
   }, [id]);
 
   const handleShare = async (platform: string) => {
-    const url = getShareableUrl(`/${"article"}/${generateSlug(article?.title || "", article?.id || id)}`);
+    if (!article) return;
+
+    // Try Web Share API first for all share actions (if supported)
+    if (typeof navigator.share !== "undefined") {
+      const res = await shareContent({
+        title: article.title,
+        type: "article",
+        id: article.id || id,
+        imageUrl: article.imageUrl,
+        authorPhoto: article.authorPhoto
+      });
+      if (res.native) {
+        return; // Native share successful
+      }
+    }
+
+    const url = getShareableUrl(`/articles/${article?.id || id}`);
     const text = article?.title || "";
 
     if (platform === "copy") {
-      await navigator.clipboard.writeText(url);
+      await safeCopyToClipboard(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       return;
@@ -287,8 +306,13 @@ export function ArticleDetail() {
       case "whatsapp":
         shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
         break;
+      case "telegram":
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
     }
-    window.open(shareUrl, "_blank");
+    if (shareUrl) {
+      window.open(shareUrl, "_blank");
+    }
   };
 
   if (loading) {
@@ -312,22 +336,11 @@ export function ArticleDetail() {
   return (
     <div className="min-h-screen bg-white text-text-primary pb-32 font-sans" dir="rtl">
       {/* Top Nav with matching light background */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-soft px-4 h-16 flex items-center justify-between text-text-primary">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary">
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-soft px-4 h-16 flex items-center justify-start text-text-primary">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary flex items-center gap-1">
           <ArrowRight className="w-6 h-6 text-taiz-sky" />
+          <span className="font-bold text-xs font-alexandria">رجوع</span>
         </button>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={toggleBookmark}
-            title={isBookmarked ? "إزالة من المفضلة" : "حفظ في المفضلة"}
-            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-taiz-sky bg-taiz-sky/10" : "hover:bg-slate-200/50 text-text-primary"}`}
-          >
-            <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
-          </button>
-          <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors relative text-text-primary">
-            {copied ? <Check className="w-6 h-6 text-emerald-600" /> : <Share2 className="w-6 h-6" />}
-          </button>
-        </div>
       </div>
 
       {/* Article Title Section Above the Slider */}
@@ -493,14 +506,26 @@ export function ArticleDetail() {
         <div className="my-6 bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 rounded-full px-6 py-2.5 shadow-sm flex items-center justify-between max-w-xl mx-auto backdrop-blur-sm">
           {/* Social Share Icons */}
           <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
-            <button onClick={() => handleShare("facebook")} className="hover:text-blue-600 transition-colors p-1" title="فيسبوك">
+            <button onClick={() => handleShare("facebook")} className="hover:text-blue-600 transition-colors p-1" title="مشاركة عبر فيسبوك">
               <Facebook className="w-5 h-5" />
             </button>
-            <button onClick={() => handleShare("twitter")} className="hover:text-sky-500 transition-colors p-1" title="إكس">
-              <Twitter className="w-5 h-5" />
+            <button onClick={() => handleShare("twitter")} className="hover:text-black dark:hover:text-white transition-colors p-1 flex items-center justify-center" title="مشاركة عبر إكس">
+              <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-current">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
             </button>
-            <button onClick={() => handleShare("whatsapp")} className="hover:text-emerald-500 transition-colors p-1" title="واتساب">
+            <button onClick={() => handleShare("whatsapp")} className="hover:text-emerald-500 transition-colors p-1" title="مشاركة عبر واتساب">
               <MessageCircle className="w-5 h-5" />
+            </button>
+            <button onClick={() => handleShare("telegram")} className="hover:text-sky-400 transition-colors p-1" title="مشاركة عبر تليجرام">
+              <Send className="w-[18px] h-[18px]" />
+            </button>
+            <button 
+              onClick={() => handleShare("copy")} 
+              className={`transition-colors p-1 flex items-center justify-center ${copied ? 'text-emerald-500' : 'hover:text-slate-900 dark:hover:text-white'}`}
+              title="نسخ رابط المشاركة"
+            >
+              {copied ? <Check className="w-[18px] h-[18px]" /> : <Link2 className="w-[18px] h-[18px]" />}
             </button>
           </div>
 

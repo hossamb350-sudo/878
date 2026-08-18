@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { updateMetadata } from "../../utils/metadata";
 import { extractIdFromSlug, generateSlug } from "../../utils/routes";
+import { shareContent, safeCopyToClipboard } from "../../utils/share";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 import { db } from "../../firebase";
@@ -242,7 +243,7 @@ export function LeaderItem() {
   const handleCopyText = async () => {
     if (!content) return;
     try {
-      await navigator.clipboard.writeText(content.title + "\n\n" + content?.content);
+      await safeCopyToClipboard(content.title + "\n\n" + content?.content);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -250,17 +251,17 @@ export function LeaderItem() {
     }
   };
 
-  const shareText = () => {
+  const shareText = async () => {
     if (!content) return;
-    const shareableUrl = getShareableUrl(`/content?/${id || content.id}`);
-    if (navigator.share) {
-      navigator.share({
-        title: content.title,
-        text: `بشأن: ${content.title}\nمن السيد القائد حفظه الله`,
-        url: shareableUrl,
-      }).catch(err => console.debug("Share failed", err));
-    } else {
-      handleCopyText();
+    const res = await shareContent({
+      title: content.title,
+      type: "leader",
+      id: content.id || id,
+      imageUrl: content.thumbnailUrl
+    });
+    if (res.success && !res.native) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
