@@ -384,14 +384,30 @@ export function NewsDetail() {
           <ArrowRight className="w-5 h-5 text-taiz-sky" />
           <span>رجوع</span>
         </button>
+
+        <div className="flex items-center gap-1">
+          <button 
+            onClick={toggleBookmark}
+            className={`p-2 rounded-full transition-colors ${isBookmarked ? "text-taiz-sky bg-taiz-sky/10" : "hover:bg-slate-100 text-text-primary"}`}
+            title="حفظ الخبر"
+          >
+            <Bookmark className={`w-5 h-5 ${isBookmarked ? "fill-current" : ""}`} />
+          </button>
+          <button onClick={() => handleShare("print")} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-text-primary" title="طباعة المقال">
+            <Printer className="w-5 h-5" />
+          </button>
+          <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-100 rounded-full transition-colors relative text-text-primary" title="نسخ الرابط">
+            {copied ? <Check className="w-5 h-5 text-emerald-600" /> : <Share2 className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
-      <div className="max-w-[760px] mx-auto w-full px-4 pt-5 sm:pt-8 pb-3 sm:pb-5 text-right border-b border-slate-100/40 dark:border-stone-800/20" dir="rtl">
+      <div className="max-w-[760px] mx-auto w-full px-2 sm:px-3 pt-3.5 sm:pt-5 pb-1.5 sm:pb-2.5 text-right border-b border-slate-100/40 dark:border-stone-800/20" dir="rtl">
         <h1 className="font-extrabold text-[20px] sm:text-[24px] md:text-[26px] text-slate-900 dark:text-white leading-[1.45] font-cairo">
           {news.title}
         </h1>
       </div>
 
-      <div className="max-w-[760px] mx-auto w-full px-0 pt-6 sm:pt-10 pb-2">
+      <div className="max-w-[760px] mx-auto w-full px-2 sm:px-3 pt-3 sm:pt-4 pb-1">
         {/* Featured News Card Header - Integrated Slider with horizontal controls */}
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
@@ -479,7 +495,7 @@ export function NewsDetail() {
 
         {/* Dynamic Image Thumbnails underneath Slider */}
         {allImages.length > 1 && (
-          <div className="px-4 sm:px-5 mb-4 flex items-center justify-center w-full">
+          <div className="px-2 sm:px-3 mb-2 flex items-center justify-center w-full">
             <div ref={thumbnailContainerRef} className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
               {allImages.map((img, idx) => (
                 <button
@@ -500,9 +516,9 @@ export function NewsDetail() {
         )}
       </div>
 
-      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5">
+      <div className="max-w-[760px] mx-auto w-full px-2 sm:px-3">
         {/* News Metadata Card - Extra Compact with Platform Navy branding & 11px Font */}
-        <div className="bg-slate-50/40 dark:bg-stone-900/20 border border-slate-200/20 dark:border-stone-800/40 rounded-lg p-2 sm:p-2.5 shadow-xs mb-3 mt-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 font-cairo text-right" dir="rtl">
+        <div className="bg-slate-50/40 dark:bg-stone-900/20 border border-slate-200/20 dark:border-stone-800/40 rounded-lg p-1.5 sm:p-2 shadow-xs mb-2 mt-0.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 font-cairo text-right" dir="rtl">
           {/* Author info with brand circular navy badge */}
           <div className="flex items-center gap-1.5 shrink-0">
             <div className="w-6.5 h-6.5 bg-taiz-navy/10 dark:bg-taiz-navy/20 rounded-full flex items-center justify-center text-taiz-navy dark:text-taiz-soft shrink-0">
@@ -533,7 +549,7 @@ export function NewsDetail() {
         </div>
 
         {/* Interaction Bar (شريط التفاعل) matching mockup design */}
-        <div className="my-5 bg-[#fafafa]/90 dark:bg-stone-900/40 border border-slate-200/50 dark:border-stone-800/80 rounded-full px-4 py-2 shadow-sm flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
+        <div className="mt-2 mb-3.5 bg-[#fafafa]/90 dark:bg-stone-900/40 border border-slate-200/50 dark:border-stone-800/80 rounded-full px-4 py-1.5 shadow-sm flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
           {/* Left side: Font Size Adjuster in mockup (+ 28px -) */}
           <div className="flex items-center gap-2.5 text-slate-500 dark:text-slate-400 font-bold text-sm font-cairo">
             <button 

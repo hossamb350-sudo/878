@@ -336,11 +336,22 @@ export function ArticleDetail() {
   return (
     <div className="min-h-screen bg-white text-text-primary pb-32 font-sans" dir="rtl">
       {/* Top Nav with matching light background */}
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-soft px-4 h-16 flex items-center justify-start text-text-primary">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary flex items-center gap-1">
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-soft px-4 h-16 flex items-center justify-between text-text-primary">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary">
           <ArrowRight className="w-6 h-6 text-taiz-sky" />
-          <span className="font-bold text-xs font-alexandria">رجوع</span>
         </button>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={toggleBookmark}
+            title={isBookmarked ? "إزالة من المفضلة" : "حفظ في المفضلة"}
+            className={`p-2 rounded-xl transition-all ${isBookmarked ? "text-taiz-sky bg-taiz-sky/10" : "hover:bg-slate-200/50 text-text-primary"}`}
+          >
+            <Bookmark className={`w-6 h-6 ${isBookmarked ? "fill-current" : ""}`} />
+          </button>
+          <button onClick={() => handleShare("copy")} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors relative text-text-primary">
+            {copied ? <Check className="w-6 h-6 text-emerald-600" /> : <Share2 className="w-6 h-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Article Title Section Above the Slider */}
