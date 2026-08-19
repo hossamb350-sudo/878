@@ -410,13 +410,19 @@ const LessonsView = ({
 const SyllabusesView = ({
   syllabusesList,
   lessonsList,
+  seriesList,
   onSelectLesson,
   scrollRef,
 }: any) => {
   const now = Date.now();
-  const activeSyllabuses = syllabusesList.filter(
-    (s: any) => !s.expiresAt || now <= s.expiresAt
-  );
+  const activeSyllabuses = (syllabusesList || []).filter((s: any) => {
+    if (s.expiresAt && now > s.expiresAt) return false;
+    if (s.endDate) {
+      const endMs = typeof s.endDate === "number" ? s.endDate : new Date(s.endDate).setHours(23, 59, 59, 999);
+      if (!isNaN(endMs) && now > endMs) return false;
+    }
+    return true;
+  });
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 relative" ref={scrollRef}>
@@ -448,18 +454,50 @@ const SyllabusesView = ({
             </p>
           ) : (
             activeSyllabuses.map((item: any) => {
-              const lesson = lessonsList.find((l: any) => l.id === item.lessonId) || {
+              // 1. Resolve original lesson from lessonsList
+              const matchedLesson = (lessonsList || []).find((l: any) => l.id === item.lessonId);
+              const lesson = matchedLesson || {
                 id: item.lessonId,
                 title: item.lessonTitle || "درس مقرر",
                 seriesId: item.seriesId || "",
                 seriesTitle: item.seriesTitle || "",
+                order: 0,
               };
-              const displayTitle = formatLessonDisplayTitle(lesson.title, lesson.order, undefined, lesson.seriesTitle);
+
+              // 2. Resolve series
+              const matchedSeries = (seriesList || []).find((s: any) => s.id === (lesson.seriesId || item.seriesId));
+              const series = matchedSeries || {
+                id: item.seriesId || lesson.seriesId || "default-series",
+                title: item.seriesTitle || (lesson as any).seriesTitle || "هدي القرآن الكريم",
+                description: "",
+                order: 1,
+              };
+
+              const displayTitle = formatLessonDisplayTitle(
+                lesson.title || item.lessonTitle,
+                lesson.order,
+                undefined,
+                series.title || item.seriesTitle
+              );
+
+              // Date calculation
+              let dateText = "";
+              if (item.startDate && item.endDate) {
+                const sDate = typeof item.startDate === "number" ? new Date(item.startDate).toLocaleDateString("ar-EG") : item.startDate;
+                const eDate = typeof item.endDate === "number" ? new Date(item.endDate).toLocaleDateString("ar-EG") : item.endDate;
+                dateText = `من ${sDate} إلى ${eDate}`;
+              } else if (item.endDate) {
+                const eDate = typeof item.endDate === "number" ? new Date(item.endDate).toLocaleDateString("ar-EG") : item.endDate;
+                dateText = `ينتهي في: ${eDate}`;
+              } else if (item.expiresAt) {
+                dateText = `ينتهي في: ${new Date(item.expiresAt).toLocaleDateString("ar-YE")}`;
+              }
+
               return (
                 <button
                   key={item.id}
-                  onClick={() => onSelectLesson(lesson)}
-                  className="bg-white dark:bg-stone-900 p-2.5 sm:p-3 rounded-[12px] sm:rounded-[14px] shadow-xs border border-slate-200/60 dark:border-slate-800/60 hover:border-taiz-sky/40 hover:shadow-md transition-all duration-300 text-right flex flex-col items-start gap-2 focus:outline-none relative overflow-hidden group active:scale-[0.99]"
+                  onClick={() => onSelectLesson(lesson, series)}
+                  className="bg-white dark:bg-stone-900 p-3 sm:p-3.5 rounded-[12px] sm:rounded-[14px] shadow-xs border border-slate-200/60 dark:border-slate-800/60 hover:border-taiz-sky/40 hover:shadow-md transition-all duration-300 text-right flex flex-col items-start gap-2 focus:outline-none relative overflow-hidden group active:scale-[0.99]"
                 >
                   <div className="flex justify-between w-full items-center">
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center text-white shadow-xs">
@@ -469,20 +507,19 @@ const SyllabusesView = ({
                       المقرر الحالي
                     </span>
                   </div>
-                  <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white font-cairo group-hover:text-taiz-sky transition-colors">
-                    {displayTitle}
-                  </span>
-                  {item.expiresAt ? (
-                    <span className="text-[10px] sm:text-[11px] text-amber-500 font-bold font-cairo">
-                      ينتهي في: {new Date(item.expiresAt).toLocaleDateString("ar-YE")}
+                  <div className="flex flex-col gap-0.5 text-right w-full">
+                    <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white font-cairo group-hover:text-taiz-sky transition-colors line-clamp-2">
+                      {displayTitle}
                     </span>
-                  ) : (
-                    item.startDate && item.endDate && (
-                      <span className="text-[10px] sm:text-[11px] text-amber-500 font-bold font-cairo">
-                        من {new Date(item.startDate).toLocaleDateString("ar-EG")} إلى{" "}
-                        {new Date(item.endDate).toLocaleDateString("ar-EG")}
-                      </span>
-                    )
+                    <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-cairo">
+                      {series.title || item.seriesTitle || "هدي القرآن الكريم"}
+                    </span>
+                  </div>
+                  {dateText && (
+                    <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-bold font-cairo mt-1">
+                      <Clock className="w-3 h-3" />
+                      <span>{dateText}</span>
+                    </div>
                   )}
                 </button>
               );
@@ -625,11 +662,17 @@ const LessonDetailView = ({
   onProgressUpdate,
   onClearJump,
 }: any) => {
-  if (!selectedLesson || !selectedSeries) return null;
+  if (!selectedLesson) return null;
+  const safeSeries = selectedSeries || {
+    id: selectedLesson.seriesId || "default-series",
+    title: (selectedLesson as any).seriesTitle || "هدي القرآن الكريم",
+    description: "",
+    order: 1,
+  };
   return (
     <QuranReader
       lesson={selectedLesson}
-      series={selectedSeries}
+      series={safeSeries}
       onBack={onBack}
       bookmarks={bookmarks}
       onToggleBookmark={onToggleBookmark}
@@ -1219,6 +1262,7 @@ export function Quran() {
   const [loading, setLoading] = useState(true);
   const [isFetchingLesson, setIsFetchingLesson] = useState(false);
   const [activeView, setActiveView] = useState<QuranView>("series");
+  const [previousView, setPreviousView] = useState<QuranView>("syllabuses");
 
   useEffect(() => {
     const viewParam = searchParams.get("view");
@@ -1394,31 +1438,45 @@ export function Quran() {
     };
   }, []);
 
-  const navigateToLesson = async (lesson: QuranLesson, series: QuranSeries) => {
-    setSelectedSeries(series);
-    
-    // Check if lesson content needs to be loaded
+  const navigateToLesson = async (lesson: QuranLesson, series?: QuranSeries) => {
+    if (activeView !== "lesson-detail") {
+      setPreviousView(activeView);
+    }
+    const resolvedSeries = series || seriesList.find((s) => s.id === lesson.seriesId) || {
+      id: lesson.seriesId || "default-series",
+      title: (lesson as any).seriesTitle || "هدي القرآن الكريم",
+      description: "",
+      order: 1,
+    };
+    setSelectedSeries(resolvedSeries);
+    setSelectedLesson(lesson);
+    setJumpToParagraphIndex(null);
+    setJumpToExactId(null);
+    setActiveView("lesson-detail");
+
+    // Check if lesson content needs to be loaded from platform JSON files
     if (!lesson.content) {
       setIsFetchingLesson(true);
-      setActiveView("lesson-detail"); // Move to view immediately (will show loading)
-      setSelectedLesson(lesson);
-      
       try {
         const fullLesson = await loadLessonContent(lesson.id);
         if (fullLesson && fullLesson.content) {
           // Update lesson in list so it's cached in memory
-          setLessonsList(prev => prev.map(l => l.id === lesson.id ? { ...l, content: fullLesson.content } : l));
-          setSelectedLesson({ ...lesson, content: fullLesson.content });
+          setLessonsList((prev) =>
+            prev.map((l) => (l.id === lesson.id ? { ...l, content: fullLesson.content } : l))
+          );
+          setSelectedLesson((prev) =>
+            prev && prev.id === lesson.id
+              ? { ...prev, content: fullLesson.content }
+              : { ...lesson, content: fullLesson.content }
+          );
+        } else {
+          console.warn("Could not load lesson content for ID:", lesson.id);
         }
       } catch (error) {
         console.error("Error loading lesson content:", error);
       } finally {
         setIsFetchingLesson(false);
       }
-    } else {
-      setSelectedLesson(lesson);
-      setJumpToParagraphIndex(null);
-      setActiveView("lesson-detail");
     }
   };
 
@@ -1893,7 +1951,7 @@ export function Quran() {
                   <LessonDetailView
                     selectedLesson={selectedLesson}
                     selectedSeries={selectedSeries}
-                    onBack={() => setActiveView("lessons")}
+                    onBack={() => setActiveView(previousView === "lesson-detail" ? "syllabuses" : previousView)}
                     bookmarks={bookmarks}
                     onToggleBookmark={handleToggleBookmark}
                     notes={notes}
@@ -1916,12 +1974,11 @@ export function Quran() {
                   <SyllabusesView
                     syllabusesList={syllabusesList}
                     lessonsList={lessonsList}
-                    onSelectLesson={(lesson) => {
-                      const series = seriesList.find(
-                        (s: any) => s.id === lesson.seriesId
-                      );
-                      setSelectedSeries(series || null);
-                      navigateToLesson(lesson, series!);
+                    seriesList={seriesList}
+                    onSelectLesson={(lesson: any, series: any) => {
+                      const resolvedLesson = lessonsList.find((l: any) => l.id === lesson.id) || lesson;
+                      const resolvedSeries = series || seriesList.find((s: any) => s.id === (resolvedLesson.seriesId || lesson.seriesId));
+                      navigateToLesson(resolvedLesson, resolvedSeries);
                     }}
                     scrollRef={scrollRef}
                   />

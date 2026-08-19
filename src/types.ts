@@ -177,7 +177,7 @@ export interface QuranSeries {
   order: number;
   verseCount?: number;
   type?: string;
-  createdAt: number;
+  createdAt?: number;
 }
 
 export interface QuranLesson {
@@ -188,7 +188,7 @@ export interface QuranLesson {
   imageUrl?: string;
   order: number;
   duration?: number;
-  createdAt: number;
+  createdAt?: number;
 }
 
 export interface QuranSyllabus {

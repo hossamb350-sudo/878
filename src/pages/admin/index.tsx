@@ -112,6 +112,7 @@ import { UserProfileSection } from "../../components/UserProfileSection";
 
 import { AdminNewsWizard } from "../../components/AdminNewsWizard";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES, sortQuranLessons } from "../../data/staticQuranData";
+import { loadQuranMetadata } from "../../data/importedQuranData";
 import { AdminCategoryManager } from "../../components/AdminCategoryManager";
 import { AdminArticles } from "../../components/AdminArticles";
 import { AdminVideos } from "../../components/AdminVideos";
@@ -4361,12 +4362,26 @@ function AdminQuranSyllabuses() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lessonId, setLessonId] = useState("");
+  const [startDate, setStartDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
+  const [endDate, setEndDate] = useState<string>("");
   const [durationVal, setDurationVal] = useState<string>("1");
   const [durationType, setDurationType] = useState<"weeks" | "months">("weeks");
   const [eventId, setEventId] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lessonSearch, setLessonSearch] = useState("");
+
+  // Helper to calculate end date from duration
+  const applyDuration = (val: string, type: "weeks" | "months", baseStart?: string) => {
+    const num = parseInt(val) || 1;
+    const start = baseStart ? new Date(baseStart) : new Date(startDate || Date.now());
+    const baseTime = isNaN(start.getTime()) ? Date.now() : start.getTime();
+    const durationMs = type === "weeks" 
+      ? num * 7 * 24 * 60 * 60 * 1000 
+      : num * 30 * 24 * 60 * 60 * 1000;
+    const targetDate = new Date(baseTime + durationMs);
+    setEndDate(targetDate.toISOString().split("T")[0]);
+  };
 
   const filteredLessons = React.useMemo(() => {
     const q = lessonSearch.trim().toLowerCase();
@@ -4379,20 +4394,64 @@ function AdminQuranSyllabuses() {
   }, [lessons, series, lessonSearch, lessonId]);
 
   useEffect(() => {
+    // 1. Load built-in platform Quran lessons and series
+    loadQuranMetadata()
+      .then((data) => {
+        if (data) {
+          if (data.series && data.series.length > 0) {
+            setSeries((prev) => {
+              const map = new Map<string, QuranSeries>();
+              data.series.forEach((s: QuranSeries) => map.set(s.id, s));
+              prev.forEach((s) => map.set(s.id, s));
+              return Array.from(map.values());
+            });
+          }
+          if (data.lessons && data.lessons.length > 0) {
+            setLessons((prev) => {
+              const map = new Map<string, QuranLesson>();
+              data.lessons.forEach((l: QuranLesson) => map.set(l.id, l));
+              prev.forEach((l) => map.set(l.id, l));
+              return Array.from(map.values());
+            });
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load local Quran metadata for syllabus admin:", err);
+      });
+
+    // 2. Listen to Firestore series & lessons if any extra exist
     const unsubSeries = onSnapshot(
       query(collection(db, "quran_series"), orderBy("order", "asc")),
       (snap) => {
-        setSeries(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranSeries)));
+        if (!snap.empty) {
+          const fsSeries = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranSeries));
+          setSeries((prev) => {
+            const map = new Map<string, QuranSeries>();
+            prev.forEach(s => map.set(s.id, s));
+            fsSeries.forEach(s => map.set(s.id, s));
+            return Array.from(map.values());
+          });
+        }
       }
     );
 
     const unsubLessons = onSnapshot(
       query(collection(db, "quran_lessons"), orderBy("order", "asc")),
       (snap) => {
-        setLessons(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranLesson)));
+        if (!snap.empty) {
+          const fsLessons = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranLesson));
+          setLessons((prev) => {
+            const map = new Map<string, QuranLesson>();
+            prev.forEach(l => map.set(l.id, l));
+            fsLessons.forEach(l => map.set(l.id, l));
+            return Array.from(map.values());
+          });
+        }
       }
     );
 
+    // 3. Listen to syllabuses collection
     const unsubSyllabuses = onSnapshot(
       query(collection(db, "quran_syllabuses"), orderBy("createdAt", "desc")),
       (snap) => {
@@ -4400,18 +4459,6 @@ function AdminQuranSyllabuses() {
         setLoading(false);
       }
     );
-
-    // Initial fetch from API if Firestore fails or empty
-    const fetchApiData = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/quran-data`);
-        if (res.ok) {
-          const data = await res.json();
-          // Use this data if Firestore yields nothing later
-        }
-      } catch (e) {}
-    };
-    fetchApiData();
 
     const unsubEvents = onSnapshot(
       query(collection(db, "events"), orderBy("timestamp", "desc")),
@@ -4429,64 +4476,78 @@ function AdminQuranSyllabuses() {
   }, []);
 
   const save = async () => {
-    if (!lessonId || !durationVal)
-      return alert("الرجاء تحديد الدرس وتحديد مدة النشر");
-    
-    const num = parseInt(durationVal);
-    if (isNaN(num) || num <= 0) {
-      return alert("الرجاء إدخال عدد صحيح للمدة");
+    if (!lessonId) {
+      return alert("الرجاء اختيار الدرس من القائمة");
     }
 
     const selectedLesson = lessons.find(l => l.id === lessonId);
     if (!selectedLesson) {
-      return alert("الدرس المحدد غير موجود");
+      return alert("الدرس المحدد غير موجود في بيانات المنصة");
     }
 
     const selectedSeries = series.find(s => s.id === selectedLesson.seriesId);
-    const seriesTitle = selectedSeries ? selectedSeries.title : "سلسلة غير معروفة";
-    const seriesId = selectedLesson.seriesId;
+    const seriesTitle = selectedSeries ? selectedSeries.title : (selectedLesson as any).seriesTitle || "هدي القرآن الكريم";
+    const seriesId = selectedLesson.seriesId || "";
     const lessonTitle = selectedLesson.title;
 
-    setSaving(true);
-    try {
-      const now = Date.now();
+    // Calculate dates & timestamps
+    const startMs = startDate ? new Date(startDate).getTime() : Date.now();
+    let endMs: number;
+    if (endDate) {
+      const d = new Date(endDate);
+      d.setHours(23, 59, 59, 999);
+      endMs = d.getTime();
+    } else {
+      const num = parseInt(durationVal) || 1;
       const durationMs = durationType === 'weeks' 
         ? num * 7 * 24 * 60 * 60 * 1000 
         : num * 30 * 24 * 60 * 60 * 1000;
-      const expiresAt = now + durationMs;
+      endMs = startMs + durationMs;
+    }
 
+    const finalStartDate = startDate || new Date(startMs).toISOString().split("T")[0];
+    const finalEndDate = endDate || new Date(endMs).toISOString().split("T")[0];
+
+    setSaving(true);
+    try {
       const id = editingId || Date.now().toString();
+      // Store ONLY the syllabus metadata and the platform lesson ID reference in Firebase
       const payload = {
-        lessonId,
-        lessonTitle,
-        seriesId,
-        seriesTitle,
-        durationVal: num,
-        durationType,
-        expiresAt,
+        lessonId: selectedLesson.id, // المرجع الأصلي للدرس المخزن في المنصة
+        lessonTitle: lessonTitle, // عنوان الدرس
+        seriesId: seriesId, // معرف السلسلة
+        seriesTitle: seriesTitle, // اسم السلسلة
+        startDate: finalStartDate, // تاريخ بدء المقرر
+        endDate: finalEndDate, // تاريخ انتهاء المقرر
+        expiresAt: endMs, // طابع زمني لانتهاء المقرر
+        durationVal: parseInt(durationVal) || 1,
+        durationType: durationType,
         eventId: eventId || null,
-        createdAt: editingId ? undefined : now,
+        createdAt: editingId ? undefined : Date.now(),
+        updatedAt: Date.now(),
       };
 
       await setDoc(doc(db, "quran_syllabuses", id), payload, { merge: true });
       await delIDB('quran_data_cache');
 
-      alert("تم الحفظ بنجاح في Firebase");
+      alert("تم اعتماد المقرر بنجاح وربطه بالدرس المخزن مسبقًا في المنصة");
       setEditingId(null);
       setLessonId("");
+      setStartDate(new Date().toISOString().split("T")[0]);
+      setEndDate("");
       setDurationVal("1");
       setDurationType("weeks");
       setEventId("");
     } catch (e) {
       console.error(e);
-      alert("حدث خطأ أثناء الحفظ");
+      alert("حدث خطأ أثناء حفظ المقرر");
     } finally {
       setSaving(false);
     }
   };
 
   const del = async (id: string) => {
-    if (confirm("تأكيد الحذف من Firebase؟")) {
+    if (confirm("تأكيد حذف المقرر الدراسي؟")) {
       try {
         await deleteDoc(doc(db, "quran_syllabuses", id));
         await delIDB('quran_data_cache');
@@ -4497,22 +4558,23 @@ function AdminQuranSyllabuses() {
     }
   };
 
-  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل البيانات...</div>;
+  if (loading) return <div className="p-10 text-center font-bold font-cairo">جاري تحميل البيانات...</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-        <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-2">
-          {editingId ? "تعديل مقرر" : "اعتماد مقرر جديد"}
+    <div className="space-y-6" dir="rtl">
+      <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800">
+        <h3 className="font-bold text-gray-800 dark:text-gray-200 text-base sm:text-lg font-cairo mb-2 flex items-center gap-2">
+          <BookOpen className="w-5 h-5 text-emerald-600" />
+          <span>{editingId ? "تعديل مقرر دراسي" : "اعتماد مقرر دراسي جديد"}</span>
         </h3>
 
         <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 pr-1">
-            البحث في الدروس
+          <label className="text-xs font-bold text-gray-500 font-cairo pr-1">
+            البحث في دروس المنصة ({lessons.length} درس متاح)
           </label>
           <input
             type="text"
-            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold placeholder-gray-400 dark:text-white mb-2 outline-none focus:ring-2 focus:ring-emerald-500/50"
+            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl text-sm font-bold placeholder-gray-400 dark:text-white mb-2 outline-none focus:ring-2 focus:ring-emerald-500/50 font-cairo"
             value={lessonSearch}
             onChange={(e) => setLessonSearch(e.target.value)}
             placeholder="اكتب اسم الدرس أو السلسلة لتصفية القائمة..."
@@ -4520,15 +4582,15 @@ function AdminQuranSyllabuses() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 pr-1">
-            الدرس المقرر
+          <label className="text-xs font-bold text-gray-500 font-cairo pr-1">
+            الدرس المطلوب اعتماده كمقرر <span className="text-red-500">*</span>
           </label>
           <select
-            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg font-bold dark:text-white"
+            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl font-bold dark:text-white font-cairo focus:ring-2 focus:ring-emerald-500/50 outline-none"
             value={lessonId}
             onChange={(e) => setLessonId(e.target.value)}
           >
-            <option value="">-- اختر الدرس --</option>
+            <option value="">-- اختر الدرس المراد اعتماده --</option>
             {filteredLessons.map((l) => {
               const s = series.find(x => x.id === l.seriesId);
               return (
@@ -4538,34 +4600,94 @@ function AdminQuranSyllabuses() {
               );
             })}
           </select>
+          {lessonId && (
+            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold font-cairo mt-1">
+              ✓ سيتم ربط المقرر مباشرة بالدرس الأصلي المخزن في المنصة (المعرف: {lessonId})
+            </p>
+          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Date Controls */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 pr-1">
-              المدة المطلوبة
+            <label className="text-xs font-bold text-gray-500 font-cairo pr-1">
+              تاريخ بدء المقرر
             </label>
             <input
-              type="number"
-              min="1"
-              className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white font-bold"
-              value={durationVal}
-              onChange={(e) => setDurationVal(e.target.value)}
-              placeholder="مثال: 3"
+              type="date"
+              className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-bold font-cairo outline-none focus:ring-2 focus:ring-emerald-500/50"
+              value={startDate}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                if (durationVal) {
+                  applyDuration(durationVal, durationType, e.target.value);
+                }
+              }}
             />
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-500 pr-1">
-              نوع المدة
+            <label className="text-xs font-bold text-gray-500 font-cairo pr-1">
+              تاريخ انتهاء المقرر
             </label>
-            <select
-              className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white font-bold"
-              value={durationType}
-              onChange={(e) => setDurationType(e.target.value as any)}
+            <input
+              type="date"
+              className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl dark:text-white font-bold font-cairo outline-none focus:ring-2 focus:ring-emerald-500/50"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {/* Quick duration helpers */}
+        <div className="bg-white dark:bg-gray-900/70 p-3 rounded-xl border border-gray-200/80 dark:border-gray-800 space-y-2">
+          <span className="text-xs font-bold text-gray-600 dark:text-gray-400 font-cairo block">
+            أو حدد مدة تلقائية لانتهاء المقرر:
+          </span>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setDurationVal("1");
+                setDurationType("weeks");
+                applyDuration("1", "weeks");
+              }}
+              className="p-2 text-xs font-bold font-cairo rounded-lg border border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition text-slate-700 dark:text-slate-300"
             >
-              <option value="weeks">أسابيع</option>
-              <option value="months">أشهر</option>
-            </select>
+              أسبوع واحد
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDurationVal("2");
+                setDurationType("weeks");
+                applyDuration("2", "weeks");
+              }}
+              className="p-2 text-xs font-bold font-cairo rounded-lg border border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition text-slate-700 dark:text-slate-300"
+            >
+              أسبوعان
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDurationVal("1");
+                setDurationType("months");
+                applyDuration("1", "months");
+              }}
+              className="p-2 text-xs font-bold font-cairo rounded-lg border border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition text-slate-700 dark:text-slate-300"
+            >
+              شهر كامل
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDurationVal("3");
+                setDurationType("months");
+                applyDuration("3", "months");
+              }}
+              className="p-2 text-xs font-bold font-cairo rounded-lg border border-gray-200 dark:border-gray-700 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition text-slate-700 dark:text-slate-300"
+            >
+              3 أشهر
+            </button>
           </div>
         </div>
 
@@ -4573,20 +4695,22 @@ function AdminQuranSyllabuses() {
           <button
             onClick={save}
             disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold font-cairo transition-all shadow-sm active:scale-95"
           >
-            {saving ? "جاري..." : "حفظ"}
+            {saving ? "جاري الاعتماد..." : editingId ? "تحديث المقرر" : "اعتماد المقرر"}
           </button>
           {editingId && (
             <button
               onClick={() => {
                 setEditingId(null);
                 setLessonId("");
+                setStartDate(new Date().toISOString().split("T")[0]);
+                setEndDate("");
                 setDurationVal("1");
                 setDurationType("weeks");
                 setEventId("");
               }}
-              className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition-colors"
+              className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2.5 rounded-xl font-bold font-cairo transition-colors"
             >
               إلغاء
             </button>
@@ -4594,57 +4718,76 @@ function AdminQuranSyllabuses() {
         </div>
       </div>
 
-      <div className="space-y-2 mt-4">
+      <div className="space-y-3 mt-6">
+        <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 font-cairo">
+          المقررات المعتمدة الحالية ({list.length}):
+        </h4>
         {list.map((s) => {
           const isExpired = s.expiresAt ? Date.now() > s.expiresAt : false;
-          const durationLabel = s.durationType === 'weeks' 
-            ? `${s.durationVal} أسابيع` 
-            : `${s.durationVal} أشهر`;
           
           return (
             <div
               key={s.id}
-              className={`flex justify-between items-center p-4 bg-white dark:bg-gray-900/30 border rounded-xl hover:border-emerald-500/30 transition-colors group ${
+              className={`flex justify-between items-center p-4 bg-white dark:bg-gray-900/50 border rounded-2xl hover:border-emerald-500/40 transition-colors group ${
                 isExpired ? "border-red-200 bg-red-50/10" : "border-gray-100 dark:border-gray-800"
               }`}
             >
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold dark:text-white">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-bold text-slate-900 dark:text-white font-cairo text-sm sm:text-base">
                     {s.lessonTitle || "درس غير معروف"}
                   </span>
-                  <span className="text-xs text-gray-400">
-                    ({s.seriesTitle || "سلسلة غير معروفة"})
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-cairo bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                    {s.seriesTitle || "هدي القرآن الكريم"}
                   </span>
-                  {isExpired && (
-                    <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {isExpired ? (
+                    <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full font-cairo">
                       منتهي الصلاحية
+                    </span>
+                  ) : (
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full font-cairo">
+                      ساري
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-gray-500 mt-1 flex gap-4">
-                  <span>المدة: {durationLabel}</span>
-                  {s.expiresAt && (
-                    <span>ينتهي في: {new Date(s.expiresAt).toLocaleDateString("ar-YE")}</span>
+                <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-3 font-cairo">
+                  {s.startDate && (
+                    <span>تاريخ البدء: {typeof s.startDate === 'number' ? new Date(s.startDate).toLocaleDateString("ar-EG") : s.startDate}</span>
                   )}
+                  {s.endDate ? (
+                    <span>تاريخ الانتهاء: {typeof s.endDate === 'number' ? new Date(s.endDate).toLocaleDateString("ar-EG") : s.endDate}</span>
+                  ) : s.expiresAt ? (
+                    <span>ينتهي في: {new Date(s.expiresAt).toLocaleDateString("ar-YE")}</span>
+                  ) : null}
+                  <span className="text-gray-400 font-mono text-[10px]">ID: {s.lessonId}</span>
                 </div>
               </div>
-              <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+              <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
                 <button
                   onClick={() => {
                     setEditingId(s.id);
                     setLessonId(s.lessonId || "");
+                    if (s.startDate) {
+                      setStartDate(typeof s.startDate === 'number' ? new Date(s.startDate).toISOString().split('T')[0] : s.startDate);
+                    }
+                    if (s.endDate) {
+                      setEndDate(typeof s.endDate === 'number' ? new Date(s.endDate).toISOString().split('T')[0] : s.endDate);
+                    } else if (s.expiresAt) {
+                      setEndDate(new Date(s.expiresAt).toISOString().split('T')[0]);
+                    }
                     setDurationVal(String(s.durationVal || 1));
                     setDurationType(s.durationType || "weeks");
                     setEventId(s.eventId || "");
                   }}
-                  className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                  className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-colors"
+                  title="تعديل المقرر"
                 >
                   <Edit className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => del(s.id)}
-                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
+                  title="حذف المقرر"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
