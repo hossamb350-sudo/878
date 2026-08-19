@@ -5,7 +5,7 @@ import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestor
 import { db } from "../../firebase";
 import { Article } from "../../types";
 import { motion } from "motion/react";
-import { Search, Star, Bookmark, ChevronLeft, CalendarDays, Newspaper, BookOpen, X, LayoutGrid, List } from "lucide-react";
+import { Search, Star, Bookmark, ChevronLeft, CalendarDays, Newspaper, BookOpen, X, LayoutGrid, List, PenTool } from "lucide-react";
 import { CategoryBadges } from "../../components/CategoryBadges";
 
 // Dynamic title font size helper based on title character length
@@ -349,7 +349,7 @@ export function Articles() {
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
                 <span className="relative z-10 flex items-center justify-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-amber-300 animate-pulse" />
+                  <PenTool className="w-4 h-4 text-teal-300 animate-pulse" />
                   <span className="whitespace-nowrap">مقالات وآراء</span>
                 </span>
               </Link>

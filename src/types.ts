@@ -208,11 +208,16 @@ export interface QuranSyllabus {
 
 export interface QuranExcerpt {
   id: string;
-  lessonId: string; // Mandatory
-  title: string;
-  content: string;
-  mediaUrl?: string; // Optional media
+  title: string; // عنوان المقتطف
+  content: string; // نص المقتطف
+  source: string; // مصدر المقتطف (اسم كتاب أو محاضرة أو درس أو مرجع آخر)
+  author: string; // صاحب المقتطف (اسم الشخص صاحب النص أو القائل به)
+  status: "published" | "draft"; // حالة النشر: منشور أو مسودة
+  mediaUrl?: string; // رابط وسائط أو صورة اختيارية
+  order?: number;
+  likes?: number;
   createdAt: number;
+  updatedAt?: number;
 }
 
 export interface QuranLastRead {

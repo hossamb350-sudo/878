@@ -9,7 +9,7 @@ import { NewsItem, VideoItem, LeaderContent, Article } from "../../types";
 import { CategoryBadges } from "../../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen, Star } from "lucide-react";
+import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen, Star, PenTool } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../../components/PullToRefresh";
 import { FeaturedTopicsSlider } from "../../components/FeaturedTopicsSlider";
@@ -613,7 +613,7 @@ export function Home() {
                     className="relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold font-cairo transition-all duration-300 active:scale-95 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
                   >
                     <span className="relative z-10 flex items-center justify-center gap-1.5">
-                      <BookOpen className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-taiz-sky transition-colors" />
+                      <PenTool className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-teal-400 transition-colors" />
                       <span className="whitespace-nowrap">مقالات وآراء</span>
                     </span>
                   </Link>

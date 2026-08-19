@@ -189,7 +189,16 @@ export function formatLessonDisplayTitle(
 export function processQuranData(importedData: any) {
   const rawSeries: QuranSeries[] = (importedData?.series || []) as QuranSeries[];
   const rawLessons: QuranLesson[] = (importedData?.lessons || []) as QuranLesson[];
-  const rawExcerpts: QuranExcerpt[] = (importedData?.excerpts || []) as QuranExcerpt[];
+  const rawExcerpts: QuranExcerpt[] = ((importedData?.excerpts || []) as any[]).map((e, idx) => ({
+    id: e.id || `excerpt-${idx + 1}`,
+    title: e.title || "مقتطف نوراني",
+    content: e.content || "",
+    source: e.source || "هدي القرآن الكريم",
+    author: e.author || "السيد حسين بدر الدين الحوثي",
+    status: e.status || "published",
+    mediaUrl: e.mediaUrl || undefined,
+    createdAt: e.createdAt || Date.now(),
+  }));
   const rawSyllabuses: QuranSyllabus[] = (importedData?.syllabuses || []) as QuranSyllabus[];
 
   // Reorganize series to combine IDs "4", "5", "6", "7" into a single series "4"

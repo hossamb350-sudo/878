@@ -90,6 +90,7 @@ import {
   X,
   Check,
   Save,
+  Quote,
 } from "lucide-react";
 import {
   NewsItem,
@@ -121,6 +122,7 @@ import { AdminRegisteredUsers } from "../../components/AdminRegisteredUsers";
 import { AdminVersionLock } from "../../components/AdminVersionLock";
 import { AdminFeaturedTopics } from "../../components/AdminFeaturedTopics";
 import { AdminLiveChannels } from "../../components/AdminLiveChannels";
+import { AdminQuranExcerpts } from "../../components/AdminQuranExcerpts";
 import { OnlineUsersConfig, RegisteredUsersConfig } from "../../services/OnlineUsersService";
 import { ContactUsSection } from "../../components/ContactUsSection";
 
@@ -464,6 +466,12 @@ export function Admin() {
       icon: Settings,
       label: "إعداد مقررات هدي القرآن",
       access: isAdmin || isManager || (isEditor && hasPermission("quran")),
+    },
+    {
+      id: "excerpts",
+      icon: Quote,
+      label: "إدارة المقتطفات",
+      access: isAdmin || isManager || (isEditor && (hasPermission("excerpts") || hasPermission("quran"))),
     },
     {
       id: "articles",
@@ -835,6 +843,7 @@ export function Admin() {
                 {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
                 {activeTab === "articles" && <AdminArticles isAdmin={isAdmin} />}
                 {activeTab === "quran" && <AdminQuran />}
+                {activeTab === "excerpts" && <AdminQuranExcerpts />}
                 {activeTab === "events" && <AdminEvents />}
                 {activeTab === "social" && <AdminSocialLinks />}
                 {activeTab === "roles" && isAdmin && <AdminRoles />}
@@ -4451,12 +4460,25 @@ function AdminQuranSyllabuses() {
       }
     );
 
-    // 3. Listen to syllabuses collection
+    // 3. Preload from local cache and listen to syllabuses collection
+    const cachedSyllabuses = localStorage.getItem("taiz_quran_syllabuses_cache");
+    if (cachedSyllabuses) {
+      try {
+        const parsed = JSON.parse(cachedSyllabuses);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setList(parsed);
+          setLoading(false);
+        }
+      } catch (e) {}
+    }
+
     const unsubSyllabuses = onSnapshot(
       query(collection(db, "quran_syllabuses"), orderBy("createdAt", "desc")),
       (snap) => {
-        setList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranSyllabus)));
+        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranSyllabus));
+        setList(items);
         setLoading(false);
+        SyncService.setCache("quran_syllabuses", items);
       }
     );
 
@@ -4550,6 +4572,7 @@ function AdminQuranSyllabuses() {
     if (confirm("تأكيد حذف المقرر الدراسي؟")) {
       try {
         await deleteDoc(doc(db, "quran_syllabuses", id));
+        await SyncService.trackDeletion("quran_syllabuses", id);
         await delIDB('quran_data_cache');
         alert("تم الحذف بنجاح");
       } catch (e) {
@@ -4800,207 +4823,7 @@ function AdminQuranSyllabuses() {
   );
 }
 
-function AdminQuranExcerpts() {
-  const [list, setList] = useState<QuranExcerpt[]>([]);
-  const [lessons, setLessons] = useState<QuranLesson[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const [lessonId, setLessonId] = useState("");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [mediaUrl, setMediaUrl] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubLessons = onSnapshot(
-      query(collection(db, "quran_lessons"), orderBy("order", "asc")),
-      (snap) => {
-        setLessons(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranLesson)));
-      }
-    );
-
-    const unsubExcerpts = onSnapshot(
-      query(collection(db, "quran_excerpts"), orderBy("createdAt", "desc")),
-      (snap) => {
-        setList(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as QuranExcerpt)));
-        setLoading(false);
-      }
-    );
-
-    return () => {
-      unsubLessons();
-      unsubExcerpts();
-    };
-  }, []);
-
-  const save = async () => {
-    if (!lessonId || !title || !content)
-      return alert("أكمل البيانات المطلوبة (الدرس، العنوان، النص)");
-    setSaving(true);
-    try {
-      const id = editingId || Date.now().toString();
-      const payload = {
-        lessonId,
-        title,
-        content,
-        mediaUrl,
-        createdAt: editingId ? undefined : Date.now(),
-      };
-
-      await setDoc(doc(db, "quran_excerpts", id), payload, { merge: true });
-      await delIDB('quran_data_cache');
-
-      alert("تم الحفظ في Firebase");
-      setEditingId(null);
-      setLessonId("");
-      setTitle("");
-      setContent("");
-      setMediaUrl("");
-    } catch (e) {
-      console.error(e);
-      alert("حدث خطأ");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const del = async (id: string) => {
-    if (confirm("تأكيد الحذف من Firebase؟")) {
-      try {
-        await deleteDoc(doc(db, "quran_excerpts", id));
-        await delIDB('quran_data_cache');
-        alert("تم الحذف بنجاح");
-      } catch (e) {
-        alert("خطأ في الحذف");
-      }
-    }
-  };
-
-  if (loading) return <div className="p-10 text-center font-bold">جاري تحميل المقتطفات...</div>;
-
-  return (
-    <div className="space-y-6">
-      <div className="space-y-4 bg-gray-50 dark:bg-gray-900/50 p-4 rounded-xl border border-gray-100 dark:border-gray-800">
-        <h3 className="font-bold text-gray-700 dark:text-white mb-2">
-          {editingId ? "تعديل مقتطف" : "إضافة مقتطف جديد"}
-        </h3>
-
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 pr-1">
-            الدرس (إلزامي)
-          </label>
-          <select
-            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg font-bold dark:text-white"
-            value={lessonId}
-            onChange={(e) => setLessonId(e.target.value)}
-          >
-            <option value="">-- اختر الدرس --</option>
-            {lessons.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.title}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 pr-1">
-            عنوان المقتطف
-          </label>
-          <input
-            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 pr-1">النص</label>
-          <textarea
-            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg h-32 leading-loose dark:text-white"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-gray-500 pr-1">
-            الوسائط (اختياري - رابط)
-          </label>
-          <input
-            className="w-full p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg dark:text-white"
-            value={mediaUrl}
-            onChange={(e) => setMediaUrl(e.target.value)}
-            placeholder="https://..."
-          />
-        </div>
-
-        <div className="flex gap-2 pt-2">
-          <button
-            onClick={save}
-            disabled={saving}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-bold transition-colors"
-          >
-            {saving ? "جاري..." : "حفظ"}
-          </button>
-          {editingId && (
-            <button
-              onClick={() => {
-                setEditingId(null);
-                setLessonId("");
-                setTitle("");
-                setContent("");
-                setMediaUrl("");
-              }}
-              className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg font-bold transition-colors"
-            >
-              إلغاء
-            </button>
-          )}
-        </div>
-      </div>
-      <div className="space-y-2 mt-4">
-        {list.map((s) => {
-          const l = lessons.find((x) => x.id === s.lessonId);
-          return (
-            <div
-              key={s.id}
-              className="flex justify-between items-center p-4 bg-white dark:bg-gray-900/30 border border-gray-100 dark:border-gray-800 rounded-xl hover:border-emerald-500/30 transition-colors group"
-            >
-              <div>
-                <span className="font-bold dark:text-white">{s.title}</span>
-                <div className="text-xs text-gray-500 mt-1">
-                  الدرس: {l ? l.title : "غير معروف"}
-                </div>
-              </div>
-              <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
-                <button
-                  onClick={() => {
-                    setEditingId(s.id);
-                    setLessonId(s.lessonId || "");
-                    setTitle(s.title || "");
-                    setContent(s.content || "");
-                    setMediaUrl(s.mediaUrl || "");
-                  }}
-                  className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                >
-                  <Edit className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => del(s.id)}
-                  className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
 function AdminEventsContent() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
