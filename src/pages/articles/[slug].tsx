@@ -363,12 +363,12 @@ export function ArticleDetail() {
 
       {/* Render Image Gallery Slider ONLY if article has images */}
       {allImages.length > 0 && (
-        <div className="max-w-[760px] mx-auto w-full px-0 pt-2.5 sm:pt-3.5 pb-1">
+        <div className="max-w-[760px] mx-auto w-full px-0 pt-2 sm:pt-3 pb-0">
           {/* Featured Article Card Header - Integrated Slider with horizontal controls */}
           <motion.div 
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="relative w-full h-[320px] sm:h-[400px] md:h-[450px] overflow-hidden bg-slate-900 mb-2 select-none group rounded-2xl shadow-md border border-slate-200/20 dark:border-slate-800/80"
+            className="relative w-full aspect-[16/10] sm:aspect-video overflow-hidden bg-slate-900 mb-3 select-none group rounded-none shadow-md border-y border-slate-200/20 dark:border-slate-800/80"
           >
             {/* Horizontal Swiping Container */}
             <div 
@@ -437,7 +437,7 @@ export function ArticleDetail() {
 
           {/* Dynamic Image Thumbnails underneath Slider */}
           {allImages.length > 1 && (
-            <div className="px-4 sm:px-5 mb-2.5 flex items-center justify-center w-full">
+            <div className="px-4 sm:px-5 mb-1 flex items-center justify-center w-full">
               <div ref={thumbnailContainerRef} className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
                 {allImages.map((img, idx) => (
                   <button
@@ -459,9 +459,9 @@ export function ArticleDetail() {
         </div>
       )}
 
-      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5 mt-1.5">
+      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5 mt-1">
         {/* Article Metadata Card - Re-designed, Elegant, Structured */}
-        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-xs mb-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 font-cairo text-right" dir="rtl">
+        <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-3.5 sm:p-4 shadow-xs mb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 font-cairo text-right" dir="rtl">
           {/* Author info with author avatar, prefix badge & name */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="relative">
@@ -514,7 +514,7 @@ export function ArticleDetail() {
           </div>
         </div>
         {/* Floating Interaction Bar (شريط التفاعل) matching screenshot */}
-        <div className="my-2.5 bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 rounded-full px-6 py-2.5 shadow-sm flex items-center justify-between max-w-xl mx-auto backdrop-blur-sm">
+        <div className="my-2 bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 rounded-full px-6 py-2.5 shadow-sm flex items-center justify-between max-w-xl mx-auto backdrop-blur-sm">
           {/* Social Share Icons */}
           <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
             <button onClick={() => handleShare("facebook")} className="hover:text-blue-600 transition-colors p-1" title="مشاركة عبر فيسبوك">

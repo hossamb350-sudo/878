@@ -406,12 +406,12 @@ export function NewsDetail() {
         </h1>
       </div>
 
-      <div className="max-w-[760px] mx-auto w-full px-0 pt-2.5 sm:pt-3.5 pb-1">
+      <div className="max-w-[760px] mx-auto w-full px-0 pt-2 sm:pt-3 pb-0">
         {/* Featured News Card Header - Integrated Slider with horizontal controls */}
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative w-full h-[320px] sm:h-[400px] md:h-[450px] overflow-hidden bg-slate-50 dark:bg-stone-950/20 mb-2 select-none group rounded-xl shadow-xs border border-slate-200/20 dark:border-stone-800/25"
+          className="relative w-full aspect-[16/10] sm:aspect-video overflow-hidden bg-slate-50 dark:bg-stone-950/20 mb-3 select-none group rounded-none shadow-xs border-y border-slate-200/20 dark:border-stone-800/25"
         >
           {/* Horizontal Swiping Container */}
           <div 
@@ -494,7 +494,7 @@ export function NewsDetail() {
 
         {/* Dynamic Image Thumbnails underneath Slider */}
         {allImages.length > 1 && (
-          <div className="px-4 sm:px-5 mb-2.5 flex items-center justify-center w-full">
+          <div className="px-4 sm:px-5 mb-1 flex items-center justify-center w-full">
             <div ref={thumbnailContainerRef} className="flex items-center gap-1.5 overflow-x-auto py-1 max-w-full scrollbar-none justify-start snap-x snap-mandatory scroll-smooth" dir="rtl">
               {allImages.map((img, idx) => (
                 <button
@@ -515,9 +515,9 @@ export function NewsDetail() {
         )}
       </div>
 
-      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5">
+      <div className="max-w-[760px] mx-auto w-full px-4 sm:px-5 mt-1">
         {/* News Metadata Card - Extra Compact with Platform Navy branding & 11px Font */}
-        <div className="bg-slate-50/40 dark:bg-stone-900/20 border border-slate-200/20 dark:border-stone-800/40 rounded-lg p-2 sm:p-2.5 shadow-xs mb-2 mt-0.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 font-cairo text-right" dir="rtl">
+        <div className="bg-slate-50/40 dark:bg-stone-900/20 border border-slate-200/20 dark:border-stone-800/40 rounded-lg p-2 sm:p-2.5 shadow-xs mb-2 mt-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 font-cairo text-right" dir="rtl">
           {/* Author info with brand circular navy badge */}
           <div className="flex items-center gap-1.5 shrink-0">
             <div className="w-6.5 h-6.5 bg-taiz-navy/10 dark:bg-taiz-navy/20 rounded-full flex items-center justify-center text-taiz-navy dark:text-taiz-soft shrink-0">
@@ -548,7 +548,7 @@ export function NewsDetail() {
         </div>
 
         {/* Interaction Bar (شريط التفاعل) matching mockup design */}
-        <div className="my-2.5 bg-[#fafafa]/90 dark:bg-stone-900/40 border border-slate-200/50 dark:border-stone-800/80 rounded-full px-4 py-2 shadow-sm flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
+        <div className="my-2 bg-[#fafafa]/90 dark:bg-stone-900/40 border border-slate-200/50 dark:border-stone-800/80 rounded-full px-4 py-2 shadow-sm flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
           {/* Left side: Font Size Adjuster in mockup (+ 28px -) */}
           <div className="flex items-center gap-2.5 text-slate-500 dark:text-slate-400 font-bold text-sm font-cairo">
             <button 
