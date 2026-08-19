@@ -69,9 +69,34 @@ export const IslamicExcerptCard = ({
 }) => {
   const [copied, setCopied] = useState(false);
 
+  const hasSource = Boolean(
+    excerpt.source &&
+      typeof excerpt.source === "string" &&
+      excerpt.source.trim().length > 0 &&
+      excerpt.source.trim() !== "غير محدد" &&
+      excerpt.source.trim() !== "null" &&
+      excerpt.source.trim() !== "undefined"
+  );
+
+  const hasAuthor = Boolean(
+    excerpt.author &&
+      typeof excerpt.author === "string" &&
+      excerpt.author.trim().length > 0 &&
+      excerpt.author.trim() !== "غير محدد" &&
+      excerpt.author.trim() !== "null" &&
+      excerpt.author.trim() !== "undefined"
+  );
+
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const textToCopy = `« ${excerpt.title} »\n\n"${excerpt.content}"\n\n📌 ${excerpt.source || "غير محدد"}\n👤 ${excerpt.author || "غير محدد"}\nمنصة تعز الإعلامية`;
+    let textToCopy = `« ${excerpt.title || "مقتطف"} »\n\n"${excerpt.content || ""}"`;
+    if (hasAuthor) {
+      textToCopy += `\n👤 ${excerpt.author}`;
+    }
+    if (hasSource) {
+      textToCopy += `\n📌 ${excerpt.source}`;
+    }
+    textToCopy += `\nمنصة تعز الإعلامية`;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2200);
@@ -81,9 +106,12 @@ export const IslamicExcerptCard = ({
     e.stopPropagation();
     if (navigator.share) {
       try {
+        let shareText = `« ${excerpt.title || "مقتطف"} »\n\n"${excerpt.content || ""}"`;
+        if (hasAuthor) shareText += `\n👤 ${excerpt.author}`;
+        if (hasSource) shareText += `\n📌 ${excerpt.source}`;
         await navigator.share({
-          title: excerpt.title,
-          text: `« ${excerpt.title} »\n\n"${excerpt.content}"\n\n📌 ${excerpt.source || "غير محدد"}\n👤 ${excerpt.author || "غير محدد"}`,
+          title: excerpt.title || "مقتطف",
+          text: shareText,
           url: window.location.href,
         });
       } catch (err) {
@@ -98,36 +126,54 @@ export const IslamicExcerptCard = ({
     return (
       <div
         onClick={onSelect}
-        className="relative flex items-center gap-3 p-3 bg-white dark:bg-stone-900 rounded-xl border border-slate-200/50 dark:border-stone-800/80 shadow-2xs hover:shadow-xs hover:border-amber-500/30 dark:hover:border-amber-500/30 transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.99] group"
+        className="relative group flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3.5 bg-gradient-to-b from-white to-amber-50/20 dark:from-stone-900 dark:to-stone-950 rounded-2xl border border-amber-500/25 dark:border-amber-500/15 shadow-2xs hover:shadow-md hover:border-amber-500/45 dark:hover:border-amber-400/40 transition-all duration-300 overflow-hidden cursor-pointer active:scale-[0.99]"
         dir="rtl"
       >
-        {/* Compact Image */}
-        <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-lg overflow-hidden border border-slate-100/80 dark:border-stone-800/80 bg-stone-50 dark:bg-stone-950 flex items-center justify-center relative">
+        {/* Subtle Decorative Gradient Bar */}
+        <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-amber-500/40 via-emerald-500/50 to-amber-500/40" />
+
+        {/* Compact Image or Icon Emblem */}
+        <div className="w-full sm:w-16 sm:h-16 h-28 shrink-0 rounded-xl overflow-hidden border border-amber-500/20 dark:border-stone-800 bg-stone-50 dark:bg-stone-950 flex items-center justify-center relative shadow-2xs">
           {excerpt.mediaUrl ? (
             <img
               src={excerpt.mediaUrl}
-              alt={excerpt.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              alt={excerpt.title || "مقتطف"}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               referrerPolicy="no-referrer"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-amber-500/10 to-emerald-500/10 dark:from-amber-500/5 dark:to-emerald-500/5 flex items-center justify-center">
-              <Quote className="w-5 h-5 text-amber-600/70 dark:text-amber-400/60 transform scale-x-[-1]" />
+            <div className="w-full h-full bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-emerald-500/10 dark:from-amber-500/10 dark:to-emerald-500/10 flex items-center justify-center">
+              <Quote className="w-6 h-6 text-amber-600 dark:text-amber-400 transform scale-x-[-1]" />
             </div>
           )}
         </div>
 
-        {/* Text Content */}
+        {/* Text Content - Full Title Display */}
         <div className="flex-1 min-w-0 flex flex-col justify-center text-right font-cairo">
-          <h3 className="font-extrabold text-[12.5px] sm:text-[13.5px] text-slate-800 dark:text-white leading-snug truncate mb-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+          <h3 className="font-extrabold text-[13.5px] sm:text-[14.5px] text-slate-800 dark:text-white leading-snug break-words mb-1.5 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
             {excerpt.title || "مقتطف بدون عنوان"}
           </h3>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-            <User className="w-3.5 h-3.5 text-emerald-600/80 dark:text-emerald-500/80 shrink-0" />
-            <span className="truncate">
-              {excerpt.author || "السيد حسين بدر الدين الحوثي"}
-            </span>
+
+          <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+            {hasAuthor && (
+              <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-500/15">
+                <User className="w-3 h-3 shrink-0" />
+                <span className="truncate max-w-[150px]">{excerpt.author}</span>
+              </div>
+            )}
+
+            {hasSource && (
+              <div className="flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded-md border border-amber-500/15">
+                <Bookmark className="w-3 h-3 shrink-0" />
+                <span className="truncate max-w-[150px]">{excerpt.source}</span>
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* Action button */}
+        <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-xl bg-amber-50 dark:bg-stone-800 text-amber-600 dark:text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-all shadow-xs shrink-0 self-center">
+          <ExternalLink className="w-3.5 h-3.5 transform scale-x-[-1]" />
         </div>
       </div>
     );
@@ -136,42 +182,44 @@ export const IslamicExcerptCard = ({
   return (
     <div
       onClick={onSelect}
-      className={`relative group bg-white dark:bg-stone-900 rounded-2xl border border-amber-500/20 dark:border-amber-500/15 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden ${
-        onSelect ? "cursor-pointer hover:border-amber-500/40 active:scale-[0.99]" : ""
+      className={`relative group bg-gradient-to-b from-white via-white to-amber-50/15 dark:from-stone-900 dark:via-stone-900 dark:to-stone-950 rounded-2xl border border-amber-500/25 dark:border-amber-500/20 shadow-sm hover:shadow-xl hover:border-amber-500/50 dark:hover:border-amber-400/40 transition-all duration-300 overflow-hidden flex flex-col justify-between ${
+        onSelect ? "cursor-pointer active:scale-[0.99]" : ""
       }`}
       dir="rtl"
     >
-      {/* Subtle Geometric Background Watermark */}
-      <div className="absolute -top-6 -left-6 w-24 h-24 bg-gradient-to-br from-amber-500/5 to-emerald-500/5 rounded-full blur-xl pointer-events-none" />
-      <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-gradient-to-br from-emerald-500/5 to-blue-500/5 rounded-full blur-xl pointer-events-none" />
+      {/* Decorative Ambient Aura */}
+      <div className="absolute -top-10 -left-10 w-32 h-32 bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-transparent rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+      <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-gradient-to-tl from-emerald-500/10 via-teal-400/5 to-transparent rounded-full blur-2xl pointer-events-none" />
 
       {/* Top Accent Strip */}
-      <div className="h-1 w-full bg-gradient-to-r from-amber-500/40 via-emerald-600/60 to-amber-500/40" />
+      <div className="h-1 w-full bg-gradient-to-r from-amber-500/50 via-emerald-600/70 to-amber-500/50" />
 
-      <div className="p-4 sm:p-5 flex flex-col justify-between h-full">
-        {/* Card Header: Title & Status / Copy */}
+      <div className="p-4 sm:p-5 flex flex-col justify-between flex-1">
         <div>
+          {/* Card Header: Title & Actions */}
           <div className="flex items-start justify-between gap-3 mb-3">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500/10 to-amber-600/20 dark:from-amber-400/10 dark:to-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0">
+            <div className="flex items-start gap-2.5 min-w-0 flex-1">
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500/15 via-amber-400/25 to-emerald-500/15 border border-amber-500/30 dark:border-amber-400/25 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0 shadow-xs mt-0.5">
                 <Quote className="w-4 h-4 transform scale-x-[-1]" />
               </div>
-              <h3 className="font-extrabold text-[14px] sm:text-[15.5px] text-slate-900 dark:text-white font-cairo leading-snug truncate">
+              
+              {/* Full Title - Unclipped & Fully Visible */}
+              <h3 className="font-extrabold text-[14.5px] sm:text-[16px] text-slate-900 dark:text-white font-cairo leading-snug break-words group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors flex-1">
                 {excerpt.title || "مقتطف بدون عنوان"}
               </h3>
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               {isAdmin && excerpt.status && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onToggleStatus?.();
                   }}
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full transition-colors font-cairo ${
+                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-colors font-cairo cursor-pointer shadow-xs ${
                     excerpt.status === "published"
-                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-500/20"
-                      : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-500/20"
+                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-500/30"
+                      : "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-500/30"
                   }`}
                   title="انقر لتغيير حالة النشر"
                 >
@@ -181,7 +229,7 @@ export const IslamicExcerptCard = ({
 
               <button
                 onClick={handleCopy}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
                 title="نسخ نص المقتطف"
               >
                 {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
@@ -189,7 +237,7 @@ export const IslamicExcerptCard = ({
 
               <button
                 onClick={handleShare}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
                 title="مشاركة المقتطف"
               >
                 <Share2 className="w-4 h-4" />
@@ -197,63 +245,68 @@ export const IslamicExcerptCard = ({
             </div>
           </div>
 
-          {/* Excerpt Body: High-Contrast Arabic Calligraphic Quote */}
-          <div className="relative py-2 px-1">
-            <Quote className="absolute -top-1 -right-1 w-6 h-6 text-amber-500/15 dark:text-amber-400/10 pointer-events-none transform scale-x-[-1]" />
-            <p
-              className={`text-[13px] sm:text-[14.5px] font-medium text-slate-800 dark:text-slate-200 font-cairo leading-[1.9] text-justify ${
-                showFull ? "" : "line-clamp-4"
-              }`}
-            >
-              {excerpt.content || "لا يوجد نص للمقتطف."}
-            </p>
-          </div>
+          {/* Excerpt Body: Only shown when showFull is true (e.g. preview modal) */}
+          {showFull && (
+            <div className="relative my-2 p-3 sm:p-3.5 rounded-xl bg-amber-50/35 dark:bg-stone-950/50 border border-amber-500/15 dark:border-stone-800">
+              <Quote className="absolute -top-1.5 -right-1.5 w-5 h-5 text-amber-500/20 dark:text-amber-400/15 pointer-events-none transform scale-x-[-1]" />
+              <p className="text-[13px] sm:text-[14px] font-medium text-slate-800 dark:text-slate-200 font-cairo leading-[1.95] text-justify">
+                {excerpt.content || "لا يوجد نص للمقتطف."}
+              </p>
+            </div>
+          )}
 
           {/* Optional Media Image */}
           {excerpt.mediaUrl && (
-            <div className="my-3 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 max-h-48">
+            <div className="my-2.5 rounded-xl overflow-hidden border border-amber-500/20 dark:border-stone-800 max-h-48 shadow-2xs">
               <img
                 src={excerpt.mediaUrl}
-                alt={excerpt.title}
-                className="w-full h-full object-cover"
+                alt={excerpt.title || "صورة المقتطف"}
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500"
+                referrerPolicy="no-referrer"
               />
             </div>
           )}
         </div>
 
-        {/* Card Footer: Islamic Details (Source & Author) */}
-        <div className="mt-3 pt-3 border-t border-dashed border-slate-200 dark:border-stone-800/80">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-[11px] sm:text-[11.5px] font-cairo text-slate-600 dark:text-slate-400">
-            {/* Author */}
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                <User className="w-3 h-3" />
-              </div>
-              <span className="truncate">
-                {excerpt.author || "السيد حسين بدر الدين الحوثي"}
-              </span>
+        {/* Card Footer: Metadata (Author & Source conditionally rendered) */}
+        <div className="mt-3 pt-3 border-t border-dashed border-amber-500/20 dark:border-stone-800">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] sm:text-[11.5px] font-cairo text-slate-600 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Author (conditionally rendered) */}
+              {hasAuthor && (
+                <div className="flex items-center gap-1.5 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-500/20 shadow-2xs">
+                  <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="font-bold">{excerpt.author}</span>
+                </div>
+              )}
+
+              {/* Source/Book - ONLY rendered when source is present and non-empty */}
+              {hasSource && (
+                <div className="flex items-center gap-1.5 bg-amber-50/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/20 shadow-2xs">
+                  <Bookmark className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span className="font-bold">{excerpt.source}</span>
+                </div>
+              )}
             </div>
 
-            {/* Source */}
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div className="w-5 h-5 rounded-full bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                <Bookmark className="w-3 h-3" />
+            {/* Read More Hint on interactive cards */}
+            {onSelect && !isAdmin && (
+              <div className="flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 group-hover:translate-x-[-2px] transition-transform">
+                <span>عرض التفاصيل</span>
+                <ExternalLink className="w-3 h-3 transform scale-x-[-1]" />
               </div>
-              <span className="truncate">
-                {excerpt.source || "هدي القرآن الكريم"}
-              </span>
-            </div>
+            )}
           </div>
 
           {/* Admin Edit / Delete Actions */}
           {isAdmin && (
-            <div className="flex items-center justify-end gap-2 mt-3 pt-2 border-t border-slate-100 dark:border-stone-800">
+            <div className="flex items-center justify-end gap-2 mt-3 pt-2.5 border-t border-slate-100 dark:border-stone-800">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit?.();
                 }}
-                className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 px-2.5 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors font-cairo"
+                className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 px-3 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/30 transition-colors font-cairo cursor-pointer"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 تعديل
@@ -263,7 +316,7 @@ export const IslamicExcerptCard = ({
                   e.stopPropagation();
                   onDelete?.();
                 }}
-                className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 px-2.5 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors font-cairo"
+                className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 px-3 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors font-cairo cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 حذف

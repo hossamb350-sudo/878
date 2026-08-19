@@ -510,7 +510,7 @@ const ExcerptsView = ({
 }) => {
   return (
     <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6 relative" ref={scrollRef} dir="rtl">
-      <div className="space-y-4 max-w-3xl mx-auto">
+      <div className="space-y-4 max-w-4xl mx-auto">
         {/* Excerpts Grid */}
         {excerptsList.length === 0 ? (
           <div className="p-12 text-center bg-white dark:bg-stone-900 rounded-2xl border border-amber-500/20 text-slate-500 font-bold font-cairo space-y-2">
@@ -518,12 +518,11 @@ const ExcerptsView = ({
             <p>لا توجد مقتطفات حالياً.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {excerptsList.map((item) => (
               <IslamicExcerptCard
                 key={item.id}
                 excerpt={item}
-                isCompact
                 onSelect={() => onSelectExcerpt(item)}
               />
             ))}
@@ -556,8 +555,29 @@ const ExcerptDetailView = ({
     );
   }
 
+  const hasSource = Boolean(
+    selectedExcerpt.source &&
+      typeof selectedExcerpt.source === "string" &&
+      selectedExcerpt.source.trim().length > 0 &&
+      selectedExcerpt.source.trim() !== "غير محدد" &&
+      selectedExcerpt.source.trim() !== "null" &&
+      selectedExcerpt.source.trim() !== "undefined"
+  );
+
+  const hasAuthor = Boolean(
+    selectedExcerpt.author &&
+      typeof selectedExcerpt.author === "string" &&
+      selectedExcerpt.author.trim().length > 0 &&
+      selectedExcerpt.author.trim() !== "غير محدد" &&
+      selectedExcerpt.author.trim() !== "null" &&
+      selectedExcerpt.author.trim() !== "undefined"
+  );
+
   const handleCopy = () => {
-    const textToCopy = `« ${selectedExcerpt.title} »\n\n"${selectedExcerpt.content}"\n\n📌 ${selectedExcerpt.source || "غير محدد"}\n👤 ${selectedExcerpt.author || "غير محدد"}\nمنصة تعز الإعلامية`;
+    let textToCopy = `« ${selectedExcerpt.title || "مقتطف"} »\n\n"${selectedExcerpt.content || ""}"`;
+    if (hasAuthor) textToCopy += `\n👤 ${selectedExcerpt.author}`;
+    if (hasSource) textToCopy += `\n📌 ${selectedExcerpt.source}`;
+    textToCopy += `\nمنصة تعز الإعلامية`;
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2200);
@@ -566,9 +586,12 @@ const ExcerptDetailView = ({
   const handleShare = async () => {
     if (navigator.share) {
       try {
+        let shareText = `« ${selectedExcerpt.title || "مقتطف"} »\n\n"${selectedExcerpt.content || ""}"`;
+        if (hasAuthor) shareText += `\n👤 ${selectedExcerpt.author}`;
+        if (hasSource) shareText += `\n📌 ${selectedExcerpt.source}`;
         await navigator.share({
-          title: selectedExcerpt.title,
-          text: `« ${selectedExcerpt.title} »\n\n"${selectedExcerpt.content}"\n\n📌 ${selectedExcerpt.source || "غير محدد"}\n👤 ${selectedExcerpt.author || "غير محدد"}`,
+          title: selectedExcerpt.title || "مقتطف",
+          text: shareText,
           url: window.location.href,
         });
       } catch (err) {}
@@ -618,12 +641,12 @@ const ExcerptDetailView = ({
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-amber-500/5 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
 
-          {/* Card Header: Ornament & Title */}
+          {/* Card Header: Ornament & Title - Full Title Display */}
           <div className="text-center space-y-2 select-none">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-700 flex items-center justify-center text-white shadow-md mx-auto">
               <Quote className="w-6 h-6 transform scale-x-[-1]" />
             </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white font-cairo leading-snug">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-slate-900 dark:text-white font-cairo leading-snug break-words">
               {selectedExcerpt.title}
             </h1>
           </div>
@@ -648,32 +671,38 @@ const ExcerptDetailView = ({
             <Quote className="absolute -bottom-3 -left-2 w-10 h-10 text-emerald-500/15 dark:text-emerald-400/10 pointer-events-none" />
           </div>
 
-          {/* Details Section: Author & Source */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            {/* Author */}
-            <div className="bg-amber-50/50 dark:bg-stone-950/60 p-3.5 rounded-2xl border border-amber-500/20 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
-                <User className="w-4 h-4" />
-              </div>
-              <div className="min-w-0 text-right font-cairo">
-                <span className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200 truncate block">
-                  {selectedExcerpt.author || "السيد حسين بدر الدين الحوثي"}
-                </span>
-              </div>
-            </div>
+          {/* Details Section: Author & Source conditionally rendered */}
+          {(hasAuthor || hasSource) && (
+            <div className={`grid gap-3 pt-2 ${hasAuthor && hasSource ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1"}`}>
+              {/* Author */}
+              {hasAuthor && (
+                <div className="bg-amber-50/50 dark:bg-stone-950/60 p-3.5 rounded-2xl border border-amber-500/20 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 text-right font-cairo">
+                    <span className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200 block">
+                      {selectedExcerpt.author}
+                    </span>
+                  </div>
+                </div>
+              )}
 
-            {/* Source */}
-            <div className="bg-emerald-50/50 dark:bg-stone-950/60 p-3.5 rounded-2xl border border-emerald-500/20 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                <Bookmark className="w-4 h-4" />
-              </div>
-              <div className="min-w-0 text-right font-cairo">
-                <span className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200 truncate block">
-                  {selectedExcerpt.source || "هدي القرآن الكريم"}
-                </span>
-              </div>
+              {/* Source (Book/Reference) */}
+              {hasSource && (
+                <div className="bg-emerald-50/50 dark:bg-stone-950/60 p-3.5 rounded-2xl border border-emerald-500/20 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Bookmark className="w-4 h-4" />
+                  </div>
+                  <div className="min-w-0 text-right font-cairo">
+                    <span className="text-xs sm:text-sm font-extrabold text-slate-800 dark:text-slate-200 block">
+                      {selectedExcerpt.source}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

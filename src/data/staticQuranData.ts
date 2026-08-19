@@ -158,11 +158,15 @@ export function formatLessonDisplayTitle(
     return fallbackTitle;
   }
 
-  // General cleanup for other series
-  clean = clean
-    .replace(/^(دروس\s+)?(آيات\s+من\s+)?سورة\s+[^\s–-]+[-–:]*\s*/gi, "")
-    .replace(/^(دروس\s+)?(آيات\s+من\s+)[^\s–-]+[-–:]*\s*/gi, "")
+  // General cleanup for other series (only strip surah prefix if followed by a separator like - or : followed by lesson name)
+  const stripped = clean
+    .replace(/^(?:دروس\s+|آيات\s+من\s+)?سورة\s+[^\-–:]+[\-–:]+\s*/gi, "")
+    .replace(/^(?:دروس\s+|آيات\s+من\s+)[^\-–:]+[\-–:]+\s*/gi, "")
     .trim();
+
+  if (stripped && stripped !== clean) {
+    clean = stripped;
+  }
 
   if (clean === "الدرس الاول" || clean === "الدرس الأول" || clean === "الاول" || clean === "الأول") {
     return "الدرس الأول";
