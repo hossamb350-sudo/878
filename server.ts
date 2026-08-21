@@ -13,6 +13,7 @@ import webPush from "web-push";
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps, App } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { injectDynamicMetaTags } from "./src/ogInjector";
 import { IMAGEKIT_CONFIG } from "./src/config/imagekitConfig";
 
 dotenv.config();
@@ -1195,8 +1196,16 @@ async function startServer() {
     if (fs.existsSync(publicPath)) {
       app.use(express.static(publicPath));
     }
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(distPath, "index.html"));
+    app.get("*", async (req, res) => {
+      const indexPath = path.join(distPath, "index.html");
+      if (fs.existsSync(indexPath)) {
+        let html = fs.readFileSync(indexPath, "utf-8");
+        const host = req.headers.host || "taiz-media-ye.vercel.app";
+        html = await injectDynamicMetaTags(req.path, html, getDb(), host);
+        res.send(html);
+      } else {
+        res.status(404).send("Not found");
+      }
     });
   }
 

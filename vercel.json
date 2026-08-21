@@ -1,6 +1,26 @@
 {
   "rewrites": [
     {
+      "source": "/news/:slug",
+      "destination": "/api/og.js?type=news&slug=:slug"
+    },
+    {
+      "source": "/articles/:slug",
+      "destination": "/api/og.js?type=articles&slug=:slug"
+    },
+    {
+      "source": "/watch/:slug",
+      "destination": "/api/og.js?type=watch&slug=:slug"
+    },
+    {
+      "source": "/leader/:slug",
+      "destination": "/api/og.js?type=leader&slug=:slug"
+    },
+    {
+      "source": "/events/activity/:slug",
+      "destination": "/api/og.js?type=activities&slug=:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
