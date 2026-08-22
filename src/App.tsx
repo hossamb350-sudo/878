@@ -53,6 +53,7 @@ function AnimatedRoutes() {
         <Route path="articles" element={<Articles />} />
         <Route path="articles/:slug" element={<ArticleDetail />} />
         <Route path="watch" element={<Watch />} />
+        <Route path="watch/channel/:id" element={<Watch />} />
         <Route path="watch/:slug" element={<WatchItem />} />
         <Route path="leader" element={<Leader />} />
         <Route path="leader/:slug" element={<LeaderItem />} />

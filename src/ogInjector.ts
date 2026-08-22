@@ -20,7 +20,7 @@ export async function injectDynamicMetaTags(reqPath: string, html: string, db: F
 
     if (parts[0] === 'news' && parts[1]) { collection = 'news'; slug = parts[1]; }
     else if (parts[0] === 'articles' && parts[1]) { collection = 'articles'; slug = parts[1]; }
-    else if (parts[0] === 'watch' && parts[1]) { collection = 'watch'; slug = parts[1]; }
+    else if (parts[0] === 'watch' && parts[1]) { collection = 'videos'; slug = parts[1]; }
     else if (parts[0] === 'leader' && parts[1]) { collection = 'leader'; slug = parts[1]; }
     else if (parts[0] === 'events' && parts[1] === 'activity' && parts[2]) { collection = 'activities'; slug = parts[2]; }
 
@@ -34,27 +34,31 @@ export async function injectDynamicMetaTags(reqPath: string, html: string, db: F
           if (!description && data.content) {
             description = data.content.substring(0, 200);
           }
-          let imageUrl = data.imageUrl || data.image || "";
+          let imageUrl = data.imageUrl || data.image || data.thumbnailUrl || "";
           if (imageUrl && imageUrl.startsWith("/")) {
             imageUrl = `https://${host}${imageUrl}`;
           }
           const fullUrl = `https://${host}${reqPath}`;
+          const fullTitle = `${title} | منصة تعز الإعلامية`;
 
           const metaTags = `
-            <meta property="og:title" content="${escapeHtml(title)}" />
+            <meta property="og:title" content="${escapeHtml(fullTitle)}" />
             <meta property="og:description" content="${escapeHtml(description)}" />
             <meta property="og:image" content="${imageUrl}" />
             <meta property="og:url" content="${fullUrl}" />
             <meta property="og:type" content="article" />
-            <meta property="og:site_name" content="تعز الإعلامية" />
+            <meta property="og:site_name" content="منصة تعز الإعلامية" />
             
             <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content="${escapeHtml(title)}" />
+            <meta name="twitter:title" content="${escapeHtml(fullTitle)}" />
             <meta name="twitter:description" content="${escapeHtml(description)}" />
             <meta name="twitter:image" content="${imageUrl}" />
           `;
           
-          return html.replace('</head>', `${metaTags}\n</head>`);
+          let updatedHtml = html.replace('</head>', `${metaTags}\n</head>`);
+          updatedHtml = updatedHtml.replace(/<title>.*<\/title>/, `<title>${escapeHtml(fullTitle)}</title>`);
+          
+          return updatedHtml;
         }
       }
     }

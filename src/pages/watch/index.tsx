@@ -33,10 +33,11 @@ import {
   LayoutGrid,
   CreditCard,
   Layers,
-  Check
+  Check,
+  Share2
 } from "lucide-react";
 import { routes, generateSlug } from "../../utils/routes";
-import { Link } from "react-router-dom";
+import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../../components/PullToRefresh";
 import { getEmbedUrl } from "../../utils/embed";
@@ -235,6 +236,7 @@ const fallbackLatest: VideoItem[] = [
 import { useLiveStream } from "../../context/LiveStreamContext";
 
 export function Watch() {
+  const { id } = useParams<{ id: string }>();
   const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
   const [channels, setChannels] = useState<LiveStream[]>([]);
   const [loading, setLoading] = useState(true);
@@ -312,8 +314,22 @@ export function Watch() {
         setChannels(activeChannels);
         const tv = activeChannels.filter(c => (c.type || "tv") === "tv");
         const radio = activeChannels.filter(c => c.type === "radio");
-        if (tv.length > 0) setActiveTvId(prev => prev || tv[0].id || null);
-        if (radio.length > 0) setActiveRadioId(prev => prev || radio[0].id || null);
+        
+        const targetChannel = id ? activeChannels.find(c => c.id === id) : null;
+        if (targetChannel) {
+          if (targetChannel.type === "radio") {
+            setChannelTab("radio");
+            setActiveRadioId(targetChannel.id);
+            if (tv.length > 0) setActiveTvId(prev => prev || tv[0].id || null);
+          } else {
+            setChannelTab("tv");
+            setActiveTvId(targetChannel.id);
+            if (radio.length > 0) setActiveRadioId(prev => prev || radio[0].id || null);
+          }
+        } else {
+          if (tv.length > 0) setActiveTvId(prev => prev || tv[0].id || null);
+          if (radio.length > 0) setActiveRadioId(prev => prev || radio[0].id || null);
+        }
       } else {
         setChannels(DEFAULT_CHANNELS as LiveStream[]);
       }
@@ -382,6 +398,24 @@ export function Watch() {
   const displayChannels = useMemo(() => {
     return channelTab === "tv" ? tvChannels : radioChannels;
   }, [channelTab, tvChannels, radioChannels]);
+
+  const handleShareChannel = async (channel: LiveStream) => {
+    const url = `https://${window.location.host}/watch/channel/${channel.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `${channel.name} | منصة تعز الإعلامية`,
+          text: `شاهد واستمع إلى ${channel.name} مباشرة على منصة تعز الإعلامية`,
+          url: url,
+        });
+      } catch (err) {
+        console.error("Error sharing channel:", err);
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      alert("تم نسخ رابط المشاركة!");
+    }
+  };
 
   // Sync selected channel/radio with global activeStream whenever activeStream changes
   useEffect(() => {
@@ -617,9 +651,9 @@ export function Watch() {
                   <div className="absolute top-0 right-0 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
                   <div className="absolute bottom-0 left-0 w-48 h-48 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
 
-                  {/* Top Bar inside TV Viewer (Top Left Badge) */}
-                  <div className="relative z-10 flex items-center justify-start w-full">
-                    <div className="flex items-center gap-1.5 bg-transparent drop-shadow-md select-none" dir="ltr">
+                  {/* Top Bar inside TV Viewer */}
+                  <div className="relative z-10 flex items-center justify-between w-full" dir="ltr">
+                    <div className="flex items-center gap-1.5 bg-transparent drop-shadow-md select-none">
                       <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-slate-900/80 border border-white/30 p-0.5 shadow-sm shrink-0 flex items-center justify-center overflow-hidden">
                         <img 
                           src={activeTvChannel?.iconUrl || "/splash_first.png"} 
@@ -638,6 +672,15 @@ export function Watch() {
                         </span>
                       </div>
                     </div>
+                    {activeTvChannel && (
+                      <button 
+                        onClick={() => handleShareChannel(activeTvChannel)}
+                        className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 flex items-center justify-center transition-colors cursor-pointer"
+                        title="مشاركة القناة"
+                      >
+                        <Share2 className="w-4 h-4 text-white" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Center Play Button for TV Viewer */}
@@ -671,6 +714,17 @@ export function Watch() {
               <div className="font-cairo" dir="rtl">
                 {/* Main Card */}
                 <div className="relative w-full rounded-[24px] overflow-hidden bg-[#fafafa] dark:bg-slate-900/90 border border-slate-200/50 dark:border-slate-800/80 shadow-sm flex flex-col items-center pt-6 pb-5 px-4">
+                  {/* Share Button (Top Left) */}
+                  {activeRadioStation && (
+                    <button 
+                      onClick={() => handleShareChannel(activeRadioStation)}
+                      className="absolute top-4 left-4 z-40 bg-white dark:bg-slate-800 hover:bg-amber-50 dark:hover:bg-slate-700 text-slate-400 hover:text-amber-500 border border-slate-200 dark:border-slate-700 p-2 rounded-full shadow-sm transition-all cursor-pointer"
+                      title="مشاركة الإذاعة"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                  )}
+
                   {/* Dotted Pattern Background */}
                   <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_2px,transparent_2px)] dark:bg-[radial-gradient(#334155_2px,transparent_2px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
 

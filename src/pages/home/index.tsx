@@ -220,7 +220,7 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
                 </div>
 
                 {/* Pinned News Tag if applicable */}
-                {currentItem.isPinned && (
+                {currentItem.isPinned && !(currentItem as any).isVideoSliderItem && (
                   <div className="absolute top-[16px] left-0 z-10">
                     <span className="bg-blue-600 text-white text-[11px] sm:text-[13px] font-bold font-ibm w-[90px] sm:w-[100px] h-[30px] sm:h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-md">
                       <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
@@ -399,15 +399,8 @@ export function Home() {
       }));
 
     const combined = [...rawVideos, ...mappedLeaderVideos];
-    combined.sort((a, b) => {
-      const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-      const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-      if (aOrder !== bOrder) {
-        return aOrder - bOrder;
-      }
-      return b.createdAt - a.createdAt;
-    });
-    return combined.slice(0, 5);
+    combined.sort((a, b) => b.createdAt - a.createdAt);
+    return combined.slice(0, 10);
   }, [rawVideos, rawLeader]);
 
 
@@ -481,15 +474,8 @@ export function Home() {
     const unsubVideosPromise = SyncService.syncCollection<VideoItem>("videos", (videoData) => {
       if (!active) return;
       const sorted = [...videoData];
-      sorted.sort((a, b) => {
-        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-        if (aOrder !== bOrder) {
-          return aOrder - bOrder;
-        }
-        return b.createdAt - a.createdAt;
-      });
-      const sliced = sorted.slice(0, 5);
+      sorted.sort((a, b) => b.createdAt - a.createdAt);
+      const sliced = sorted.slice(0, 30);
       setRawVideos(sliced);
       localStorage.setItem("taiz_videos_cache", JSON.stringify(sliced));
       videosDone = true;
@@ -570,7 +556,8 @@ export function Home() {
         createdAt: item.createdAt,
         views: item.views || 0,
         isLeader: true,
-        videoUrl: item.content
+        videoUrl: item.content,
+        isVideoSliderItem: true
       }));
 
     // Regular videos flagged for slider
@@ -588,7 +575,8 @@ export function Home() {
         isFeatured: true,
         createdAt: item.createdAt,
         views: item.views || 0,
-        videoUrl: item.url
+        videoUrl: item.url,
+        isVideoSliderItem: true
       }));
 
     const getTime = (val: any): number => {
@@ -891,7 +879,7 @@ export function Home() {
                           </div>
 
                           {/* Pinned News Tag if applicable */}
-                          {item.isPinned && (
+                          {item.isPinned && !(item as any).isVideoSliderItem && (
                             <div className="absolute top-[16px] left-0 z-20">
                               <span className="bg-blue-600 text-white text-[11px] sm:text-[13px] font-bold font-ibm w-[90px] sm:w-[100px] h-[30px] sm:h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-md">
                                 <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
