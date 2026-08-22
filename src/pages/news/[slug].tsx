@@ -450,7 +450,7 @@ export function NewsDetail() {
 
           {/* Views badge - compact eye icon with views count on the far left inside the slider */}
           <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 px-2.5 py-1 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
-            <Eye className="w-3.5 h-3.5 stroke-[2] text-white/80" />
+            <Eye className="w-3.5 h-3.5 stroke-[2] text-red-500 animate-pulse" />
             <span>{news.views || 4}</span>
           </div>
 
@@ -524,7 +524,7 @@ export function NewsDetail() {
               <User className="w-3 h-3 stroke-[2.5]" />
             </div>
             <div>
-              <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-bold leading-none mb-0.5">الكاتب</p>
+              <p className="text-[9px] text-slate-400 dark:text-zinc-500 font-bold leading-none mb-0.5">تحرير</p>
               <p className="text-[11px] font-black text-slate-800 dark:text-zinc-200">{news.author || "هيثم اليوسفي"}</p>
             </div>
           </div>

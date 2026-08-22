@@ -122,6 +122,27 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// Android App Links verification
+app.get("/.well-known/assetlinks.json", (req, res) => {
+  const filePath = path.join(process.cwd(), "public/.well-known/assetlinks.json");
+  if (fs.existsSync(filePath)) {
+    res.setHeader("Content-Type", "application/json");
+    return res.sendFile(filePath);
+  }
+  res.json([
+    {
+      relation: ["delegate_permission/common.handle_all_urls"],
+      target: {
+        namespace: "android_app",
+        package_name: "com.taiz.platform",
+        sha256_cert_fingerprints: [
+          "14:6D:E9:75:5F:52:12:D7:4E:20:97:E2:51:14:6B:0B:08:42:34:64:1B:32:49:50:4E:0F:81:9F:60:A2:69:DA"
+        ]
+      }
+    }
+  ]);
+});
+
 // Quran Data API
 app.get("/api/quran-data", (req, res) => {
   const filePath = path.join(process.cwd(), "public/quranData.json");

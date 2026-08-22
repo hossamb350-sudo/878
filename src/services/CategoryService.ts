@@ -25,27 +25,7 @@ export const PRESET_CATEGORY_COLORS = [
   "#64748B", // Slate
 ];
 
-export const DEFAULT_CATEGORIES: { name: string; color: string; description?: string }[] = [
-  { name: "محلية", color: "#06B6D4", description: "الأخبار المحلية والشؤون الداخلية" },
-  { name: "تعبئة عامة", color: "#EF4444", description: "فعاليات وأخبار التعبئة العامة" },
-  { name: "اجتماعية", color: "#10B981", description: "المشاريع والمبادرات الاجتماعية" },
-  { name: "أنشطة وزيارات", color: "#8B5CF6", description: "الأنشطة والزيارات الميدانية الرسمية" },
-  { name: "مشاريع", color: "#F59E0B", description: "المشاريع التنموية والخدمية" },
-  { name: "مقال", color: "#6366F1", description: "المقالات والرؤى التحليلية" },
-  { name: "تقارير ميدانية", color: "#3B82F6", description: "التقارير المصورة والميدانية" },
-  { name: "زوامل وأناشيد", color: "#EC4899", description: "القصائد والزوامل والأناشيد" },
-  { name: "محاضرات ودروس", color: "#14B8A6", description: "المحاضرات التوعوية والدروس" },
-  { name: "أفلام وثائقية", color: "#F97316", description: "الوثائقيات والمواد المرئية" },
-  { name: "سياسي", color: "#3B82F6", description: "الأخبار السياسية" },
-  { name: "اقتصادي", color: "#10B981", description: "الأخبار الاقتصادية" },
-  { name: "ثقافي", color: "#8B5CF6", description: "الفعاليات الثقافية" },
-  { name: "السيد القائد", color: "#1e4275", description: "كلمات ومواقف السيد القائد" },
-  { name: "فعاليات", color: "#EF4444", description: "الفعاليات والأنشطة العامة" },
-  { name: "لقاء خاص", color: "#8B5CF6", description: "المقابلات واللقاءات الحصرية" },
-  { name: "تقرير ميداني", color: "#3B82F6", description: "تقارير ميدانية خاصة" },
-  { name: "تقارير خاصة", color: "#06B6D4", description: "تقارير إخبارية خاصة" },
-  { name: "مشاريع حيوية", color: "#F59E0B", description: "مشاريع حيوية وتنموية" },
-];
+export const DEFAULT_CATEGORIES: { name: string; color: string; description?: string }[] = [];
 
 export const CategoryService = {
   getFallbackColor: (name: string): string => {
@@ -258,13 +238,13 @@ export const CategoryService = {
       try {
         const snap = await getDocs(collection(db, colName));
         if (!snap.empty) {
-          const docsToUpdate = snap.docs.filter(d => d.data().category || d.data().type || d.data().cat);
+          const docsToUpdate = snap.docs.filter(d => d.data().category || (d.data().categories && d.data().categories.length > 0));
           if (docsToUpdate.length > 0) {
             for (let i = 0; i < docsToUpdate.length; i += 400) {
               const batch = writeBatch(db);
               const chunk = docsToUpdate.slice(i, i + 400);
               chunk.forEach(d => {
-                batch.update(d.ref, { category: "", cat: "", type: "" });
+                batch.update(d.ref, { category: "", categories: [] });
                 unlinkedContentItems++;
               });
               await batch.commit();

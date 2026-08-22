@@ -54,6 +54,8 @@ export interface VideoItem {
   updatedAt?: number;
   isLeader?: boolean;
   isFeatured?: boolean;
+  showInSlider?: boolean;
+  isPinned?: boolean;
   hijriDate?: string;
   gregorianDate?: string;
   authorId?: string;
@@ -98,8 +100,17 @@ export interface LeaderContent {
   description?: string;
   views?: number;
   thumbnailUrl?: string;
+  category?: string;
+  categories?: string[];
   order?: number;
+  isFeatured?: boolean;
+  showInSlider?: boolean;
+  isPinned?: boolean;
+  hijriDate?: string;
+  gregorianDate?: string;
+  duration?: string;
   createdAt: number;
+  updatedAt?: number;
 }
 
 export interface QuranContent {

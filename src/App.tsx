@@ -25,6 +25,7 @@ import { TopicDetail } from "./pages/topic/[slug]";
 import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
+import { DeepLinkHandler } from "./components/DeepLinkHandler";
 import { QuranAudioProvider } from "./context/QuranAudioContext";
 import { LiveStreamProvider } from "./context/LiveStreamContext";
 import { useEffect } from "react";
@@ -100,11 +101,11 @@ export default function App() {
 
   useEffect(() => {
     const purgeOld = async () => {
-      const purged = localStorage.getItem("categories_purged_v2");
+      const purged = localStorage.getItem("categories_purged_v3");
       if (!purged) {
         try {
           await CategoryService.purgeAllOldCategoriesAndUnlinkContent();
-          localStorage.setItem("categories_purged_v2", "true");
+          localStorage.setItem("categories_purged_v3", "true");
         } catch (e) {
           console.warn("Auto purge failed:", e);
         }
@@ -217,6 +218,7 @@ export default function App() {
 
   return (
     <BrowserRouter>
+      <DeepLinkHandler />
       <LiveStreamProvider>
         <QuranAudioProvider>
           <NavigationController />

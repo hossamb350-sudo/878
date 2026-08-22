@@ -117,6 +117,7 @@ import { loadQuranMetadata } from "../../data/importedQuranData";
 import { AdminCategoryManager } from "../../components/AdminCategoryManager";
 import { AdminArticles } from "../../components/AdminArticles";
 import { AdminVideos } from "../../components/AdminVideos";
+import { AdminLeader } from "../../components/AdminLeader";
 import { AdminOnlineUsers } from "../../components/AdminOnlineUsers";
 import { AdminRegisteredUsers } from "../../components/AdminRegisteredUsers";
 import { AdminVersionLock } from "../../components/AdminVersionLock";
@@ -942,6 +943,8 @@ function AdminSummaryDashboard({
           }).catch(() => {});
         }
       }
+    }, (err) => {
+      console.warn("Could not fetch registered_users_config:", err);
     });
 
     const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
@@ -952,7 +955,9 @@ function AdminSummaryDashboard({
           setRegisteredCountDisplay(cnt);
           localStorage.setItem("registered_users_display_count", String(cnt));
         }
-      });
+      }).catch(() => {});
+    }, (err) => {
+      console.warn("Could not listen to users collection:", err);
     });
 
     return () => {
@@ -1000,6 +1005,9 @@ function AdminSummaryDashboard({
       } else {
         setOnlineCountDisplay(34);
       }
+    }, (err) => {
+      console.warn("Could not fetch online_users_config:", err);
+      setOnlineCountDisplay(34);
     });
 
     return () => {
@@ -2590,19 +2598,8 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
       // Save Metadata (Category)
       if (cat === "custom" && customCat && !savedCats.includes(customCat)) {
         const newList = [...savedCats, customCat];
-        const customOnlyList = newList.filter(
-          (c) =>
-            ![
-              "محلية",
-              "تعبئة عامة",
-              "اجتماعية",
-              "أنشطة وزيارات",
-              "مشاريع",
-              "مقال",
-            ].includes(c)
-        );
         await setDoc(doc(db, "newsMetadata", "categories"), {
-          list: customOnlyList,
+          list: newList,
         });
         setSavedCats(newList);
       }
@@ -3475,359 +3472,7 @@ function AdminLive() {
   );
 }
 
-function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<"video" | "text">("video");
-  const [content, setContent] = useState("");
-  const [description, setDescription] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
-  const [order, setOrder] = useState<string>("");
-  const [views, setViews] = useState<number>(0);
-  const [saving, setSaving] = useState(false);
-  const [notify, setNotify] = useState(true);
-  const [leaderContents, setLeaderContents] = useState<LeaderContent[]>([]);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const q = query(collection(db, "leader"));
-    const unsub = onSnapshot(
-      q,
-      (snap) => {
-        const data = snap.docs.map(
-          (d) => ({ id: d.id, ...d.data() } as LeaderContent)
-        );
-        data.sort((a, b) => {
-          const aOrder =
-            a.order !== undefined && a.order !== null
-              ? Number(a.order)
-              : Infinity;
-          const bOrder =
-            b.order !== undefined && b.order !== null
-              ? Number(b.order)
-              : Infinity;
-          if (aOrder !== bOrder) {
-            return aOrder - bOrder;
-          }
-          return b.createdAt - a.createdAt;
-        });
-        setLeaderContents(data);
-      },
-      (error) => console.warn("Error fetching leader content:", error)
-    );
-    return () => unsub();
-  }, []);
-
-  const save = async () => {
-    if (!title || !content) return alert("يرجى تعبئة جميع الحقول");
-    setSaving(true);
-    const parsedOrder = order.trim() ? Number(order) : 9999;
-    try {
-      if (editingId) {
-        await updateDoc(doc(db, "leader", editingId), {
-          title,
-          type,
-          content,
-          description: type === "video" ? description.trim() : "",
-          thumbnailUrl: thumbnailUrl.trim(),
-          order: parsedOrder,
-          views: Number(views) || 0,
-        });
-        alert("تم التعديل بنجاح!");
-      } else {
-        const docRef = await addDoc(collection(db, "leader"), {
-          title,
-          type,
-          content,
-          description: type === "video" ? description.trim() : "",
-          thumbnailUrl: thumbnailUrl.trim(),
-          order: parsedOrder,
-          views: Number(views) || 0,
-          createdAt: Date.now(),
-        });
-
-        if (notify) {
-          try {
-            await PushNotificationService.triggerPushNotification(
-              type === "video" ? "خطاب جديد للمناسبة 🎥" : "محتوى ثقافي جديد 📖",
-              title,
-              `/leader?leaderContentId=${docRef.id}`
-            );
-          } catch (pushErr) {
-            console.error("Failed to send leader push notification:", pushErr);
-          }
-        }
-
-        alert("تمت الإضافة بنجاح!");
-      }
-      resetForm();
-    } catch (e) {
-      console.error(e);
-      alert("حدث خطأ أثناء الحفظ");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const resetForm = () => {
-    setTitle("");
-    setContent("");
-    setDescription("");
-    setThumbnailUrl("");
-    setOrder("");
-    setViews(0);
-    setType("video");
-    setEditingId(null);
-  };
-
-  const handleEdit = (item: LeaderContent) => {
-    setTitle(item.title || "");
-    setContent(item.content || "");
-    setDescription(item.description || "");
-    setThumbnailUrl(item.thumbnailUrl || "");
-    setOrder(
-      item.order !== undefined && item.order !== null ? String(item.order) : ""
-    );
-    setViews(item.views || 0);
-    setType(item.type || "text");
-    setEditingId(item.id);
-  };
-
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteDoc(doc(db, "leader", id));
-      await SyncService.trackDeletion("leader", id);
-      alert("تم الحذف بنجاح");
-      setDeletingId(null);
-    } catch (e) {
-      console.error(e);
-      alert("خطأ في الحذف");
-    }
-  };
-
-  return (
-    <div className="space-y-6 max-w-2xl">
-      <div className="flex items-center justify-between border-b dark:border-gray-700 pb-3">
-        <h2 className="text-xl font-bold">
-          {editingId ? "تعديل محتوى السيد القائد" : "إضافة محتوى السيد القائد"}
-        </h2>
-      </div>
-
-      <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-2xl border border-gray-100 dark:border-gray-800 space-y-4">
-        <div>
-          <label className="block text-sm font-bold mb-2">العنوان:</label>
-          <input
-            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 font-bold"
-            placeholder=""
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold mb-2">النوع:</label>
-          <select
-            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 font-bold"
-            value={type}
-            onChange={(e) => setType(e.target.value as "video" | "text")}
-          >
-            <option value="text">محاضرات ودروس</option>
-            <option value="video">ضع رابط الفيديو</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold mb-2">
-            {type === "text" ? "المحتوى:" : "رابط الفيديو:"}
-          </label>
-          <textarea
-            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl h-32 focus:outline-blue-500"
-            placeholder={
-              type === "text"
-                ? "اكتب المحتوى هنا..."
-                : "ضع رابط الفيديو هنا (يدعم يوتيوب، درايف، تيليجرام، والمسيرة)..."
-            }
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
-          {type === "video" && (
-            <p className="text-[11px] text-emerald-600 mt-2 font-medium">
-              يدعم الروابط المباشرة واليوتيوب (YouTube)، جوجل درايف (Drive)،
-              تيليجرام (Telegram)، والمسيرة (Almasirah) وسيتم معالجتها تلقائياً
-              للعرض بالشكل الصحيح.
-            </p>
-          )}
-        </div>
-
-        {type === "video" && (
-          <div>
-            <label className="block text-sm font-bold mb-2">وصف الفيديو:</label>
-            <textarea
-              className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl h-24 focus:outline-blue-500 text-sm"
-              placeholder=""
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-        )}
-
-        <div>
-          <ImageUpload
-            value={thumbnailUrl}
-            onChange={setThumbnailUrl}
-            label={type === "text" ? "صورة المحاضرة أو النص (اختياري)" : "الصورة المصغرة للفيديو (اختياري)"}
-            placeholder={type === "text" ? "اختر أو اسحب صورة للمحاضرة" : "اختر أو اسحب صورة مصغرة للفيديو"}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold mb-2">
-            ترتيب العرض والأولوية (الأصغر يظهر أولاً):
-          </label>
-          <input
-            type="number"
-            className="w-full p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl focus:outline-blue-500 text-sm font-bold"
-            placeholder="مثال: 1 للظهور أولاً، 2 للظهور ثانياً، 3 للظهور ثالثاً..."
-            value={order}
-            onChange={(e) => setOrder(e.target.value)}
-          />
-          <p className="text-[11px] text-emerald-600 mt-2 font-medium">
-            كلما كان الرقم أصغر كلما تمت موازنته والظهور في المقدمة (رقم 1 في
-            البداية). يُرتب تلقائياً حسب الأقدم/الأحدث إذا كان فارغاً.
-          </p>
-        </div>
-
-        {isAdmin && (
-          <div className="space-y-2 bg-blue-50/30 dark:bg-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30">
-            <label className="block text-sm font-bold text-blue-800 dark:text-blue-400">
-              تعديل عدد المشاهدات يدوياً:
-            </label>
-            <input
-              type="number"
-              className="w-full max-w-[200px] p-3 bg-white dark:bg-gray-800 border border-blue-200 dark:border-blue-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-lg font-mono font-bold"
-              value={views}
-              onChange={(e) => setViews(parseInt(e.target.value) || 0)}
-            />
-            <p className="text-[10px] text-gray-500">خاص بالمدير فقط.</p>
-          </div>
-        )}
-
-        <label className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-xl cursor-pointer hover:border-blue-500/30 transition-colors font-bold text-sm">
-          <input
-            type="checkbox"
-            checked={notify}
-            onChange={(e) => setNotify(e.target.checked)}
-            className="w-5 h-5 accent-blue-600 rounded"
-          />
-          <span className="text-gray-700 dark:text-gray-200">
-            إرسال تنبيه للمشتركين بخصوص هذا المحتوى
-          </span>
-        </label>
-
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={save}
-            disabled={saving}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50"
-          >
-            {saving
-              ? "جاري الحفظ..."
-              : editingId
-              ? "حفظ التعديلات"
-              : "إضافة المحتوى الآن"}
-          </button>
-          {editingId && (
-            <button
-              onClick={resetForm}
-              className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-6 py-2.5 rounded-xl font-bold"
-            >
-              إلغاء
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
-          <List className="w-5 h-5 text-gray-500" /> المحتوى المضاف مرتباً حسب
-          الأولويات والعرض
-        </h3>
-        <div className="space-y-3">
-          {leaderContents.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm"
-            >
-              <div className="flex flex-col gap-1">
-                <span className="font-bold text-[#111827] dark:text-white line-clamp-1">
-                  {item.title}
-                </span>
-                <div className="text-xs text-gray-400 dark:text-gray-400 flex flex-wrap gap-2 items-center">
-                  <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                  <span>•</span>
-                  <span>
-                    {item.type === "video" ? "فيديو" : "محاضرات ودروس"}
-                  </span>
-                  <span>•</span>
-                  <span>{item.views || 0} مشاهدة</span>
-                  {item.order !== undefined && item.order !== 9999 && (
-                    <>
-                      <span>•</span>
-                      <span className="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-500/15">
-                        الترتيب: {item.order}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                {deletingId === item.id ? (
-                  <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 p-1.5 rounded-lg">
-                    <span className="text-xs font-bold text-red-600 dark:text-red-400 px-2">
-                      تأكيد الحذف؟
-                    </span>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded text-sm font-bold transition-colors"
-                    >
-                      نعم
-                    </button>
-                    <button
-                      onClick={() => setDeletingId(null)}
-                      className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-1.5 rounded text-sm font-bold transition-colors"
-                    >
-                      لا
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleEdit(item)}
-                      className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors flex items-center gap-1 text-sm font-medium"
-                    >
-                      <Edit className="w-4 h-4" /> تعديل
-                    </button>
-                    <button
-                      onClick={() => setDeletingId(item.id)}
-                      className="text-red-500 hover:text-red-700 px-4 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 font-bold text-sm transition-colors flex items-center gap-1"
-                    >
-                      <Trash2 className="w-4 h-4" /> حذف
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-          {leaderContents.length === 0 && (
-            <p className="text-gray-500 text-sm text-center py-8 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
-              لا يوجد محتوى مضاف بعد.
-            </p>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+// AdminLeader is imported from components/AdminLeader.tsx
 
 import {
   QuranSeries,

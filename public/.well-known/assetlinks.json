@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.taiz.platform",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:75:5F:52:12:D7:4E:20:97:E2:51:14:6B:0B:08:42:34:64:1B:32:49:50:4E:0F:81:9F:60:A2:69:DA"
+      ]
+    }
+  }
+]

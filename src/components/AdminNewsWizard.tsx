@@ -79,8 +79,8 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   const [author, setAuthor] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [additionalImages, setAdditionalImages] = useState<string[]>([]);
-  const [cat, setCat] = useState("محلية");
-  const [selectedCats, setSelectedCats] = useState<string[]>(["محلية"]);
+  const [cat, setCat] = useState("");
+  const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [catSearch, setCatSearch] = useState("");
   const [showCatDropdown, setShowCatDropdown] = useState(false);
   const [customCat, setCustomCat] = useState("");
@@ -291,8 +291,8 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       setSelectedCats(item.categories);
       setCat(item.categories[0]);
     } else {
-      setSelectedCats([item.category || "محلية"]);
-      setCat(item.category || "محلية");
+      setSelectedCats(item.category ? [item.category] : []);
+      setCat(item.category || "");
     }
 
     if (savedCats.some(c => c.name === (item.category || ""))) {
@@ -359,7 +359,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       author: author || "منصة تعز",
       imageUrl: imageUrl || null,
       additionalImages: filteredAdditionalImages.length > 0 ? filteredAdditionalImages : null,
-      category: finalSelectedCats[0] || "محلية",
+      category: finalSelectedCats[0] || "",
       categories: finalSelectedCats,
       isBreaking,
       isPinned,
@@ -482,16 +482,13 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   };
 
   const deleteCategory = async (catToDelete: string) => {
-    if (["محلية", "تعبئة عامة", "اجتماعية", "أنشطة وزيارات", "مشاريع", "مقال"].includes(catToDelete)) {
-      return alert("لا يمكن حذف التصنيفات الافتراضية");
-    }
     if (!confirm(`هل أنت متأكد من حذف تصنيف "${catToDelete}"؟ لن يتم حذف الأخبار المرتبطة به ولكن سيختفي من القائمة.`)) return;
     
     try {
       const newList = savedCats.filter(c => c.name !== catToDelete);
       await setDoc(doc(db, "newsMetadata", "categories"), { items: newList });
       setSavedCats(newList);
-      if (cat === catToDelete) setCat("محلية");
+      if (cat === catToDelete) setCat("");
     } catch (e) {
       alert("خطأ في الحذف");
     }
@@ -1568,7 +1565,7 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
                                     </span>
                                   )}
                                   <QuickCategorySelector
-                                    currentCategory={item.category || "محلية"}
+                                    currentCategory={item.category || ""}
                                     currentCategories={item.categories}
                                     itemTitle={item.title}
                                     size="xs"

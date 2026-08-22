@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs, orderBy, limit, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, limit, addDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 import { get, set } from "idb-keyval";
 
@@ -118,6 +118,7 @@ export class SyncService {
     options?: SyncOptions
   ): Promise<() => void> {
     let active = true;
+    let unsubscribeRealtime: (() => void) | null = null;
 
     // 1. Return cached items immediately
     let cachedList = await SyncService.getCache<T>(collectionName);
@@ -210,7 +211,62 @@ export class SyncService {
       await SyncService.setSyncTime(collectionName, now);
 
       // Trigger callback with fresh merged data
-      if (active) onUpdate(mergedList);
+      if (active) onUpdate([...mergedList]);
+
+      // --- Realtime Listener for New Content ---
+      let queryField = syncField === "order" ? "createdAt" : syncField;
+      
+      let newestTime = 0;
+      if (mergedList.length > 0) {
+        const isDesc = (options?.orderDirection || "desc") === "desc";
+        const newestItem = isDesc ? mergedList[0] : mergedList[mergedList.length - 1];
+        newestTime = Number(newestItem[queryField as keyof T] || newestItem.createdAt || newestItem.timestamp || 0);
+      } else {
+        // If collection is truly empty, fallback to now to only listen for future inserts
+        newestTime = Date.now();
+      }
+      // Subtract 1 millisecond to ensure we don't miss items created at the exact same millisecond
+      // although > is strict, usually timestamps are unique enough. 
+      // Actually, since > is strict, if a new item has the exact same timestamp, we'd miss it. 
+      // Firestore timestamps are very precise, but using >= might trigger for the newest item again.
+      // If it triggers for the newest item again, our merge logic deduplicates it anyway!
+      
+      const realtimeQuery = query(
+        collection(db, collectionName),
+        where(queryField, ">=", newestTime)
+      );
+
+      unsubscribeRealtime = onSnapshot(realtimeQuery, (snapshot) => {
+        if (!active) return;
+        
+        let hasNewData = false;
+        snapshot.docChanges().forEach((change) => {
+          if (change.type === "added" || change.type === "modified") {
+            const newItem = { id: change.doc.id, ...(change.doc.data() as any) } as unknown as T;
+            const existingIndex = mergedList.findIndex(item => item.id === newItem.id);
+            if (existingIndex > -1) {
+              mergedList[existingIndex] = newItem;
+            } else {
+              mergedList.push(newItem);
+            }
+            hasNewData = true;
+          } else if (change.type === "removed") {
+             const existingIndex = mergedList.findIndex(item => item.id === change.doc.id);
+             if (existingIndex > -1) {
+                 mergedList.splice(existingIndex, 1);
+                 hasNewData = true;
+             }
+          }
+        });
+        
+        if (hasNewData) {
+          mergedList = SyncService.sortItems(mergedList, options);
+          SyncService.setCache(collectionName, mergedList).catch(console.warn);
+          onUpdate([...mergedList]);
+        }
+      }, (error) => {
+         console.warn(`Realtime listener error for ${collectionName}:`, error);
+      });
     } catch (e: any) {
       const isQuotaExceeded = e.code === 'resource-exhausted' || 
                              (e.message && (e.message.includes('Quota') || e.message.includes('quota')));
@@ -223,6 +279,9 @@ export class SyncService {
 
     return () => {
       active = false;
+      if (unsubscribeRealtime) {
+        unsubscribeRealtime();
+      }
     };
   }
 

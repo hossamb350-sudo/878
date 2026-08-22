@@ -483,121 +483,76 @@ export function Watch() {
         <div className="max-w-[760px] mx-auto space-y-3.5">
 
           {/* 0. HEADER & TAB SWITCHER (MOVED TO TOP) */}
-          <div className="space-y-2 mb-3">
-            {/* TAB SWITCHER: TV vs RADIO - COMPACT LUXURY BROADCAST CAPSULE */}
-            <div className="relative p-1 rounded-2xl bg-slate-100/90 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-slate-800 shadow-inner select-none" dir="rtl">
-              <div className="flex items-center gap-1 relative z-10">
+          <div className="pt-1.5 pb-2 px-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800 shadow-soft mb-2 -mx-2 sm:-mx-3 px-2 sm:px-3">
+            <div className="max-w-[760px] mx-auto w-full px-1">
+              {/* Premium Segmented Switcher Pills (Full Width) */}
+              <div className="w-full bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 grid grid-cols-2 gap-1 shadow-inner select-none">
                 {/* Tab 1: قنوات التلفزيون */}
                 <button
                   type="button"
                   id="tab-switcher-tv"
                   onClick={() => setChannelTab("tv")}
-                  className={`relative flex-1 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-between gap-1.5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 active:scale-[0.98] ${
+                  title="قسم البث التلفزيوني المباشر"
+                  className={`relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-cairo transition-all duration-300 active:scale-95 cursor-pointer outline-none ${
                     channelTab === "tv"
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+                      ? "font-black text-white"
+                      : "font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
                   }`}
                 >
                   {channelTab === "tv" && (
                     <motion.div
-                      layoutId="activeBroadcastPill"
-                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                      className="absolute inset-0 rounded-xl bg-white dark:bg-slate-800 shadow-md shadow-slate-900/10 dark:shadow-black/50 border border-slate-200/80 dark:border-slate-700/80 -z-10"
+                      layoutId="broadcast-channel-tab-pill"
+                      className="absolute inset-0 bg-gradient-to-r from-red-600 via-rose-600 to-red-600 rounded-lg sm:rounded-xl shadow-xs border border-rose-400/30"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
-                  
-                  {/* Right Side: Icon & Title */}
-                  <div className="flex items-center gap-2">
-                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center transition-all ${
+                  <span className="relative z-10 flex items-center justify-center gap-1.5">
+                    <Tv className={`w-4 h-4 transition-transform duration-300 ${
+                      channelTab === "tv" ? "text-rose-200 animate-pulse scale-110" : "text-slate-500 dark:text-slate-400"
+                    }`} />
+                    <span className="whitespace-nowrap">البث التلفزيوني</span>
+                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded leading-none border transition-colors ${
                       channelTab === "tv"
-                        ? "bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 shadow-2xs"
-                        : "bg-slate-200/60 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400"
-                    }`}>
-                      <Tv className={`w-3.5 h-3.5 transition-transform duration-300 ${
-                        channelTab === "tv" ? "scale-110" : ""
-                      }`} />
-                    </div>
-
-                    <span className="text-xs sm:text-sm font-black font-cairo leading-none">
-                      قنوات التلفزيون
-                    </span>
-                  </div>
-
-                  {/* Left Side: Live Indicator & Badge */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className={`text-[8.5px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-[5px] border ${
-                      channelTab === "tv" 
-                        ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20" 
-                        : "bg-slate-200/70 dark:bg-slate-800 text-slate-500 border-slate-300/40 dark:border-slate-700"
+                        ? "bg-white/20 text-white border-white/25 shadow-xs"
+                        : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600"
                     }`}>
                       HD
                     </span>
-                    <span className="relative flex h-2 w-2 shrink-0">
-                      {channelTab === "tv" && (
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                      )}
-                      <span className={`relative inline-flex rounded-full h-2 w-2 ${
-                        channelTab === "tv" ? "bg-red-600 dark:bg-red-500 shadow-[0_0_8px_rgba(220,38,38,0.6)]" : "bg-slate-300 dark:bg-slate-600"
-                      }`} />
-                    </span>
-                  </div>
+                  </span>
                 </button>
 
-                {/* Tab 2: الإذاعات المتاحة */}
+                {/* Tab 2: الإذاعات الصوتية */}
                 <button
                   type="button"
                   id="tab-switcher-radio"
                   onClick={() => setChannelTab("radio")}
-                  className={`relative flex-1 py-1.5 sm:py-2 px-2.5 sm:px-3 rounded-xl font-bold transition-all duration-300 flex items-center justify-between gap-1.5 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 active:scale-[0.98] ${
+                  title="قسم البث الإذاعي الصوتي"
+                  className={`relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-cairo transition-all duration-300 active:scale-95 cursor-pointer outline-none ${
                     channelTab === "radio"
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50"
+                      ? "font-black text-white"
+                      : "font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
                   }`}
                 >
                   {channelTab === "radio" && (
                     <motion.div
-                      layoutId="activeBroadcastPill"
-                      transition={{ type: "spring", stiffness: 450, damping: 32 }}
-                      className="absolute inset-0 rounded-xl bg-white dark:bg-slate-800 shadow-md shadow-slate-900/10 dark:shadow-black/50 border border-slate-200/80 dark:border-slate-700/80 -z-10"
+                      layoutId="broadcast-channel-tab-pill"
+                      className="absolute inset-0 bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 rounded-lg sm:rounded-xl shadow-xs border border-amber-300/30"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
-                  
-                  {/* Right Side: Icon & Title */}
-                  <div className="flex items-center gap-2">
-                    <div className={`w-6 h-6 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center transition-all ${
+                  <span className="relative z-10 flex items-center justify-center gap-1.5">
+                    <Radio className={`w-4 h-4 transition-transform duration-300 ${
+                      channelTab === "radio" ? "text-amber-200 animate-pulse scale-110" : "text-slate-500 dark:text-slate-400"
+                    }`} />
+                    <span className="whitespace-nowrap">الإذاعات الصوتية</span>
+                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded leading-none border transition-colors ${
                       channelTab === "radio"
-                        ? "bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 shadow-2xs"
-                        : "bg-slate-200/60 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400"
-                    }`}>
-                      <Radio className={`w-3.5 h-3.5 transition-transform duration-300 ${
-                        channelTab === "radio" ? "scale-110" : ""
-                      }`} />
-                    </div>
-
-                    <span className="text-xs sm:text-sm font-black font-cairo leading-none">
-                      الإذاعات المتاحة
-                    </span>
-                  </div>
-
-                  {/* Left Side: Audio Waves & FM Badge */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className={`text-[8.5px] sm:text-[9px] font-black px-1.5 py-0.5 rounded-[5px] border ${
-                      channelTab === "radio" 
-                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" 
-                        : "bg-slate-200/70 dark:bg-slate-800 text-slate-500 border-slate-300/40 dark:border-slate-700"
+                        ? "bg-white/20 text-white border-white/25 shadow-xs"
+                        : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600"
                     }`}>
                       FM
                     </span>
-                    {channelTab === "radio" ? (
-                      <div className="flex items-end gap-0.5 h-3 shrink-0">
-                        <span className="w-0.5 h-2 bg-amber-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(245,158,11,0.5)]" style={{ animationDuration: '0.6s' }} />
-                        <span className="w-0.5 h-3 bg-amber-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(245,158,11,0.5)]" style={{ animationDuration: '0.9s' }} />
-                        <span className="w-0.5 h-1.5 bg-amber-500 rounded-full animate-pulse shadow-[0_0_6px_rgba(245,158,11,0.5)]" style={{ animationDuration: '0.7s' }} />
-                      </div>
-                    ) : (
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-300 dark:bg-slate-600 shrink-0" />
-                    )}
-                  </div>
+                  </span>
                 </button>
               </div>
             </div>

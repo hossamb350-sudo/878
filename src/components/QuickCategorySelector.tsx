@@ -64,7 +64,7 @@ export function QuickCategorySelector({
     if (currentCategory && currentCategory.trim() && !list.includes(currentCategory.trim())) {
       list.unshift(currentCategory.trim());
     }
-    return list.length > 0 ? list : ["محلية"];
+    return list;
   }, [currentCategory, currentCategories]);
 
   const activeCategoriesList = useMemo(() => computeActiveList(), [computeActiveList]);
@@ -143,18 +143,7 @@ export function QuickCategorySelector({
     activeCategoriesList.forEach(c => {
       if (!map.has(c)) map.set(c, CategoryService.getFallbackColor(c));
     });
-    // 3. Preset default system categories
-    const defaults = [
-      "محلية", "تعبئة عامة", "أنشطة وزيارات", "مشاريع ومبادرات", 
-      "تحليلات", "مقالات رأي", "دراسات", "ثقافة وفكر",
-      "فيديوهات", "تقارير مرئية", "محاضرات ودروس", "تغطيات خاصة",
-      "القوات المسلحة", "المولد النبوي الشريف", "مسيرات ووقفات", "اجتماعية"
-    ];
-    defaults.forEach(d => {
-      if (!map.has(d)) {
-        map.set(d, CategoryService.getFallbackColor(d));
-      }
-    });
+
 
     return Array.from(map.entries()).map(([name, color]) => ({ name, color }));
   }, [categories, activeCategoriesList]);
@@ -221,8 +210,8 @@ export function QuickCategorySelector({
   const handleSaveChanges = async () => {
     setIsLoading(true);
     try {
-      const finalCategories = selectedList.length > 0 ? selectedList : ["محلية"];
-      const primaryCategory = finalCategories[0];
+      const finalCategories = selectedList.length > 0 ? selectedList : [];
+      const primaryCategory = finalCategories[0] || "";
 
       await onUpdate(primaryCategory, finalCategories);
 
@@ -268,7 +257,7 @@ export function QuickCategorySelector({
   };
 
   // Primary category for trigger styling
-  const primaryCat = activeCategoriesList[0] || "محلية";
+  const primaryCat = activeCategoriesList[0] || "بدون تصنيف";
   const primaryColor = getCategoryColor(primaryCat);
   const extraCount = activeCategoriesList.length > 1 ? activeCategoriesList.length - 1 : 0;
 

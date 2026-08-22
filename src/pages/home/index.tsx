@@ -71,6 +71,55 @@ function formatViews(views: number): string {
   return views.toString();
 }
 
+function ShimmerNewsImage({
+  src,
+  alt,
+  className = "",
+  containerClassName = "",
+}: {
+  src?: string;
+  alt?: string;
+  className?: string;
+  containerClassName?: string;
+}) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  return (
+    <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-800 ${containerClassName}`}>
+      {/* Animated Shimmer beam during image loading */}
+      {!loaded && !error && (
+        <div className="absolute inset-0 z-0 bg-slate-200/90 dark:bg-slate-700/80 overflow-hidden">
+          <div 
+            className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 dark:via-white/20 to-transparent"
+            style={{ willChange: "transform" }}
+          />
+        </div>
+      )}
+
+      {src && !error ? (
+        <img
+          src={src}
+          alt={alt || ""}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+          className={`w-full h-full object-cover transition-all duration-700 ${
+            loaded ? "opacity-100" : "opacity-0"
+          } ${className}`}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-400">
+          <Newspaper className="w-8 h-8 opacity-35" />
+        </div>
+      )}
+
+      {/* Gentle ambient light reflection sweep over the image on hover */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-10" />
+    </div>
+  );
+}
+
 
 
 
@@ -214,13 +263,13 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
                           <span>{mDate}</span>
                         </div>
                       )}
-
-                      {/* Views */}
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Eye className="w-4 h-4 text-white/90 stroke-[1.75]" />
-                        <span>{formatViews(currentItem.views || 0)}</span>
-                      </div>
                     </div>
+                 </div>
+
+                 {/* Views Badge - Positioned at bottom-left of the slider */}
+                 <div className="absolute bottom-2.5 left-3 sm:bottom-3 sm:left-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15 text-white text-[10.5px] sm:text-[12px] font-bold shadow-md pointer-events-none select-none">
+                   <Eye className="w-3.5 h-3.5 text-red-400 animate-pulse stroke-[2]" />
+                   <span>{formatViews(currentItem.views || 0)}</span>
                  </div>
               </Link>
             </motion.div>
@@ -321,6 +370,8 @@ export function Home() {
         imageUrl: item.thumbnailUrl || "",
         category: "السيد القائد",
         isBreaking: false,
+        isPinned: !!(item.showInSlider || item.isFeatured || item.isPinned),
+        isFeatured: !!(item.showInSlider || item.isFeatured),
         createdAt: item.createdAt,
         views: item.views || 0,
         isLeader: true,
@@ -501,22 +552,88 @@ export function Home() {
   // Filter items
   let filteredNews = [...news];
 
-  // Determine news items for the slider
+  // Determine news/video/leader items for the slider
   const sliderItems = useMemo(() => {
-    const pinned = news.filter(n => n.isPinned);
+    // Leader video items flagged for slider
+    const featuredLeaderVideos: NewsItem[] = rawLeader
+      .filter(item => item.type === "video" && (item.showInSlider || item.isFeatured || item.isPinned))
+      .map(item => ({
+        id: item.id,
+        title: item.title,
+        shortDescription: item.description || "",
+        content: item.description || item.title,
+        imageUrl: item.thumbnailUrl || "",
+        category: "السيد القائد",
+        isBreaking: false,
+        isPinned: true,
+        isFeatured: true,
+        createdAt: item.createdAt,
+        views: item.views || 0,
+        isLeader: true,
+        videoUrl: item.content
+      }));
+
+    // Regular videos flagged for slider
+    const featuredVideos: NewsItem[] = rawVideos
+      .filter(item => item.showInSlider || item.isFeatured || item.isPinned)
+      .map(item => ({
+        id: item.id,
+        title: item.title,
+        shortDescription: item.description || "",
+        content: item.description || item.title,
+        imageUrl: item.thumbnailUrl || "",
+        category: item.category || "فيديو",
+        isBreaking: false,
+        isPinned: true,
+        isFeatured: true,
+        createdAt: item.createdAt,
+        views: item.views || 0,
+        videoUrl: item.url
+      }));
+
+    const getTime = (val: any): number => {
+      if (!val) return 0;
+      if (typeof val === "number") return val;
+      if (typeof val === "string") {
+        const parsed = Date.parse(val);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      if (typeof val === "object") {
+        if (typeof val.toDate === "function") return val.toDate().getTime();
+        if (typeof val.seconds === "number") return val.seconds * 1000;
+      }
+      return 0;
+    };
+
+    const allCandidateItems = [...news, ...featuredLeaderVideos, ...featuredVideos];
+    const uniqueMap = new Map<string, NewsItem>();
+    allCandidateItems.forEach(item => {
+      if (!uniqueMap.has(item.id)) {
+        uniqueMap.set(item.id, item);
+      }
+    });
+    const combinedList = Array.from(uniqueMap.values());
+    combinedList.sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
+
+    const pinned = combinedList.filter(n => (n as any).isPinned || (n as any).isFeatured || (n as any).showInSlider || (n as any).isFeaturedLayout);
+
+    let resultList: NewsItem[] = [];
     if (sliderShowLatest) {
       const combined = [...pinned];
-      for (const item of news) {
-        if (combined.length >= 5) break;
+      for (const item of combinedList) {
+        if (combined.length >= 6) break;
         if (!combined.some(c => c.id === item.id)) {
           combined.push(item);
         }
       }
-      return combined;
+      resultList = combined;
     } else {
-      return pinned;
+      resultList = pinned;
     }
-  }, [news, sliderShowLatest]);
+
+    // Always sort final list descending so slider starts with the newest events
+    return [...resultList].sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
+  }, [news, rawLeader, rawVideos, sliderShowLatest]);
 
   // Define breakingNewsIndex as fallback or kept as empty if not needed
   const breakingNewsIndex = -1;
@@ -739,113 +856,145 @@ export function Home() {
                   whileHover={{ y: -3, transition: { duration: 0.25, ease: "easeOut" } }}
                 >
                   {item.isFeaturedLayout ? (
-                    <div className="px-2 sm:px-3">
-                      <Link 
-                        to={item.isLeader ? routes.leaderItem(generateSlug(item.title || "", item.id)) : routes.news(generateSlug(item.title || "", item.id))} 
-                        className="block relative w-full h-[320px] sm:h-[350px] rounded-[18px] sm:rounded-[22px] overflow-hidden border border-black/5 dark:border-white/10 shadow-md hover:shadow-xl active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out mb-3 select-none group will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
-                        style={{ direction: 'rtl', transform: 'translateZ(0)' }}
-                      >
-                        {item.imageUrl ? (
-                          <img 
-                            src={item.imageUrl} 
-                            alt={item.title} 
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 pointer-events-none" 
-                          />
-                        ) : (
-                          <div className="absolute inset-0 w-full h-full bg-[#141B26] flex items-center justify-center">
-                            <Newspaper className="w-12 h-12 text-white/20" />
+                    <div className="w-full relative select-none mb-3 px-2 sm:px-3 mt-1">
+                      <div className="relative w-full h-[376px] overflow-hidden bg-surface-card shadow-lg rounded-[20px] sm:rounded-[24px] border border-black/5 dark:border-white/10 hover:border-red-500 dark:hover:border-red-500 hover:shadow-[0_8px_30px_rgba(239,68,68,0.18)] active:scale-[0.98] active:opacity-95 transition-all duration-300 ease-out group will-change-transform outline-none touch-manipulation cursor-pointer">
+                        <Link 
+                          to={item.isLeader ? routes.leaderItem(generateSlug(item.title || "", item.id)) : routes.news(generateSlug(item.title || "", item.id))} 
+                          className="block w-full h-full relative"
+                          style={{ direction: 'rtl', transform: 'translateZ(0)' }}
+                        >
+                          {/* Transparent Gradient Overlay across entire card on Hover */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-red-600/25 via-red-500/10 to-red-500/[0.04] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-red-600/[0.08] via-transparent to-red-600/[0.04] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-20" />
+                          
+                          {/* Active Press Feedback */}
+                          <div className="absolute inset-0 bg-black/10 opacity-0 group-active:opacity-100 transition-opacity duration-100 pointer-events-none z-30" />
+                          
+                          {item.imageUrl ? (
+                            <img 
+                              src={item.imageUrl} 
+                              alt={item.title} 
+                              className="w-full h-full object-cover pointer-events-none transition-transform duration-700 group-hover:scale-105" 
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-[#141B26] flex items-center justify-center pointer-events-none">
+                              <Newspaper className="w-12 h-12 text-white/20" />
+                            </div>
+                          )}
+                          
+                          {/* Deeper multi-stop gradient overlay in Taiz brand colors for readability */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/85 via-taiz-royal/40 to-transparent pointer-events-none"></div>
+                          
+                          {/* Category Pill floating at top-right of the card */}
+                          <div className="absolute top-4 right-4 sm:top-5 sm:right-6 z-20">
+                            <CategoryBadges item={item} isHero={true} className="drop-shadow-lg" />
                           </div>
-                        )}
-                        
-                        {/* Deeper multi-stop gradient overlay in Taiz brand colors */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/85 via-taiz-royal/40 to-transparent pointer-events-none"></div>
-                        
-                        {/* Content Container at the Bottom */}
-                        <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6 pb-12 sm:pb-12 flex flex-col justify-end text-right z-10 select-none" dir="rtl">
-                           {/* Row 1: The Red Pill Tag */}
-                           <div className="flex justify-start mb-3">
-                             <CategoryBadges item={item} isHero={true} className="drop-shadow-md shrink-0" />
+
+                          {/* Pinned News Tag if applicable */}
+                          {item.isPinned && (
+                            <div className="absolute top-[16px] left-0 z-20">
+                              <span className="bg-blue-600 text-white text-[11px] sm:text-[13px] font-bold font-ibm w-[90px] sm:w-[100px] h-[30px] sm:h-[34px] rounded-r-[10px] flex items-center justify-center gap-1.5 shadow-md">
+                                <Star className="w-3.5 h-3.5 fill-current animate-pulse" />
+                                خبر مثبت
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Content Container at the Bottom */}
+                          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 pb-12 sm:pb-14 flex flex-col justify-end text-right z-10 select-none" dir="rtl">
+                             {/* Title / Headline */}
+                             <h2 
+                               className="font-bold text-[16px] sm:text-[19px] md:text-[22px] text-white leading-[1.35] transition-colors group-hover:text-taiz-sky line-clamp-3 font-cairo text-right w-full mb-3 shadow-text"
+                               style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                                {item.title}
+                              </h2>
+
+                              {/* Metadata Row: Aligned in a single line RTL */}
+                              <div className="flex flex-wrap items-center justify-start gap-x-4 sm:gap-x-5 gap-y-1.5 text-white/90 text-[10.5px] sm:text-[12.5px] font-medium w-full" dir="rtl">
+                                {/* Author */}
+                                {item.author && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <User className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                                    <span>{item.author}</span>
+                                  </div>
+                                )}
+
+                                {/* Hijri Date */}
+                                {formatPublishInfo(item.createdAt).hDate && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <Calendar className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                                    <span>{formatPublishInfo(item.createdAt).hDate}</span>
+                                  </div>
+                                )}
+
+                                {/* Gregorian Date */}
+                                {formatPublishInfo(item.createdAt).mDate && (
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <Calendar className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                                    <span>{formatPublishInfo(item.createdAt).mDate}</span>
+                                  </div>
+                                )}
+                              </div>
                            </div>
 
-                           {/* Row 2: Title */}
-                           <h2 
-                             className="font-bold text-[16px] sm:text-[19px] md:text-[22px] text-white leading-[1.4] transition-colors group-hover:text-taiz-sky line-clamp-3 font-cairo text-right w-full"
-                             style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
-                              {item.title}
-                           </h2>
-
-                           {/* Row 3: Meta Details aligned perfectly right-to-left in a single line */}
-                           <div className="flex flex-wrap items-center justify-start gap-x-4 gap-y-1 mt-3.5 text-white/90 text-[11px] sm:text-[12px] font-medium w-full" dir="rtl">
-                             {/* Author */}
-                             {item.author && (
-                               <div className="flex items-center gap-1.5 shrink-0">
-                                 <User className="w-4 h-4 text-white/90 stroke-[2]" />
-                                 <span>{item.author}</span>
-                               </div>
-                             )}
-
-                             {/* Date */}
-                             <div className="flex items-center gap-1.5 shrink-0">
-                               <Calendar className="w-4 h-4 text-white/90 stroke-[2]" />
-                               <span>{format(new Date(item.createdAt), "d MMMM yyyy", { locale: ar })}</span>
-                             </div>
-
-                             {/* Views */}
-                             <div className="flex items-center gap-1.5 shrink-0">
-                               <Eye className="w-4 h-4 text-white/90 stroke-[2]" />
-                               <span>{formatViews(item.views || 0)}</span>
-                             </div>
-
-                             {/* :: Separator */}
-                             <span className="text-white/50 font-semibold tracking-widest text-xs shrink-0 select-none ml-1">::</span>
+                           {/* Views Badge - Positioned at bottom-left of the card */}
+                           <div className="absolute bottom-2.5 left-3 sm:bottom-3 sm:left-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15 text-white text-[10.5px] sm:text-[12px] font-bold shadow-md pointer-events-none select-none">
+                             <Eye className="w-3.5 h-3.5 text-red-400 animate-pulse stroke-[2]" />
+                             <span>{formatViews(item.views || 0)}</span>
                            </div>
-                        </div>
-                      </Link>
+                        </Link>
+                      </div>
                     </div>
                   ) : (
                     <Link
                       to={item.isLeader ? routes.leaderItem(generateSlug(item.title || "", item.id)) : routes.news(generateSlug(item.title || "", item.id))} 
-                      className="flex items-center bg-white rounded-[14px] border border-slate-200/80 shadow-soft mx-2 sm:mx-3 mb-2 overflow-hidden group relative hover:shadow-medium hover:bg-slate-50/50 hover:-translate-y-0.5 active:scale-[0.98] active:opacity-90 transition-all duration-300 ease-out h-[105px] sm:h-[120px] will-change-transform outline-none focus-visible:ring-2 focus-visible:ring-taiz-sky touch-manipulation"
+                      className="flex items-center bg-white dark:bg-slate-900 rounded-[14px] mx-2 sm:mx-3 mb-2 overflow-hidden group relative border border-slate-200/80 dark:border-slate-800 hover:border-red-500 dark:hover:border-red-500 hover:shadow-[0_4px_18px_rgba(239,68,68,0.12)] hover:-translate-y-0.5 active:scale-[0.98] active:bg-slate-50 transition-all duration-300 ease-out h-[105px] sm:h-[120px] will-change-transform outline-none touch-manipulation cursor-pointer"
                       style={{ direction: 'rtl', transform: 'translateZ(0)' }}
                     >
-                      {/* Right Side Compact Image */}
-                      {item.imageUrl ? (
-                        <div className="relative w-[110px] sm:w-[130px] h-full shrink-0 bg-gray-100 overflow-hidden">
-                           <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                           <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/50 to-transparent pointer-events-none"></div>
-                           <div className="absolute bottom-1.5 inset-x-1 flex justify-center z-10 pointer-events-none">
-                             <CategoryBadges item={item} isSecondary={true} className="drop-shadow-md" />
-                           </div>
+                      {/* Transparent Gradient Overlay across entire card on Hover */}
+                      <div className="absolute inset-0 bg-gradient-to-l from-red-500/[0.09] via-red-500/[0.03] to-red-500/[0.01] pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100 z-20" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-red-500/[0.06] via-transparent to-transparent pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100 z-20" />
+                      
+                      {/* Active Press Feedback */}
+                      <div className="absolute inset-0 bg-red-950/5 opacity-0 group-active:opacity-100 transition-opacity duration-75 pointer-events-none z-30" />
+
+                      {/* Right Side Compact Image with Shimmer */}
+                      <div className="relative w-[110px] sm:w-[130px] h-full shrink-0 overflow-hidden">
+                        <ShimmerNewsImage 
+                          src={item.imageUrl} 
+                          alt={item.title} 
+                          className="group-hover:scale-105"
+                          containerClassName="w-full h-full"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent pointer-events-none z-10" />
+                        <div className="absolute bottom-1.5 inset-x-1 flex justify-center z-20 pointer-events-none">
+                          <CategoryBadges item={item} isSecondary={true} className="drop-shadow-md" />
                         </div>
-                      ) : (
-                        <div className="relative w-[110px] sm:w-[130px] h-full shrink-0 bg-gray-100 overflow-hidden flex items-center justify-center">
-                           <div className="absolute bottom-1.5 inset-x-1 flex justify-center z-10 pointer-events-none">
-                             <CategoryBadges item={item} isSecondary={true} className="drop-shadow-md" />
-                           </div>
-                        </div>
-                      )}
+                      </div>
 
                       {/* Left Side News Content */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-center py-2 px-3 text-right">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center py-2 px-3 text-right z-10">
                          <div>
-                            <h3 className="font-bold text-[11px] sm:text-[12px] text-gray-900 leading-[1.5] transition-colors group-hover:text-taiz-sky mb-2 whitespace-normal line-clamp-3 font-cairo" style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}>
+                            <h3 
+                              className="font-bold text-[11px] sm:text-[12px] leading-[1.5] transition-colors duration-300 group-hover:text-red-600 mb-2 whitespace-normal line-clamp-3 font-cairo text-gray-900 dark:text-gray-100"
+                              style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}
+                            >
                               {item.title}
                             </h3>
-
                             {/* Consistently aligned metadata line */}
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] sm:text-[11px] font-medium text-gray-500 mt-auto">
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[8.5px] sm:text-[9.5px] font-bold text-slate-500 mt-auto transition-colors duration-300 group-hover:text-slate-600">
                                {item.author && (
-                                 <span className="text-gray-700 font-bold truncate max-w-[80px]">{item.author}</span>
-                                )}
-                               
+                                 <span className="truncate max-w-[80px]">{item.author}</span>
+                               )}
+                                
+                               <span className="shrink-0">{formatPublishInfo(item.createdAt).hDate}</span>
                                <span className="shrink-0">{formatPublishInfo(item.createdAt).mDate}</span>
                                <span className="shrink-0">{formatPublishInfo(item.createdAt).mTime}</span>
-                               <span className="shrink-0 text-gray-400">{formatPublishInfo(item.createdAt).hDate}</span>
-                               
-                               {/* Views */}
-                               <span className="flex items-center gap-1 shrink-0 text-taiz-royal mr-auto">
-                                 <Eye className="w-3 h-3 text-taiz-sky"/> 
-                                 {item.views || 0}
+                                
+                               {/* Views with Red Continuous Pulsing Eye Icon */}
+                               <span className="flex items-center gap-1 shrink-0 mr-auto">
+                                 <Eye className="w-3 h-3 text-red-500 animate-pulse shrink-0"/> 
+                                 <span>{item.views || 0}</span>
                                </span>
                             </div>
                          </div>

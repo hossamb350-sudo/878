@@ -185,17 +185,37 @@ export function WatchItem() {
 
   if (loading) {
     return (
-      <div className="max-w-[1000px] mx-auto p-4 py-12 animate-pulse font-sans">
-        <div className="space-y-8">
-          <div className="aspect-video w-full bg-slate-100 rounded-[2.5rem]"></div>
-          <div className="bg-white rounded-[2rem] p-10 shadow-sm border border-slate-100">
-             <div className="h-10 bg-slate-100 w-3/4 rounded-2xl mb-6"></div>
-             <div className="h-4 bg-slate-100 w-full rounded mb-2"></div>
-             <div className="h-4 bg-slate-100 w-5/6 rounded mb-8"></div>
-             <div className="grid grid-cols-2 gap-4">
-                <div className="h-14 bg-slate-100 rounded-2xl"></div>
-                <div className="h-14 bg-slate-100 rounded-2xl"></div>
-             </div>
+      <div className="min-h-[75vh] w-full max-w-[1000px] mx-auto p-4 py-12 flex flex-col items-center justify-center font-cairo" dir="rtl">
+        <div className="w-full bg-slate-950 rounded-3xl p-8 sm:p-12 border border-slate-800/80 shadow-2xl flex flex-col items-center justify-center text-center relative overflow-hidden">
+          {/* Ambient Background Glow */}
+          <div className="absolute -top-24 -left-24 w-72 h-72 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -right-24 w-72 h-72 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Animated Video Play Loading Icon */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-red-600 to-amber-500 blur-md opacity-60 animate-pulse" />
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-slate-900 border border-slate-700/80 flex items-center justify-center shadow-xl">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-red-600 via-rose-600 to-amber-500 flex items-center justify-center text-white shadow-lg">
+                <Play className="w-6 h-6 sm:w-7 sm:h-7 ml-0.5 fill-current animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          {/* Text Indicators */}
+          <h3 className="text-lg sm:text-xl font-black text-white mb-2 tracking-tight">
+            جاري تحميل الفيديو المرئي...
+          </h3>
+          <p className="text-xs sm:text-sm font-semibold text-slate-400 max-w-sm mb-6">
+            منصة تعز الإعلامية — إعداد العرض والمحتوى
+          </p>
+
+          {/* Animated Equalizer Bars */}
+          <div className="flex items-center gap-1.5 h-6">
+            <span className="w-1.5 bg-red-500 rounded-full animate-[bounce_1s_infinite_100ms] h-3" />
+            <span className="w-1.5 bg-amber-500 rounded-full animate-[bounce_1s_infinite_200ms] h-6" />
+            <span className="w-1.5 bg-red-600 rounded-full animate-[bounce_1s_infinite_300ms] h-4" />
+            <span className="w-1.5 bg-amber-400 rounded-full animate-[bounce_1s_infinite_400ms] h-5" />
+            <span className="w-1.5 bg-red-500 rounded-full animate-[bounce_1s_infinite_500ms] h-3" />
           </div>
         </div>
       </div>

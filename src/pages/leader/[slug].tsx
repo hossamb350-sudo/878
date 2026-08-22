@@ -1,9 +1,9 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { updateMetadata } from "../../utils/metadata";
-import { extractIdFromSlug, generateSlug } from "../../utils/routes";
+import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { shareContent } from "../../utils/share";
-import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { useParams, Link } from "react-router-dom";
+import { doc, getDoc, updateDoc, increment, collection, query, limit, getDocs } from "firebase/firestore";
 import { db } from "../../firebase";
 import { LeaderContent } from "../../types";
 import { format } from "date-fns";
@@ -13,139 +13,61 @@ import {
   Eye, 
   Calendar, 
   Quote, 
-  ZoomIn, 
-  ZoomOut, 
-  Copy, 
-  Check, 
-  PlayCircle,
-  FileText,
-  Share2, Bookmark, 
+  Share2, 
+  Bookmark, 
   BookOpen, 
-  Type,
-  Sun,
-  Moon,
-  Plus,
-  Minus,
-  Clock,
-  Play,
-  Video as VideoIcon
+  Clock, 
+  Sparkles,
+  ChevronLeft,
+  Layers,
 } from "lucide-react";
 import { motion } from "motion/react";
-import { getShareableUrl } from "../../config/apiConfig";
 import { useLiveStream } from "../../context/LiveStreamContext";
-
-// Helper function to translate standard video links into embeddable URLs
-const getEmbedUrl = (url: string, autoPlay: boolean = false) => {
-  if (!url) return undefined;
-  const cleanUrl = url.trim();
-
-  // Youtube match
-  if (cleanUrl.includes("youtube.com") || cleanUrl.includes("youtu.be")) {
-    if (cleanUrl.includes("/embed/")) {
-      const base = cleanUrl.includes("?") ? cleanUrl : `${cleanUrl}?rel=0`;
-      return `${base}&enablejsapi=1&autoplay=${autoPlay ? 1 : 0}`;
-    }
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
-    const match = cleanUrl.match(regExp);
-    if (match && match[2].length === 11) {
-      const videoId = match[2];
-      return `https://www.youtube.com/embed/${videoId}?autoplay=${autoPlay ? 1 : 0}&rel=0&enablejsapi=1`;
-    }
-  }
-
-  // Google Drive match
-  if (cleanUrl.includes("drive.google.com") && cleanUrl.includes("/file/d/")) {
-    if (cleanUrl.includes("/view")) {
-      return cleanUrl.replace("/view", "/preview");
-    }
-    if (!cleanUrl.includes("/preview")) {
-      return cleanUrl.endsWith("/") ? `${cleanUrl}preview` : `${cleanUrl}/preview`;
-    }
-  }
-
-  // Telegram post match
-  if (cleanUrl.includes("t.me/") && !cleanUrl.includes("?embed=1")) {
-    if (cleanUrl.includes("?")) {
-      return `${cleanUrl}&embed=1`;
-    } else {
-      return `${cleanUrl}?embed=1`;
-    }
-  }
-
-  // Almasirah standard video player
-  if (cleanUrl.includes("almasirah.net.ye/video?id=")) {
-    return cleanUrl.replace("/video?id=", "/player?id=");
-  }
-
-  // Almasirah or clean Peertube watch link
-  if (cleanUrl.includes("/w/") || cleanUrl.includes("/videos/watch/")) {
-    const embedUrl = cleanUrl.replace("/w/", "/videos/embed/").replace("/videos/watch/", "/videos/embed/");
-    return autoPlay ? `${embedUrl}?autoplay=1` : embedUrl;
-  }
-
-  return cleanUrl;
-};
+import { 
+  IslamicDivider, 
+  IslamicStarMedallion 
+} from "../../components/leader/LeaderIslamicOrnaments";
+import { LeaderCustomPlayer } from "../../components/leader/LeaderCustomPlayer";
+import { LeaderReaderToolbar, ReaderThemeMode } from "../../components/leader/LeaderReaderToolbar";
+import { LeaderVideoCard } from "../../components/leader/LeaderVideoCard";
+import { LeaderTextCard } from "../../components/leader/LeaderTextCard";
 
 export function LeaderItem() {
   const { slug } = useParams();
   const id = extractIdFromSlug(slug || "");
-  const navigate = useNavigate();
   const { stopStream } = useLiveStream();
+
   const [content, setContent] = useState<LeaderContent | null>(null);
+  const [relatedContent, setRelatedContent] = useState<LeaderContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
 
-  const handlePlayVideo = useCallback(() => {
-    setIsVideoPlaying(true);
-    stopStream();
-    window.dispatchEvent(new CustomEvent("stop-quran-audio"));
-  }, [stopStream]);
-
-  // Handle postMessage from YouTube iframe if played directly inside iframe
-  useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        if (typeof event.data === 'string' && event.data.includes("infoDelivery")) {
-          const data = JSON.parse(event.data);
-          if (data.event === 'infoDelivery' && data.info && data.info.playerState === 1) {
-            handlePlayVideo();
-          }
-        }
-      } catch {
-        // ignore
-      }
-    };
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, [handlePlayVideo]);
-
-  useEffect(() => {
-    if (content) {
-      updateMetadata({
-        title: content.title,
-        description: content.description || "",
-        imageUrl: content.thumbnailUrl || "",
-        type: "article",
-        path: window.location.pathname
-      });
-    }
-  }, [content]);
-  
-  // Custom reading preferences
+  // Reading preferences
   const [fontSize, setFontSize] = useState<number>(() => {
     const saved = localStorage.getItem("leader_font_size");
     return saved ? parseInt(saved, 10) : 18;
   });
-  
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    return document.documentElement.classList.contains("dark");
+
+  const [readerTheme, setReaderTheme] = useState<ReaderThemeMode>(() => {
+    const saved = localStorage.getItem("leader_reader_theme");
+    return (saved as ReaderThemeMode) || "light";
   });
 
   const [copied, setCopied] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
 
+  // Save font size
+  useEffect(() => {
+    localStorage.setItem("leader_font_size", fontSize.toString());
+  }, [fontSize]);
+
+  // Save reader theme
+  useEffect(() => {
+    localStorage.setItem("leader_reader_theme", readerTheme);
+  }, [readerTheme]);
+
+  // Check favorites
   useEffect(() => {
     if (content) {
       const saved = localStorage.getItem("favorite_items");
@@ -153,82 +75,14 @@ export function LeaderItem() {
         try {
           const favs = JSON.parse(saved);
           setIsFavorited(favs.some((item: any) => item.id === content.id));
-        } catch(e) {}
+        } catch {
+          // ignore
+        }
       }
     }
   }, [content]);
 
-  const toggleDarkMode = () => {
-    const current = document.documentElement.classList.contains("dark");
-    if (current) {
-      document.documentElement.classList.remove("dark");
-      setIsDarkMode(false);
-      localStorage.setItem("theme", "light");
-    } else {
-      document.documentElement.classList.add("dark");
-      setIsDarkMode(true);
-      localStorage.setItem("theme", "dark");
-    }
-  };
-
-  const toggleBookmark = () => {
-    if (!content) return;
-    const saved = localStorage.getItem("favorite_items");
-    let favs: any[] = saved ? JSON.parse(saved) : [];
-    
-    if (isFavorited) {
-      favs = favs.filter((item: any) => item.id !== content.id);
-      setIsFavorited(false);
-    } else {
-      favs.push({
-        id: content.id,
-        type: "content?",
-        title: content.title,
-        imageUrl: content.thumbnailUrl || "",
-        savedAt: Date.now()
-      });
-      setIsFavorited(true);
-    }
-    localStorage.setItem("favorite_items", JSON.stringify(favs));
-  };
-
-  useEffect(() => {
-    localStorage.setItem("content?_font_size", fontSize.toString());
-  }, [fontSize]);
-
-  useEffect(() => {
-    if (!id) return;
-    
-    const fetchLeaderContent = async () => {
-      try {
-        const docRef = doc(db, "content?", id);
-        const docSnap = await getDoc(docRef);
-        
-        if (docSnap.exists()) {
-          const itemData = { id: docSnap.id, ...docSnap.data() } as LeaderContent;
-          setContent(itemData);
-          
-          try {
-            await updateDoc(docRef, {
-              views: increment(1)
-            });
-          } catch(e) {
-            console.warn("Could not increment views", e);
-          }
-        } else {
-          setError(true);
-        }
-      } catch (err) {
-        console.error(err);
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchLeaderContent();
-  }, [id]);
-
+  // Track scroll progress
   useEffect(() => {
     const handleScroll = () => {
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -240,97 +94,171 @@ export function LeaderItem() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Fetch single leader document & increment views
+  useEffect(() => {
+    if (!id) return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    const fetchLeaderContent = async () => {
+      try {
+        setLoading(true);
+        setError(false);
+        const docRef = doc(db, "leader", id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          const itemData = { id: docSnap.id, ...docSnap.data() } as LeaderContent;
+          setContent(itemData);
+
+          // Update SEO / social metadata
+          updateMetadata({
+            title: itemData.title,
+            description: itemData.description || (itemData.content ? itemData.content.slice(0, 150) : ""),
+            imageUrl: itemData.thumbnailUrl || "",
+            type: "article",
+            path: window.location.pathname,
+          });
+
+          // Increment view count safely
+          try {
+            await updateDoc(docRef, {
+              views: increment(1),
+            });
+          } catch (e) {
+            console.warn("Could not increment views:", e);
+          }
+
+          // Fetch related items from leader collection
+          try {
+            const q = query(collection(db, "leader"), limit(6));
+            const snap = await getDocs(q);
+            const related = snap.docs
+              .map((d) => ({ id: d.id, ...d.data() } as LeaderContent))
+              .filter((d) => d.id !== id)
+              .slice(0, 4);
+            setRelatedContent(related);
+          } catch {
+            // ignore
+          }
+        } else {
+          setError(true);
+        }
+      } catch (err) {
+        console.error("Error fetching leader content:", err);
+        setError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderContent();
+  }, [id]);
+
+  const handlePlayVideo = useCallback(() => {
+    stopStream();
+    window.dispatchEvent(new CustomEvent("stop-quran-audio"));
+  }, [stopStream]);
+
+  const toggleBookmark = () => {
+    if (!content) return;
+    const saved = localStorage.getItem("favorite_items");
+    let favs: any[] = saved ? JSON.parse(saved) : [];
+
+    if (isFavorited) {
+      favs = favs.filter((item: any) => item.id !== content.id);
+      setIsFavorited(false);
+    } else {
+      favs.push({
+        id: content.id,
+        type: "leader",
+        title: content.title,
+        imageUrl: content.thumbnailUrl || "",
+        savedAt: Date.now(),
+      });
+      setIsFavorited(true);
+    }
+    localStorage.setItem("favorite_items", JSON.stringify(favs));
+  };
+
   const handleCopyText = async () => {
     if (!content) return;
     try {
-      await navigator.clipboard.writeText(content.title + "\n\n" + content?.content);
+      const fullText = `${content.title}\n\n${content.content || content.description || ""}`;
+      await navigator.clipboard.writeText(fullText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy", err);
+    } catch {
+      // ignore
     }
   };
 
-  const shareText = async () => {
+  const handleShare = async () => {
     if (!content) return;
-    const res = await shareContent({
+    await shareContent({
       title: content.title,
       type: "leader",
       id: content.id || id,
-      imageUrl: content.thumbnailUrl
+      imageUrl: content.thumbnailUrl,
     });
-    if (res.success && !res.native) {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-3xl mx-auto p-4 pt-10 space-y-6 animate-pulse">
-        <div className="h-4 bg-surface-card rounded-lg w-1/4"></div>
-        <div className="h-10 bg-surface-card rounded-xl w-full"></div>
-        <div className="h-64 sm:h-96 bg-surface-card rounded-3xl w-full shadow-soft"></div>
-        <div className="space-y-4">
-           <div className="h-4 bg-surface-card rounded-lg w-full"></div>
-           <div className="h-4 bg-surface-card rounded-lg w-full"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !content) {
-    return (
-      <div className="max-w-3xl mx-auto p-4 py-20 text-center font-ibm rtl" dir="rtl">
-        <div className="w-20 h-20 bg-stone-100 dark:bg-stone-800 rounded-full flex items-center justify-center mx-auto mb-6">
-          <Quote className="w-10 h-10 text-stone-300" />
-        </div>
-        <h2 className="text-2xl font-bold mb-2 text-stone-900 dark:text-white font-cairo">المادة غير موجودة</h2>
-        <button 
-          onClick={() => navigate(-1)}
-          className="bg-red-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg transition mt-4 font-cairo"
-        >
-          العودة لقسم السيد القائد
-        </button>
-      </div>
-    );
-  }
-
+  // Date Formatter
   const formatPublishInfo = (timestamp: number) => {
-    const d = new Date(timestamp);
+    const d = new Date(timestamp || Date.now());
     const mDate = format(d, "dd MMMM yyyy'م'", { locale: ar });
     const mTime = format(d, "hh:mm a", { locale: ar });
-    
+
     let hDate = "";
     try {
-      const formatted = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
+      const formatted = new Intl.DateTimeFormat("ar-SA-u-ca-islamic", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
       }).format(d).trim();
       hDate = formatted.endsWith("هـ") ? formatted : `${formatted} هـ`;
-    } catch (e) {
+    } catch {
       hDate = "";
     }
-    
+
     return { mDate, mTime, hDate };
   };
 
-  const { mDate, mTime, hDate } = formatPublishInfo(content?.createdAt);
+  const { mDate, hDate } = formatPublishInfo(content?.createdAt || Date.now());
 
+  // Reading time calculation
+  const calculateReadingTime = (text: string) => {
+    if (!text) return "قراءة 3 دقائق";
+    const wordCount = text.trim().split(/\s+/).length;
+    const minutes = Math.max(1, Math.ceil(wordCount / 180));
+    return `قراءة ${minutes} دقائق (${wordCount} كلمة)`;
+  };
+
+  // Render paragraphs with Quranic highlighting & Subheadings
   const renderParagraph = (text: string, idx: number) => {
     if (!text.trim()) return null;
 
-    const isSubHeader = text.startsWith("###") || text.startsWith("##") || text.split(" ").slice(0, 3).join(" ").includes("المحور") || text.startsWith("-");
+    const isSubHeader =
+      text.startsWith("###") ||
+      text.startsWith("##") ||
+      text.split(" ").slice(0, 3).join(" ").includes("المحور") ||
+      text.startsWith("-");
+
     if (isSubHeader) {
       const cleanText = text.replace(/^[#-\s]+/, "");
       return (
-        <h3 key={idx} className="text-lg md:text-xl font-bold text-gray-900 dark:text-white mt-8 mb-4 border-r-4 border-red-600 pr-3 leading-relaxed font-cairo">
-          {cleanText}
-        </h3>
+        <div key={idx} className="mt-7 mb-3.5">
+          <div className="flex items-center gap-2 mb-1.5 text-taiz-sky text-xs font-bold font-cairo">
+            <span>❖</span>
+            <span>محور رئيسي</span>
+          </div>
+          <h3 className="text-base sm:text-lg md:text-xl font-bold text-taiz-royal border-r-4 border-taiz-sky pr-3 py-1 bg-slate-100 rounded-l-lg leading-relaxed font-cairo">
+            {cleanText}
+          </h3>
+        </div>
       );
     }
 
+    // Quranic Verses Matcher: ﴿ ... ﴾
     const quranRegex = /﴿([^﴾]+)﴾/g;
     const parts: (string | React.ReactNode)[] = [];
     let lastIndex = 0;
@@ -342,9 +270,9 @@ export function LeaderItem() {
         parts.push(text.slice(lastIndex, matchIndex));
       }
       parts.push(
-        <span 
-          key={`q-${idx}-${matchIndex}`} 
-          className="text-[#B8860B] font-serif font-black bg-[#DAA520]/[0.05] px-1.5 py-0.5 rounded inline-block leading-loose text-center mx-1"
+        <span
+          key={`q-${idx}-${matchIndex}`}
+          className="text-taiz-royal font-serif font-bold bg-amber-500/10 px-2 py-0.5 rounded-md inline-block leading-loose text-center mx-1 border border-amber-500/20 shadow-xs"
           style={{ fontSize: `${fontSize + 2}px` }}
         >
           ﴿ {match[1]} ﴾
@@ -358,9 +286,9 @@ export function LeaderItem() {
     }
 
     return (
-      <p 
-        key={idx} 
-        className="mb-4 leading-relaxed text-justify font-ibm"
+      <p
+        key={idx}
+        className="mb-4 sm:mb-5 leading-loose text-justify font-ibm text-text-primary"
         style={{ fontSize: `${fontSize}px` }}
       >
         {parts.length > 0 ? parts : text}
@@ -368,288 +296,294 @@ export function LeaderItem() {
     );
   };
 
+  // Theme styling definitions for reader mode
+  const getThemeContainerClasses = () => {
+    switch (readerTheme) {
+      case "parchment":
+        return "bg-[#F7EED9] text-[#2C2216] border-[#E2D0AF]";
+      case "dark":
+        return "bg-taiz-navy text-slate-100 border-taiz-sky/40";
+      case "light":
+      default:
+        return "bg-white text-text-primary border-slate-200";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-surface-main text-text-primary p-4 py-12 flex flex-col items-center justify-center space-y-3" dir="rtl">
+        <div className="w-10 h-10 border-3 border-taiz-sky border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-bold text-text-muted font-cairo">جاري تحميل مادة السيد القائد...</p>
+      </div>
+    );
+  }
+
+  if (error || !content) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 py-16 text-center font-cairo" dir="rtl">
+        <div className="w-16 h-16 bg-slate-100 border border-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 text-taiz-sky">
+          <Quote className="w-8 h-8" />
+        </div>
+        <h2 className="text-lg sm:text-xl font-bold mb-2 text-text-primary">
+          المادة المطلوبة غير موجودة
+        </h2>
+        <p className="text-xs text-text-muted mb-5">
+          ربما تم نقل هذه المادة أو حذفها، يمكنك العودة لمكتبة السيد القائد وتصفح كافة الخطابات.
+        </p>
+        <Link
+          to={routes.leader()}
+          className="inline-flex items-center gap-2 bg-taiz-royal text-white px-5 py-2 rounded-xl font-bold text-xs shadow-md transition active:scale-95 cursor-pointer"
+        >
+          <ArrowRight className="w-4 h-4" />
+          <span>العودة لقسم السيد القائد</span>
+        </Link>
+      </div>
+    );
+  }
+
+  const isVideo = content.type === "video";
+
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
-      className="max-w-3xl mx-auto w-full bg-white dark:bg-stone-900 min-h-screen font-ibm transition-colors duration-300 relative"
+      exit={{ opacity: 0, y: -15 }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
+      className="min-h-screen bg-surface-main text-text-primary py-3 sm:py-5 px-3 sm:px-4 md:px-6 font-cairo pb-20 transition-colors duration-300 relative"
       dir="rtl"
     >
-      {/* Reading Progress Indicator */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-gray-100/10 dark:bg-stone-800/20 z-50">
-        <div 
-          className="h-full bg-taiz-sky transition-all duration-75 shadow-sm" 
+      {/* Top Reading Progress Bar */}
+      <div className="fixed top-0 left-0 right-0 h-1 bg-black/5 z-50 pointer-events-none">
+        <div
+          className="h-full bg-gradient-to-r from-taiz-royal via-taiz-sky to-taiz-cyan transition-all duration-300"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
 
-      <article className="w-full">
-        {/* Edge-to-Edge Header */}
-        {content?.type === "video" ? (
-          <div className="w-full relative aspect-video bg-black overflow-hidden group">
-            {isVideoPlaying ? (
-              <iframe 
-                src={getEmbedUrl(content?.content, true)} 
-                className="w-full h-full border-0"
-                allowFullScreen
-                allow="autoplay; encrypted-media; picture-in-picture"
-              ></iframe>
-            ) : (
-              <div 
-                onClick={handlePlayVideo}
-                className="relative w-full h-full cursor-pointer flex items-center justify-center bg-stone-900 group"
-              >
-                {content.thumbnailUrl ? (
-                  <img 
-                    src={content.thumbnailUrl} 
-                    alt={content.title} 
-                    className="w-full h-full object-cover opacity-80 group-hover:opacity-90 group-hover:scale-105 transition-all duration-500"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-stone-900 to-black flex items-center justify-center">
-                    <VideoIcon className="w-16 h-16 text-white/20" />
-                  </div>
-                )}
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all flex items-center justify-center">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600/90 hover:bg-red-600 text-white flex items-center justify-center shadow-2xl shadow-red-600/50 border border-white/20 transform group-hover:scale-110 transition-all duration-300">
-                    <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-current" />
-                  </div>
+      <div className="max-w-4xl mx-auto w-full space-y-3.5">
+        
+        {/* Navigation Breadcrumb Bar */}
+        <div className="flex items-center justify-between bg-surface-card rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-border-subtle shadow-soft text-xs">
+          <Link
+            to={routes.leader()}
+            className="flex items-center gap-1.5 font-bold text-slate-700 hover:text-taiz-sky transition-colors cursor-pointer"
+          >
+            <ArrowRight className="w-4 h-4 text-taiz-sky" />
+            <span>قسم السيد القائد</span>
+            <span className="text-slate-400">/</span>
+            <span className="text-taiz-royal font-bold truncate max-w-[200px] sm:max-w-xs">
+              {isVideo ? "خطاب مرئي" : "نص"}
+            </span>
+          </Link>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleShare}
+              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+              title="مشاركة"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={toggleBookmark}
+              className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                isFavorited
+                  ? "bg-taiz-sky text-white"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+              }`}
+              title="حفظ"
+            >
+              <Bookmark className={`w-4 h-4 ${isFavorited ? "fill-current" : ""}`} />
+            </button>
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* 1. VIDEO VIEW COMPONENT (Single Unified Card) */}
+        {/* ============================================================== */}
+        {isVideo ? (
+          <div className="relative rounded-[20px] sm:rounded-[24px] bg-surface-card border border-border-subtle overflow-hidden shadow-soft">
+            {/* Embedded Custom Video Player */}
+            <LeaderCustomPlayer
+              videoUrl={content.content}
+              thumbnailUrl={content.thumbnailUrl}
+              title={content.title}
+              onPlay={handlePlayVideo}
+              isEmbedded={true}
+            />
+
+            {/* Video Metadata & Details inside same card */}
+            <div className="p-4 sm:p-5 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div className="flex items-center gap-3 text-xs text-text-muted font-medium">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{mDate}</span>
+                  </span>
+                  {hDate && <span className="text-slate-500">{hDate}</span>}
+                </div>
+
+                <div className="flex items-center gap-1 text-xs text-text-muted font-medium">
+                  <Eye className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                  <span>{(content.views || 0).toLocaleString("ar-EG")} مشاهدة</span>
                 </div>
               </div>
-            )}
-            
-            <div className="absolute top-4 right-4 z-20 flex items-center gap-2 pointer-events-auto">
-              <button 
-                onClick={shareText}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/10 hover:bg-red-600 transition-all active:scale-90"
-                title="مشاركة"
-              >
-                <Share2 className="w-4 h-4" />
-              </button>
-              <button 
-                onClick={toggleBookmark}
-                className={`w-8 h-8 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-md border border-white/10 transition-all active:scale-90 ${isFavorited ? 'text-red-500 bg-white/20' : 'text-white hover:text-red-400'}`}
-                title="حفظ"
-              >
-                <Bookmark className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="w-full relative aspect-[4/3] sm:aspect-video md:aspect-[16/9] max-h-[500px] bg-stone-950 overflow-hidden">
-            {content.thumbnailUrl ? (
-              <img 
-                src={content.thumbnailUrl} 
-                alt={content.title} 
-                className="w-full h-full object-cover select-none" 
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-tr from-stone-950 via-slate-900 to-stone-900 flex items-center justify-center">
-                <Quote className="w-32 h-32 text-white/10" />
-              </div>
-            )}
-            
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-0 pointer-events-none" />
-            
-            <div className="absolute inset-0 pointer-events-none p-4 sm:p-5 flex flex-col justify-between">
-              <div className="flex items-center justify-end gap-2 pointer-events-auto">
-                <button 
-                  onClick={shareText}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md text-white border border-white/10 hover:bg-red-600 transition-all active:scale-90"
-                  title="مشاركة"
-                >
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={toggleBookmark}
-                  className={`w-8 h-8 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-md border border-white/10 transition-all active:scale-90 ${isFavorited ? 'text-red-500 bg-white/20' : 'text-white hover:text-red-400'}`}
-                  title="حفظ"
-                >
-                  <Bookmark className={`w-4 h-4 ${isFavorited ? 'fill-current' : ''}`} />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Title area & Content */}
-        {content?.type === "video" ? (
-          <div className="max-w-[800px] mx-auto">
-            <div className="px-5 sm:px-8 pb-6 pt-6 border-b border-stone-100 dark:border-stone-800">
-              {/* Back Button Above Title */}
-              <button 
-                onClick={() => navigate(-1)}
-                className="mb-4 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-cairo cursor-pointer"
-              >
-                <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
-              </button>
-              
-              <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
-                عرض مرئي
-              </span>
-              
-              <h1 className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo text-xl sm:text-2xl">
+              {/* Title */}
+              <h1 className="text-base sm:text-xl font-bold leading-snug text-text-primary font-cairo">
                 {content.title}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
-                <span>{mDate}</span>
-                {hDate && (
-                  <>
-                    <span className="text-stone-200 dark:text-stone-700">|</span>
-                    <span>{hDate}</span>
-                  </>
-                )}
-                <span className="text-stone-200 dark:text-stone-700">|</span>
-                <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
-                  <Eye className="w-3 h-3 text-red-600 shrink-0" />
-                  <span>{((content?.views || 0) + 1).toLocaleString('ar-EG')} مشاهدة</span>
-                </span>
-              </div>
-            </div>
-
-            <div className="px-5 sm:px-8 py-8">
-              {/* Description Block - Only show if exists */}
+              {/* Description */}
               {content.description && (
-                <div className="bg-stone-50 dark:bg-stone-800/30 p-6 rounded-2xl border border-stone-100 dark:border-stone-800/40 mb-6">
-                  <p className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed font-bold font-ibm whitespace-pre-line">
-                    {content.description}
-                  </p>
+                <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-text-secondary text-xs sm:text-sm font-tajawal leading-relaxed">
+                  {content.description}
                 </div>
               )}
-              
-              <div className="flex gap-3">
-                <button 
-                  onClick={shareText}
-                  className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs shadow-lg shadow-red-600/20 font-ibm cursor-pointer"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                  <span>مشاركة المحتوى</span>
-                </button>
-                <button 
-                  onClick={toggleBookmark}
-                  className={`flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-ibm cursor-pointer ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
-                >
-                  <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
-                  <span>حفظ</span>
-                </button>
-              </div>
             </div>
           </div>
         ) : (
-          <>
-            <div className="px-6 sm:px-8 pt-6">
-              <button 
-                onClick={() => navigate(-1)}
-                className="mb-6 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-ibm cursor-pointer"
-              >
-                <ArrowRight className="w-4 h-4" /> العودة لقسم السيد القائد
-              </button>
-            </div>
+          /* ============================================================== */
+          /* 2. TEXT / LECTURE VIEW COMPONENT (Single Unified Card) */
+          /* ============================================================== */
+          <div className={`relative rounded-[20px] sm:rounded-[24px] border overflow-hidden shadow-soft transition-colors duration-300 ${getThemeContainerClasses()}`}>
+            {/* Header Title Card with Uploaded Image Background (Matched to Home Slider Dimensions: h-[376px]) */}
+            <div className="relative w-full h-[376px] overflow-hidden select-none">
+              {/* Background Image (Uploaded Thumbnail or Default) */}
+              {content.thumbnailUrl ? (
+                <img
+                  src={content.thumbnailUrl}
+                  alt={content.title}
+                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                />
+              ) : (
+                <img
+                  src="/splash_first.png"
+                  alt={content.title}
+                  className="w-full h-full object-cover brightness-90"
+                />
+              )}
 
-            <div className="px-6 sm:px-8 pb-6 border-b border-stone-100 dark:border-stone-800">
-               <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
-                  محاضرات ودروس
-               </span>
-               <h1 
-                  className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo"
-                  style={{ fontSize: `${fontSize}px` }}
+              {/* Multi-stop gradient overlay in Taiz brand colors matching Home Slider */}
+              <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/85 via-taiz-royal/40 to-transparent pointer-events-none" />
+
+              {/* Content Container at the Bottom */}
+              <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6 flex flex-col justify-end text-right z-10 select-none" dir="rtl">
+                {/* Title / Headline matching Home Slider typography */}
+                <h1 
+                  className="font-bold text-[16px] sm:text-[19px] md:text-[22px] text-white leading-[1.35] font-cairo text-right w-full mb-3 drop-shadow-md"
+                  style={{ fontFamily: 'Cairo, Tajawal, "IBM Plex Sans Arabic", sans-serif' }}
                 >
                   {content.title}
                 </h1>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
-                  <span>{mDate}</span>
-                  <span className="text-stone-200 dark:text-stone-700">|</span>
-                  <span>{hDate}</span>
-                  <span className="text-stone-200 dark:text-stone-700">|</span>
-                  <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
-                    <Eye className="w-3 h-3 text-red-600 shrink-0" />
-                    <span>{(content?.views || 0) + 1} مشاهدة</span>
-                  </span>
-                </div>
-            </div>
 
-            {/* Reading Options toolbar */}
-            <div className="flex items-center justify-between py-4 px-6 sm:px-8 bg-white dark:bg-stone-900 border-b border-stone-100 dark:border-stone-800/80 transition-colors duration-300">
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={toggleDarkMode}
-                  className="flex items-center gap-2 text-sm font-bold text-gray-600 dark:text-stone-300 hover:opacity-80 transition cursor-pointer select-none font-ibm"
-                >
-                  <span>{isDarkMode ? "ليلي" : "نهاري"}</span>
-                  {isDarkMode ? (
-                    <Moon className="w-5 h-5 text-red-600 fill-indigo-400/20" />
-                  ) : (
-                    <Sun className="w-5 h-5 text-amber-500 fill-amber-500" />
+                {/* Metadata Row matching Home Slider layout */}
+                <div className="flex flex-wrap items-center justify-start gap-x-4 sm:gap-x-5 gap-y-1.5 text-white/90 text-[10.5px] sm:text-[12.5px] font-medium w-full" dir="rtl">
+                  {/* Gregorian Date */}
+                  {mDate && (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Calendar className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                      <span>{mDate}</span>
+                    </div>
                   )}
-                </button>
-              </div>
 
-              <div className="flex items-center border border-gray-200 dark:border-stone-800 rounded-lg px-3 py-1 bg-white dark:bg-stone-900 shadow-sm text-sm font-bold text-gray-700 dark:text-stone-300 select-none font-ibm">
-                <button 
-                  onClick={() => setFontSize(prev => Math.min(prev + 1, 26))} 
-                  className="p-1 text-gray-500 hover:text-gray-950 dark:hover:text-white transition cursor-pointer"
-                >
-                  <Plus className="w-4 h-4" strokeWidth={3} />
-                </button>
-                <span className="mx-4 text-sm font-bold min-w-[36px] text-center">
-                  {fontSize}px
+                  {/* Hijri Date */}
+                  {hDate && (
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Calendar className="w-4 h-4 text-white/90 stroke-[1.75]" />
+                      <span>{hDate}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Interactive Reader Toolbar Inside the Unified Card */}
+            <div className="px-3 sm:px-5 pt-3 pb-1 border-b border-slate-200/60 dark:border-white/10">
+              <LeaderReaderToolbar
+                fontSize={fontSize}
+                onIncreaseFontSize={() => setFontSize((prev) => Math.min(prev + 2, 32))}
+                onDecreaseFontSize={() => setFontSize((prev) => Math.max(prev - 2, 14))}
+                onResetFontSize={() => setFontSize(18)}
+                readerTheme={readerTheme}
+                onThemeChange={setReaderTheme}
+                onCopyText={handleCopyText}
+                copied={copied}
+                onShare={handleShare}
+                isFavorited={isFavorited}
+                onToggleBookmark={toggleBookmark}
+                readingTime={calculateReadingTime(content.content || "")}
+              />
+            </div>
+
+            {/* Full Lecture Typography Reader Content */}
+            <div className="p-4 sm:p-7 md:p-9">
+              {/* Bismillah Header */}
+              <div className="text-center my-3 select-none">
+                <span className="font-serif text-base sm:text-xl text-taiz-royal dark:text-amber-300 font-bold block mb-1">
+                  بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                 </span>
-                <button 
-                  onClick={() => setFontSize(prev => Math.max(prev - 1, 14))} 
-                  className="p-1 text-gray-500 hover:text-gray-950 dark:hover:text-white transition cursor-pointer"
-                >
-                  <Minus className="w-4 h-4" strokeWidth={3} />
-                </button>
+                <IslamicDivider className="max-w-xs mx-auto opacity-70 my-2" />
+              </div>
+
+              {/* Body Content */}
+              <div className="space-y-2 mt-5">
+                {(content.content || content.description || "لا يوجد نص متاح لهذه المحاضرة.")
+                  .split("\n")
+                  .map((para, pIdx) => renderParagraph(para, pIdx))}
+              </div>
+
+              {/* Lecture Conclusion Footer */}
+              <div className="mt-8 pt-5 border-t border-slate-200/80 dark:border-white/10 text-center space-y-2">
+                <IslamicStarMedallion size="w-10 h-10" className="mx-auto">
+                  <Sparkles className="w-4 h-4 text-amber-300" />
+                </IslamicStarMedallion>
+                <p className="text-xs font-bold text-text-muted font-cairo">
+                  تمت بعون الله وتوفيقه — مكتبة توثيق خطابات السيد القائد
+                </p>
               </div>
             </div>
-
-            {/* Content Area */}
-            <div className="bg-white dark:bg-stone-900 transition-colors duration-300 pt-8 pb-16">
-              <div className="px-6 sm:px-8">
-                <div className="mb-12">
-                  <div className="space-y-4">
-                    <div 
-                      className="prose prose-stone dark:prose-invert max-w-none text-gray-800 dark:text-stone-100 text-justify font-ibm [&_p]:mb-4 [&_p]:mt-0 [&_p]:leading-relaxed"
-                      style={{ 
-                        fontSize: `${fontSize}px`, 
-                        lineHeight: 1.8,
-                      }}
-                    >
-                      {content?.content.split("\n").map((para, pIdx) => renderParagraph(para, pIdx))}
-                    </div>
-
-                    <div className="flex gap-3 pt-8 border-t border-stone-100 dark:border-stone-800 mt-12">
-                      <button 
-                        onClick={shareText}
-                        className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-cairo shadow-lg shadow-red-600/20 cursor-pointer"
-                      >
-                        <Share2 className="w-3.5 h-3.5" />
-                        <span>مشاركة النص</span>
-                      </button>
-                      <button 
-                        onClick={handleCopyText}
-                        className="flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-cairo cursor-pointer"
-                      >
-                        {copied ? <Check className="w-3.5 h-3.5 text-red-600" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copied ? "تم النسخ" : "نسخ النص"}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Slogan Footer */}
-                <div className="mt-16 pt-8 border-t border-stone-100 dark:border-stone-800 text-center">
-                  <Quote className="w-8 h-8 mx-auto text-red-600/20 mb-3" />
-                  <p className="text-sm font-bold text-red-600 font-ibm">انتهى خطاب السيد القائد</p>
-                </div>
-              </div>
-            </div>
-          </>
+          </div>
         )}
-      </article>
+
+        {/* ============================================================== */}
+        {/* RELATED MATERIALS SECTION */}
+        {/* ============================================================== */}
+        {relatedContent.length > 0 && (
+          <div className="mt-8 space-y-3 pt-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-taiz-sky" />
+                <h3 className="text-sm sm:text-base font-bold text-text-primary font-cairo">
+                  محاضرات وخطابات مقترحة
+                </h3>
+              </div>
+              <Link
+                to={routes.leader()}
+                className="text-xs font-bold text-taiz-sky hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>عرض الكل</span>
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {relatedContent.map((item, idx) => (
+                <div key={item.id}>
+                  {item.type === "video" ? (
+                    <LeaderVideoCard item={item} index={idx} isFavorited={false} />
+                  ) : (
+                    <LeaderTextCard item={item} index={idx} isFavorited={false} />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
     </motion.div>
   );
 }
+
+export default LeaderItem;

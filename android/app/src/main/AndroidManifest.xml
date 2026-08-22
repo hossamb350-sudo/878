@@ -19,6 +19,25 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <!-- Android App Links (HTTPS Deep Linking with autoVerify) -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="taiz-media-ye.vercel.app" />
+                <data android:scheme="https" android:host="ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" />
+                <data android:scheme="https" android:host="ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" />
+            </intent-filter>
+
+            <!-- Custom URI Scheme Deep Linking (taizmedia:// and taizapp://) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="taizmedia" />
+                <data android:scheme="taizapp" />
+            </intent-filter>
         </activity>
 
         <provider

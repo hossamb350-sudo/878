@@ -75,4 +75,4 @@ const replacement = `                      {/* Left Side News Content */}
 
 code = code.replace(target, replacement);
 fs.writeFileSync('src/pages/home/index.tsx', code);
-console.log("Fixed!");
+console.log(code.includes(replacement) ? "Fixed!" : "Not Fixed");

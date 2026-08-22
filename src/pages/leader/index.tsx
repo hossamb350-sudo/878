@@ -1,282 +1,199 @@
-import { useEffect, useState, useMemo } from "react";
-import { SyncService } from "../../services/SyncService";
+import React, { useEffect, useState, useMemo } from "react";
+import { collection, query, orderBy, getDocs, onSnapshot } from "firebase/firestore";
+import { db } from "../../firebase";
 import { LeaderContent } from "../../types";
-import { format } from "date-fns";
-import { ar } from "date-fns/locale";
-import { Search, Play, Calendar, Eye, FileText, Video as VideoIcon } from "lucide-react";
-import { routes, generateSlug } from "../../utils/routes";
-import { Link } from "react-router-dom";
+import { updateMetadata } from "../../utils/metadata";
+import { Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-
-// Islamic Geometric Background Overlay Pattern
-const IslamicPatternOverlay = () => (
-  <svg 
-    className="absolute inset-0 w-full h-full opacity-[0.12] pointer-events-none mix-blend-overlay" 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="80" 
-    height="80" 
-    viewBox="0 0 80 80"
-  >
-    <path d="M40 0 L80 40 L40 80 L0 40 Z" fill="none" stroke="#F1C40F" strokeWidth="1" />
-    <circle cx="40" cy="40" r="16" fill="none" stroke="#F1C40F" strokeWidth="0.8" />
-    <path d="M40 12 L68 40 L40 68 L12 40 Z" fill="none" stroke="#F1C40F" strokeWidth="0.6" />
-    <rect x="28" y="28" width="24" height="24" fill="none" stroke="#F1C40F" strokeWidth="0.5" transform="rotate(45 40 40)" />
-  </svg>
-);
-
-// Golden Corner Frame Accents for Cards
-const GoldenCornerFrame = () => (
-  <>
-    <div className="absolute top-2.5 right-2.5 w-3.5 h-3.5 border-t-2 border-r-2 border-[#D4AF37]/70 rounded-tr-sm pointer-events-none z-10" />
-    <div className="absolute top-2.5 left-2.5 w-3.5 h-3.5 border-t-2 border-l-2 border-[#D4AF37]/70 rounded-tl-sm pointer-events-none z-10" />
-    <div className="absolute bottom-2.5 right-2.5 w-3.5 h-3.5 border-b-2 border-r-2 border-[#D4AF37]/70 rounded-br-sm pointer-events-none z-10" />
-    <div className="absolute bottom-2.5 left-2.5 w-3.5 h-3.5 border-b-2 border-l-2 border-[#D4AF37]/70 rounded-bl-sm pointer-events-none z-10" />
-  </>
-);
+import { LeaderFilterBar } from "../../components/leader/LeaderFilterBar";
+import { LeaderVideoCard } from "../../components/leader/LeaderVideoCard";
+import { LeaderTextCard } from "../../components/leader/LeaderTextCard";
+import { IslamicDivider } from "../../components/leader/LeaderIslamicOrnaments";
 
 export function Leader() {
   const [content, setContent] = useState<LeaderContent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedType, setSelectedType] = useState<"all" | "video" | "text">("all");
+  const [favorites, setFavorites] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem("favorite_items");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return parsed.map((item: any) => item.id);
+      }
+    } catch {
+      // ignore
+    }
+    return [];
+  });
 
   useEffect(() => {
-    let active = true;
-    const unsubPromise = SyncService.syncCollection<LeaderContent>("leader", (leaderData) => {
-      if (!active) return;
-      const sorted = [...leaderData];
-      sorted.sort((a, b) => {
-        const aOrder = a.order !== undefined && a.order !== null ? Number(a.order) : Infinity;
-        const bOrder = b.order !== undefined && b.order !== null ? Number(b.order) : Infinity;
-        if (aOrder !== bOrder) {
-          return aOrder - bOrder;
-        }
-        return b.createdAt - a.createdAt;
-      });
-      setContent(sorted);
-      setLoading(false);
-    }, { orderByField: "createdAt", orderDirection: "desc", limit: 50 });
-
-    return () => {
-      active = false;
-      unsubPromise.then(unsub => unsub());
-    };
+    updateMetadata({
+      title: "السيد القائد - مكتبة الخطابات والمحاضرات الهدائية",
+      description: "المكتبة التوثيقية الشاملة لخطابات ومحاضرات ودروس السيد القائد عبدالملك بدرالدين الحوثي المرئية والمكتوبة.",
+      type: "website",
+      path: window.location.pathname,
+    });
   }, []);
 
-  const filteredContent = useMemo(() => {
-    return content.filter(item => {
-      const matchesSearch = 
-        item.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesType = selectedType === "all" || item.type === selectedType;
-      return matchesSearch && matchesType;
-    });
-  }, [content, searchQuery, selectedType]);
+  // Real-time Firestore subscription
+  useEffect(() => {
+    setLoading(true);
+    const q = query(collection(db, "leader"), orderBy("createdAt", "desc"));
 
-  // Helper to format date cleanly
-  const formatDateString = (timestamp: number) => {
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const items = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as LeaderContent[];
+        setContent(items);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Firestore Leader listener error:", error);
+        // Fallback fetch
+        getDocs(q)
+          .then((snap) => {
+            setContent(snap.docs.map((d) => ({ id: d.id, ...d.data() } as LeaderContent)));
+          })
+          .catch((err) => console.error("Leader fallback error:", err))
+          .finally(() => setLoading(false));
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  // Filtering Logic
+  const filteredAndSortedContent = useMemo(() => {
+    return content
+      .filter((item) => {
+        // Search query
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const titleMatch = item.title?.toLowerCase().includes(q);
+          const descMatch = item.description?.toLowerCase().includes(q);
+          const contentMatch = item.content?.toLowerCase().includes(q);
+          return Boolean(titleMatch || descMatch || contentMatch);
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        return (b.createdAt || 0) - (a.createdAt || 0);
+      });
+  }, [content, searchQuery]);
+
+  const handleToggleFavorite = (item: LeaderContent) => {
     try {
-      return format(new Date(timestamp), "dd MMMM yyyy", { locale: ar });
-    } catch {
-      return "12 يوليو 2026";
+      const saved = localStorage.getItem("favorite_items");
+      let favList = saved ? JSON.parse(saved) : [];
+
+      if (favorites.includes(item.id)) {
+        favList = favList.filter((f: any) => f.id !== item.id);
+        setFavorites((prev) => prev.filter((id) => id !== item.id));
+      } else {
+        favList.push({
+          id: item.id,
+          type: "leader",
+          title: item.title,
+          imageUrl: item.thumbnailUrl || "",
+          savedAt: Date.now(),
+        });
+        setFavorites((prev) => [...prev, item.id]);
+      }
+      localStorage.setItem("favorite_items", JSON.stringify(favList));
+    } catch (e) {
+      console.warn("Favorite error:", e);
     }
   };
 
-  // Helper to get fallback duration for video items
-  const getItemDuration = (item: LeaderContent, index: number) => {
-    const defaultDurations = ["18:42", "16:31", "17:08", "19:15", "14:20", "22:05"];
-    return defaultDurations[index % defaultDurations.length];
-  };
-
   return (
-    <div className="min-h-screen bg-white font-cairo py-4 px-2 sm:px-3 pb-12" dir="rtl">
-      <div className="max-w-[760px] mx-auto w-full space-y-4">
+    <div className="min-h-screen bg-surface-main text-text-primary py-3 sm:py-5 px-3 sm:px-4 md:px-6 font-cairo transition-colors duration-300" dir="rtl">
+      <div className="max-w-4xl mx-auto w-full">
         
-        {/* Top Header Card Container with Search and Segmented Filter Control */}
-        <div className="bg-surface-card rounded-[24px] sm:rounded-[28px] p-3 sm:p-4 shadow-soft border border-border-subtle space-y-3">
-          
-          {/* 1. Search Bar */}
-          <div className="relative w-full h-[52px] sm:h-[56px] rounded-[24px] sm:rounded-[28px] bg-[#F8FAFC] border border-slate-200/80 flex items-center px-[16px] sm:px-[18px] transition-all focus-within:border-[#07152B]/50 focus-within:bg-white focus-within:shadow-[0_4px_16px_rgba(7,21,43,0.08)] group">
-            <input 
-              type="text" 
-              placeholder="ابحث بموضوع العنوان، المحاضرة أو الوصف..."
-              className="w-full bg-transparent border-0 focus:outline-none text-[#1E293B] placeholder:text-[#8E9B90] text-xs sm:text-sm font-medium pr-1 pl-12"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <div className="absolute left-2.5 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white border border-slate-200/60 shadow-xs flex items-center justify-center text-slate-500 group-focus-within:bg-[#07152B] group-focus-within:text-white transition-all">
-              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
-            </div>
-          </div>
+        {/* Unified Search Bar */}
+        <LeaderFilterBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
 
-          {/* 2. Capsule Segmented Filter Control */}
-          <div className="relative w-full h-[44px] sm:h-[48px] rounded-full bg-[#E2E8F0]/60 p-1 flex items-center justify-between gap-1 overflow-hidden">
-            {[
-              { id: "all", label: "الكل" },
-              { id: "video", label: "فيديو" },
-              { id: "text", label: "محاضرات ودروس" }
-            ].map(tab => {
-              const isActive = selectedType === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setSelectedType(tab.id as any)}
-                  className={`relative flex-1 h-full rounded-full text-xs sm:text-sm font-black transition-all cursor-pointer z-10 flex items-center justify-center ${
-                    isActive ? "text-white" : "text-[#475569] hover:text-[#0F172A]"
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div 
-                      layoutId="activeTabIndicator"
-                      className="absolute inset-0 rounded-full bg-[#07152B] shadow-[0_2px_8px_rgba(7,21,43,0.25)] border border-[#D4AF37]/40"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-        </div>
-
-        {/* Loading State */}
+        {/* 3. Dynamic Content Rendering */}
         {loading ? (
-          <div className="flex flex-col justify-center items-center py-20 space-y-4">
-            <div className="w-12 h-12 border-4 border-[#07152B] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs font-bold text-slate-500">جاري تحميل مواد السيد القائد...</p>
+          /* High-Fidelity Skeleton Loader matching platform style */
+          <div className="space-y-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="w-full h-32 sm:h-36 rounded-[18px] bg-white border border-slate-200/80 p-4 shadow-soft animate-pulse flex flex-col justify-between"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="h-5 w-28 bg-slate-200 rounded-md" />
+                  <div className="h-5 w-20 bg-slate-200 rounded-md" />
+                </div>
+                <div className="space-y-2 my-auto">
+                  <div className="h-4 w-3/4 bg-slate-200 rounded-md" />
+                  <div className="h-3.5 w-1/2 bg-slate-100 rounded-md" />
+                </div>
+                <div className="flex justify-between items-center pt-2.5 border-t border-slate-100">
+                  <div className="h-3.5 w-24 bg-slate-200 rounded" />
+                  <div className="h-3.5 w-20 bg-slate-200 rounded" />
+                </div>
+              </div>
+            ))}
           </div>
-        ) : filteredContent.length === 0 ? (
-          <div className="text-center py-16 px-6 bg-surface-card rounded-[24px] border border-dashed border-slate-300/80 shadow-xs text-slate-400">
-            <p className="text-sm font-bold text-slate-600">لا يوجد محتوى يطابق خيارات البحث والتصفية المحددة.</p>
-          </div>
+        ) : filteredAndSortedContent.length === 0 ? (
+          /* Empty State */
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-14 px-6 bg-surface-card rounded-[20px] border border-dashed border-slate-300 shadow-soft text-slate-400 space-y-3"
+          >
+            <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-taiz-sky">
+              <Sparkles className="w-7 h-7" />
+            </div>
+            <h3 className="text-sm sm:text-base font-bold text-text-primary">
+              لم يتم العثور على أي نتائج
+            </h3>
+            <p className="text-xs text-text-muted max-w-sm mx-auto">
+              جرب تغيير عبارة البحث أو التبديل بين أقسام الخطابات المرئية والمحاضرات المكتوبة.
+            </p>
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="mt-2 px-4 py-1.5 rounded-full bg-taiz-royal text-white text-xs font-bold shadow-sm cursor-pointer"
+              >
+                إعادة ضبط البحث
+              </button>
+            )}
+          </motion.div>
         ) : (
-          /* Vertical Scrolling Cards List */
-          <div className="flex flex-col gap-4 sm:gap-5">
+          /* Cards List with spacing matching news cards */
+          <div className="flex flex-col gap-2">
             <AnimatePresence mode="popLayout">
-              {filteredContent.map((item, index) => {
-                const isVideo = item.type === "video";
-                const itemDuration = getItemDuration(item, index);
-                const dateStr = formatDateString(item.createdAt);
+              {filteredAndSortedContent.map((item, index) => {
+                const isFavorited = favorites.includes(item.id);
 
                 return (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.35, delay: index * 0.02, ease: "easeOut" }}
-                    whileTap={{ scale: 0.97 }}
-                    className="w-full"
-                  >
-                    <Link
-                      to={routes.leaderItem(generateSlug(item.title || "", item.id))}
-                      className="group relative w-full min-h-[210px] sm:min-h-[225px] rounded-[24px] overflow-hidden bg-gradient-to-l from-[#07152B] via-[#0B2545] to-[#0A3323] border border-[#D4AF37]/35 shadow-[0_10px_25px_rgba(7,21,43,0.15)] flex items-stretch transition-all duration-300 block"
-                    >
-                      {/* Decorative Frame Elements */}
-                      <GoldenCornerFrame />
-                      <IslamicPatternOverlay />
-
-                      {/* Side Accent Line & Rosette Medallion on Far Right Edge */}
-                      <div className="absolute right-0 top-0 bottom-0 w-[5px] bg-gradient-to-b from-[#D4AF37]/40 via-[#D4AF37] to-[#D4AF37]/40 z-20 pointer-events-none" />
-                      
-                      {/* Ornate Gold Rosette Seal attached to right edge */}
-                      <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-9 sm:h-9 bg-[#07152B] border-2 border-[#D4AF37] rounded-full flex items-center justify-center text-[#D4AF37] shadow-lg z-30 pointer-events-none group-hover:scale-110 transition-transform">
-                        <Play className="w-3.5 h-3.5 fill-current mr-0.5" />
-                      </div>
-
-                      {/* LEFT ZONE: Video Thumbnail Artwork (~42% width) */}
-                      <div className="relative w-[42%] shrink-0 overflow-hidden bg-slate-900 border-l border-[#D4AF37]/25 flex flex-col justify-center">
-                        {item.thumbnailUrl ? (
-                          <img
-                            src={item.thumbnailUrl}
-                            alt={item.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                            loading="lazy"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-[#07152B] to-[#0A3323] flex items-center justify-center p-3">
-                            <img 
-                              src="/splash_first.png" 
-                              alt="السيد القائد" 
-                              className="w-full h-full object-contain opacity-90 group-hover:scale-105 transition-transform duration-700"
-                              onError={(e) => {
-                                (e.target as HTMLElement).style.display = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
-
-                        {/* Top Gradient for Badge contrast */}
-                        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/80 via-black/30 to-transparent pointer-events-none" />
-                        
-                        {/* Bottom Gradient Overlay */}
-                        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/85 via-black/40 to-transparent pointer-events-none" />
-
-                        {/* Video Badge (Top-Right of Thumbnail) */}
-                        <div className="absolute top-2.5 right-2.5 z-10">
-                          {isVideo ? (
-                            <span className="bg-[#E11D48] text-white text-[10px] font-black px-2 py-0.5 rounded-[8px] flex items-center gap-1 shadow-md">
-                              <VideoIcon className="w-2.5 h-2.5 fill-current" />
-                              <span>فيديو</span>
-                            </span>
-                          ) : (
-                            <span className="bg-[#0284C7] text-white text-[10px] font-black px-2 py-0.5 rounded-[8px] flex items-center gap-1 shadow-md">
-                              <FileText className="w-2.5 h-2.5" />
-                              <span>محاضرة</span>
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Duration Badge (Bottom-Right of Thumbnail) */}
-                        <div className="absolute bottom-2.5 right-2.5 z-10">
-                          <span className="bg-black/75 backdrop-blur-md text-white text-[10.5px] font-mono font-bold px-2 py-0.5 rounded border border-white/15 shadow-sm">
-                            {itemDuration}
-                          </span>
-                        </div>
-
-                        {/* Glassmorphism Play Button (Bottom-Left of Thumbnail) */}
-                        <motion.div 
-                          whileHover={{ scale: 1.08 }}
-                          whileTap={{ scale: 0.92 }}
-                          className="absolute bottom-2.5 left-2.5 z-10 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/25 backdrop-blur-md border border-white/40 shadow-lg flex items-center justify-center text-white group-hover:bg-white/35 transition-all"
-                        >
-                          <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current mr-0.5" />
-                        </motion.div>
-                      </div>
-
-                      {/* RIGHT ZONE: Title & Metadata (~58% width) */}
-                      <div className="relative flex-1 p-3 sm:p-4.5 pr-4.5 sm:pr-6 flex flex-col justify-between overflow-hidden z-10">
-                        
-                        {/* Title Section: Centered vertically and horizontally in the middle of the card */}
-                        <div className="my-auto py-2 flex items-center justify-center text-center">
-                          <h2 className="text-white text-[13px] xs:text-xs sm:text-[14px] font-bold sm:font-black leading-snug sm:leading-relaxed group-hover:text-amber-200 transition-colors font-cairo text-center">
-                            {item.title}
-                          </h2>
-                        </div>
-
-                        {/* Metadata Row */}
-                        <div className="flex items-center justify-between text-[#CBD5E1] text-[10.5px] sm:text-xs font-medium pt-2 border-t border-white/10 mt-auto">
-                          <div className="flex items-center gap-2.5 sm:gap-3 w-full justify-between">
-                            {/* Date */}
-                            <span className="flex items-center gap-1 text-slate-200 font-bold">
-                              <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#D4AF37]" />
-                              <span>{dateStr}</span>
-                            </span>
-
-                            {/* Views */}
-                            <span className="flex items-center gap-1 text-slate-200 font-bold">
-                              <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />
-                              <span>{item.views ?? 0}</span>
-                            </span>
-                          </div>
-                        </div>
-
-                      </div>
-
-                    </Link>
-                  </motion.div>
+                  <div key={item.id} className="w-full">
+                    {item.type === "video" ? (
+                      <LeaderVideoCard
+                        item={item}
+                        index={index}
+                        isFavorited={isFavorited}
+                        onToggleFavorite={handleToggleFavorite}
+                      />
+                    ) : (
+                      <LeaderTextCard
+                        item={item}
+                        index={index}
+                        isFavorited={isFavorited}
+                        onToggleFavorite={handleToggleFavorite}
+                      />
+                    )}
+                  </div>
                 );
               })}
             </AnimatePresence>
@@ -287,4 +204,4 @@ export function Leader() {
     </div>
   );
 }
-
+export default Leader;

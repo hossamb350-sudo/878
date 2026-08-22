@@ -72,6 +72,27 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   const [hijriDate, setHijriDate] = useState("");
   const [gregorianDate, setGregorianDate] = useState("");
   const [duration, setDuration] = useState("");
+  const [showInSlider, setShowInSlider] = useState(false);
+  const [selectedDatePicker, setSelectedDatePicker] = useState("");
+
+  const handleDatePickerChange = (dateStr: string) => {
+    setSelectedDatePicker(dateStr);
+    if (!dateStr) return;
+    const parts = dateStr.split('-');
+    if (parts.length === 3) {
+      const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+      if (!isNaN(d.getTime())) {
+        const greg = new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+        setGregorianDate(greg);
+        try {
+          const hijri = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' }).format(d);
+          setHijriDate(hijri);
+        } catch (e) {
+          console.warn("Hijri conversion error", e);
+        }
+      }
+    }
+  };
 
   // Custom Category State
   const [showAddCatInput, setShowAddCatInput] = useState(false);
@@ -110,6 +131,10 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   useEffect(() => {
     if (mode === "wizard" && !editingId && !hijriDate) {
       const d = new Date();
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      setSelectedDatePicker(`${yyyy}-${mm}-${dd}`);
       setGregorianDate(new Intl.DateTimeFormat('ar-EG', { day: 'numeric', month: 'long', year: 'numeric' }).format(d));
       try {
         setHijriDate(new Intl.DateTimeFormat('ar-SA-u-ca-islamic', { day: 'numeric', month: 'long', year: 'numeric' }).format(d));
@@ -130,6 +155,8 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
     setHijriDate("");
     setGregorianDate("");
     setDuration("");
+    setShowInSlider(false);
+    setSelectedDatePicker("");
     setEditingId(null);
     setCurrentStep(1);
   };
@@ -151,6 +178,7 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
     setHijriDate(v.hijriDate || "");
     setGregorianDate(v.gregorianDate || "");
     setDuration(v.duration || "");
+    setShowInSlider(!!v.showInSlider || !!v.isFeatured || !!v.isPinned);
     setMode("wizard");
     setCurrentStep(1);
   };
@@ -200,8 +228,8 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
 
     setSaving(true);
     try {
-      const finalCategories = categoriesList.length > 0 ? categoriesList : [category || "فيديوهات"];
-      const primaryCategory = finalCategories[0] || "فيديوهات";
+      const finalCategories = categoriesList.length > 0 ? categoriesList : (category ? [category] : []);
+      const primaryCategory = finalCategories[0] || "";
 
       const payload = {
         title: title.trim(),
@@ -214,6 +242,9 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
         hijriDate: hijriDate.trim(),
         gregorianDate: gregorianDate.trim(),
         duration: duration.trim() || null,
+        showInSlider,
+        isFeatured: showInSlider,
+        isPinned: showInSlider,
         updatedAt: Date.now()
       };
 
@@ -471,6 +502,14 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
                   <div>
                     {/* Image / Video Header */}
                     <div className="relative aspect-video bg-slate-900 overflow-hidden">
+                      {/* Main Slider Badge if applicable */}
+                      {(v.showInSlider || v.isFeatured || v.isPinned) && (
+                        <span className="absolute top-2 left-2 bg-rose-600/90 text-white text-[10px] font-black px-2 py-1 rounded-full backdrop-blur-md shadow-xs flex items-center gap-1 z-10">
+                          <Sparkles className="w-3 h-3" />
+                          <span>في السلايدر الرئيسي</span>
+                        </span>
+                      )}
+
                       {v.thumbnailUrl ? (
                         <img
                           src={v.thumbnailUrl}
@@ -771,61 +810,73 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
                     setCategory("");
                   }
                 }}
-                presetSuggestions={[
-                  "فيديوهات",
-                  "تقارير مرئية",
-                  "محاضرات ودروس",
-                  "تغطيات خاصة",
-                  "محلية",
-                  "تعبئة عامة",
-                  "أنشطة وزيارات",
-                  "مشاريع ومبادرات",
-                  "القوات المسلحة",
-                  "المولد النبوي الشريف",
-                  "مسيرات ووقفات"
-                ]}
+                presetSuggestions={[]}
                 helperText="ملاحظة: اختيار التصنيفات يربط الفيديو تلقائياً بأبرز المواضيع والمصنفات المطابقة لتسميات التصانيف المحددة."
               />
 
-              {/* Dates & Duration */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300">
-                    التاريخ الهجري
+              {/* Dates & Duration with Manual Date Selector */}
+              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <label className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <Calendar className="w-4 h-4 text-rose-500" />
+                    <span>تحديد تاريخ الفيديو من التقويم (تلقائي للهجري والميلادي)</span>
                   </label>
-                  <input
-                    type="text"
-                    placeholder="مثال: 15 صفر 1448 هـ"
-                    value={hijriDate}
-                    onChange={(e) => setHijriDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 outline-none focus:border-rose-500"
-                  />
+                  <span className="text-[11px] text-rose-600 dark:text-rose-400 font-bold">
+                    يمكنك اختيار التاريخ أو إدخاله يدوياً
+                  </span>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300">
-                    التاريخ الميلادي
-                  </label>
+                <div className="flex items-center gap-3">
                   <input
-                    type="text"
-                    placeholder="مثال: 15 أغسطس 2026"
-                    value={gregorianDate}
-                    onChange={(e) => setGregorianDate(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 outline-none focus:border-rose-500"
+                    type="date"
+                    value={selectedDatePicker}
+                    onChange={(e) => handleDatePickerChange(e.target.value)}
+                    className="bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold rounded-xl p-3 border border-slate-200 dark:border-slate-700 outline-none focus:border-rose-500 cursor-pointer shadow-xs"
                   />
+                  <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                    حدد التاريخ من القائمة التقويمية ليتم تحويله مباشرة للهجري والميلادي
+                  </span>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300">
-                    مدة الفيديو (اختياري)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="مثال: 05:30 أو 12 دقيقة"
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700 outline-none focus:border-rose-500"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-black text-slate-600 dark:text-slate-400">
+                      التاريخ الهجري (قابل للتعديل)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثال: 15 صفر 1448 هـ"
+                      value={hijriDate}
+                      onChange={(e) => setHijriDate(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold rounded-xl p-3 border border-slate-200 dark:border-slate-700 outline-none focus:border-rose-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-black text-slate-600 dark:text-slate-400">
+                      التاريخ الميلادي (قابل للتعديل)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثال: 15 أغسطس 2026"
+                      value={gregorianDate}
+                      onChange={(e) => setGregorianDate(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold rounded-xl p-3 border border-slate-200 dark:border-slate-700 outline-none focus:border-rose-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-[11px] font-black text-slate-600 dark:text-slate-400">
+                      مدة الفيديو (اختياري)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="مثال: 05:30 أو 12 دقيقة"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      className="w-full bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-bold rounded-xl p-3 border border-slate-200 dark:border-slate-700 outline-none focus:border-rose-500"
+                    />
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -1009,6 +1060,27 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
                 </div>
               )}
 
+              {/* Main Slider Display Toggle */}
+              <label className="flex items-center justify-between p-4 bg-rose-50/50 dark:bg-rose-950/20 border border-rose-500/30 rounded-2xl cursor-pointer hover:border-rose-500 transition-colors font-bold text-xs select-none">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-xl ${showInSlider ? "bg-rose-600 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-500"}`}>
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="block text-slate-900 dark:text-white font-black text-sm">عرض المحتوى في السلايدر الرئيسي للمنصة</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+                      عند التفعيل، سيظهر هذا الفيديو بشكل بارز في السلايدر المتحرك في أعلى الصفحة الرئيسية للموقع.
+                    </span>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={showInSlider}
+                  onChange={(e) => setShowInSlider(e.target.checked)}
+                  className="w-5 h-5 accent-rose-600 rounded shrink-0 cursor-pointer"
+                />
+              </label>
+
               {/* Summary Overview */}
               <div className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 space-y-3">
                 <h4 className="text-xs font-black text-slate-800 dark:text-slate-200">ملخص بيانات الفيديو قبل النشر:</h4>
@@ -1019,7 +1091,7 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
                   </div>
                   <div>
                     <span className="text-slate-400 font-bold">التصنيف: </span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{categoriesList[0] || category || "فيديوهات"}</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{categoriesList[0] || category || "بدون تصنيف"}</span>
                   </div>
                 </div>
               </div>
@@ -1142,7 +1214,7 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
 
               {/* Modal Footer Info */}
               <div className="p-4 bg-slate-950/80 flex items-center justify-between text-xs text-slate-400">
-                <span>{previewModalVideo.category || "فيديوهات"}</span>
+                <span>{previewModalVideo.category || "بدون تصنيف"}</span>
                 <button
                   onClick={() => {
                     handleEditVideo(previewModalVideo);

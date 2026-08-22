@@ -210,8 +210,8 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
         finalAuthorId = newAuthorRef.id;
       }
 
-      const finalCategories = categoriesList.length > 0 ? categoriesList : [category || "تحليلات"];
-      const primaryCategory = finalCategories[0] || "تحليلات";
+      const finalCategories = categoriesList.length > 0 ? categoriesList : (category ? [category] : []);
+      const primaryCategory = finalCategories[0] || "";
 
       const payload = {
         title: title.trim(),
@@ -786,19 +786,7 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
                     setCategory("");
                   }
                 }}
-                presetSuggestions={[
-                  "تحليلات",
-                  "مقالات رأي",
-                  "دراسات",
-                  "ثقافة وفكر",
-                  "محلية",
-                  "تعبئة عامة",
-                  "أنشطة وزيارات",
-                  "مشاريع ومبادرات",
-                  "القوات المسلحة",
-                  "المولد النبوي الشريف",
-                  "مسيرات ووقفات"
-                ]}
+                presetSuggestions={[]}
                 helperText="ملاحظة: اختيار التصنيفات يربط المقال تلقائياً بأبرز المواضيع والمصنفات المطابقة لتسميات التصانيف المحددة."
               />
 
@@ -1042,7 +1030,7 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
                 <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-1 list-disc list-inside font-medium">
                   <li>العنوان: <span className="font-bold">{title || "غير محدد"}</span></li>
                   <li>الكاتب: <span className="font-bold">{authorName || "غير محدد"}</span></li>
-                  <li>التصنيف: <span className="font-bold">{category || "تحليلات"}</span></li>
+                  <li>التصنيف: <span className="font-bold">{category || "بدون تصنيف"}</span></li>
                   <li>الصور: <span className="font-bold">{imageUrl ? "صورة غلاف موجودة" : "بدون صورة غلاف"} + ({additionalImages.filter(Boolean).length} صورة معرض)</span></li>
                 </ul>
               </div>
