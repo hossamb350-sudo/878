@@ -37,6 +37,8 @@ import {
   Share2
 } from "lucide-react";
 import { routes, generateSlug } from "../../utils/routes";
+import { shareContent } from "../../utils/share";
+import { getShareableUrl } from "../../config/apiConfig";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../../components/PullToRefresh";
@@ -284,6 +286,7 @@ export function Watch() {
 
   // Temporary states for modal
   const [tempSort, setTempSort] = useState<"newest" | "oldest" | "popular">("newest");
+  const [copiedChannelToast, setCopiedChannelToast] = useState<string | null>(null);
 
   const activeVideoRef = useRef<HTMLDivElement>(null);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -400,20 +403,20 @@ export function Watch() {
   }, [channelTab, tvChannels, radioChannels]);
 
   const handleShareChannel = async (channel: LiveStream) => {
-    const url = `https://${window.location.host}/watch/channel/${channel.id}`;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${channel.name} | منصة تعز الإعلامية`,
-          text: `شاهد واستمع إلى ${channel.name} مباشرة على منصة تعز الإعلامية`,
-          url: url,
-        });
-      } catch (err) {
-        console.error("Error sharing channel:", err);
+    const isRadio = channel.type === "radio";
+    try {
+      const res = await shareContent({
+        title: `${channel.name} | منصة تعز الإعلامية`,
+        type: isRadio ? "radio" : "channel",
+        id: channel.id,
+        imageUrl: channel.iconUrl,
+      });
+      if (!res.native && res.success) {
+        setCopiedChannelToast(isRadio ? "تم نسخ رابط الإذاعة بنجاح" : "تم نسخ رابط القناة بنجاح");
+        setTimeout(() => setCopiedChannelToast(null), 2500);
       }
-    } else {
-      navigator.clipboard.writeText(url);
-      alert("تم نسخ رابط المشاركة!");
+    } catch (err) {
+      console.error("Error sharing channel:", err);
     }
   };
 
@@ -634,16 +637,27 @@ export function Watch() {
                         </div>
                       </div>
 
-                      <button 
-                        onClick={() => {
-                          setIsPlayingInHero(false);
-                          globalStopStream();
-                        }}
-                        className="absolute top-3 right-3 z-40 bg-black/70 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition backdrop-blur-md cursor-pointer shadow-xl"
-                        title="إغلاق البث"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      <div className="absolute top-3 right-3 z-40 flex items-center gap-2">
+                        {activeTvChannel && (
+                          <button 
+                            onClick={() => handleShareChannel(activeTvChannel)}
+                            className="bg-black/70 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition backdrop-blur-md cursor-pointer shadow-xl"
+                            title="مشاركة القناة"
+                          >
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => {
+                            setIsPlayingInHero(false);
+                            globalStopStream();
+                          }}
+                          className="bg-black/70 hover:bg-black/90 text-white p-2 rounded-full border border-white/20 transition backdrop-blur-md cursor-pointer shadow-xl"
+                          title="إغلاق البث"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   ) : null}
 
@@ -1531,6 +1545,21 @@ export function Watch() {
                   </div>
                 </motion.div>
               </div>
+            )}
+          </AnimatePresence>
+
+          {/* Toast Notification for Link Copy */}
+          <AnimatePresence>
+            {copiedChannelToast && (
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-stone-900/95 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-full shadow-2xl border border-stone-700/80 flex items-center gap-2 font-cairo backdrop-blur-md"
+              >
+                <Check className="w-4 h-4 text-emerald-400" />
+                <span>{copiedChannelToast}</span>
+              </motion.div>
             )}
           </AnimatePresence>
 

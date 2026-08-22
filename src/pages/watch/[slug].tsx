@@ -11,7 +11,8 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { 
   ArrowRight, Eye, Calendar, Play, Share2, Clock, Bookmark, 
-  Maximize, Monitor, Volume2, Settings, Video as VideoIcon
+  Maximize, Monitor, Volume2, Settings, Video as VideoIcon,
+  Facebook, MessageCircle, Send, Check
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getShareableUrl } from "../../config/apiConfig";
@@ -169,17 +170,46 @@ export function WatchItem() {
     fetchVideoAndSuggestions();
   }, [id]);
 
-  const handleShare = async () => {
+  const handleShare = async (platform: string) => {
     if (!video) return;
-    const res = await shareContent({
-      title: video.title,
-      type: "video",
-      id: video.id || id,
-      imageUrl: video.thumbnailUrl
-    });
-    if (res.success && !res.native) {
+    if (typeof navigator.share !== "undefined") {
+      const res = await shareContent({
+        title: video.title,
+        type: "video",
+        id: video.id || id,
+        imageUrl: video.thumbnailUrl
+      });
+      if (res.native) {
+        return;
+      }
+    }
+    const url = getShareableUrl(`/watch/${video.id || id}`);
+    const text = video.title || "";
+    if (platform === "copy") {
+      await navigator.clipboard.writeText(url);
       setShareSuccess(true);
       setTimeout(() => setShareSuccess(false), 2000);
+      return;
+    }
+    let shareUrl = "";
+    switch (platform) {
+      case "twitter":
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case "whatsapp":
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+        break;
+      case "telegram":
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
+      default:
+        return;
+    }
+    if (shareUrl) {
+      window.open(shareUrl, "_blank", "width=600,height=500,noopener,noreferrer");
     }
   };
 
@@ -279,7 +309,7 @@ export function WatchItem() {
         {/* Immersive Overlay UI (Top controls) */}
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2 pointer-events-auto">
           <button 
-            onClick={handleShare}
+            onClick={() => handleShare("copy")}
             className="w-8 h-8 flex items-center justify-center rounded-full bg-black/50 backdrop-blur-md text-white border border-white/10 hover:bg-red-600 transition-all active:scale-90"
             title="مشاركة"
           >
@@ -296,59 +326,90 @@ export function WatchItem() {
       </div>
 
       {/* 2. Unified Content Section (Directly after player) */}
-      <div className="max-w-[800px] mx-auto">
-        <div className="px-5 sm:px-8 pb-6 pt-6 border-b border-stone-100 dark:border-stone-800">
-          {/* Back Button Above Title */}
-          <button 
-            onClick={() => navigate(-1)}
-            className="mb-4 text-red-600 flex items-center gap-1.5 text-xs font-black hover:gap-2 transition-all font-cairo cursor-pointer"
-          >
-            <ArrowRight className="w-4 h-4" /> العودة لقسم ميديا
-          </button>
+      <div className="max-w-[800px] mx-auto px-4 sm:px-6 pt-5 pb-10">
+        <div className="bg-white dark:bg-stone-900 rounded-2xl sm:rounded-3xl p-5 sm:p-7 border border-slate-100 dark:border-stone-800/80 shadow-sm space-y-4">
+          {/* Back Button & Category Badge */}
+          <div className="flex items-center justify-between gap-2">
+            <button 
+              onClick={() => navigate(-1)}
+              className="text-red-600 dark:text-red-500 flex items-center gap-1.5 text-xs sm:text-sm font-black hover:gap-2 transition-all font-cairo cursor-pointer"
+            >
+              <ArrowRight className="w-4 h-4" /> العودة لقسم ميديا
+            </button>
+            
+            <span className="inline-block px-2.5 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded-full font-cairo">
+              عرض مرئي
+            </span>
+          </div>
           
-          <span className="inline-block px-2 py-0.5 bg-red-600 text-white font-bold text-[10px] sm:text-xs rounded mb-2 font-cairo">
-            عرض مرئي
-          </span>
-          
-          <h1 className="font-bold text-stone-900 dark:text-white leading-normal mb-3 font-cairo text-xl sm:text-2xl">
+          {/* Video Title */}
+          <h1 className="font-bold text-stone-900 dark:text-white leading-normal font-cairo text-lg sm:text-2xl">
             {video.title}
           </h1>
 
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[10px] sm:text-xs text-stone-400 font-normal font-ibm">
+          {/* Date & Views */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-400 font-normal font-ibm pb-1 border-b border-slate-100/80 dark:border-stone-800/60">
             <span>{format(video.createdAt, "dd MMMM yyyy", { locale: ar })}</span>
-            <span className="text-stone-200 dark:text-stone-700">|</span>
-            <span className="text-red-500 flex items-center gap-1 font-semibold animate-pulse">
-              <Eye className="w-3 h-3 text-red-600 shrink-0" />
-              <span>{(video.views || 2568).toLocaleString('ar-EG')} مشاهدة</span>
+            <span className="text-stone-300 dark:text-stone-700">|</span>
+            <span className="text-red-500 flex items-center gap-1 font-semibold">
+              <Eye className="w-3.5 h-3.5 text-red-600 shrink-0" />
+              <span>{(video.views || 0).toLocaleString('ar-EG')} مشاهدة</span>
             </span>
           </div>
-        </div>
 
-        <div className="px-5 sm:px-8 py-8">
           {/* Description Block - Only show if exists */}
           {video.description && (
-            <div className="bg-stone-50 dark:bg-stone-800/30 p-6 rounded-2xl border border-stone-100 dark:border-stone-800/40 mb-6">
-              <p className="text-sm text-stone-500 dark:text-stone-400 leading-relaxed font-bold font-ibm whitespace-pre-line">
-                {video.description}
-              </p>
+            <div className="bg-stone-50 dark:bg-stone-800/40 p-4 sm:p-5 rounded-2xl border border-stone-100 dark:border-stone-800/40 text-sm text-stone-600 dark:text-stone-300 leading-relaxed font-bold font-ibm whitespace-pre-line">
+              {video.description}
             </div>
           )}
           
-          <div className="flex gap-3">
-            <button 
-              onClick={handleShare}
-              className="flex-1 bg-red-600 text-white rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs shadow-lg shadow-red-600/20 font-ibm"
-            >
-              <Share2 className="w-3.5 h-3.5" />
-              <span>مشاركة المحتوى</span>
-            </button>
-            <button 
-              onClick={toggleBookmark}
-              className={`flex-1 bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-xl py-3 px-4 flex items-center justify-center gap-2 font-bold text-xs font-ibm ${isFavorited ? 'text-red-600 border-red-100 bg-red-50/50' : ''}`}
-            >
-              <Bookmark className={`w-3.5 h-3.5 ${isFavorited ? 'fill-current' : ''}`} />
-              <span>حفظ</span>
-            </button>
+          {/* Integrated Interaction Bar matching mockup */}
+          <div className="pt-2">
+            <div className="bg-[#fafafa]/90 dark:bg-stone-900/60 border border-slate-200/70 dark:border-stone-800/80 rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
+              {/* Bookmark Button (Right side in RTL) */}
+              <button 
+                onClick={toggleBookmark}
+                className={`p-2 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${isFavorited ? 'text-red-600 dark:text-red-400' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                title="حفظ"
+              >
+                <Bookmark className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+              </button>
+
+              {/* Social Share Icons (Left side in RTL) */}
+              <div className="flex items-center gap-2" dir="ltr">
+                <button 
+                  onClick={() => handleShare("telegram")} 
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
+                  title="مشاركة عبر تليجرام"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => handleShare("facebook")} 
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
+                  title="مشاركة عبر فيسبوك"
+                >
+                  <Facebook className="w-4.5 h-4.5" />
+                </button>
+                <button 
+                  onClick={() => handleShare("twitter")} 
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
+                  title="مشاركة عبر إكس"
+                >
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </button>
+                <button 
+                  onClick={() => handleShare("whatsapp")} 
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
+                  title="مشاركة عبر واتساب"
+                >
+                  <MessageCircle className="w-4.5 h-4.5" />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         

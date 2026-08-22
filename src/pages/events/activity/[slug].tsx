@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { updateMetadata } from "../../../utils/metadata";
-import { extractIdFromSlug, generateSlug } from "../../../utils/routes";
+import { extractIdFromSlug, generateSlug, routes } from "../../../utils/routes";
+import { getShareableUrl } from "../../../config/apiConfig";
+import { shareContent } from "../../../utils/share";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../../firebase";
-import { ArrowRight, Edit, Trash2, Calendar, Clock, Image, Save, X, Info } from "lucide-react";
+import { ArrowRight, Edit, Trash2, Calendar, Clock, Image, Save, X, Info, Share2, Bookmark, Send, Facebook, MessageCircle, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export function ActivityDetail() {
@@ -27,6 +29,7 @@ export function ActivityDetail() {
   const [editEndTime, setEditEndTime] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [editImageUrl, setEditImageUrl] = useState("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -137,6 +140,53 @@ export function ActivityDetail() {
       alert("حدث خطأ أثناء حفظ التعديلات");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleShare = async (platform: string = "copy") => {
+    if (!activity) return;
+
+    if (typeof navigator.share !== "undefined") {
+      const res = await shareContent({
+        title: activity.title || "فعالية",
+        type: "activity",
+        id: activity.id || id,
+        imageUrl: activity.imageUrl
+      });
+      if (res.native) {
+        return;
+      }
+    }
+
+    const url = getShareableUrl(routes.activity(activity.id || id));
+    const text = activity.title || "";
+
+    if (platform === "copy") {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      return;
+    }
+
+    let shareUrl = "";
+    switch (platform) {
+      case "twitter":
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case "whatsapp":
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+        break;
+      case "telegram":
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
+      default:
+        return;
+    }
+    if (shareUrl) {
+      window.open(shareUrl, "_blank", "width=600,height=500,noopener,noreferrer");
     }
   };
 
@@ -290,8 +340,70 @@ export function ActivityDetail() {
               )}
             </div>
           </div>
+
+          {/* Integrated Interaction / Share Bar */}
+          <div className="pt-4 border-t border-gray-100 dark:border-stone-800">
+            <div className="bg-[#fafafa]/90 dark:bg-stone-900/60 border border-slate-200/70 dark:border-stone-800/80 rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
+              <button 
+                onClick={() => handleShare("copy")}
+                className="p-2 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold font-cairo"
+                title="نسخ الرابط"
+              >
+                <Share2 className="w-4.5 h-4.5" />
+                <span className="hidden sm:inline">نسخ الرابط</span>
+              </button>
+
+              <div className="flex items-center gap-2" dir="ltr">
+                <button 
+                  onClick={() => handleShare("telegram")} 
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
+                  title="مشاركة عبر تليجرام"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => handleShare("facebook")} 
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
+                  title="مشاركة عبر فيسبوك"
+                >
+                  <Facebook className="w-4.5 h-4.5" />
+                </button>
+                <button 
+                  onClick={() => handleShare("twitter")} 
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
+                  title="مشاركة عبر إكس"
+                >
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                  </svg>
+                </button>
+                <button 
+                  onClick={() => handleShare("whatsapp")} 
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
+                  title="مشاركة عبر واتساب"
+                >
+                  <MessageCircle className="w-4.5 h-4.5" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Copy notification toast */}
+      <AnimatePresence>
+        {copied && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white text-xs sm:text-sm font-bold px-4 py-2.5 rounded-full shadow-2xl border border-stone-700 flex items-center gap-2 font-cairo"
+          >
+            <Check className="w-4 h-4 text-emerald-400" />
+            <span>تم نسخ رابط الفعالية بنجاح</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Elegant Edit Slide-over/Modal */}
       <AnimatePresence>

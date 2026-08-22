@@ -43,6 +43,7 @@ import {
   Share2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { getShareableUrl } from "../../config/apiConfig";
 import { QuranReader } from "../../components/QuranReader";
 import { QuranStats } from "../../components/QuranStats";
 import { QuranKareem } from "../../components/QuranKareem";
@@ -592,7 +593,7 @@ const ExcerptDetailView = ({
         await navigator.share({
           title: selectedExcerpt.title || "مقتطف",
           text: shareText,
-          url: window.location.href,
+          url: getShareableUrl("/quran"),
         });
       } catch (err) {}
     } else {

@@ -8,6 +8,7 @@ import { db } from "../../firebase";
 import { LeaderContent } from "../../types";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
+import { getShareableUrl } from "../../config/apiConfig";
 import { 
   ArrowRight, 
   Eye, 
@@ -20,6 +21,9 @@ import {
   Sparkles,
   ChevronLeft,
   Layers,
+  Facebook,
+  MessageCircle,
+  Send
 } from "lucide-react";
 import { motion } from "motion/react";
 import { useLiveStream } from "../../context/LiveStreamContext";
@@ -192,14 +196,51 @@ export function LeaderItem() {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (platform: string = "copy") => {
     if (!content) return;
-    await shareContent({
-      title: content.title,
-      type: "leader",
-      id: content.id || id,
-      imageUrl: content.thumbnailUrl,
-    });
+    
+    if (typeof navigator.share !== "undefined") {
+      const res = await shareContent({
+        title: content.title,
+        type: "leader",
+        id: content.id || id,
+        imageUrl: content.thumbnailUrl,
+      });
+      if (res.native) {
+        return;
+      }
+    }
+    
+    const url = getShareableUrl(`/leader/${content.id || id}`);
+    const text = content.title || "";
+    
+    if (platform === "copy") {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      return;
+    }
+    
+    let shareUrl = "";
+    switch (platform) {
+      case "twitter":
+        shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+        break;
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+        break;
+      case "whatsapp":
+        shareUrl = `https://wa.me/?text=${encodeURIComponent(text + " " + url)}`;
+        break;
+      case "telegram":
+        shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+        break;
+      default:
+        return;
+    }
+    if (shareUrl) {
+      window.open(shareUrl, "_blank", "width=600,height=500,noopener,noreferrer");
+    }
   };
 
   // Date Formatter
@@ -377,13 +418,15 @@ export function LeaderItem() {
           </Link>
 
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={handleShare}
-              className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-              title="مشاركة"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
+            {!isVideo && (
+              <button
+                onClick={() => handleShare("copy")}
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                title="مشاركة"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+            )}
             <button
               onClick={toggleBookmark}
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
@@ -440,6 +483,49 @@ export function LeaderItem() {
                   {content.description}
                 </div>
               )}
+              
+              <div className="bg-[#fafafa]/90 dark:bg-stone-900/60 border border-slate-200/70 dark:border-stone-800/80 rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm mt-4">
+                <button 
+                  onClick={toggleBookmark}
+                  className={`p-2 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${isFavorited ? 'text-taiz-sky' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                  title="حفظ"
+                >
+                  <Bookmark className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
+                </button>
+
+                <div className="flex items-center gap-2" dir="ltr">
+                  <button 
+                    onClick={() => handleShare("telegram")} 
+                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
+                    title="مشاركة عبر تليجرام"
+                  >
+                    <Send className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleShare("facebook")} 
+                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
+                    title="مشاركة عبر فيسبوك"
+                  >
+                    <Facebook className="w-4.5 h-4.5" />
+                  </button>
+                  <button 
+                    onClick={() => handleShare("twitter")} 
+                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
+                    title="مشاركة عبر إكس"
+                  >
+                    <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={() => handleShare("whatsapp")} 
+                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
+                    title="مشاركة عبر واتساب"
+                  >
+                    <MessageCircle className="w-4.5 h-4.5" />
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         ) : (

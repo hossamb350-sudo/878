@@ -3,7 +3,7 @@ import { getShareableUrl } from "../config/apiConfig";
 
 export interface ShareOptions {
   title: string;
-  type: 'news' | 'video' | 'article' | 'activity' | 'leader';
+  type: 'news' | 'video' | 'article' | 'activity' | 'leader' | 'channel' | 'radio';
   id: string;
   imageUrl?: string;
   authorPhoto?: string;
@@ -33,6 +33,10 @@ export async function shareContent(options: ShareOptions): Promise<{ success: bo
       break;
     case "activity":
       path = routes.activity(id);
+      break;
+    case "channel":
+    case "radio":
+      path = routes.channel(id);
       break;
     default:
       path = `/${type}/${id}`;
@@ -102,11 +106,28 @@ export async function shareContent(options: ShareOptions): Promise<{ success: bo
   
   // 4. Fallback to Copy to Clipboard
   try {
-    await navigator.clipboard.writeText(shareableUrl);
-    return { success: true, native: false };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      await navigator.clipboard.writeText(shareableUrl);
+      return { success: true, native: false };
+    }
   } catch (clipboardErr) {
-    console.error("Clipboard copy failed", clipboardErr);
-    // Absolute fallback
+    console.debug("Clipboard writeText failed, trying execCommand fallback", clipboardErr);
+  }
+
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = shareableUrl;
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return { success: successful, native: false };
+  } catch (fallbackErr) {
+    console.warn("Clipboard fallback copy also failed", fallbackErr);
     return { success: false, native: false };
   }
 }

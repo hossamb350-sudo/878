@@ -11,6 +11,7 @@ import {
 import { db } from "../firebase";
 import { QuranExcerpt } from "../types";
 import { SyncService } from "../services/SyncService";
+import { getShareableUrl } from "../config/apiConfig";
 import { del as delIDB } from "idb-keyval";
 import {
   Quote,
@@ -112,7 +113,7 @@ export const IslamicExcerptCard = ({
         await navigator.share({
           title: excerpt.title || "مقتطف",
           text: shareText,
-          url: window.location.href,
+          url: getShareableUrl("/quran"),
         });
       } catch (err) {
         // Share cancelled or failed
