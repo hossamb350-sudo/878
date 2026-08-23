@@ -42,17 +42,18 @@ export async function injectDynamicMetaTags(reqPath: string, html: string, db: F
           const fullUrl = `https://${host}${reqPath}`;
           const fullTitle = `${title} | منصة تعز الإعلامية`;
 
+          const combinedTitle = `منصة تعز الإعلامية | ${title}`;
           const metaTags = `
-            <meta property="og:title" content="منصة تعز الإعلامية" />
-            <meta property="og:description" content="${escapeHtml(title)}" />
+            <meta property="og:title" content="${escapeHtml(combinedTitle)}" />
+            <meta property="og:description" content="${escapeHtml(description)}" />
             <meta property="og:image" content="${imageUrl}" />
             <meta property="og:url" content="${fullUrl}" />
             <meta property="og:type" content="article" />
             <meta property="og:site_name" content="منصة تعز الإعلامية" />
             
             <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content="منصة تعز الإعلامية" />
-            <meta name="twitter:description" content="${escapeHtml(title)}" />
+            <meta name="twitter:title" content="${escapeHtml(combinedTitle)}" />
+            <meta name="twitter:description" content="${escapeHtml(description)}" />
             <meta name="twitter:image" content="${imageUrl}" />
           `;
           
