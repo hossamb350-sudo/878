@@ -20,6 +20,7 @@ export async function injectDynamicMetaTags(reqPath: string, html: string, db: F
 
     if (parts[0] === 'news' && parts[1]) { collection = 'news'; slug = parts[1]; }
     else if (parts[0] === 'articles' && parts[1]) { collection = 'articles'; slug = parts[1]; }
+    else if (parts[0] === 'watch' && parts[1] === 'channel' && parts[2]) { collection = 'livestreams'; slug = parts[2]; }
     else if (parts[0] === 'watch' && parts[1]) { collection = 'videos'; slug = parts[1]; }
     else if (parts[0] === 'leader' && parts[1]) { collection = 'leader'; slug = parts[1]; }
     else if (parts[0] === 'events' && parts[1] === 'activity' && parts[2]) { collection = 'activities'; slug = parts[2]; }
@@ -29,12 +30,12 @@ export async function injectDynamicMetaTags(reqPath: string, html: string, db: F
       if (doc.exists) {
         const data = doc.data();
         if (data) {
-          const title = data.title || "";
-          let description = data.summary || data.shortDescription || "";
+          const title = data.title || data.name || "";
+          let description = data.summary || data.shortDescription || data.description || "";
           if (!description && data.content) {
             description = data.content.substring(0, 200);
           }
-          let imageUrl = data.imageUrl || data.image || data.thumbnailUrl || "";
+          let imageUrl = data.imageUrl || data.image || data.thumbnailUrl || data.iconUrl || "";
           if (imageUrl && imageUrl.startsWith("/")) {
             imageUrl = `https://${host}${imageUrl}`;
           }

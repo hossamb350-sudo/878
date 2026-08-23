@@ -13,6 +13,10 @@
       "destination": "/api/og.js?type=watch&slug=:slug"
     },
     {
+      "source": "/watch/channel/:slug",
+      "destination": "/api/og.js?type=livestreams&slug=:slug"
+    },
+    {
       "source": "/leader/:slug",
       "destination": "/api/og.js?type=leader&slug=:slug"
     },

@@ -30,12 +30,14 @@ export default async function handler(req, res) {
     
     if (req.query && req.query.type && req.query.slug) {
         collection = req.query.type;
+        if (collection === 'watch') collection = 'videos';
         slug = req.query.slug;
     } else {
         const parts = urlPath.split('?')[0].split('/').filter(Boolean);
         if (parts[0] === 'news') { collection = 'news'; slug = parts[1]; }
         else if (parts[0] === 'articles') { collection = 'articles'; slug = parts[1]; }
-        else if (parts[0] === 'watch') { collection = 'watch'; slug = parts[1]; }
+        else if (parts[0] === 'watch' && parts[1] === 'channel') { collection = 'livestreams'; slug = parts[2]; }
+        else if (parts[0] === 'watch') { collection = 'videos'; slug = parts[1]; }
         else if (parts[0] === 'leader') { collection = 'leader'; slug = parts[1]; }
         else if (parts[0] === 'events' && parts[1] === 'activity') { collection = 'activities'; slug = parts[2]; }
     }
@@ -47,9 +49,9 @@ export default async function handler(req, res) {
         const docData = await docRes.json();
         if (docData.fields) {
             const fields = docData.fields;
-            const title = fields.title?.stringValue || "";
-            const description = fields.summary?.stringValue || fields.shortDescription?.stringValue || (fields.content?.stringValue || "").substring(0, 200);
-            let imageUrl = fields.imageUrl?.stringValue || fields.image?.stringValue || "";
+            const title = fields.title?.stringValue || fields.name?.stringValue || "";
+            const description = fields.summary?.stringValue || fields.shortDescription?.stringValue || fields.description?.stringValue || (fields.content?.stringValue || "").substring(0, 200);
+            let imageUrl = fields.imageUrl?.stringValue || fields.image?.stringValue || fields.thumbnailUrl?.stringValue || fields.iconUrl?.stringValue || "";
             if (imageUrl && imageUrl.startsWith("/")) {
               imageUrl = `${protocol}://${host}${imageUrl}`;
             }
