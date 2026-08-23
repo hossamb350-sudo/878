@@ -63,7 +63,7 @@ export default async function handler(req, res) {
               <meta property="og:image" content="${imageUrl}" />
               <meta property="og:url" content="${fullUrl}" />
               <meta property="og:type" content="article" />
-              <meta property="og:site_name" content="تعز الإعلامية" />
+              <meta property="og:site_name" content="منصة تعز الإعلامية" />
               
               <meta name="twitter:card" content="summary_large_image" />
               <meta name="twitter:title" content="${escapeHtml(title)}" />
@@ -73,6 +73,7 @@ export default async function handler(req, res) {
             
             // Replace the generic tags if they exist, or just inject before </head>
             html = html.replace('</head>', `${metaTags}</head>`);
+            html = html.replace(/<title>.*<\/title>/, `<title>${escapeHtml(title + ' | منصة تعز الإعلامية')}</title>`);
         }
       }
     }
