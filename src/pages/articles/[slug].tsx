@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { updateMetadata } from "../../utils/metadata";
+import { SEO } from "../../components/SEO";
 import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { shareContent } from "../../utils/share";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -96,13 +96,6 @@ export function ArticleDetail() {
 
   useEffect(() => {
     if (article) {
-      updateMetadata({
-        title: article.title,
-        description: article.content ? article.content.substring(0, 160).replace(/[#*_>]/g, '').trim() + '...' : "",
-        imageUrl: article.imageUrl || "",
-        type: "article",
-        path: window.location.pathname
-      });
     }
   }, [article]);
 
@@ -334,6 +327,13 @@ export function ArticleDetail() {
 
   return (
     <div className="min-h-screen bg-white text-text-primary pb-32 font-sans" dir="rtl">
+      <SEO 
+        title={article.title}
+        description={article.shortDescription || ""}
+        imageUrl={article.imageUrl || ""}
+        type="article"
+        path={window.location.pathname}
+      />
       {/* Inline Top Navigation Actions */}
       <div className="max-w-[760px] mx-auto w-full px-4 pt-4 sm:pt-6 flex justify-between items-center text-text-primary" dir="rtl">
         <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-200/50 rounded-xl transition-colors text-text-primary flex items-center gap-1.5 font-bold text-xs font-alexandria">

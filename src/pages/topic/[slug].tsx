@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { updateMetadata } from "../../utils/metadata";
+import { SEO } from "../../components/SEO";
 import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, onSnapshot, query, where, orderBy } from "firebase/firestore";
@@ -109,13 +109,6 @@ export function TopicDetail() {
 
   useEffect(() => {
     if (topic) {
-      updateMetadata({
-        title: topic.title,
-        description: "",
-        imageUrl: topic.imageUrl || "",
-        type: "website",
-        path: window.location.pathname
-      });
     }
   }, [topic]);
 
@@ -207,6 +200,12 @@ export function TopicDetail() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-cairo pb-20 text-right" dir="rtl">
+      <SEO 
+        title={topic.title}
+        description={topic.description || ""}
+        type="website"
+        path={window.location.pathname}
+      />
       {/* Top Navigation Header */}
       <div className="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between">

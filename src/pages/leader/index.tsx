@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { collection, query, orderBy, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "../../firebase";
 import { LeaderContent } from "../../types";
-import { updateMetadata } from "../../utils/metadata";
+import { SEO } from "../../components/SEO";
 import { Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { LeaderFilterBar } from "../../components/leader/LeaderFilterBar";
@@ -28,12 +28,6 @@ export function Leader() {
   });
 
   useEffect(() => {
-    updateMetadata({
-      title: "السيد القائد - مكتبة الخطابات والمحاضرات الهدائية",
-      description: "المكتبة التوثيقية الشاملة لخطابات ومحاضرات ودروس السيد القائد عبدالملك بدرالدين الحوثي المرئية والمكتوبة.",
-      type: "website",
-      path: window.location.pathname,
-    });
   }, []);
 
   // Real-time Firestore subscription
@@ -112,6 +106,12 @@ export function Leader() {
 
   return (
     <div className="min-h-screen bg-surface-main text-text-primary py-3 sm:py-5 px-3 sm:px-4 md:px-6 font-cairo transition-colors duration-300" dir="rtl">
+      <SEO 
+        title="مكتبة السيد القائد"
+        description="خطابات ومحاضرات وكلمات السيد القائد عبدالملك بدرالدين الحوثي"
+        type="website"
+        path={window.location.pathname}
+      />
       <div className="max-w-4xl mx-auto w-full">
         
         {/* Unified Search Bar */}

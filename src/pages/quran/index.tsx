@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getShareableUrl } from "../../config/apiConfig";
-import { updateMetadata } from "../../utils/metadata";
+import { SEO } from "../../components/SEO";
 import { QuranReader } from "../../components/QuranReader";
 import { QuranStats } from "../../components/QuranStats";
 import { QuranKareem } from "../../components/QuranKareem";
@@ -1372,12 +1372,6 @@ export function Quran() {
   if (activeView === "quran") title = "القرآن الكريم";
 
   useEffect(() => {
-    updateMetadata({
-      title: title,
-      description: "هدي القرآن الكريم، سلسلة دروس، مقتطفات، ومقررات قرآنية عبر منصة تعز الإعلامية",
-      type: "website",
-      path: "/quran"
-    });
   }, [title]);
 
   const [lastRead, setLastRead] = useState<QuranLastRead | null>(null);
@@ -1944,6 +1938,12 @@ export function Quran() {
       className="flex-1 w-full flex flex-col bg-white dark:bg-gray-950 font-sans rtl relative overflow-hidden"
       dir="rtl"
     >
+      <SEO 
+        title="المنهج الثقافي"
+        description="مكتبة الدروس والبرامج الثقافية للمشروع القرآني"
+        type="website"
+        path={window.location.pathname}
+      />
       {activeView !== "lesson-detail" && (
         <div className="py-2.5 px-3 sm:px-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 shadow-xs sticky top-0 z-50 shrink-0 select-none">
           <div className="max-w-[850px] mx-auto w-full flex flex-col gap-2">

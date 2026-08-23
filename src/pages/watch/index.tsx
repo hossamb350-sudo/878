@@ -39,7 +39,7 @@ import {
 import { routes, generateSlug } from "../../utils/routes";
 import { shareContent } from "../../utils/share";
 import { getShareableUrl } from "../../config/apiConfig";
-import { updateMetadata } from "../../utils/metadata";
+import { SEO } from "../../components/SEO";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../../components/PullToRefresh";
@@ -452,20 +452,7 @@ export function Watch() {
   useEffect(() => {
     const channel = channelTab === "tv" ? activeTvChannel : activeRadioStation;
     if (channel) {
-      updateMetadata({
-        title: `${channel.name} | البث المباشر`,
-        description: channel.description || "شاهد واستمع إلى البث المباشر عبر منصة تعز الإعلامية",
-        imageUrl: channel.iconUrl || "",
-        type: "video.other",
-        path: `/watch/channel/${channel.id}`
-      });
     } else {
-      updateMetadata({
-        title: "البث المباشر والميديا",
-        description: "مكتبة الفيديوهات والبث المباشر لقنوات التلفزيون والإذاعة",
-        type: "website",
-        path: "/watch"
-      });
     }
   }, [channelTab, activeTvChannel, activeRadioStation]);
 
@@ -538,6 +525,12 @@ export function Watch() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
+      <SEO 
+        title="ميديا"
+        description="مكتبة الفيديو والبث المباشر لمنصة تعز الإعلامية"
+        type="website"
+        path={window.location.pathname}
+      />
       <div className="min-h-screen bg-white font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
         <div className="max-w-[760px] mx-auto space-y-3.5">
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { updateMetadata } from "../../../utils/metadata";
+import { SEO } from "../../../components/SEO";
 import { extractIdFromSlug, generateSlug, routes } from "../../../utils/routes";
 import { getShareableUrl } from "../../../config/apiConfig";
 import { shareContent } from "../../../utils/share";
@@ -192,13 +192,6 @@ export function ActivityDetail() {
 
   useEffect(() => {
     if (activity) {
-      updateMetadata({
-        title: activity.title,
-        description: activity.shortDescription || activity.description || "",
-        imageUrl: activity.imageUrl || activity.thumbnailUrl || "",
-        type: "article",
-        path: window.location.pathname
-      });
     }
   }, [activity]);
 
@@ -227,6 +220,13 @@ export function ActivityDetail() {
 
   return (
     <div className="max-w-3xl mx-auto w-full p-4 pb-20 space-y-6 font-sans" dir="rtl">
+      <SEO 
+        title={activity.title}
+        description={activity.description || ""}
+        imageUrl={activity.imageUrl || ""}
+        type="article"
+        path={window.location.pathname}
+      />
       {/* Back Button */}
       <button
         onClick={() => navigate("/events")}

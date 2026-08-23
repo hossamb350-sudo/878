@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { updateMetadata } from "../../utils/metadata";
+import { SEO } from "../../components/SEO";
 import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { shareContent } from "../../utils/share";
 import { useParams, Link } from "react-router-dom";
@@ -115,13 +115,6 @@ export function LeaderItem() {
           setContent(itemData);
 
           // Update SEO / social metadata
-          updateMetadata({
-            title: itemData.title,
-            description: itemData.description || (itemData.content ? itemData.content.slice(0, 150) : ""),
-            imageUrl: itemData.thumbnailUrl || "",
-            type: "article",
-            path: window.location.pathname,
-          });
 
           // Increment view count safely
           try {
@@ -393,6 +386,13 @@ export function LeaderItem() {
       className="min-h-screen bg-surface-main text-text-primary py-3 sm:py-5 px-3 sm:px-4 md:px-6 font-cairo pb-20 transition-colors duration-300 relative"
       dir="rtl"
     >
+      <SEO 
+        title={content.title}
+        description={content.description || content.title}
+        imageUrl={content.thumbnailUrl || ""}
+        type="article"
+        path={window.location.pathname}
+      />
       {/* Top Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-black/5 z-50 pointer-events-none">
         <div

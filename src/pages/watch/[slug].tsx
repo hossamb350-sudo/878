@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { updateMetadata } from "../../utils/metadata";
+import { SEO } from "../../components/SEO";
 import { extractIdFromSlug, generateSlug, routes } from "../../utils/routes";
 import { shareContent } from "../../utils/share";
 import { useParams, useNavigate, Link } from "react-router-dom";
@@ -57,13 +57,6 @@ export function WatchItem() {
 
   useEffect(() => {
     if (video) {
-      updateMetadata({
-        title: video.title,
-        description: video.description || "",
-        imageUrl: video.thumbnailUrl || "",
-        type: "video.other",
-        path: window.location.pathname
-      });
     }
   }, [video]);
 
@@ -272,7 +265,13 @@ export function WatchItem() {
 
   return (
     <div className="min-h-screen bg-white font-sans rtl select-none" dir="rtl">
-      
+      <SEO 
+        title={video.title}
+        description={video.description || video.title}
+        imageUrl={video.thumbnailUrl || ""}
+        type="video.other"
+        path={window.location.pathname}
+      />
       {/* 1. Pro Player Section (Full Width Top) */}
       <div className="relative aspect-video w-full bg-black overflow-hidden group">
         {isPlaying ? (

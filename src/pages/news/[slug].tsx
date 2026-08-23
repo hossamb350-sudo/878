@@ -35,6 +35,7 @@ import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { getShareableUrl } from "../../config/apiConfig";
 import { CategoryBadges } from "../../components/CategoryBadges";
+import { SEO } from "../../components/SEO";
 
 export function NewsDetail() {
   const { slug } = useParams();
@@ -132,18 +133,6 @@ export function NewsDetail() {
       window.removeEventListener("close-modal-gallery", handleCustomClose);
     };
   }, []);
-
-  useEffect(() => {
-    if (news) {
-      updateMetadata({
-        title: news.title,
-        description: news.shortDescription || "",
-        imageUrl: news.imageUrl || "",
-        type: "article",
-        path: window.location.pathname
-      });
-    }
-  }, [news]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -366,6 +355,13 @@ export function NewsDetail() {
 
   return (
     <div className="min-h-screen bg-white text-text-primary pb-20 font-sans relative" dir="rtl">
+      <SEO 
+        title={news.title}
+        description={news.shortDescription || ""}
+        imageUrl={news.imageUrl || ""}
+        type="article"
+        path={window.location.pathname}
+      />
       {/* Reading Progress Bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-slate-200/50 z-50">
         <div 
