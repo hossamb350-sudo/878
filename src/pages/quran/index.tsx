@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getShareableUrl } from "../../config/apiConfig";
+import { updateMetadata } from "../../utils/metadata";
 import { QuranReader } from "../../components/QuranReader";
 import { QuranStats } from "../../components/QuranStats";
 import { QuranKareem } from "../../components/QuranKareem";
@@ -1369,6 +1370,15 @@ export function Quran() {
     title = selectedExcerpt.title;
   if (activeView === "stats") title = "لوحة التقدم";
   if (activeView === "quran") title = "القرآن الكريم";
+
+  useEffect(() => {
+    updateMetadata({
+      title: title,
+      description: "هدي القرآن الكريم، سلسلة دروس، مقتطفات، ومقررات قرآنية عبر منصة تعز الإعلامية",
+      type: "website",
+      path: "/quran"
+    });
+  }, [title]);
 
   const [lastRead, setLastRead] = useState<QuranLastRead | null>(null);
   const [lessonProgress, setLessonProgress] = useState<Record<string, number>>(

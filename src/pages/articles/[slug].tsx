@@ -98,7 +98,7 @@ export function ArticleDetail() {
     if (article) {
       updateMetadata({
         title: article.title,
-        description: "",
+        description: article.content ? article.content.substring(0, 160).replace(/[#*_>]/g, '').trim() + '...' : "",
         imageUrl: article.imageUrl || "",
         type: "article",
         path: window.location.pathname
