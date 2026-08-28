@@ -97,7 +97,7 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     retryCountRef.current = 0;
     
     if (Capacitor.getPlatform() === 'android') {
-      Media3.stop().catch(() => {});
+      Media3.stop({ mediaType: 'radio' }).catch(() => {});
     }
     
     if (audioRef.current) {
@@ -127,7 +127,7 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       } else {
         setIsPlaying(false);
         if (Capacitor.getPlatform() === 'android' && activeStream.type === 'radio') {
-          Media3.pause().catch(() => {});
+          Media3.pause({ mediaType: 'radio' }).catch(() => {});
         }
         if (audioRef.current) {
           audioRef.current.pause();
@@ -208,7 +208,8 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
               url: absoluteSrc,
               title: activeStream.name || "إذاعة تعز",
               artist: "منصة تعز الإعلامية",
-              artwork: activeStream.iconUrl || ""
+              artwork: activeStream.iconUrl || "",
+              mediaType: "radio"
             }).catch(e => console.warn("Native Media3 play error:", e));
             setIsLoading(false); // Native player handles its own loading state implicitly for UI
           } else {
@@ -235,14 +236,14 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
       } else {
         // TV stream plays video inside Watch page iframe; pause background audio element
         if (Capacitor.getPlatform() === 'android') {
-          Media3.pause();
+          Media3.pause({ mediaType: 'radio' }).catch(() => {});
         } else {
           audio.pause();
         }
       }
     } else {
       if (Capacitor.getPlatform() === 'android' && activeStream?.type === 'radio') {
-        Media3.pause();
+        Media3.pause({ mediaType: 'radio' }).catch(() => {});
       } else {
         audio.pause();
       }
@@ -255,10 +256,14 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     
     let listener: any = null;
     Media3.addListener('onPlaybackStateChanged', (state) => {
-      if (!state.isPlaying) {
+      if (state.mediaType === 'radio') {
+        setIsPlaying(state.isPlaying);
+        if (state.isPlaying) {
+          setIsLoading(false);
+          setStreamError(null);
+        }
+      } else if (state.mediaType === 'quran' && state.isPlaying) {
         setIsPlaying(false);
-      } else {
-        setIsPlaying(true);
       }
     }).then(l => listener = l);
 

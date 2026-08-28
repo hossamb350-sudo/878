@@ -288,9 +288,6 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const handleStopQuran = () => {
       setIsPlaying(false);
-      if (Capacitor.getPlatform() === 'android') {
-        Media3.pause();
-      }
       if (audioRef.current) {
         audioRef.current.pause();
       }
@@ -306,16 +303,20 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
     
     let listener: any = null;
     Media3.addListener('onPlaybackStateChanged', (state) => {
-      if (!state.isPlaying) {
-        if (state.ended) {
-          if (handleAudioEndedRef.current) {
-            handleAudioEndedRef.current();
+      if (state.mediaType === 'quran') {
+        if (!state.isPlaying) {
+          if (state.ended) {
+            if (handleAudioEndedRef.current) {
+              handleAudioEndedRef.current();
+            }
+          } else {
+            setIsPlaying(false);
           }
         } else {
-          setIsPlaying(false);
+          setIsPlaying(true);
         }
-      } else {
-        setIsPlaying(true);
+      } else if (state.mediaType === 'radio' && state.isPlaying) {
+        setIsPlaying(false);
       }
     }).then(l => listener = l);
 
@@ -335,7 +336,7 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
         // Media3 play is handled below when track changes, 
         // but if we are just unpausing the existing track:
         if (surahDetail && currentAyahIndex >= 0) {
-          Media3.resume().catch(() => {});
+          Media3.resume({ mediaType: 'quran' }).catch(() => {});
         }
       } else {
         audio.play().catch((err) => {
@@ -345,7 +346,7 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
       }
     } else {
       if (Capacitor.getPlatform() === 'android') {
-        Media3.pause().catch(() => {});
+        Media3.pause({ mediaType: 'quran' }).catch(() => {});
       }
       audio.pause();
     }
@@ -368,7 +369,8 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
           url: currentAyah.audio,
           title: title,
           artist: "القارئ محمد صديق المنشاوي",
-          artwork: ""
+          artwork: "",
+          mediaType: "quran"
         }).catch((err) => {
           console.warn("Audio playback failed:", err);
           setIsPlaying(false);
@@ -491,7 +493,7 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
   const closePlayer = () => {
     setIsPlaying(false);
     if (Capacitor.getPlatform() === 'android') {
-      Media3.stop().catch(() => {});
+      Media3.stop({ mediaType: 'quran' }).catch(() => {});
     }
     if (audioRef.current) {
       audioRef.current.pause();
