@@ -33,9 +33,9 @@ public class Media3Plugin extends Plugin {
                 mediaController = controllerFuture.get();
                 mediaController.addListener(new Player.Listener() {
                     @Override
-                    public void onIsPlayingChanged(boolean isPlaying) {
+                    public void onPlayWhenReadyChanged(boolean playWhenReady, int reason) {
                         JSObject ret = new JSObject();
-                        ret.put("isPlaying", isPlaying);
+                        ret.put("isPlaying", playWhenReady);
                         notifyListeners("onPlaybackStateChanged", ret);
                     }
                     
