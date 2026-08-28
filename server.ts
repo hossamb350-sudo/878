@@ -1178,6 +1178,96 @@ app.get("/sw.js", (req, res) => {
   res.status(404).send("Service worker not found");
 });
 
+// --- FCM Push Notification Routes ---
+
+app.post("/api/notifications/fcm/trigger", async (req, res) => {
+  try {
+    const db = getDb();
+    if (!db) {
+      return res.status(500).json({ error: "Database not initialized" });
+    }
+
+    const { title, body, imageUrl, url, type, contentId, topic } = req.body;
+    
+    // Idempotency check: don't send duplicate notifications for the same content
+    if (contentId) {
+      const notifRef = db.collection("notifications_sent").doc(contentId);
+      const notifDoc = await notifRef.get();
+      if (notifDoc.exists) {
+        return res.status(200).json({ success: true, message: "Notification already sent for this content" });
+      }
+      await notifRef.set({
+        sentAt: FieldValue.serverTimestamp(),
+        type,
+        title
+      });
+    }
+
+    const { getMessaging } = require("firebase-admin/messaging");
+    const messaging = getMessaging(adminApp);
+
+    const message = {
+      notification: {
+        title: title || "تحديث جديد",
+        body: body || "هناك محتوى جديد متاح في المنصة",
+        ...(imageUrl && { imageUrl }),
+      },
+      data: {
+        url: url || "/",
+        type: type || "general",
+        contentId: contentId || "",
+      },
+      topic: topic || "all",
+      android: {
+        notification: {
+          sound: "default",
+          clickAction: "FLUTTER_NOTIFICATION_CLICK" // Sometimes needed for Capacitor, or we just rely on data
+        },
+        priority: type === "urgentNews" ? "high" : "normal"
+      }
+    };
+
+    const response = await messaging.send(message);
+    console.log("Successfully sent FCM message:", response);
+    res.json({ success: true, messageId: response });
+  } catch (error: any) {
+    console.error("FCM Trigger Error:", error);
+    res.status(500).json({ error: error.message || "Failed to trigger FCM" });
+  }
+});
+
+app.post("/api/notifications/fcm/subscribe", async (req, res) => {
+  try {
+    const { token, topic } = req.body;
+    if (!token) return res.status(400).json({ error: "Token is required" });
+    
+    const { getMessaging } = require("firebase-admin/messaging");
+    const messaging = getMessaging(adminApp);
+    
+    const response = await messaging.subscribeToTopic(token, topic || "all");
+    res.json({ success: true, response });
+  } catch (error: any) {
+    console.error("FCM Subscribe Error:", error);
+    res.status(500).json({ error: error.message || "Failed to subscribe to topic" });
+  }
+});
+
+app.post("/api/notifications/fcm/unsubscribe", async (req, res) => {
+  try {
+    const { token, topic } = req.body;
+    if (!token) return res.status(400).json({ error: "Token is required" });
+    
+    const { getMessaging } = require("firebase-admin/messaging");
+    const messaging = getMessaging(adminApp);
+    
+    const response = await messaging.unsubscribeFromTopic(token, topic || "all");
+    res.json({ success: true, response });
+  } catch (error: any) {
+    console.error("FCM Unsubscribe Error:", error);
+    res.status(500).json({ error: error.message || "Failed to unsubscribe from topic" });
+  }
+});
+
 // API 404 Handler - MUST be before Vite/Static middleware
 app.use("/api/*", (req, res) => {
   res.status(404).json({ error: `API route not found: ${req.method} ${req.originalUrl}` });

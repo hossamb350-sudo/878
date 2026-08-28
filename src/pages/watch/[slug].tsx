@@ -35,7 +35,15 @@ export function WatchItem() {
     setIsPlaying(true);
     stopStream();
     window.dispatchEvent(new CustomEvent("stop-quran-audio"));
-  }, [stopStream]);
+
+    if (video && 'mediaSession' in navigator) {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: video.title || "فيديو",
+        artist: "منصة تعز الإعلامية",
+        artwork: video.thumbnailUrl ? [{ src: video.thumbnailUrl }] : []
+      });
+    }
+  }, [stopStream, video]);
 
   // Handle postMessage from YouTube iframe if played directly inside iframe
   useEffect(() => {

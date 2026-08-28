@@ -329,7 +329,7 @@ export function ArticleDetail() {
     <div className="min-h-screen bg-white text-text-primary pb-32 font-sans" dir="rtl">
       <SEO 
         title={article.title}
-        description={article.shortDescription || ""}
+        description={article.title}
         imageUrl={article.imageUrl || ""}
         type="article"
         path={window.location.pathname}

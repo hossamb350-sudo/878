@@ -6,6 +6,8 @@ import {
   isStreamInBroadcastWindow, 
   getRadioScheduleInfo 
 } from "../utils/yemenTime";
+import { Media3 } from "../services/Media3";
+
 
 interface LiveStreamContextType {
   activeStream: LiveStream | null;
@@ -93,6 +95,11 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     setIsTopBarPinned(false);
     setStreamError(null);
     retryCountRef.current = 0;
+    
+    if (Capacitor.getPlatform() === 'android') {
+      Media3.stop().catch(() => {});
+    }
+    
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = "";
@@ -119,6 +126,9 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
         setIsPlaying(true);
       } else {
         setIsPlaying(false);
+        if (Capacitor.getPlatform() === 'android' && activeStream.type === 'radio') {
+          Media3.pause().catch(() => {});
+        }
         if (audioRef.current) {
           audioRef.current.pause();
         }
@@ -192,23 +202,70 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
 
         if (src) {
           const absoluteSrc = src.startsWith("http") ? src : new URL(src, window.location.origin).href;
-          if (audio.src !== absoluteSrc) {
-            audio.src = absoluteSrc;
-            audio.load();
+          
+          if (Capacitor.getPlatform() === 'android') {
+            Media3.play({
+              url: absoluteSrc,
+              title: activeStream.name || "إذاعة تعز",
+              artist: "منصة تعز الإعلامية",
+              artwork: activeStream.iconUrl || ""
+            }).catch(e => console.warn("Native Media3 play error:", e));
+            setIsLoading(false); // Native player handles its own loading state implicitly for UI
+          } else {
+            if (audio.src !== absoluteSrc) {
+              audio.src = absoluteSrc;
+              audio.load();
+            }
+            
+            if ('mediaSession' in navigator) {
+              navigator.mediaSession.metadata = new MediaMetadata({
+                title: activeStream.name || "إذاعة تعز",
+                artist: "منصة تعز الإعلامية",
+                artwork: activeStream.iconUrl ? [{ src: activeStream.iconUrl }] : []
+              });
+              navigator.mediaSession.setActionHandler('play', () => { togglePlay(); });
+              navigator.mediaSession.setActionHandler('pause', () => { togglePlay(); });
+            }
+
+            audio.play().catch(e => {
+              console.warn("Live stream playback notice:", e.message || e);
+            });
           }
         }
-        
-        audio.play().catch(e => {
-          console.warn("Live stream playback notice:", e.message || e);
-        });
       } else {
         // TV stream plays video inside Watch page iframe; pause background audio element
-        audio.pause();
+        if (Capacitor.getPlatform() === 'android') {
+          Media3.pause();
+        } else {
+          audio.pause();
+        }
       }
     } else {
-      audio.pause();
+      if (Capacitor.getPlatform() === 'android' && activeStream?.type === 'radio') {
+        Media3.pause();
+      } else {
+        audio.pause();
+      }
     }
   }, [isPlaying, activeStream]);
+
+  // Listen to Native Media3 events to sync state
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== 'android') return;
+    
+    let listener: any = null;
+    Media3.addListener('onPlaybackStateChanged', (state) => {
+      if (!state.isPlaying) {
+        setIsPlaying(false);
+      } else {
+        setIsPlaying(true);
+      }
+    }).then(l => listener = l);
+
+    return () => {
+      if (listener) listener.remove();
+    };
+  }, []);
 
   const handleAudioError = () => {
     setIsLoading(false);

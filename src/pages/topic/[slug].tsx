@@ -202,7 +202,7 @@ export function TopicDetail() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-cairo pb-20 text-right" dir="rtl">
       <SEO 
         title={topic.title}
-        description={topic.description || ""}
+        description={topic.title}
         type="website"
         path={window.location.pathname}
       />

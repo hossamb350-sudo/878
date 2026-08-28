@@ -1594,7 +1594,7 @@ function AdminUrgentNews() {
           }
 
           // Offset createdAt slightly to preserve exact input order (newest goes first, so we might want to offset negatively so they sort naturally)
-          await addDoc(collection(db, "urgentNews"), {
+          const docRef = await addDoc(collection(db, "urgentNews"), {
             text: draft.text,
             isActive: true,
             createdAt: now + i, 
@@ -1603,6 +1603,20 @@ function AdminUrgentNews() {
             expiresAt: newScrollingExpiresAt,
           });
           createdCount++;
+
+          // Send FCM for urgent news
+          try {
+            await PushNotificationService.triggerPushNotification(
+              "🔴 عاجل",
+              draft.text,
+              "/",
+              "urgentNews",
+              docRef.id,
+              ""
+            );
+          } catch (pushErr) {
+            console.error("Failed to send urgent push notification:", pushErr);
+          }
         }
         alert(`تم إضافة ${createdCount} خبر عاجل بنجاح`);
       }
@@ -2623,11 +2637,19 @@ function OldAdminNews({ isAdmin }: { isAdmin?: boolean }) {
 
         // Send push notification to all subscribers
         try {
-          await PushNotificationService.triggerPushNotification(
-            "خبر جديد 📰",
-            payload.title || "تحديث جديد في الأخبار",
-            `/?newsId=${savedId}`
-          );
+          if (publishStatus === 'published') {
+            const notifTitle = payload.isBreaking ? "🔴 عاجل" : (payload.category === "مقالات" ? "✍️ مقال جديد" : "📰 خبر جديد");
+            const notifType = payload.isBreaking ? "urgentNews" : (payload.category === "مقالات" ? "article" : "news");
+            
+            await PushNotificationService.triggerPushNotification(
+              notifTitle,
+              payload.title || "تحديث جديد في المنصة",
+              `/news/${savedId}`, // Assuming slug or ID works in route
+              notifType,
+              savedId,
+              payload.imageUrl || ""
+            );
+          }
         } catch (pushErr) {
           console.error("Failed to send news push notification:", pushErr);
         }
@@ -3227,10 +3249,26 @@ function AdminLive() {
         await updateDoc(doc(db, "livestreams", editingId), payload);
         alert("تم تعديل البث بنجاح");
       } else {
-        await addDoc(collection(db, "livestreams"), {
+        const docRef = await addDoc(collection(db, "livestreams"), {
           ...payload,
           createdAt: Date.now(),
         });
+        
+        // Send FCM for new live stream
+        try {
+          const isVideo = type === "tv";
+          await PushNotificationService.triggerPushNotification(
+            isVideo ? "🎥 فيديو/بث جديد" : "📻 بث إذاعي جديد",
+            name,
+            "/watch",
+            "livestream",
+            docRef.id,
+            iconUrl
+          );
+        } catch (pushErr) {
+          console.error("Failed to send livestream push notification:", pushErr);
+        }
+        
         alert("تم إضافة البث بنجاح");
       }
 
@@ -4534,7 +4572,7 @@ function AdminEventsContent() {
         });
         alert("تم التعديل");
       } else {
-        await addDoc(collection(db, "events"), {
+        const docRef = await addDoc(collection(db, "events"), {
           ...data,
           createdAt: Date.now(),
         });
@@ -4544,7 +4582,10 @@ function AdminEventsContent() {
           await PushNotificationService.triggerPushNotification(
             "مناسبة جديدة في التقويم 📅",
             title,
-            "/events"
+            "/events",
+            "event",
+            docRef.id,
+            ""
           );
         } catch (pushErr) {
           console.error("Failed to send event push notification:", pushErr);
@@ -5060,7 +5101,22 @@ function AdminActivitiesContent() {
         await updateDoc(doc(db, "activities", actEditingId), data);
         alert("تم تعديل الفعالية بنجاح");
       } else {
-        await addDoc(collection(db, "activities"), { ...data, createdAt: Date.now() });
+        const docRef = await addDoc(collection(db, "activities"), { ...data, createdAt: Date.now() });
+        
+        // Send FCM for new activity
+        try {
+          await PushNotificationService.triggerPushNotification(
+            "📍 فعالية جديدة",
+            actTitle,
+            `/events/activity/${docRef.id}`,
+            "activity",
+            docRef.id,
+            actImageUrl || ""
+          );
+        } catch (pushErr) {
+          console.error("Failed to send activity push notification:", pushErr);
+        }
+        
         alert("تم إضافة الفعالية بنجاح");
       }
       

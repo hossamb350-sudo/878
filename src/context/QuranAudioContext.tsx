@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import { Capacitor } from "@capacitor/core";
 import { SURAHS_METADATA, SurahMetadata } from "../data/surahData";
+import { Media3 } from "../services/Media3";
 
 export interface Ayah {
   number: number;
@@ -286,6 +288,9 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const handleStopQuran = () => {
       setIsPlaying(false);
+      if (Capacitor.getPlatform() === 'android') {
+        Media3.pause();
+      }
       if (audioRef.current) {
         audioRef.current.pause();
       }
@@ -295,6 +300,30 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
     return () => window.removeEventListener("stop-quran-audio", handleStopQuran);
   }, []);
 
+  // Listen to Native Media3 events
+  useEffect(() => {
+    if (Capacitor.getPlatform() !== 'android') return;
+    
+    let listener: any = null;
+    Media3.addListener('onPlaybackStateChanged', (state) => {
+      if (!state.isPlaying) {
+        if (state.ended) {
+          if (handleAudioEndedRef.current) {
+            handleAudioEndedRef.current();
+          }
+        } else {
+          setIsPlaying(false);
+        }
+      } else {
+        setIsPlaying(true);
+      }
+    }).then(l => listener = l);
+
+    return () => {
+      if (listener) listener.remove();
+    };
+  }, []);
+
   // Handle Play/Pause state changes
   useEffect(() => {
     const audio = audioRef.current;
@@ -302,11 +331,22 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
 
     if (isPlaying) {
       window.dispatchEvent(new CustomEvent("stop-live-stream"));
-      audio.play().catch((err) => {
-        console.warn("Playback failed:", err);
-        setIsPlaying(false);
-      });
+      if (Capacitor.getPlatform() === 'android') {
+        // Media3 play is handled below when track changes, 
+        // but if we are just unpausing the existing track:
+        if (surahDetail && currentAyahIndex >= 0) {
+          Media3.resume().catch(() => {});
+        }
+      } else {
+        audio.play().catch((err) => {
+          console.warn("Playback failed:", err);
+          setIsPlaying(false);
+        });
+      }
     } else {
+      if (Capacitor.getPlatform() === 'android') {
+        Media3.pause().catch(() => {});
+      }
       audio.pause();
     }
   }, [isPlaying]);
@@ -319,17 +359,46 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
     }
 
     const currentAyah = surahDetail.ayahs[currentAyahIndex];
+    const surahName = selectedSurah?.name || surahDetail.name;
+    const title = `سورة ${surahName} - آية ${currentAyah.numberInSurah}`;
     
-    // Check if source actually changed to avoid restarting same track
-    if (audio.src !== currentAyah.audio) {
-      audio.src = currentAyah.audio;
-    }
+    if (Capacitor.getPlatform() === 'android') {
+      if (isPlaying) {
+        Media3.play({
+          url: currentAyah.audio,
+          title: title,
+          artist: "القارئ محمد صديق المنشاوي",
+          artwork: ""
+        }).catch((err) => {
+          console.warn("Audio playback failed:", err);
+          setIsPlaying(false);
+        });
+      }
+    } else {
+      // Check if source actually changed to avoid restarting same track
+      if (audio.src !== currentAyah.audio) {
+        audio.src = currentAyah.audio;
+      }
+      
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: title,
+          artist: "القارئ محمد صديق المنشاوي",
+          album: "القرآن الكريم",
+          artwork: []
+        });
+        navigator.mediaSession.setActionHandler('play', () => { setIsPlaying(true); });
+        navigator.mediaSession.setActionHandler('pause', () => { setIsPlaying(false); });
+        navigator.mediaSession.setActionHandler('previoustrack', () => { playPrevious(); });
+        navigator.mediaSession.setActionHandler('nexttrack', () => { playNext(); });
+      }
 
-    if (isPlaying) {
-      audio.play().catch((err) => {
-        console.warn("Audio playback failed:", err);
-        setIsPlaying(false);
-      });
+      if (isPlaying) {
+        audio.play().catch((err) => {
+          console.warn("Audio playback failed:", err);
+          setIsPlaying(false);
+        });
+      }
     }
 
     // Accumulate recitation progress
@@ -421,6 +490,9 @@ export function QuranAudioProvider({ children }: { children: React.ReactNode }) 
 
   const closePlayer = () => {
     setIsPlaying(false);
+    if (Capacitor.getPlatform() === 'android') {
+      Media3.stop().catch(() => {});
+    }
     if (audioRef.current) {
       audioRef.current.pause();
     }
