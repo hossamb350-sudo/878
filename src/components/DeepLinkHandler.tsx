@@ -32,17 +32,8 @@ export function DeepLinkHandler() {
         }
       });
 
-      // Listen for FCM Deep Links
-      const handleFcmDeepLink = (e: any) => {
-        if (e.detail) {
-          handleIncomingDeepLink(e.detail);
-        }
-      };
-      window.addEventListener("fcm-deep-link", handleFcmDeepLink);
-
       return () => {
         listenerPromise.then((handle) => handle.remove());
-        window.removeEventListener("fcm-deep-link", handleFcmDeepLink);
       };
     }
   }, [navigate]);

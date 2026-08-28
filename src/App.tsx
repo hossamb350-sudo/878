@@ -30,8 +30,6 @@ import { QuranAudioProvider } from "./context/QuranAudioContext";
 import { LiveStreamProvider } from "./context/LiveStreamContext";
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
-import { FirebaseMessaging } from "@capacitor-firebase/messaging";
-import { PushNotificationService } from "./services/PushNotificationService";
 import { GoogleAuth } from "@southdevs/capacitor-google-auth";
 import { db } from "./firebase";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -128,36 +126,6 @@ export default function App() {
       } catch (e) {
         console.warn("GoogleAuth init error:", e);
       }
-
-      // Initialize Push Notifications
-      const initPush = async () => {
-        try {
-          const isSub = await PushNotificationService.isSubscribed();
-          if (!isSub) {
-            await PushNotificationService.subscribeUser();
-          }
-
-          // Handle foreground notifications
-          FirebaseMessaging.addListener("pushNotificationReceived", (notification) => {
-            console.log("Push received: ", notification);
-            // We could show a local toast here if we want, but Capacitor FCM often handles it if configured.
-            // Since UI should not be changed, we just log it or dispatch an event.
-          });
-
-          // Handle notification tap
-          FirebaseMessaging.addListener("pushNotificationActionPerformed", (action) => {
-            console.log("Push action performed: ", action);
-            const data = action.notification.data;
-            if (data && data.url) {
-              window.dispatchEvent(new CustomEvent('fcm-deep-link', { detail: data.url }));
-            }
-          });
-        } catch (err) {
-          console.warn("Push Init Error:", err);
-        }
-      };
-
-      initPush();
     }
   }, []);
 
