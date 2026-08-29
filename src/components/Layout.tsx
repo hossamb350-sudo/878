@@ -356,10 +356,7 @@ function UrgentNewsBanner() {
                       </span>
                       <div className="inline-flex items-center px-1.5 sm:px-2 shrink-0">
                         <img 
-                          src="/tape.png" 
-                          onError={(e) => {
-                            (e.target as HTMLElement).setAttribute("src", "/logo3.png");
-                          }}
+                          src="/ic_launcher.png" 
                           alt="شعار منصة تعز" 
                           className="w-7 h-7 sm:w-9 sm:h-9 object-contain drop-shadow-lg mx-1" 
                         />
