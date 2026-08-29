@@ -606,4 +606,4 @@ export function ImageUpload({
 }
 
 // Simple placeholder constant to prevent import failures
-const LOGO_SRC = "/logo.png";
+const LOGO_SRC = "/ic_launcher.png";

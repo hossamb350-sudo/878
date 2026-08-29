@@ -5,8 +5,8 @@ self.addEventListener('push', function(event) {
       const title = data.title || 'إشعار جديد';
       const options = {
         body: data.body || '',
-        icon: data.icon || '/app-icon.png',
-        badge: data.badge || '/app-icon.png',
+        icon: data.icon || '/ic_launcher.png',
+        badge: data.badge || '/ic_launcher.png',
         image: data.image || undefined,
         data: {
           url: data.url || '/'
@@ -24,7 +24,7 @@ self.addEventListener('push', function(event) {
       event.waitUntil(
         self.registration.showNotification('تنبيه جديد', {
           body: text,
-          icon: '/app-icon.png',
+          icon: '/ic_launcher.png',
           dir: 'rtl'
         })
       );

@@ -194,7 +194,7 @@ export const HeaderWidgets: React.FC = () => {
 
             {/* Bottom Line: Slogan */}
             <span className="text-slate-600 font-medium text-[10px] sm:text-[11.5px] leading-tight font-cairo mt-0.5 opacity-90 truncate max-w-[200px] xs:max-w-[240px] sm:max-w-xs md:max-w-md">
-              إعلام ينقل الواقع وتستنير بالقرآن والقائد
+              إعلام ينقل الواقع ويستنير بالقرآن والقائد
             </span>
           </div>
         </Link>
@@ -331,7 +331,7 @@ export const HeaderWidgets: React.FC = () => {
                   transition={{ delay: 0.2 }}
                   className="flex-1 flex justify-center pr-8"
                 >
-                  <img src="/logo3.png" alt="منصة تعز" className="h-20 sm:h-24 w-auto object-contain drop-shadow-lg" />
+                  <img src="/ic_launcher.png" alt="منصة تعز" className="h-20 sm:h-24 w-auto object-contain drop-shadow-lg" />
                 </motion.div>
                 <button 
                   onClick={() => setIsDrawerOpen(false)}
