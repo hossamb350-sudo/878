@@ -168,6 +168,7 @@ export interface UserProfile {
   city?: string;
   preferredCategories?: string[];
   notificationSettings?: {
+    enabled?: boolean;
     urgent?: boolean;
     dailyEvents?: boolean;
     prayerTimes?: boolean;

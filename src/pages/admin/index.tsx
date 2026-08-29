@@ -412,10 +412,17 @@ export function Admin() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
-  // Admin/Manager View Logic (Moved to top to follow Rules of Hooks)
+  // Admin/Manager/Editor View Logic (Moved to top to follow Rules of Hooks)
   const isManager = profile?.role === "manager";
   const isAdmin = profile?.role === "admin";
   const isEditor = profile?.role === "editor";
+  const isPrivileged = isAdmin || isManager || isEditor;
+
+  // Mode Switcher state: "admin" vs "member" (exclusively for Admin, Manager, Editor)
+  const [portalMode, setPortalMode] = useState<"admin" | "member">(() => {
+    const saved = localStorage.getItem("admin_portal_mode");
+    return saved === "member" ? "member" : "admin";
+  });
   const hasPermission = (sectionId: string) => {
     if (!profile?.permissions || !Array.isArray(profile.permissions)) return false;
     if (profile.permissions.includes("all")) return true;
@@ -723,15 +730,70 @@ export function Admin() {
     );
   }
 
-  // If user is logged in but not an admin
-  if (profile?.role === "user") {
+  // If user is a regular member (not Admin, Manager, or Editor)
+  // OR if a privileged staff user has switched to "member" mode:
+  if (!isPrivileged || (isPrivileged && portalMode === "member")) {
     return (
-      <UserProfileSection
-        user={user}
-        profile={profile}
-        logout={logout}
-        onProfileUpdated={(updated) => setProfile(updated)}
-      />
+      <div className="w-full max-w-4xl mx-auto p-3 sm:p-5 md:p-6 pb-24 space-y-3.5 sm:space-y-4 animate-fade-in font-sans select-none" dir="rtl">
+        {isPrivileged && (
+          <>
+            {/* 1. TOP RED LOGOUT BUTTON */}
+            <button
+              onClick={logout}
+              className="w-full flex items-center justify-center gap-2.5 text-base sm:text-lg font-black text-white bg-gradient-to-r from-red-500 via-red-500 to-red-600 hover:from-red-600 hover:to-red-700 active:scale-[0.99] transition-all shadow-lg shadow-red-500/25 rounded-[22px] sm:rounded-2xl py-3.5 sm:py-4 px-6 border border-red-400/30 cursor-pointer font-cairo shrink-0"
+            >
+              <LogOut className="w-5 h-5 stroke-[2.2] shrink-0" />
+              <span>تسجيل الخروج</span>
+            </button>
+
+            {/* 2. MODE SWITCHER BAR: Exclusively for Admin, Manager, Editor */}
+            <div className="bg-white dark:bg-slate-900 p-2 sm:p-2.5 rounded-[22px] sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setPortalMode("admin");
+                  localStorage.setItem("admin_portal_mode", "admin");
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold font-cairo text-xs sm:text-sm md:text-base transition-all cursor-pointer text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 active:scale-[0.98]"
+              >
+                <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
+                <span>الدخول كمسؤول</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPortalMode("member");
+                  localStorage.setItem("admin_portal_mode", "member");
+                }}
+                className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold font-cairo text-xs sm:text-sm md:text-base transition-all cursor-pointer bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-500/20 active:scale-[0.98]"
+              >
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <span>الدخول كعضو</span>
+                <span className="text-[10px] bg-white/25 text-white px-2 py-0.5 rounded-full font-sans font-bold">نشط</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        <UserProfileSection
+          user={user}
+          profile={
+            profile || {
+              uid: user.uid,
+              email: user.email || "",
+              displayName: user.displayName || "مستخدم",
+              photoURL: user.photoURL || undefined,
+              role: "user",
+              createdAt: Date.now(),
+              lastLogin: Date.now(),
+            }
+          }
+          logout={logout}
+          onProfileUpdated={(updated) => setProfile(updated)}
+          hideHeaderLogout={isPrivileged}
+        />
+      </div>
     );
   }
 
@@ -747,7 +809,35 @@ export function Admin() {
         <span>تسجيل الخروج</span>
       </button>
 
-      {/* 2. SUB-HEADER FLOATING BAR: MAIN TITLE & QUICK MENU DROPDOWN */}
+      {/* 2. MODE SWITCHER BAR: Exclusively for Admin, Manager, Editor */}
+      <div className="bg-white dark:bg-slate-900 p-2 sm:p-2.5 rounded-[22px] sm:rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setPortalMode("admin");
+            localStorage.setItem("admin_portal_mode", "admin");
+          }}
+          className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold font-cairo text-xs sm:text-sm md:text-base transition-all cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 active:scale-[0.98]"
+        >
+          <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+          <span>الدخول كمسؤول</span>
+          <span className="text-[10px] bg-white/25 text-white px-2 py-0.5 rounded-full font-sans font-bold">نشط</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setPortalMode("member");
+            localStorage.setItem("admin_portal_mode", "member");
+          }}
+          className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold font-cairo text-xs sm:text-sm md:text-base transition-all cursor-pointer text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 active:scale-[0.98]"
+        >
+          <User className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600 dark:text-emerald-400" />
+          <span>الدخول كعضو</span>
+        </button>
+      </div>
+
+      {/* 3. SUB-HEADER FLOATING BAR: MAIN TITLE & QUICK MENU DROPDOWN */}
       <div className="bg-white dark:bg-slate-900 p-3.5 sm:p-4 px-4 sm:px-5 rounded-[22px] sm:rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-xs flex items-center justify-between">
         
         {/* Right Side: Title with Menu Hamburger Icon */}
@@ -3823,7 +3913,7 @@ function AdminQuranLessons() {
       };
       
       await setDoc(doc(db, "quran_lessons", id), data, { merge: true });
-      if (!lessonToEdit) { // Only send push on new lesson
+      if (!editingId) { // Only send push on new lesson
         sendFCMNotification(
           "هدى القرآن | " + data.title,
           "تمت إضافة درس جديد",
@@ -5070,13 +5160,13 @@ function AdminActivitiesContent() {
         await updateDoc(doc(db, "activities", actEditingId), data);
         alert("تم تعديل الفعالية بنجاح");
       } else {
-        await addDoc(collection(db, "activities"), { ...data, createdAt: Date.now() });
+        const docRef = await addDoc(collection(db, "activities"), { ...data, createdAt: Date.now() });
         sendFCMNotification(
           "نشاط جديد | " + data.title,
           "تابع أحدث الأنشطة والفعاليات",
           "activity",
-          slug,
-          data.image
+          docRef.id,
+          data.imageUrl
         );
         alert("تم إضافة الفعالية بنجاح");
       }

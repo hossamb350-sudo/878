@@ -403,11 +403,11 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
         });
         // Send FCM
         sendFCMNotification(
-          "عاجل | " + (formData.title || "خبر جديد"),
-          formData.summary || "تم إضافة خبر جديد على منصة تعز",
+          "عاجل | " + (title || "خبر جديد"),
+          finalSnippet || "تم إضافة خبر جديد على منصة تعز",
           "news",
-          slug,
-          formData.imageUrl
+          docRef.id,
+          imageUrl
         );
         savedId = docRef.id;
       }

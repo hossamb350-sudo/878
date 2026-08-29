@@ -83,13 +83,14 @@ export function PushNotificationHandler() {
           }
         });
 
-        // 2. Request permissions
-        const permStatus = await PushNotifications.requestPermissions();
+        // 2. Check permissions: if already granted and not explicitly disabled, register
+        const permStatus = await PushNotifications.checkPermissions();
+        const isDisabled = localStorage.getItem("push_notifications_enabled") === "false";
 
-        if (permStatus?.receive === "granted") {
+        if (permStatus?.receive === "granted" && !isDisabled) {
           await PushNotifications.register();
         } else {
-          console.log("[PushNotification] Permission not granted or dismissed.");
+          console.log("[PushNotification] Push notifications not active on startup.");
         }
       } catch (err) {
         console.warn("[PushNotification] Initialization error caught safely:", err);

@@ -253,16 +253,16 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
         await updateDoc(doc(db, "videos", editingId), payload);
         alert("تم حفظ تعديلات الفيديو بنجاح");
       } else {
-        await addDoc(collection(db, "videos"), {
+        const docRef = await addDoc(collection(db, "videos"), {
           ...payload,
           createdAt: Date.now()
         });
         sendFCMNotification(
-          "ميديا | " + formData.title,
+          "ميديا | " + title,
           "فيديو جديد تمت إضافته في قسم الميديا",
           "video",
-          slug,
-          formData.thumbnailUrl
+          docRef.id,
+          thumbnailUrl
         );
         alert("تم إضافة ونشر الفيديو بنجاح");
       }

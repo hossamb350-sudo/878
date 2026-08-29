@@ -297,40 +297,73 @@ export default function CalendarDetail() {
       }
     }
 
-    // Fallback calendar month generation
+    // High precision fallback calendar month generation
     const fallbackDays: AladhanDay[] = [];
-    const monthNameAr = HIJRI_MONTH_NAMES[month - 1] || "صفر";
-    // Calculate approximate start date offset for fallback
-    const baseDate = new Date(2026, 5, 16); // 1 Muharram 1448 = June 16, 2026
-    const daysOffset = (month - 1) * 29.5;
-    const startDate = new Date(baseDate.getTime() + daysOffset * 86400000);
-    
-    const weekdaysAr = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
-    const weekdaysEn = ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    const monthNameAr = HIJRI_MONTH_NAMES[month - 1] || "ربيع الأول";
 
-    for (let i = 1; i <= 30; i++) {
-      const currGreg = new Date(startDate);
-      currGreg.setDate(startDate.getDate() + (i - 1));
-      const dayNumStr = currGreg.getDate().toString().padStart(2, "0");
-      const monthNumStr = (currGreg.getMonth() + 1).toString().padStart(2, "0");
-      const yearStr = currGreg.getFullYear().toString();
-      const gregDateStr = `${yearStr}-${monthNumStr}-${dayNumStr}`;
-      const weekdayIdx = (i - 1) % 7;
+    // Accurate base calendar mapping for 1448 AH (Umm al-Qura)
+    const MONTH_1448_CONFIG: Record<number, { startY: number; startM: number; startD: number; totalDays: number }> = {
+      1: { startY: 2026, startM: 6, startD: 16, totalDays: 30 }, // Muharram: 16 Jun 2026
+      2: { startY: 2026, startM: 7, startD: 16, totalDays: 29 }, // Safar: 16 Jul 2026
+      3: { startY: 2026, startM: 8, startD: 14, totalDays: 29 }, // Rabi I: 14 Aug 2026 (Day 17 = 30 Aug 2026 Sunday)
+      4: { startY: 2026, startM: 9, startD: 12, totalDays: 30 }, // Rabi II: 12 Sep 2026
+      5: { startY: 2026, startM: 10, startD: 12, totalDays: 30 }, // Jumada I: 12 Oct 2026
+      6: { startY: 2026, startM: 11, startD: 11, totalDays: 29 }, // Jumada II: 11 Nov 2026
+      7: { startY: 2026, startM: 12, startD: 10, totalDays: 30 }, // Rajab: 10 Dec 2026
+      8: { startY: 2027, startM: 1, startD: 9, totalDays: 30 }, // Shaban: 9 Jan 2027
+      9: { startY: 2027, startM: 2, startD: 8, totalDays: 29 }, // Ramadan: 8 Feb 2027
+      10: { startY: 2027, startM: 3, startD: 9, totalDays: 30 }, // Shawwal: 9 Mar 2027
+      11: { startY: 2027, startM: 4, startD: 8, totalDays: 29 }, // Dhu al-Qidah: 8 Apr 2027
+      12: { startY: 2027, startM: 5, startD: 7, totalDays: 30 }, // Dhu al-Hijjah: 7 May 2027
+    };
+
+    let startY = 2026;
+    let startM = 8;
+    let startD = 14;
+    let totalDays = 29;
+
+    if (year === 1448 && MONTH_1448_CONFIG[month]) {
+      const cfg = MONTH_1448_CONFIG[month];
+      startY = cfg.startY;
+      startM = cfg.startM;
+      startD = cfg.startD;
+      totalDays = cfg.totalDays;
+    } else {
+      const baseDate = new Date(2026, 5, 16);
+      const approxDays = (year - 1448) * 354.367 + (month - 1) * 29.53;
+      const targetDate = new Date(baseDate.getTime() + approxDays * 86400000);
+      startY = targetDate.getFullYear();
+      startM = targetDate.getMonth() + 1;
+      startD = targetDate.getDate();
+      totalDays = (month % 2 === 1) ? 30 : 29;
+    }
+
+    const weekdaysArList = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    const weekdaysEnList = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const monthEnNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    for (let i = 1; i <= totalDays; i++) {
+      const currGreg = new Date(startY, startM - 1, startD + i - 1);
+      const jsDay = currGreg.getDay(); // 0: Sunday, 1: Monday, ... 6: Saturday
+      const gDayStr = currGreg.getDate().toString();
+      const gMonthNum = currGreg.getMonth() + 1;
+      const gYearStr = currGreg.getFullYear().toString();
+      const gregDateStr = `${gDayStr.padStart(2, "0")}-${gMonthNum.toString().padStart(2, "0")}-${gYearStr}`;
 
       fallbackDays.push({
         timestamp: `${currGreg.getTime()}`,
         gregorian: {
           date: gregDateStr,
-          day: `${currGreg.getDate()}`,
-          weekday: { en: weekdaysEn[weekdayIdx], number: weekdayIdx + 1 },
-          month: { number: currGreg.getMonth() + 1, en: "July" },
-          year: yearStr
+          day: gDayStr,
+          weekday: { en: weekdaysEnList[jsDay], number: jsDay === 0 ? 7 : jsDay },
+          month: { number: gMonthNum, en: monthEnNames[gMonthNum - 1] || "August" },
+          year: gYearStr
         },
         hijri: {
           day: `${i}`,
-          month: { number: month, en: "Safar", ar: monthNameAr },
+          month: { number: month, en: "Hijri Month", ar: monthNameAr },
           year: `${year}`,
-          weekday: { en: weekdaysEn[weekdayIdx], ar: weekdaysAr[weekdayIdx] },
+          weekday: { en: weekdaysEnList[jsDay], ar: weekdaysArList[jsDay] },
           holidays: []
         }
       });
@@ -361,7 +394,7 @@ export default function CalendarDetail() {
 
   const weekDays = ["السبت", "الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة"];
 
-  const currentMonthName = HIJRI_MONTH_NAMES[hijriMonth - 1] || "صفر";
+  const currentMonthName = HIJRI_MONTH_NAMES[hijriMonth - 1] || "ربيع الأول";
 
   // Derive selected day info for hero metrics
   const selectedDayData = useMemo(() => {
@@ -371,6 +404,144 @@ export default function CalendarDetail() {
     });
     return getAladhanDayData(day || calendarData[selectedDayNumber - 1] || null);
   }, [calendarData, selectedDayNumber]);
+
+  // Formatted Gregorian Date String e.g. "2026-08-30"
+  const formattedGregorianDate = useMemo(() => {
+    if (!selectedDayData.gregorian) return "2026-08-30";
+    const g = selectedDayData.gregorian;
+    if (g.year && g.month && g.day) {
+      const mNum = typeof g.month === "object" ? g.month.number : g.month;
+      const yStr = `${g.year}`;
+      const mStr = `${mNum}`.padStart(2, "0");
+      const dStr = `${g.day}`.padStart(2, "0");
+      return `${yStr}-${mStr}-${dStr}`;
+    }
+    if (g.date) {
+      const parts = g.date.split("-");
+      if (parts.length === 3) {
+        if (parts[0].length === 4) return g.date; // YYYY-MM-DD
+        return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`; // convert DD-MM-YYYY to YYYY-MM-DD
+      }
+      return g.date;
+    }
+    return "2026-08-30";
+  }, [selectedDayData]);
+
+  // Normalized weekday Arabic name for the selected day
+  const selectedDayWeekdayName = useMemo(() => {
+    const ar = selectedDayData.hijri?.weekday?.ar || "";
+    if (ar) {
+      if (ar.includes("احد") || ar.includes("أحد")) return "الأحد";
+      if (ar.includes("اثنين") || ar.includes("إثنين")) return "الإثنين";
+      if (ar.includes("ثلاثاء")) return "الثلاثاء";
+      if (ar.includes("اربعاء") || ar.includes("أربعاء")) return "الأربعاء";
+      if (ar.includes("خميس")) return "الخميس";
+      if (ar.includes("جمعه") || ar.includes("جمعة")) return "الجمعة";
+      if (ar.includes("سبت")) return "السبت";
+      return ar;
+    }
+    const en = (selectedDayData.gregorian?.weekday?.en || "").toLowerCase();
+    const enToAr: Record<string, string> = {
+      sunday: "الأحد",
+      monday: "الإثنين",
+      tuesday: "الثلاثاء",
+      wednesday: "الأربعاء",
+      thursday: "الخميس",
+      friday: "الجمعة",
+      saturday: "السبت"
+    };
+    return enToAr[en] || "الأحد";
+  }, [selectedDayData]);
+
+  // Calculate starting weekday offset for calendar grid (0 = السبت, 1 = الأحد, ..., 6 = الجمعة)
+  const startWeekdayOffset = useMemo(() => {
+    if (!calendarData || calendarData.length === 0) return 0;
+    const firstDay = calendarData[0];
+    const { gregorian, hijri } = getAladhanDayData(firstDay);
+    
+    // Method 1: Arabic weekday from Hijri
+    const arWeekday = (hijri?.weekday?.ar || "").replace(/أ|إ|آ/g, "ا").replace(/ة/g, "ه").trim();
+    const weekdayMap: Record<string, number> = {
+      "السبت": 0,
+      "الاحد": 1,
+      "الاثنين": 2,
+      "الثلاثاء": 3,
+      "الاربعاء": 4,
+      "الخميس": 5,
+      "الجمعه": 6
+    };
+    for (const [name, idx] of Object.entries(weekdayMap)) {
+      if (arWeekday.includes(name)) return idx;
+    }
+
+    // Method 2: Gregorian date calculation
+    if (gregorian?.date) {
+      const parts = gregorian.date.split("-");
+      if (parts.length === 3) {
+        let d: number, m: number, y: number;
+        if (parts[0].length === 4) {
+          y = parseInt(parts[0]);
+          m = parseInt(parts[1]) - 1;
+          d = parseInt(parts[2]);
+        } else {
+          d = parseInt(parts[0]);
+          m = parseInt(parts[1]) - 1;
+          y = parseInt(parts[2]);
+        }
+        const jsDate = new Date(y, m, d);
+        const jsDay = jsDate.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+        return (jsDay + 1) % 7; // 0=Sat, 1=Sun, ..., 6=Fri
+      }
+    }
+
+    // Method 3: English weekday
+    const enWeekday = (gregorian?.weekday?.en || "").toLowerCase();
+    const enMap: Record<string, number> = {
+      "saturday": 0,
+      "sunday": 1,
+      "monday": 2,
+      "tuesday": 3,
+      "wednesday": 4,
+      "thursday": 5,
+      "friday": 6
+    };
+    if (enMap[enWeekday] !== undefined) return enMap[enWeekday];
+
+    return 0;
+  }, [calendarData]);
+
+  // Helper for first & last day names
+  const firstDayName = useMemo(() => {
+    if (!calendarData || calendarData.length === 0) return "الجمعة";
+    const { hijri, gregorian } = getAladhanDayData(calendarData[0]);
+    const ar = hijri?.weekday?.ar || "";
+    if (ar.includes("احد") || ar.includes("أحد")) return "الأحد";
+    if (ar.includes("اثنين") || ar.includes("إثنين")) return "الإثنين";
+    if (ar.includes("ثلاثاء")) return "الثلاثاء";
+    if (ar.includes("اربعاء") || ar.includes("أربعاء")) return "الأربعاء";
+    if (ar.includes("خميس")) return "الخميس";
+    if (ar.includes("جمعه") || ar.includes("جمعة")) return "الجمعة";
+    if (ar.includes("سبت")) return "السبت";
+    const en = (gregorian?.weekday?.en || "").toLowerCase();
+    const map: Record<string, string> = { sunday: "الأحد", monday: "الإثنين", tuesday: "الثلاثاء", wednesday: "الأربعاء", thursday: "الخميس", friday: "الجمعة", saturday: "السبت" };
+    return map[en] || "الجمعة";
+  }, [calendarData]);
+
+  const lastDayName = useMemo(() => {
+    if (!calendarData || calendarData.length === 0) return "الجمعة";
+    const { hijri, gregorian } = getAladhanDayData(calendarData[calendarData.length - 1]);
+    const ar = hijri?.weekday?.ar || "";
+    if (ar.includes("احد") || ar.includes("أحد")) return "الأحد";
+    if (ar.includes("اثنين") || ar.includes("إثنين")) return "الإثنين";
+    if (ar.includes("ثلاثاء")) return "الثلاثاء";
+    if (ar.includes("اربعاء") || ar.includes("أربعاء")) return "الأربعاء";
+    if (ar.includes("خميس")) return "الخميس";
+    if (ar.includes("جمعه") || ar.includes("جمعة")) return "الجمعة";
+    if (ar.includes("سبت")) return "السبت";
+    const en = (gregorian?.weekday?.en || "").toLowerCase();
+    const map: Record<string, string> = { sunday: "الأحد", monday: "الإثنين", tuesday: "الثلاثاء", wednesday: "الأربعاء", thursday: "الخميس", friday: "الجمعة", saturday: "السبت" };
+    return map[en] || "الجمعة";
+  }, [calendarData]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#F0F8F3] via-[#E6F4EA] to-[#DCF0E3] pb-16 pt-2 px-3 sm:px-6 select-none font-sans" dir="rtl">
@@ -404,7 +575,7 @@ export default function CalendarDetail() {
               </h2>
 
               <p className="text-xs sm:text-sm font-bold font-cairo text-emerald-100/90">
-                المقابل الميلادي: {selectedDayData.gregorian?.date || `2026-07-20`} ({selectedDayData.hijri?.weekday?.ar || 'الإثنين'})
+                المقابل الميلادي: {formattedGregorianDate} ({selectedDayWeekdayName})
               </p>
             </div>
 
@@ -420,7 +591,7 @@ export default function CalendarDetail() {
             <div className="bg-[#002814]/50 backdrop-blur-md border border-[#E5A921]/30 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 transition-colors">
               <span className="text-[10px] sm:text-xs text-emerald-100/80 font-bold font-cairo">اليوم</span>
               <span className="text-xs sm:text-sm font-black font-cairo tracking-tight text-white">
-                {selectedDayData.hijri?.weekday?.ar || 'الإثنين'}
+                {selectedDayWeekdayName}
               </span>
             </div>
 
@@ -436,7 +607,7 @@ export default function CalendarDetail() {
             <div className="bg-[#002814]/50 backdrop-blur-md border border-[#E5A921]/30 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 transition-colors">
               <span className="text-[10px] sm:text-xs text-emerald-100/80 font-bold font-cairo">أيام الشهر</span>
               <span className="text-xs sm:text-sm font-black font-cairo tracking-tight text-white">
-                {calendarData.length || 30} يوماً
+                {calendarData.length || 29} يوماً
               </span>
             </div>
 
@@ -466,7 +637,7 @@ export default function CalendarDetail() {
                 بداية الشهر
               </span>
               <span className="text-xs sm:text-sm font-black text-slate-900 font-cairo tracking-tight">
-                {calendarData[0]?.hijri?.weekday?.ar || 'الأربعاء'} (1 {currentMonthName})
+                {firstDayName} (1 {currentMonthName})
               </span>
             </div>
 
@@ -487,7 +658,7 @@ export default function CalendarDetail() {
                 نهاية الشهر
               </span>
               <span className="text-xs sm:text-sm font-black text-slate-900 font-cairo tracking-tight">
-                {calendarData[calendarData.length - 1]?.hijri?.weekday?.ar || 'الخميس'} ({calendarData.length || 30} {currentMonthName})
+                {lastDayName} ({calendarData.length || 29} {currentMonthName})
               </span>
             </div>
 
@@ -554,11 +725,23 @@ export default function CalendarDetail() {
             )}
 
             <div className="grid grid-cols-7 gap-y-2 gap-x-1 text-center">
-              {Array.from({ length: calendarData.length || 30 }).map((_, idx) => {
-                const hDayNum = idx + 1;
-                let gDayNum = 15 + idx;
-                if (gDayNum > 31) {
-                  gDayNum = gDayNum - 31;
+              {/* Leading Empty Cells for proper weekday alignment */}
+              {Array.from({ length: startWeekdayOffset }).map((_, emptyIdx) => (
+                <div key={`empty-${emptyIdx}`} className="aspect-square opacity-0 pointer-events-none" />
+              ))}
+
+              {calendarData.map((dayItem, idx) => {
+                const { gregorian, hijri } = getAladhanDayData(dayItem);
+                const hDayNum = hijri?.day ? parseInt(hijri.day) : idx + 1;
+                
+                let gDayNum = idx + 1;
+                if (gregorian?.day) {
+                  gDayNum = parseInt(gregorian.day);
+                } else if (gregorian?.date) {
+                  const parts = gregorian.date.split('-');
+                  if (parts.length === 3) {
+                    gDayNum = parseInt(parts[0].length === 4 ? parts[2] : parts[0]);
+                  }
                 }
 
                 const isSelected = selectedDayNumber === hDayNum;

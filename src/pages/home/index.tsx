@@ -9,7 +9,7 @@ import { NewsItem, VideoItem, LeaderContent, Article } from "../../types";
 import { CategoryBadges } from "../../components/CategoryBadges";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
-import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen, Star, PenTool } from "lucide-react";
+import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, Play, MonitorPlay, ChevronLeft, X, Eye, User, Calendar, BookOpen, Star, PenTool } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../../components/PullToRefresh";
 import { FeaturedTopicsSlider } from "../../components/FeaturedTopicsSlider";
@@ -158,6 +158,18 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
 
   const currentItem = sliderList[currentIndex];
 
+  const getSliderItemUrl = (item: NewsItem) => {
+    if (item.isLeader) {
+      return routes.leaderItem(generateSlug(item.title || "", item.id));
+    }
+    if ((item as any).isVideoSliderItem || (item as any).type === "video" || (item as any).videoUrl) {
+      return routes.watchItem(generateSlug(item.title || "", item.id));
+    }
+    return routes.news(generateSlug(item.title || "", item.id));
+  };
+
+  const isVideo = !!((currentItem as any).isVideoSliderItem || (currentItem as any).type === "video" || (currentItem as any).videoUrl);
+
   const displayCategory = currentItem.category === "المولد النبوي الشريف" 
     ? "المولد النبوي الشريف 1446هـ" 
     : currentItem.category;
@@ -198,7 +210,7 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
               }}
               className="w-full h-full absolute top-0 left-0 cursor-grab active:cursor-grabbing"
             >
-              <Link to={currentItem.isLeader ? routes.leaderItem(generateSlug(currentItem.title || "", currentItem.id)) : routes.news(generateSlug(currentItem.title || "", currentItem.id))} className="block w-full h-full relative group">
+              <Link to={getSliderItemUrl(currentItem)} className="block w-full h-full relative group">
                 {currentItem.imageUrl ? (
                   <img 
                     src={currentItem.imageUrl} 
@@ -214,6 +226,15 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
                 {/* Deeper multi-stop gradient overlay in Taiz brand colors for readability */}
                 <div className="absolute inset-0 bg-gradient-to-t from-taiz-navy via-taiz-navy/85 via-taiz-royal/40 to-transparent pointer-events-none"></div>
                 
+                {/* Play Button Overlay in center for Videos */}
+                {isVideo && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-2xl backdrop-blur-sm group-hover:scale-110 group-hover:bg-red-600 transition-all duration-300">
+                      <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-current ml-1" />
+                    </div>
+                  </div>
+                )}
+
                 {/* Category Pill floating at middle-right height of the slider card */}
                 <div className="absolute top-4 right-4 sm:top-5 sm:right-6 z-20">
                   <CategoryBadges item={currentItem} isHero={true} className="drop-shadow-lg" />
@@ -538,11 +559,11 @@ export function Home() {
   // Filter items
   let filteredNews = [...news];
 
-  // Determine news/video/leader items for the slider
+  // Determine news/video/leader items for the slider (strictly latest 5 items)
   const sliderItems = useMemo(() => {
-    // Leader video items flagged for slider
+    // Leader video items flagged specifically for slider
     const featuredLeaderVideos: NewsItem[] = rawLeader
-      .filter(item => item.type === "video" && (item.showInSlider || item.isFeatured || item.isPinned))
+      .filter(item => item.type === "video" && !!item.showInSlider)
       .map(item => ({
         id: item.id,
         title: item.title,
@@ -551,8 +572,6 @@ export function Home() {
         imageUrl: item.thumbnailUrl || "",
         category: "السيد القائد",
         isBreaking: false,
-        isPinned: true,
-        isFeatured: true,
         createdAt: item.createdAt,
         views: item.views || 0,
         isLeader: true,
@@ -560,9 +579,9 @@ export function Home() {
         isVideoSliderItem: true
       }));
 
-    // Regular videos flagged for slider
+    // Regular videos flagged specifically for slider
     const featuredVideos: NewsItem[] = rawVideos
-      .filter(item => item.showInSlider || item.isFeatured || item.isPinned)
+      .filter(item => !!item.showInSlider)
       .map(item => ({
         id: item.id,
         title: item.title,
@@ -571,8 +590,6 @@ export function Home() {
         imageUrl: item.thumbnailUrl || "",
         category: item.category || "فيديو",
         isBreaking: false,
-        isPinned: true,
-        isFeatured: true,
         createdAt: item.createdAt,
         views: item.views || 0,
         videoUrl: item.url,
@@ -593,6 +610,7 @@ export function Home() {
       return 0;
     };
 
+    // Combine all candidate items: latest news + videos with showInSlider enabled
     const allCandidateItems = [...news, ...featuredLeaderVideos, ...featuredVideos];
     const uniqueMap = new Map<string, NewsItem>();
     allCandidateItems.forEach(item => {
@@ -601,27 +619,13 @@ export function Home() {
       }
     });
     const combinedList = Array.from(uniqueMap.values());
+
+    // Sort strictly by createdAt descending so slider always shows newest items first
     combinedList.sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
 
-    const pinned = combinedList.filter(n => (n as any).isPinned || (n as any).isFeatured || (n as any).showInSlider || (n as any).isFeaturedLayout);
-
-    let resultList: NewsItem[] = [];
-    if (sliderShowLatest) {
-      const combined = [...pinned];
-      for (const item of combinedList) {
-        if (combined.length >= 6) break;
-        if (!combined.some(c => c.id === item.id)) {
-          combined.push(item);
-        }
-      }
-      resultList = combined;
-    } else {
-      resultList = pinned;
-    }
-
-    // Always sort final list descending so slider starts with the newest events
-    return [...resultList].sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
-  }, [news, rawLeader, rawVideos, sliderShowLatest]);
+    // Limit to latest 5 items only
+    return combinedList.slice(0, 5);
+  }, [news, rawLeader, rawVideos]);
 
   // Define breakingNewsIndex as fallback or kept as empty if not needed
   const breakingNewsIndex = -1;

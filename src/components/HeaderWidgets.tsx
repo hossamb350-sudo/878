@@ -165,8 +165,22 @@ export const HeaderWidgets: React.FC = () => {
   // Hijri Date display
   const hijriDate = useMemo(() => {
     if (apiHijriDate) return apiHijriDate;
-    return "25 صفر 1448 هـ";
-  }, [apiHijriDate]);
+    try {
+      const formatter = new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+      const parts = formatter.formatToParts(time);
+      const d = parts.find(p => p.type === 'day')?.value;
+      const m = parts.find(p => p.type === 'month')?.value;
+      const y = parts.find(p => p.type === 'year')?.value;
+      if (d && m && y) {
+        return `${d} ${m} ${y} هـ`;
+      }
+    } catch {}
+    return "17 ربيع الأول 1448 هـ";
+  }, [apiHijriDate, time]);
 
   return (
     <div className="w-full max-w-[760px] mx-auto select-none bg-transparent" dir="rtl">

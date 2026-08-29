@@ -234,16 +234,16 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
       if (editingId) {
         await updateDoc(doc(db, "articles", editingId), payload);
       } else {
-        await addDoc(collection(db, "articles"), {
+        const docRef = await addDoc(collection(db, "articles"), {
           ...payload,
           createdAt: Date.now()
         });
         sendFCMNotification(
-          "مقال جديد | " + formData.title,
-          formData.author || "تم إضافة مقال جديد",
+          "مقال جديد | " + title,
+          authorName || "تم إضافة مقال جديد",
           "article",
-          slug,
-          formData.image
+          docRef.id,
+          imageUrl
         );
       }
 

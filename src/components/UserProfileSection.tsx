@@ -4,6 +4,8 @@ import { db } from "../firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { User as FirebaseUser } from "firebase/auth";
 import { motion, AnimatePresence } from "motion/react";
+import { Capacitor } from "@capacitor/core";
+import { PushNotifications } from "@capacitor/push-notifications";
 import { 
   Mail, 
   MapPin, 
@@ -15,7 +17,9 @@ import {
   Sparkles, 
   CheckCircle2, 
   Share2, 
-  Sliders
+  Sliders,
+  BellRing,
+  ShieldCheck
 } from "lucide-react";
 import { FavoritesList } from "./FavoritesList";
 import { ContactUsSection } from "./ContactUsSection";
@@ -26,9 +30,10 @@ interface UserProfileSectionProps {
   profile: UserProfile;
   logout: () => void;
   onProfileUpdated?: (updated: UserProfile) => void;
+  hideHeaderLogout?: boolean;
 }
 
-export function UserProfileSection({ profile, logout }: UserProfileSectionProps) {
+export function UserProfileSection({ profile, logout, hideHeaderLogout = false }: UserProfileSectionProps) {
   const [activeTab, setActiveTab] = useState<"favorites" | "preferences" | "notifications">("favorites");
   
   // Local profile state
@@ -39,20 +44,48 @@ export function UserProfileSection({ profile, logout }: UserProfileSectionProps)
     return parseInt(localStorage.getItem("article_font_size") || "18");
   });
 
-  // Notification Toggles
-  const [notifSettings, setNotifSettings] = useState({
-    urgent: profile.notificationSettings?.urgent ?? true,
-    dailyEvents: profile.notificationSettings?.dailyEvents ?? true,
-    prayerTimes: profile.notificationSettings?.prayerTimes ?? true,
-    quranAudio: profile.notificationSettings?.quranAudio ?? true,
-    articles: profile.notificationSettings?.articles ?? true,
+  // Single Notification Toggle State
+  const [notifEnabled, setNotifEnabled] = useState<boolean>(() => {
+    const localVal = localStorage.getItem("push_notifications_enabled");
+    if (localVal !== null) return localVal === "true";
+    if (profile.notificationSettings?.enabled !== undefined) {
+      return !!profile.notificationSettings.enabled;
+    }
+    return false;
   });
+
+  const [isRequestingNotif, setIsRequestingNotif] = useState(false);
 
   // Toast message
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Stats Counters from localStorage
   const [bookmarksCount, setBookmarksCount] = useState(0);
+
+  useEffect(() => {
+    // Check initial native or web permission status
+    if (Capacitor.isNativePlatform()) {
+      PushNotifications.checkPermissions().then((status) => {
+        if (status?.receive === "granted") {
+          const localVal = localStorage.getItem("push_notifications_enabled");
+          if (localVal !== "false") {
+            setNotifEnabled(true);
+          }
+        } else {
+          setNotifEnabled(false);
+        }
+      }).catch(() => {});
+    } else if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "granted") {
+        const localVal = localStorage.getItem("push_notifications_enabled");
+        if (localVal !== "false") {
+          setNotifEnabled(true);
+        }
+      } else if (Notification.permission === "denied") {
+        setNotifEnabled(false);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     // Read stats
@@ -69,15 +102,101 @@ export function UserProfileSection({ profile, logout }: UserProfileSectionProps)
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  const handleToggleNotif = async (key: keyof typeof notifSettings) => {
-    const updated = { ...notifSettings, [key]: !notifSettings[key] };
-    setNotifSettings(updated);
-    try {
-      const userRef = doc(db, "users", profile.uid);
-      await setDoc(userRef, { notificationSettings: updated }, { merge: true });
-      showToast("تم تحديث تفضيلات التنبيهات");
-    } catch (e) {
-      console.error(e);
+  const handleToggleNotifications = async () => {
+    if (isRequestingNotif) return;
+
+    if (!notifEnabled) {
+      // User is enabling notifications -> Trigger native permissions dialog
+      setIsRequestingNotif(true);
+      try {
+        if (Capacitor.isNativePlatform()) {
+          // Request permissions (Triggers Android 13+ system permission prompt)
+          const permStatus = await PushNotifications.requestPermissions();
+          
+          if (permStatus?.receive === "granted") {
+            await PushNotifications.register();
+            setNotifEnabled(true);
+            localStorage.setItem("push_notifications_enabled", "true");
+            
+            // Save to Firestore user doc
+            if (profile?.uid) {
+              const userRef = doc(db, "users", profile.uid);
+              await setDoc(userRef, { 
+                notificationSettings: { 
+                  enabled: true,
+                  urgent: true,
+                  dailyEvents: true,
+                  prayerTimes: true,
+                  quranAudio: true,
+                  articles: true
+                } 
+              }, { merge: true });
+            }
+            showToast("تم تفعيل الإشعارات والتنبيهات المباشرة بنجاح 🔔");
+          } else {
+            setNotifEnabled(false);
+            localStorage.setItem("push_notifications_enabled", "false");
+            showToast("لم يتم منح إذن الإشعارات من النظام");
+          }
+        } else if (typeof window !== "undefined" && "Notification" in window) {
+          // Web / PWA Notification Permission
+          const permission = await Notification.requestPermission();
+          if (permission === "granted") {
+            setNotifEnabled(true);
+            localStorage.setItem("push_notifications_enabled", "true");
+            if (profile?.uid) {
+              const userRef = doc(db, "users", profile.uid);
+              await setDoc(userRef, { 
+                notificationSettings: { 
+                  enabled: true,
+                  urgent: true,
+                  dailyEvents: true,
+                  prayerTimes: true,
+                  quranAudio: true,
+                  articles: true
+                } 
+              }, { merge: true });
+            }
+            showToast("تم تفعيل الإشعارات والتنبيهات المباشرة بنجاح 🔔");
+          } else {
+            setNotifEnabled(false);
+            localStorage.setItem("push_notifications_enabled", "false");
+            showToast("لم يتم منح إذن الإشعارات من المتصفح");
+          }
+        } else {
+          // Fallback
+          setNotifEnabled(true);
+          localStorage.setItem("push_notifications_enabled", "true");
+          showToast("تم تفعيل الإشعارات بنجاح");
+        }
+      } catch (e) {
+        console.error("Notification permission error:", e);
+        showToast("حدث خطأ أثناء طلب الإذن، يرجى المحاولة لاحقاً");
+      } finally {
+        setIsRequestingNotif(false);
+      }
+    } else {
+      // User is disabling notifications
+      setNotifEnabled(false);
+      localStorage.setItem("push_notifications_enabled", "false");
+      try {
+        if (profile?.uid) {
+          const userRef = doc(db, "users", profile.uid);
+          await setDoc(userRef, { 
+            notificationSettings: { 
+              enabled: false,
+              urgent: false,
+              dailyEvents: false,
+              prayerTimes: false,
+              quranAudio: false,
+              articles: false
+            } 
+          }, { merge: true });
+        }
+        showToast("تم إيقاف استقبال الإشعارات");
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
@@ -179,14 +298,16 @@ export function UserProfileSection({ profile, logout }: UserProfileSectionProps)
                 <span>مشاركة</span>
               </button>
 
-              <button
-                onClick={logout}
-                className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 dark:bg-red-950/30 dark:hover:bg-red-600 px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl border border-red-200 dark:border-red-900/50 transition-all cursor-pointer active:scale-95 shadow-xs"
-                title="تسجيل الخروج"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>تسجيل الخروج</span>
-              </button>
+              {!hideHeaderLogout && (
+                <button
+                  onClick={logout}
+                  className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-red-600 hover:text-white bg-red-50 hover:bg-red-600 dark:bg-red-950/30 dark:hover:bg-red-600 px-4 py-2.5 sm:px-5 sm:py-3 rounded-2xl border border-red-200 dark:border-red-900/50 transition-all cursor-pointer active:scale-95 shadow-xs"
+                  title="تسجيل الخروج"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>تسجيل الخروج</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -327,35 +448,40 @@ export function UserProfileSection({ profile, logout }: UserProfileSectionProps)
                 <Bell className="w-5 h-5 text-emerald-600" /> إعدادات التنبيهات والإشعارات المباشرة
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                تخصيص أنواع الإشعارات المستلمة فور صدور الأخبار العاجلة أو التحديثات المهمة.
+                التحكم في استقبال الإشعارات والتنبيهات المباشرة لكافة الأحداث والأخبار والأنشطة في المنصة.
               </p>
             </div>
 
-            <div className="space-y-3">
-              {[
-                { key: "urgent", title: "الأخبار العاجلة والتحديثات الهامة", desc: "إشعارات فورية عند نشر شريط الأخبار العاجلة والأحداث الطارئة." },
-                { key: "dailyEvents", title: "مناسبات تعز وتقويم اليوم", desc: "تنبيهات يومية بأهم المناسبات والتقويم الهجري والأحداث المرتقبة." },
-                { key: "quranAudio", title: "دروس وهدي القرآن الكريم", desc: "تنبيهات عند إضافة سور أو محاضرات جديدة لمكتبة التلاوة." },
-                { key: "articles", title: "أبرز المقالات والتحليلات السياسية", desc: "إشعارات فورية عند نشر المقالات لكبار الكتاب." },
-              ].map((item) => {
-                const isChecked = notifSettings[item.key as keyof typeof notifSettings];
-                return (
-                  <div
-                    key={item.key}
-                    onClick={() => handleToggleNotif(item.key as keyof typeof notifSettings)}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/80 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-all cursor-pointer"
-                  >
-                    <div className="space-y-0.5">
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white font-cairo">{item.title}</h4>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{item.desc}</p>
-                    </div>
-
-                    <div className={`w-12 h-6 rounded-full transition-colors relative shrink-0 ${isChecked ? "bg-emerald-600" : "bg-slate-300 dark:bg-slate-700"}`}>
-                      <div className={`w-5 h-5 rounded-full bg-white shadow-md absolute top-0.5 transition-transform ${isChecked ? "right-6" : "right-0.5"}`} />
-                    </div>
+            <div className="space-y-4">
+              {/* Single Push Notifications Toggle Card */}
+              <div
+                onClick={handleToggleNotifications}
+                className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/70 hover:bg-slate-100/90 dark:hover:bg-slate-800/80 transition-all cursor-pointer shadow-xs select-none"
+              >
+                <div className="space-y-1 pl-4">
+                  <div className="flex items-center gap-2">
+                    <BellRing className={`w-4 h-4 ${notifEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`} />
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-cairo">
+                      تفعيل الإشعارات والتنبيهات المباشرة
+                    </h4>
                   </div>
-                );
-              })}
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    استقبال تنبيهات فورية للأخبار العاجلة، التقارير والمواد المرئية، والمناسبات اليومية عبر خدمة الإشعارات.
+                  </p>
+                </div>
+
+                <div className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${notifEnabled ? "bg-emerald-600" : "bg-slate-300 dark:bg-slate-700"}`}>
+                  <div className={`w-6 h-6 rounded-full bg-white shadow-md absolute top-0.5 transition-all ${notifEnabled ? "right-7" : "right-0.5"}`} />
+                </div>
+              </div>
+
+              {/* Status Note */}
+              <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/30 text-xs text-emerald-800 dark:text-emerald-300">
+                <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                <p className="leading-relaxed">
+                  عند تفعيل هذا الخيار، سيطلب منك النظام السماح بإرسال الإشعارات. يتم تفعيل واستقبال كافة التنبيهات المباشرة فور الموافقة.
+                </p>
+              </div>
             </div>
           </div>
         )}
@@ -370,3 +496,4 @@ export function UserProfileSection({ profile, logout }: UserProfileSectionProps)
     </div>
   );
 }
+
