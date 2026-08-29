@@ -28,6 +28,11 @@
                 <data android:scheme="https" android:host="taiz-media-ye.vercel.app" />
                 <data android:scheme="https" android:host="ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" />
                 <data android:scheme="https" android:host="ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" />
+                <data android:pathPrefix="/news" />
+                <data android:pathPrefix="/articles" />
+                <data android:pathPrefix="/watch" />
+                <data android:pathPrefix="/leader" />
+                <data android:pathPrefix="/events" />
             </intent-filter>
 
             <!-- Custom URI Scheme Deep Linking (taizmedia:// and taizapp://) -->
