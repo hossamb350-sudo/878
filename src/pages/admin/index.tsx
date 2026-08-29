@@ -1,3 +1,4 @@
+import { sendFCMNotification } from "../../utils/sendFCM";
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { ImageUpload } from "../../components/ImageUpload";
 import {
@@ -3822,6 +3823,15 @@ function AdminQuranLessons() {
       };
       
       await setDoc(doc(db, "quran_lessons", id), data, { merge: true });
+      if (!lessonToEdit) { // Only send push on new lesson
+        sendFCMNotification(
+          "هدى القرآن | " + data.title,
+          "تمت إضافة درس جديد",
+          "quran",
+          id,
+          ""
+        );
+      }
       await delIDB('quran_data_cache');
       
       alert("تم حفظ الدرس في Firebase");
@@ -5061,6 +5071,13 @@ function AdminActivitiesContent() {
         alert("تم تعديل الفعالية بنجاح");
       } else {
         await addDoc(collection(db, "activities"), { ...data, createdAt: Date.now() });
+        sendFCMNotification(
+          "نشاط جديد | " + data.title,
+          "تابع أحدث الأنشطة والفعاليات",
+          "activity",
+          slug,
+          data.image
+        );
         alert("تم إضافة الفعالية بنجاح");
       }
       

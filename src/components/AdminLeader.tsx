@@ -1,3 +1,4 @@
+import { sendFCMNotification } from "../utils/sendFCM";
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { 
@@ -276,6 +277,13 @@ export function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
           ...payload,
           createdAt: Date.now()
         });
+        sendFCMNotification(
+          "السيد القائد | " + formData.title,
+          "تمت إضافة مرئية جديدة للسيد القائد",
+          "leader",
+          slug,
+          formData.thumbnailUrl
+        );
 
         if (notify) {
           try {

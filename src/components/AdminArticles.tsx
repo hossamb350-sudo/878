@@ -1,3 +1,4 @@
+import { sendFCMNotification } from "../utils/sendFCM";
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { 
@@ -237,6 +238,13 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
           ...payload,
           createdAt: Date.now()
         });
+        sendFCMNotification(
+          "مقال جديد | " + formData.title,
+          formData.author || "تم إضافة مقال جديد",
+          "article",
+          slug,
+          formData.image
+        );
       }
 
       setMode("list");

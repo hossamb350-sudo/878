@@ -13,6 +13,7 @@ import webPush from "web-push";
 import { GoogleGenAI } from "@google/genai";
 import { initializeApp, getApps, App } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
+import { getMessaging } from "firebase-admin/messaging";
 import { injectDynamicMetaTags } from "./src/ogInjector";
 import { IMAGEKIT_CONFIG } from "./src/config/imagekitConfig";
 

@@ -1,3 +1,4 @@
+import { sendFCMNotification } from "../utils/sendFCM";
 import { routes, generateSlug } from "../utils/routes";
 import React, { useState, useEffect } from "react";
 import { 
@@ -400,6 +401,14 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
           ...payload,
           createdAt: Date.now()
         });
+        // Send FCM
+        sendFCMNotification(
+          "عاجل | " + (formData.title || "خبر جديد"),
+          formData.summary || "تم إضافة خبر جديد على منصة تعز",
+          "news",
+          slug,
+          formData.imageUrl
+        );
         savedId = docRef.id;
       }
       

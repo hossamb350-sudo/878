@@ -1,3 +1,4 @@
+import { sendFCMNotification } from "../utils/sendFCM";
 import React, { useState, useEffect } from "react";
 import { db } from "../firebase";
 import { 
@@ -256,6 +257,13 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
           ...payload,
           createdAt: Date.now()
         });
+        sendFCMNotification(
+          "ميديا | " + formData.title,
+          "فيديو جديد تمت إضافته في قسم الميديا",
+          "video",
+          slug,
+          formData.thumbnailUrl
+        );
         alert("تم إضافة ونشر الفيديو بنجاح");
       }
 

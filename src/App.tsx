@@ -26,6 +26,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
 import { DeepLinkHandler } from "./components/DeepLinkHandler";
+import { PushNotificationHandler } from "./components/PushNotificationHandler";
 import { QuranAudioProvider } from "./context/QuranAudioContext";
 import { LiveStreamProvider } from "./context/LiveStreamContext";
 import { useEffect } from "react";
@@ -220,6 +221,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <DeepLinkHandler />
+      <PushNotificationHandler />
       <LiveStreamProvider>
         <QuranAudioProvider>
           <NavigationController />
