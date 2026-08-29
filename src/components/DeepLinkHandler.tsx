@@ -53,7 +53,7 @@ export function DeepLinkHandler() {
 
       if (targetPath) {
         console.log("[DeepLink] Navigating to:", targetPath);
-        navigate(targetPath);
+        navigate(targetPath, { replace: true });
       }
     } catch (err) {
       console.warn("[DeepLink] Failed to parse URL:", rawUrl, err);
