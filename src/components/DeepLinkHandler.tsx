@@ -131,10 +131,10 @@ export function DeepLinkHandler() {
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2.5 sm:gap-4">
           {/* Logo & App Info */}
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden bg-slate-900 border border-amber-400/40 shrink-0 shadow-md flex items-center justify-center p-0.5">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg overflow-hidden bg-slate-900 border border-amber-400/40 shrink-0 shadow-md flex items-center justify-center p-0.5">
               <img
-                src="/splash_first.png"
+                src="/ic_launcher.png"
                 alt="تطبيق المنصة"
                 className="w-full h-full object-contain"
                 onError={(e) => {
@@ -143,30 +143,30 @@ export function DeepLinkHandler() {
               />
             </div>
 
-            <div className="flex flex-col min-w-0 text-right">
-              <div className="flex items-center gap-1.5">
-                <span className="font-bold text-xs sm:text-sm text-white truncate font-cairo">
+            <div className="flex flex-col min-w-0 text-right leading-tight">
+              <div className="flex items-center gap-1">
+                <span className="font-bold text-[11px] sm:text-xs text-white font-cairo whitespace-nowrap">
                   تطبيق المنصة الإعلامية
                 </span>
-                <span className="bg-amber-400 text-[#07152B] text-[9px] font-black px-1.5 py-0.2 rounded-full shrink-0">
+                <span className="bg-amber-400 text-[#07152B] text-[8px] sm:text-[9px] font-black px-1 py-0.2 rounded-full shrink-0">
                   Android
                 </span>
               </div>
-              <p className="text-[10px] sm:text-[11px] text-slate-300 truncate font-medium">
-                افتح المحتوى مباشرة في التطبيق أو حمله الآن
+              <p className="text-[9px] sm:text-[10px] text-slate-300 font-medium font-cairo whitespace-nowrap overflow-hidden text-ellipsis">
+                افتح المحتوى مباشرة في التطبيق
               </p>
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
             {/* Open in App Button */}
             <button
               onClick={handleOpenApp}
-              className="flex items-center gap-1 sm:gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-[11px] sm:text-xs px-2.5 sm:px-3 py-1.5 rounded-lg sm:rounded-xl shadow-md transition-transform active:scale-95 cursor-pointer font-cairo"
+              className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg shadow-md transition-transform active:scale-95 cursor-pointer font-cairo whitespace-nowrap"
               title="فتح الرابط في تطبيق الأندرويد"
             >
-              <Smartphone className="w-3.5 h-3.5" />
+              <Smartphone className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>فتح في التطبيق</span>
             </button>
 
@@ -174,10 +174,10 @@ export function DeepLinkHandler() {
             {downloadUrl && (
               <button
                 onClick={handleDownloadApp}
-                className="hidden xs:flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white font-bold text-[11px] sm:text-xs px-2 sm:px-2.5 py-1.5 rounded-lg sm:rounded-xl border border-white/20 transition-all active:scale-95 cursor-pointer font-cairo"
+                className="hidden md:flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white font-bold text-[10px] sm:text-xs px-2 py-1 rounded-lg border border-white/20 transition-all active:scale-95 cursor-pointer font-cairo whitespace-nowrap"
                 title="تحميل تطبيق الأندرويد APK"
               >
-                <Download className="w-3.5 h-3.5 text-amber-300" />
+                <Download className="w-3 h-3 text-amber-300" />
                 <span>تحميل APK</span>
               </button>
             )}
@@ -185,10 +185,10 @@ export function DeepLinkHandler() {
             {/* Dismiss Button */}
             <button
               onClick={handleDismiss}
-              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer mr-0.5"
+              className="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer mr-0.5 shrink-0"
               aria-label="إغلاق التنبيه"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

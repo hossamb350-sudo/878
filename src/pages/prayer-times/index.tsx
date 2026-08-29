@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { 
   MapPin, Calendar, ChevronLeft, 
-  Sun, Moon, Check, ArrowRight
+  Sun, Moon, Check, ArrowRight,
+  Bell, BellOff
 } from "lucide-react";
 import { PrayerBackgroundEffect } from "../../components/PrayerBackgroundEffect";
 
@@ -101,6 +102,7 @@ type PrayerItem = {
   key: string;
   name: string;
   time: string;
+  image: string;
   badgeIcon: React.ReactNode;
   centerIcon: React.ReactNode;
   accentBarColor: string;
@@ -110,6 +112,59 @@ export const PrayerTimesDetail: React.FC = () => {
   const navigate = useNavigate();
   const [time, setTime] = useState(new Date());
   const [copiedVerse, setCopiedVerse] = useState(false);
+  const [selectedPrayerKey, setSelectedPrayerKey] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Per-prayer alert settings state
+  const [prayerAlerts, setPrayerAlerts] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem("prayer_alerts_settings");
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return {
+      Fajr: true,
+      Sunrise: false,
+      Dhuhr: true,
+      Asr: true,
+      Maghrib: true,
+      Isha: true,
+    };
+  });
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleTogglePrayerAlert = async (e: React.MouseEvent, prayerKey: string, prayerName: string) => {
+    e.stopPropagation();
+    const currentStatus = prayerAlerts[prayerKey] ?? true;
+    const newStatus = !currentStatus;
+
+    if (newStatus && typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+      try {
+        await Notification.requestPermission();
+      } catch (err) {
+        console.warn(err);
+      }
+    }
+
+    const updated = { ...prayerAlerts, [prayerKey]: newStatus };
+    setPrayerAlerts(updated);
+    try {
+      localStorage.setItem("prayer_alerts_settings", JSON.stringify(updated));
+    } catch (err) {
+      console.error(err);
+    }
+
+    if (newStatus) {
+      showToast(`تم تفعيل تنبيه صلاة ${prayerName} 🔔`);
+    } else {
+      showToast(`تم إلغاء تنبيه صلاة ${prayerName} 🔕`);
+    }
+  };
 
   const [rawTimings, setRawTimings] = useState<Record<string, string> | null>(() => {
     try {
@@ -122,9 +177,9 @@ export const PrayerTimesDetail: React.FC = () => {
 
   const [hijriDate, setHijriDate] = useState<string>(() => {
     try {
-      return localStorage.getItem("cached_detail_hijri_date") || "8 صفر 1448 هـ";
+      return localStorage.getItem("cached_detail_hijri_date") || "17 ربيع الأول 1448 هـ";
     } catch {
-      return "8 صفر 1448 هـ";
+      return "17 ربيع الأول 1448 هـ";
     }
   });
 
@@ -194,7 +249,7 @@ export const PrayerTimesDetail: React.FC = () => {
     return `${days[time.getDay()]} ${time.getDate()} ${months[time.getMonth()]} ${time.getFullYear()}`;
   }, [time]);
 
-  // Prayer list:
+  // Prayer list with dedicated photos:
   const prayerList: PrayerItem[] = useMemo(() => {
     const defaultTimings = {
       Fajr: "04:27",
@@ -212,6 +267,7 @@ export const PrayerTimesDetail: React.FC = () => {
         key: "Fajr",
         name: "الفجر",
         time: t.Fajr || "04:27",
+        image: "/Fajr.jpg",
         badgeIcon: <FajrBadgeIcon />,
         centerIcon: <FajrBadgeIcon />,
         accentBarColor: "bg-indigo-500",
@@ -220,6 +276,7 @@ export const PrayerTimesDetail: React.FC = () => {
         key: "Sunrise",
         name: "الشروق",
         time: t.Sunrise || "05:46",
+        image: "/Fajr.jpg",
         badgeIcon: <SunriseBadgeIcon />,
         centerIcon: <SunriseBadgeIcon />,
         accentBarColor: "bg-amber-400",
@@ -228,6 +285,7 @@ export const PrayerTimesDetail: React.FC = () => {
         key: "Dhuhr",
         name: "الظهر",
         time: t.Dhuhr || "12:10",
+        image: "/Dhuhr.jpg",
         badgeIcon: <DhuhrBadgeIcon />,
         centerIcon: <DhuhrBadgeIcon />,
         accentBarColor: "bg-emerald-500",
@@ -236,6 +294,7 @@ export const PrayerTimesDetail: React.FC = () => {
         key: "Asr",
         name: "العصر",
         time: t.Asr || "15:30",
+        image: "/Asr.jpg",
         badgeIcon: <AsrBadgeIcon />,
         centerIcon: <AsrBadgeIcon />,
         accentBarColor: "bg-orange-500",
@@ -244,6 +303,7 @@ export const PrayerTimesDetail: React.FC = () => {
         key: "Maghrib",
         name: "المغرب",
         time: t.Maghrib || "18:34",
+        image: "/Maghrib.jpg",
         badgeIcon: <MaghribBadgeIcon />,
         centerIcon: <MaghribBadgeIcon />,
         accentBarColor: "bg-rose-500",
@@ -252,6 +312,7 @@ export const PrayerTimesDetail: React.FC = () => {
         key: "Isha",
         name: "العشاء",
         time: t.Isha || "20:04",
+        image: "/Isha.jpg",
         badgeIcon: <IshaBadgeIcon />,
         centerIcon: <IshaBadgeIcon />,
         accentBarColor: "bg-blue-500",
@@ -297,6 +358,15 @@ export const PrayerTimesDetail: React.FC = () => {
     };
   }, [time, prayerList]);
 
+  // Active / displayed prayer in hero
+  const activeDisplayPrayer = useMemo(() => {
+    if (selectedPrayerKey) {
+      const found = prayerList.find((p) => p.key === selectedPrayerKey);
+      if (found) return found;
+    }
+    return nextPrayer;
+  }, [selectedPrayerKey, prayerList, nextPrayer]);
+
   // Copy Verse Text
   const copyVerse = () => {
     navigator.clipboard.writeText("إن الصلاة كانت على المؤمنين كتاباً موقوتاً (سورة النساء: 103)");
@@ -307,38 +377,30 @@ export const PrayerTimesDetail: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#FAFAFA] text-slate-900 pb-12 pt-2 px-3 sm:px-5 select-none font-sans" dir="rtl">
       <div className="max-w-md md:max-w-lg mx-auto space-y-3">
-        
 
-
-        {/* HERO BANNER CARD WITH MOSQUE.PNG & FLOATING NEXT PRAYER CARD */}
+        {/* HERO BANNER CARD WITH DEDICATED PRAYER IMAGE & FLOATING NEXT PRAYER CARD */}
         <div className="relative w-full h-[230px] sm:h-[250px] rounded-xl overflow-hidden shadow-md border border-slate-200/80 p-3.5 flex flex-col justify-between">
           
-          {/* Background Mosque Image */}
+          {/* Background Prayer Image - Fajr.jpg / Dhuhr.jpg / Asr.jpg / Maghrib.jpg / Isha.jpg */}
           <img 
-            src="/mosque.png" 
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (target.src.endsWith("/mosque.png")) {
-                target.src = "/mosque_bg.jpg";
-              }
-            }}
-            alt="جامع تعز" 
-            className="absolute inset-0 w-full h-full object-cover object-center"
+            src={activeDisplayPrayer.image} 
+            alt={activeDisplayPrayer.name} 
+            className="absolute inset-0 w-full h-full object-cover object-center transition-all duration-700 ease-in-out"
             referrerPolicy="no-referrer"
           />
 
-          {/* Dark Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/30" />
+          {/* Gradient Overlay for Legibility */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-black/40" />
 
           {/* Top Info Overlay: Title Right */}
           <div className="relative z-10 flex items-start justify-between">
             {/* Right: Title & City */}
             <div className="text-right space-y-0.5">
-              <h1 className="text-xl font-black text-white tracking-tight font-cairo drop-shadow-md">
+              <h1 className="text-sm sm:text-base font-bold text-white tracking-tight font-cairo drop-shadow-md">
                 مواقيت الصلاة
               </h1>
-              <div className="flex items-center gap-1 text-emerald-200 text-xs font-bold font-cairo drop-shadow-xs">
-                <MapPin className="w-3 h-3 text-amber-300 fill-amber-300/30" />
+              <div className="flex items-center gap-1 text-emerald-200 text-[11px] font-bold font-cairo drop-shadow-xs">
+                <MapPin className="w-2.5 h-2.5 text-amber-300 fill-amber-300/30" />
                 <span>تعز، اليمن</span>
               </div>
             </div>
@@ -346,26 +408,26 @@ export const PrayerTimesDetail: React.FC = () => {
 
           {/* Bottom Floating Transparent Green Next Prayer Card (Aligned Left in RTL) */}
           <div className="relative z-10 self-end w-[155px] sm:w-[165px] bg-slate-900/80 backdrop-blur-md rounded-lg p-2 text-white shadow-lg border border-emerald-300/30 space-y-1 overflow-hidden">
-            <PrayerBackgroundEffect prayerName={nextPrayer.name} className="opacity-95" />
+            <PrayerBackgroundEffect prayerName={activeDisplayPrayer.name} className="opacity-95" />
 
             <div className="relative z-10 space-y-0.5">
               <p className="text-[9px] font-bold text-amber-100 font-cairo drop-shadow-xs">
-                الصلاة القادمة
+                {selectedPrayerKey ? "الصلاة المعروضة" : "الصلاة القادمة"}
               </p>
               
               <div className="flex items-center gap-1">
                 <h2 className="text-base font-black text-white font-cairo drop-shadow-sm">
-                  {nextPrayer.name}
+                  {activeDisplayPrayer.name}
                 </h2>
                 <Sun className="w-3.5 h-3.5 text-amber-300 fill-amber-300/40" />
               </div>
 
               <p className="text-base font-black text-white font-sans tracking-tight drop-shadow-sm">
-                {formatTime12h(nextPrayer.time)}
+                {formatTime12h(activeDisplayPrayer.time)}
               </p>
 
               <p className="text-[9px] font-medium text-emerald-100 font-cairo">
-                بعد {countdownText}
+                {selectedPrayerKey && selectedPrayerKey !== nextPrayer.key ? `موعد الصلاة` : `بعد ${countdownText}`}
               </p>
             </div>
 
@@ -381,6 +443,81 @@ export const PrayerTimesDetail: React.FC = () => {
             </div>
 
           </div>
+        </div>
+
+        {/* PRAYER CARDS LIST WITH SPECIFIC IMAGES */}
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          {prayerList.map((item) => {
+            const isNext = item.key === nextPrayer.key;
+            const isSelected = selectedPrayerKey === item.key || (!selectedPrayerKey && isNext);
+
+            return (
+              <motion.button
+                key={item.key}
+                type="button"
+                onClick={() => setSelectedPrayerKey(item.key)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`relative rounded-xl overflow-hidden p-2 text-right flex flex-col justify-between h-[105px] border transition-all cursor-pointer shadow-xs ${
+                  isSelected
+                    ? "border-amber-400 ring-2 ring-amber-400/40 shadow-md"
+                    : "border-slate-200/90 hover:border-slate-300 bg-white"
+                }`}
+              >
+                {/* Background Image Thumbnail */}
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="absolute inset-0 w-full h-full object-cover object-center brightness-75"
+                  referrerPolicy="no-referrer"
+                />
+
+                {/* Dark Gradient Overlay */}
+                <div className={`absolute inset-0 transition-opacity ${
+                  isSelected 
+                    ? "bg-gradient-to-t from-slate-950/90 via-slate-900/60 to-slate-950/40" 
+                    : "bg-gradient-to-t from-slate-950/80 via-slate-900/50 to-slate-950/30"
+                }`} />
+
+                {/* Header: Name & (Active Tag + Bell Notification Toggle) */}
+                <div className="relative z-10 flex items-center justify-between gap-1">
+                  <span className="font-bold text-xs text-white font-cairo drop-shadow-sm truncate">
+                    {item.name}
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isNext && (
+                      <span className="text-[7px] sm:text-[8px] font-black bg-amber-400 text-slate-950 px-1 py-0.2 rounded-full font-cairo animate-pulse">
+                        القادمة
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={(e) => handleTogglePrayerAlert(e, item.key, item.name)}
+                      title={prayerAlerts[item.key] ? `إلغاء تنبيه صلاة ${item.name}` : `تفعيل تنبيه صلاة ${item.name}`}
+                      className={`w-5 h-5 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-xs ${
+                        prayerAlerts[item.key]
+                          ? "bg-amber-400 hover:bg-amber-300 text-slate-950 ring-1 ring-amber-300/60"
+                          : "bg-black/50 hover:bg-black/70 text-slate-300 hover:text-white ring-1 ring-white/20"
+                      }`}
+                    >
+                      {prayerAlerts[item.key] ? (
+                        <Bell className="w-2.5 h-2.5 fill-slate-950 stroke-[2.5]" />
+                      ) : (
+                        <BellOff className="w-2.5 h-2.5 stroke-[2] opacity-75" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Footer: Time */}
+                <div className="relative z-10 space-y-0.5">
+                  <p className="text-xs font-black text-white font-sans tracking-tight drop-shadow-sm">
+                    {formatTime12h(item.time)}
+                  </p>
+                </div>
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* BOTTOM QURANIC VERSE AYAH QUOTE CARD */}
@@ -416,6 +553,20 @@ export const PrayerTimesDetail: React.FC = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Toast Alert Feedback */}
+        <AnimatePresence>
+          {toastMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 15, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 15, scale: 0.92 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-slate-950/90 text-amber-300 border border-amber-400/40 shadow-2xl px-4 py-2 rounded-xl flex items-center gap-2 text-xs sm:text-sm font-bold font-cairo backdrop-blur-md"
+            >
+              <span>{toastMessage}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>
