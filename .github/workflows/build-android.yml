@@ -102,47 +102,48 @@ jobs:
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          node -e '
-          const fs = require("fs");
-          const path = require("path");
+          mkdir -p .github/scripts
+          cat > .github/scripts/setup-google-services.js <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
 
-          const targetPath = path.join("android", "app", "google-services.json");
-          let raw = process.env.GOOGLE_SERVICES_JSON || "";
+          const targetPath = path.join('android', 'app', 'google-services.json');
+          let raw = process.env.GOOGLE_SERVICES_JSON || '';
 
           if (raw.trim()) {
-            console.log("Found GOOGLE_SERVICES_JSON secret — normalizing and validating...");
+            console.log('Found GOOGLE_SERVICES_JSON secret — normalizing and validating...');
             let content = raw.trim();
 
-            // Try base64 decode if it looks base64 encoded
-            if (/^[A-Za-z0-9+/=\s]+$/.test(content) && content.length > 100) {
-              try {
-                const decoded = Buffer.from(content, "base64").toString("utf8");
-                if (decoded.includes("project_info")) {
-                  console.log("Secret appears base64-encoded — decoded successfully.");
-                  content = decoded;
-                }
-              } catch (e) {}
+            // Try base64 decode if it looks like base64 (non-fatal)
+            try {
+              const decoded = Buffer.from(content, 'base64').toString('utf8');
+              if (decoded.includes('project_info')) {
+                console.log('Secret appears base64-encoded — decoded successfully.');
+                content = decoded;
+              }
+            } catch (e) {
+              // ignore decode errors
             }
 
             // Strip surrounding quotes if whole string is wrapped in quotes
-            if ((content.startsWith(`"`) && content.endsWith(`"`)) || (content.startsWith(`'`) && content.endsWith(`'`))) {
+            if ((content.startsWith('"') && content.endsWith('"')) || (content.startsWith("'") && content.endsWith("'"))) {
               content = content.slice(1, -1);
             }
 
-            // Replace literal \n with actual newline
-            content = content.replace(/\\n/g, "\n");
+            // Replace literal \n sequences with real newlines
+            content = content.replace(/\\n/g, '\n');
 
             try {
               JSON.parse(content);
               fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-              fs.writeFileSync(targetPath, content, "utf8");
-              console.log("google-services.json created and validated successfully!");
+              fs.writeFileSync(targetPath, content, 'utf8');
+              console.log('google-services.json created and validated successfully!');
             } catch (err) {
-              console.error("Invalid google-services.json format:", err.message);
+              console.error('Invalid google-services.json format:', err.message);
               process.exit(1);
             }
           } else {
-            console.log("GOOGLE_SERVICES_JSON secret not set or empty. Injecting fallback google-services.json...");
+            console.log('GOOGLE_SERVICES_JSON secret not set or empty. Injecting fallback google-services.json...');
             const fallback = {
               project_info: {
                 project_number: "123456789012",
@@ -159,24 +160,19 @@ jobs:
                   },
                   oauth_client: [],
                   api_key: [
-                    {
-                      current_key: "AIzaSyDummyKeyForBuildVerificationOnly"
-                    }
+                    { current_key: "AIzaSyDummyKeyForBuildVerificationOnly" }
                   ],
-                  services: {
-                    appinvite_service: {
-                      other_platform_oauth_client: []
-                    }
-                  }
+                  services: { appinvite_service: { other_platform_oauth_client: [] } }
                 }
               ],
               configuration_version: "1"
             };
             fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-            fs.writeFileSync(targetPath, JSON.stringify(fallback, null, 2), "utf8");
-            console.log("Fallback google-services.json generated successfully.");
+            fs.writeFileSync(targetPath, JSON.stringify(fallback, null, 2), 'utf8');
+            console.log('Fallback google-services.json generated successfully.');
           }
-          '
+          NODE
+          node .github/scripts/setup-google-services.js
 
       - name: Build APK
         working-directory: ./android
