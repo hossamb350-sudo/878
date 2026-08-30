@@ -13,6 +13,7 @@ import { Share2, Bookmark, Headphones, Newspaper, Clock, PlayCircle, Play, Monit
 import { motion, AnimatePresence } from "motion/react";
 import { PullToRefresh } from "../../components/PullToRefresh";
 import { FeaturedTopicsSlider } from "../../components/FeaturedTopicsSlider";
+import { SEO } from "../../components/SEO";
 
 function getRelativeArabicTime(timestamp: number): string {
   const diffMs = Date.now() - timestamp;
@@ -656,6 +657,12 @@ export function Home() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
+    <SEO 
+      title="منصة تعز الإعلامية" 
+      description="إعلام ينقل الواقع ويستنير بالقرآن والقائد" 
+      imageUrl="https://taiz-media-ye.vercel.app/TAIZMEDIAPLATFORM.jpg" 
+      path="/" 
+    />
     <motion.div 
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 

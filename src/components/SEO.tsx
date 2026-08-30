@@ -14,10 +14,10 @@ export function SEO({ title, description, imageUrl, type = 'website', path }: SE
   const siteName = "منصة تعز الإعلامية";
   
   // For the browser tab (standard title)
-  const tabTitle = title ? `${title} | ${siteName}` : siteName;
+  const tabTitle = title && title !== siteName ? `${title} | ${siteName}` : siteName;
   
-  // For Open Graph Title (as required for Facebook preview)
-  const ogTitle = title ? `${siteName} | ${title}` : siteName;
+  // For Open Graph Title (as required for Facebook/WhatsApp preview)
+  const ogTitle = title && title !== siteName ? `${siteName} | ${title}` : siteName;
   
   const absoluteUrl = path ? routes.absolute(path) : undefined;
 

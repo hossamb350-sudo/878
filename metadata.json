@@ -1,6 +1,6 @@
 {
   "name": "منصة تعز الإعلامية",
-  "description": "المنصة الرسمية لمنصة تعز الإعلامية - تغطية إخبارية شاملة، دروس هدي القرآن، وبث مباشر.",
+  "description": "إعلام ينقل الواقع ويستنير بالقرآن والقائد",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
