@@ -125,6 +125,7 @@ import { AdminVersionLock } from "../../components/AdminVersionLock";
 import { AdminFeaturedTopics } from "../../components/AdminFeaturedTopics";
 import { AdminLiveChannels } from "../../components/AdminLiveChannels";
 import { AdminQuranExcerpts } from "../../components/AdminQuranExcerpts";
+import { AdminPrayerWeather } from "../../components/AdminPrayerWeather";
 import { OnlineUsersConfig, RegisteredUsersConfig } from "../../services/OnlineUsersService";
 import { ContactUsSection } from "../../components/ContactUsSection";
 
@@ -505,6 +506,12 @@ export function Admin() {
       icon: List,
       label: "إدارة التصنيفات",
       access: isAdmin || isManager || (isEditor && hasPermission("categories")),
+    },
+    {
+      id: "prayer-weather",
+      icon: Clock,
+      label: "مواقيت الصلاة والطقس",
+      access: isAdmin || isManager,
     },
     { id: "registered-users", icon: Users, label: "إدارة عدد المستخدمين", access: isAdmin },
     { id: "version-lock", icon: Shield, label: "قفل وإصدار التطبيق", access: isAdmin },
@@ -939,6 +946,7 @@ export function Admin() {
                 {activeTab === "events" && <AdminEvents />}
                 {activeTab === "social" && <AdminSocialLinks />}
                 {activeTab === "roles" && isAdmin && <AdminRoles />}
+                {activeTab === "prayer-weather" && (isAdmin || isManager) && <AdminPrayerWeather isAdmin={isAdmin} />}
                 {activeTab === "registered-users" && isAdmin && <AdminRegisteredUsers isAdmin={isAdmin} />}
                 {activeTab === "version-lock" && isAdmin && <AdminVersionLock isAdmin={isAdmin} />}
               </div>
@@ -1163,7 +1171,7 @@ function AdminSummaryDashboard({
     return () => unsubs.forEach((u) => u());
   }, []);
 
-  // Sections matching exact visual arrangement from reference image
+  // Sections matching exact visual arrangement from sidebar tabs
   const adminSections = [
     {
       id: "news",
@@ -1174,20 +1182,36 @@ function AdminSummaryDashboard({
       access: filteredTabs.some((t) => t.id === "news"),
     },
     {
-      id: "articles",
-      label: "إدارة المقالات",
-      icon: BookOpen,
-      bgColor: "bg-amber-50 dark:bg-amber-950/50",
-      textColor: "text-amber-600 dark:text-amber-400",
-      access: filteredTabs.some((t) => t.id === "articles"),
-    },
-    {
       id: "urgent",
       label: "الأخبار العاجلة",
       icon: AlertTriangle,
       bgColor: "bg-orange-50 dark:bg-orange-950/50",
       textColor: "text-orange-600 dark:text-orange-400",
       access: filteredTabs.some((t) => t.id === "urgent"),
+    },
+    {
+      id: "featuredTopics",
+      label: "أبرز المواضيع",
+      icon: Zap,
+      bgColor: "bg-amber-50 dark:bg-amber-950/50",
+      textColor: "text-amber-600 dark:text-amber-400",
+      access: filteredTabs.some((t) => t.id === "featuredTopics"),
+    },
+    {
+      id: "articles",
+      label: "إدارة المقالات",
+      icon: BookOpen,
+      bgColor: "bg-indigo-50 dark:bg-indigo-950/50",
+      textColor: "text-indigo-600 dark:text-indigo-400",
+      access: filteredTabs.some((t) => t.id === "articles"),
+    },
+    {
+      id: "videos",
+      label: "الفيديوهات",
+      icon: Video,
+      bgColor: "bg-purple-50 dark:bg-purple-950/50",
+      textColor: "text-purple-600 dark:text-purple-400",
+      access: filteredTabs.some((t) => t.id === "videos"),
     },
     {
       id: "live",
@@ -1206,20 +1230,20 @@ function AdminSummaryDashboard({
       access: filteredTabs.some((t) => t.id === "leader"),
     },
     {
-      id: "videos",
-      label: "الفيديوهات",
-      icon: Video,
-      bgColor: "bg-indigo-50 dark:bg-indigo-950/50",
-      textColor: "text-indigo-600 dark:text-indigo-400",
-      access: filteredTabs.some((t) => t.id === "videos"),
+      id: "quran",
+      label: "إعداد مقررات هدي القرآن",
+      icon: BookOpen,
+      bgColor: "bg-green-50 dark:bg-green-950/50",
+      textColor: "text-green-600 dark:text-green-400",
+      access: filteredTabs.some((t) => t.id === "quran"),
     },
     {
-      id: "roles",
-      label: "إدارة الصلاحيات",
-      icon: Users,
-      bgColor: "bg-purple-50 dark:bg-purple-950/50",
-      textColor: "text-purple-600 dark:text-purple-400",
-      access: filteredTabs.some((t) => t.id === "roles"),
+      id: "excerpts",
+      label: "إدارة المقتطفات",
+      icon: Quote,
+      bgColor: "bg-violet-50 dark:bg-violet-950/50",
+      textColor: "text-violet-600 dark:text-violet-400",
+      access: filteredTabs.some((t) => t.id === "excerpts"),
     },
     {
       id: "events",
@@ -1228,14 +1252,6 @@ function AdminSummaryDashboard({
       bgColor: "bg-rose-50 dark:bg-rose-950/50",
       textColor: "text-rose-600 dark:text-rose-400",
       access: filteredTabs.some((t) => t.id === "events"),
-    },
-    {
-      id: "quran",
-      label: "إعداد مقررات هدي القرآن",
-      icon: BookOpen,
-      bgColor: "bg-green-50 dark:bg-green-950/50",
-      textColor: "text-green-600 dark:text-green-400",
-      access: filteredTabs.some((t) => t.id === "quran"),
     },
     {
       id: "social",
@@ -1252,6 +1268,38 @@ function AdminSummaryDashboard({
       bgColor: "bg-sky-50 dark:bg-sky-950/50",
       textColor: "text-sky-600 dark:text-sky-400",
       access: filteredTabs.some((t) => t.id === "categories"),
+    },
+    {
+      id: "prayer-weather",
+      label: "مواقيت الصلاة والطقس",
+      icon: Clock,
+      bgColor: "bg-emerald-50 dark:bg-emerald-950/50",
+      textColor: "text-emerald-600 dark:text-emerald-400",
+      access: filteredTabs.some((t) => t.id === "prayer-weather"),
+    },
+    {
+      id: "registered-users",
+      label: "إدارة عدد المستخدمين",
+      icon: Users,
+      bgColor: "bg-cyan-50 dark:bg-cyan-950/50",
+      textColor: "text-cyan-600 dark:text-cyan-400",
+      access: filteredTabs.some((t) => t.id === "registered-users"),
+    },
+    {
+      id: "version-lock",
+      label: "قفل وإصدار التطبيق",
+      icon: Shield,
+      bgColor: "bg-slate-100 dark:bg-slate-800",
+      textColor: "text-slate-700 dark:text-slate-300",
+      access: filteredTabs.some((t) => t.id === "version-lock"),
+    },
+    {
+      id: "roles",
+      label: "إدارة الصلاحيات",
+      icon: Users,
+      bgColor: "bg-fuchsia-50 dark:bg-fuchsia-950/50",
+      textColor: "text-fuchsia-600 dark:text-fuchsia-400",
+      access: filteredTabs.some((t) => t.id === "roles"),
     },
   ];
 

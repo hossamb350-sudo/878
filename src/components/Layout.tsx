@@ -1,5 +1,6 @@
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { HeaderWidgets } from "./HeaderWidgets";
+import { PrayerAdhanPopup } from "./PrayerAdhanPopup";
 import { Newspaper, Tv, BookOpen, Calendar as CalendarIcon, User, LogIn, AlertTriangle, X, Play, Pause, Volume2, ArrowLeft, Radio } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { collection, query, orderBy, limit, onSnapshot, doc, getDoc } from "firebase/firestore";
@@ -658,6 +659,9 @@ export function Layout({ children }: { children?: React.ReactNode }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Global Islamic Adhan Popup Alert */}
+      <PrayerAdhanPopup />
 
       {/* Navigation for All Devices */}
       <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_25px_rgba(0,0,0,0.06)] border-t border-slate-100 z-40 pb-safe transition-transform duration-300 h-[62px] sm:h-[66px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>

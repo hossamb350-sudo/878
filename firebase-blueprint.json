@@ -267,9 +267,63 @@
         "createdAt": { "type": "number" }
       },
       "required": ["title", "imageUrl", "categories", "isVisible", "order", "createdAt"]
+    },
+    "PrayerTimesConfig": {
+      "title": "Prayer Times Configuration",
+      "description": "Manual or automatic settings for prayer times in Taiz",
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["auto", "manual"] },
+        "timings": { "type": "object" },
+        "hijriDateOverride": { "type": "string" },
+        "updatedAt": { "type": "number" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["mode", "timings", "updatedAt"]
+    },
+    "WeatherConfig": {
+      "title": "Weather Configuration",
+      "description": "Manual or automatic settings for weather in Taiz",
+      "type": "object",
+      "properties": {
+        "mode": { "type": "string", "enum": ["auto", "manual"] },
+        "temp": { "type": "number" },
+        "conditionText": { "type": "string" },
+        "weatherCode": { "type": "number" },
+        "humidity": { "type": "number" },
+        "windSpeed": { "type": "number" },
+        "updatedAt": { "type": "number" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["mode", "temp", "conditionText", "updatedAt"]
+    },
+    "PrayerAlertBroadcast": {
+      "title": "Prayer Alert Broadcast",
+      "description": "Instant broadcast trigger for adhan popup",
+      "type": "object",
+      "properties": {
+        "prayerKey": { "type": "string" },
+        "prayerName": { "type": "string" },
+        "message": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "triggeredBy": { "type": "string" }
+      },
+      "required": ["prayerKey", "prayerName", "timestamp"]
     }
   },
   "firestore": {
+    "/settings/prayer_times_config": {
+      "schema": { "$ref": "PrayerTimesConfig" },
+      "description": "Prayer times mode and manual timings"
+    },
+    "/settings/weather_config": {
+      "schema": { "$ref": "WeatherConfig" },
+      "description": "Weather mode and manual conditions"
+    },
+    "/settings/prayer_alert_broadcast": {
+      "schema": { "$ref": "PrayerAlertBroadcast" },
+      "description": "Adhan announcement broadcast"
+    },
     "/featured_topics/{topicId}": {
       "schema": { "$ref": "FeaturedTopic" },
       "description": "Featured topics shown on home page"

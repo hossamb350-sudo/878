@@ -330,3 +330,48 @@ export interface AppVersionConfig {
   updatedBy?: string;
 }
 
+export interface PrayerTimesConfig {
+  mode: "auto" | "manual";
+  timings: {
+    Fajr: string;
+    Sunrise: string;
+    Dhuhr: string;
+    Asr: string;
+    Maghrib: string;
+    Isha: string;
+  };
+  hijriDateOverride?: string;
+  updatedAt: number;
+  updatedBy?: string;
+}
+
+export interface WeatherConfig {
+  mode: "auto" | "manual";
+  temp: number;
+  feelsLike?: number;
+  conditionText: string;
+  weatherCode: number;
+  humidity: number;
+  windSpeed: number;
+  windDeg?: number;
+  pressure?: number;
+  visibilityKm?: number;
+  precipProb?: number;
+  cloudiness?: number;
+  tempMax?: number;
+  tempMin?: number;
+  isNight?: boolean;
+  rainProb?: number;
+  updatedAt: number;
+  updatedBy?: string;
+}
+
+export interface PrayerAlertBroadcast {
+  id?: string;
+  prayerKey: "Fajr" | "Sunrise" | "Dhuhr" | "Asr" | "Maghrib" | "Isha";
+  prayerName: string;
+  message: string;
+  timestamp: number;
+  triggeredBy?: string;
+}
+

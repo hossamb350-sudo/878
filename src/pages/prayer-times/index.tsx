@@ -4,9 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { 
   MapPin, Calendar, ChevronLeft, 
   Sun, Moon, Check, ArrowRight,
-  Bell, BellOff
+  Bell, BellOff, Sparkles
 } from "lucide-react";
 import { PrayerBackgroundEffect } from "../../components/PrayerBackgroundEffect";
+import { PrayerWeatherService } from "../../services/PrayerWeatherService";
+import { PrayerTimesConfig } from "../../types";
 
 // ==========================================
 // 1. DISTINCT CUSTOM PRAYER ICONS FOR EACH PRAYER
@@ -143,14 +145,6 @@ export const PrayerTimesDetail: React.FC = () => {
     const currentStatus = prayerAlerts[prayerKey] ?? true;
     const newStatus = !currentStatus;
 
-    if (newStatus && typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
-      try {
-        await Notification.requestPermission();
-      } catch (err) {
-        console.warn(err);
-      }
-    }
-
     const updated = { ...prayerAlerts, [prayerKey]: newStatus };
     setPrayerAlerts(updated);
     try {
@@ -165,6 +159,8 @@ export const PrayerTimesDetail: React.FC = () => {
       showToast(`تم إلغاء تنبيه صلاة ${prayerName} 🔕`);
     }
   };
+
+  const [prayerConfig, setPrayerConfig] = useState<PrayerTimesConfig | null>(null);
 
   const [rawTimings, setRawTimings] = useState<Record<string, string> | null>(() => {
     try {
@@ -189,7 +185,25 @@ export const PrayerTimesDetail: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch Prayer Times for Taiz, Yemen
+  // Listen to Firestore Manual Prayer Config
+  useEffect(() => {
+    const unsub = PrayerWeatherService.subscribePrayerTimesConfig((cfg) => {
+      setPrayerConfig(cfg);
+      if (cfg?.mode === "manual") {
+        if (cfg.timings) {
+          setRawTimings(cfg.timings);
+          localStorage.setItem("cached_detail_raw_timings", JSON.stringify(cfg.timings));
+        }
+        if (cfg.hijriDateOverride) {
+          setHijriDate(cfg.hijriDateOverride);
+          localStorage.setItem("cached_detail_hijri_date", cfg.hijriDateOverride);
+        }
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  // Fetch Prayer Times for Taiz, Yemen (for auto mode)
   useEffect(() => {
     const fetchPrayerTimes = async () => {
       try {
@@ -197,13 +211,15 @@ export const PrayerTimesDetail: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           const timings = data.data.timings;
-          setRawTimings(timings);
-          localStorage.setItem("cached_detail_raw_timings", JSON.stringify(timings));
+          if (!prayerConfig || prayerConfig.mode === "auto") {
+            setRawTimings(timings);
+            localStorage.setItem("cached_detail_raw_timings", JSON.stringify(timings));
 
-          const hijri = data.data.date.hijri;
-          const newHijriDate = `${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
-          setHijriDate(newHijriDate);
-          localStorage.setItem("cached_detail_hijri_date", newHijriDate);
+            const hijri = data.data.date.hijri;
+            const newHijriDate = `${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
+            setHijriDate(newHijriDate);
+            localStorage.setItem("cached_detail_hijri_date", newHijriDate);
+          }
         } else {
           if (!rawTimings) {
             setRawTimings({
@@ -231,7 +247,7 @@ export const PrayerTimesDetail: React.FC = () => {
     };
 
     fetchPrayerTimes();
-  }, []);
+  }, [prayerConfig]);
 
   // Format 24h string to 12h Arabic format e.g. "12:10 م"
   const formatTime12h = (time24?: string) => {
@@ -452,13 +468,20 @@ export const PrayerTimesDetail: React.FC = () => {
             const isSelected = selectedPrayerKey === item.key || (!selectedPrayerKey && isNext);
 
             return (
-              <motion.button
+              <motion.div
                 key={item.key}
-                type="button"
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedPrayerKey(item.key)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedPrayerKey(item.key);
+                  }
+                }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`relative rounded-xl overflow-hidden p-2 text-right flex flex-col justify-between h-[105px] border transition-all cursor-pointer shadow-xs ${
+                className={`relative rounded-xl overflow-hidden p-2 text-right flex flex-col justify-between h-[105px] border transition-all cursor-pointer shadow-xs select-none focus:outline-hidden ${
                   isSelected
                     ? "border-amber-400 ring-2 ring-amber-400/40 shadow-md"
                     : "border-slate-200/90 hover:border-slate-300 bg-white"
@@ -515,7 +538,7 @@ export const PrayerTimesDetail: React.FC = () => {
                     {formatTime12h(item.time)}
                   </p>
                 </div>
-              </motion.button>
+              </motion.div>
             );
           })}
         </div>

@@ -2,6 +2,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Menu, Search, X, Calendar, BookOpen, Tv, Newspaper, Clock, Cloud, Mic, Settings, ChevronLeft, Sun, Moon, CloudRain, CloudLightning, CloudSnow } from "lucide-react";
+import { PrayerWeatherService } from "../services/PrayerWeatherService";
+import { PrayerTimesConfig, WeatherConfig } from "../types";
 
 export const HeaderWidgets: React.FC = () => {
   const navigate = useNavigate();
@@ -15,6 +17,8 @@ export const HeaderWidgets: React.FC = () => {
   // Hijri Date & Prayer Times State
   const [apiData, setApiData] = useState<any>(null);
   const [weatherData, setWeatherData] = useState<any>(null);
+  const [prayerConfig, setPrayerConfig] = useState<PrayerTimesConfig | null>(null);
+  const [weatherConfig, setWeatherConfig] = useState<WeatherConfig | null>(null);
   const [apiHijriDate, setApiHijriDate] = useState<string | null>(() => {
     try {
       return localStorage.getItem("cached_hijri_date");
@@ -29,7 +33,21 @@ export const HeaderWidgets: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch Hijri date and prayer times
+  // Listen to Firestore Manual Configs
+  useEffect(() => {
+    const unsubPrayer = PrayerWeatherService.subscribePrayerTimesConfig((cfg) => {
+      setPrayerConfig(cfg);
+    });
+    const unsubWeather = PrayerWeatherService.subscribeWeatherConfig((cfg) => {
+      setWeatherConfig(cfg);
+    });
+    return () => {
+      unsubPrayer();
+      unsubWeather();
+    };
+  }, []);
+
+  // Fetch Hijri date and prayer times (for auto mode)
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -49,7 +67,7 @@ export const HeaderWidgets: React.FC = () => {
     fetchData();
   }, []);
 
-  // Fetch Weather data
+  // Fetch Weather data (for auto mode)
   useEffect(() => {
     const fetchWeather = async () => {
       try {
@@ -72,8 +90,14 @@ export const HeaderWidgets: React.FC = () => {
 
   // Calculate Next Prayer and Countdown
   const nextPrayerInfo = useMemo(() => {
-    if (!apiData) return { name: "الفجر", countdown: "--:--:--" };
-    const timings = apiData.timings;
+    let timings = apiData?.timings;
+
+    // If manual mode is configured, override timings
+    if (prayerConfig?.mode === "manual" && prayerConfig.timings) {
+      timings = prayerConfig.timings;
+    }
+
+    if (!timings) return { name: "الفجر", countdown: "--:--:--" };
     
     const timeToMs = (timeStr: string) => {
       const timePart = timeStr.split(' ')[0];
@@ -112,10 +136,29 @@ export const HeaderWidgets: React.FC = () => {
     ].join(':');
 
     return { name: next.name, countdown: countdownStr };
-  }, [apiData, time]);
+  }, [apiData, prayerConfig, time]);
 
   // Weather Display Mapping
   const weatherDisplay = useMemo(() => {
+    // If manual weather mode is enabled, display manual admin settings
+    if (weatherConfig?.mode === "manual") {
+      const temp = Math.round(weatherConfig.temp);
+      const condition = weatherConfig.conditionText || "صافٍ";
+      const isNight = weatherConfig.isNight ?? false;
+      const code = weatherConfig.weatherCode ?? 0;
+
+      let IconComponent = Cloud;
+      if (code === 0) {
+        IconComponent = isNight ? Moon : Sun;
+      } else if (code >= 51 && code <= 67) {
+        IconComponent = CloudRain;
+      } else if (code >= 80 && code <= 99) {
+        IconComponent = CloudLightning;
+      }
+
+      return { text: `${temp}°C - ${condition}`, icon: IconComponent };
+    }
+
     if (!weatherData) return { text: "جاري التحديث...", icon: Cloud };
     
     const { temperature, weathercode, is_day } = weatherData;
@@ -146,7 +189,7 @@ export const HeaderWidgets: React.FC = () => {
     }
 
     return { text: `${Math.round(temperature)}°C - ${text}`, icon: IconComponent };
-  }, [weatherData]);
+  }, [weatherData, weatherConfig]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 
 import { fetchWeatherData } from "../../utils/weatherApi";
+import { PrayerWeatherService } from "../../services/PrayerWeatherService";
+import { WeatherConfig } from "../../types";
 
 // --- TIME PERIOD OF DAY ENGINE ---
 export type TimePeriod = "dawn" | "morning" | "noon" | "afternoon" | "sunset" | "evening" | "night";
@@ -1081,12 +1083,21 @@ export const WeatherDetail: React.FC = () => {
   } | null>(null);
 
   // Live state initialization (No caching)
+  const [weatherConfig, setWeatherConfig] = useState<WeatherConfig | null>(null);
   const [weatherData, setWeatherData] = useState<any>(null);
   const [forecastData, setForecastData] = useState<any>(null);
   const [airPollutionData, setAirPollutionData] = useState<any>(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Subscribe to manual weather config
+  useEffect(() => {
+    const unsub = PrayerWeatherService.subscribeWeatherConfig((cfg) => {
+      setWeatherConfig(cfg);
+    });
+    return () => unsub();
+  }, []);
 
   // Helper function to extract YYYY-MM-DD string in local format
   const getLocalDateStr = (dtSec?: number) => {
@@ -1244,22 +1255,29 @@ export const WeatherDetail: React.FC = () => {
   };
 
   // Current Weather values
-  const rawTemp = weatherData?.main?.temp ?? 26;
-  const rawFeelsLike = weatherData?.main?.feels_like ?? 27;
-  const rawTempMax = weatherData?.main?.temp_max ?? 30;
-  const rawTempMin = weatherData?.main?.temp_min ?? 20;
+  const isManualMode = weatherConfig?.mode === "manual";
+  const rawTemp = isManualMode ? (weatherConfig?.temp ?? 26) : (weatherData?.main?.temp ?? 26);
+  const rawFeelsLike = isManualMode ? (weatherConfig?.feelsLike ?? rawTemp) : (weatherData?.main?.feels_like ?? 27);
+  const rawTempMax = isManualMode ? (weatherConfig?.tempMax ?? (rawTemp + 3)) : (weatherData?.main?.temp_max ?? 30);
+  const rawTempMin = isManualMode ? (weatherConfig?.tempMin ?? (rawTemp - 4)) : (weatherData?.main?.temp_min ?? 20);
 
-  const conditionStr = weatherData?.weather?.[0]?.description || "غائم جزئياً";
-  const weatherCode = weatherData?.weather?.[0]?.id || 801;
-  const humidity = Math.round(weatherData?.main?.humidity ?? 52);
-  const windSpeed = weatherData?.wind?.speed ? (Math.round(weatherData.wind.speed * 100) / 100) : 3.8;
-  const windDeg = weatherData?.wind?.deg ?? 70;
-  const pressure = Math.round(weatherData?.main?.pressure ?? 1010);
-  const visibilityKm = weatherData?.visibility ? Math.round(weatherData.visibility / 1000) : 10;
+  const conditionStr = isManualMode 
+    ? (weatherConfig?.conditionText || "صافٍ") 
+    : (weatherData?.weather?.[0]?.description || "غائم جزئياً");
+  const weatherCode = isManualMode 
+    ? (weatherConfig?.weatherCode ?? 800) 
+    : (weatherData?.weather?.[0]?.id || 801);
+  const humidity = Math.round(isManualMode ? (weatherConfig?.humidity ?? 50) : (weatherData?.main?.humidity ?? 52));
+  const windSpeed = isManualMode 
+    ? (weatherConfig?.windSpeed ?? 3.5) 
+    : (weatherData?.wind?.speed ? (Math.round(weatherData.wind.speed * 100) / 100) : 3.8);
+  const windDeg = isManualMode ? (weatherConfig?.windDeg ?? 70) : (weatherData?.wind?.deg ?? 70);
+  const pressure = Math.round(isManualMode ? (weatherConfig?.pressure ?? 1010) : (weatherData?.main?.pressure ?? 1010));
+  const visibilityKm = isManualMode ? (weatherConfig?.visibilityKm ?? 10) : (weatherData?.visibility ? Math.round(weatherData.visibility / 1000) : 10);
   const sunriseTime = weatherData?.sys?.sunrise ? formatTime12h(weatherData.sys.sunrise) : "05:46 ص";
   const sunsetTime = weatherData?.sys?.sunset ? formatTime12h(weatherData.sys.sunset) : "06:34 م";
-  const precipProb = weatherData?.pop !== undefined ? Math.round(weatherData.pop * 100) : 0;
-  const cloudiness = weatherData?.clouds?.all ?? 40;
+  const precipProb = isManualMode ? (weatherConfig?.precipProb ?? 0) : (weatherData?.pop !== undefined ? Math.round(weatherData.pop * 100) : 0);
+  const cloudiness = isManualMode ? (weatherConfig?.cloudiness ?? 20) : (weatherData?.clouds?.all ?? 40);
   const dewPoint = calculateDewPoint(rawTemp, humidity);
   const aqiCode = airPollutionData?.list?.[0]?.main?.aqi ?? 2;
   const aqiObj = getAqiDetails(aqiCode);
