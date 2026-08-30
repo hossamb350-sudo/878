@@ -98,6 +98,49 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Setup Firebase google-services.json Configuration
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          mkdir -p android/app
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "Injecting google-services.json from secret GOOGLE_SERVICES_JSON..."
+            echo "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          else
+            echo "GOOGLE_SERVICES_JSON secret not set or empty. Injecting fallback google-services.json for build..."
+            cat << 'EOF' > android/app/google-services.json
+          {
+            "project_info": {
+              "project_number": "123456789012",
+              "project_id": "taiz-platform",
+              "storage_bucket": "taiz-platform.appspot.com"
+            },
+            "client": [
+              {
+                "client_info": {
+                  "mobilesdk_app_id": "1:123456789012:android:1234567890123456789012",
+                  "android_client_info": {
+                    "package_name": "com.taiz.platform"
+                  }
+                },
+                "oauth_client": [],
+                "api_key": [
+                  {
+                    "current_key": "AIzaSyDummyKeyForBuildVerificationOnly"
+                  }
+                ],
+                "services": {
+                  "appinvite_service": {
+                    "other_platform_oauth_client": []
+                  }
+                }
+              }
+            ],
+            "configuration_version": "1"
+          }
+          EOF
+          fi
+
       - name: Build APK
         working-directory: ./android
         run: |
