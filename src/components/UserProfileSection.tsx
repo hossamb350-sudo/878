@@ -113,7 +113,12 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false }
           const permStatus = await PushNotifications.requestPermissions();
           
           if (permStatus?.receive === "granted") {
-            await PushNotifications.register();
+            try {
+              await PushNotifications.register();
+            } catch (regErr) {
+              console.error("[PushNotification] Manual registration failed caught safely:", regErr);
+              showToast("حدث خطأ أثناء الاتصال بخادم الإشعارات. يرجى التحقق من اتصال الإنترنت وجوجل بلاي.");
+            }
             setNotifEnabled(true);
             localStorage.setItem("push_notifications_enabled", "true");
             

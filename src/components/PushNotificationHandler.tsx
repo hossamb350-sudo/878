@@ -83,12 +83,19 @@ export function PushNotificationHandler() {
           }
         });
 
-        // 2. Check permissions: if already granted and not explicitly disabled, register
+        // 2. Check permissions: if already granted and not explicitly disabled, register with a safe delay
         const permStatus = await PushNotifications.checkPermissions();
         const isDisabled = localStorage.getItem("push_notifications_enabled") === "false";
 
         if (permStatus?.receive === "granted" && !isDisabled) {
-          await PushNotifications.register();
+          setTimeout(async () => {
+            try {
+              console.log("[PushNotification] Executing delayed registration...");
+              await PushNotifications.register();
+            } catch (regErr) {
+              console.error("[PushNotification] Delayed native registration failed caught safely:", regErr);
+            }
+          }, 1500);
         } else {
           console.log("[PushNotification] Push notifications not active on startup.");
         }
