@@ -478,7 +478,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white text-text-primary transition-colors" dir="rtl">
+    <div className="flex flex-col min-h-screen bg-slate-50 text-text-primary transition-colors" dir="rtl">
       <UrgentNewsBanner />
 
       {/* Platform Logo & Widgets Area */}
@@ -595,7 +595,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       </div>
 
       {/* Main Content Area */}
-      <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto pb-16 min-w-0 w-full overflow-x-hidden">
+      <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto pb-16 min-w-0 w-full overflow-x-hidden bg-slate-50/60">
         {children || <Outlet />}
       </main>
 

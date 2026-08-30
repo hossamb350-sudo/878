@@ -13,7 +13,6 @@ import {
   Check, 
   Palette, 
   Layers, 
-  Sparkles,
   Info,
   RefreshCw,
   RotateCcw,

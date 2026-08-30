@@ -24,7 +24,6 @@ import {
   Copy,
   BookOpen,
   User,
-  Sparkles,
   CheckCircle2,
   FileText,
   X,
@@ -765,7 +764,7 @@ export function AdminQuranExcerpts() {
                 {(title || content) && (
                   <div className="p-3 bg-amber-50/50 dark:bg-stone-950 rounded-xl border border-amber-500/20 space-y-2">
                     <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400 font-cairo">
-                      <Sparkles className="w-3.5 h-3.5" />
+                      <BookOpen className="w-3.5 h-3.5" />
                       معاينة مباشرة لشكل البطاقة
                     </div>
                     <IslamicExcerptCard

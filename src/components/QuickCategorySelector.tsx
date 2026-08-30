@@ -14,8 +14,7 @@ import {
   Layers,
   Save,
   Tag,
-  SlidersHorizontal,
-  Sparkles
+  SlidersHorizontal
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 

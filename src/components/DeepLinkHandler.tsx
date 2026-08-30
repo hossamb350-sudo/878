@@ -5,7 +5,7 @@ import { App } from "@capacitor/app";
 import { isAndroidWebBrowser, buildAndroidIntentUrl, openInAndroidApp } from "../utils/deepLink";
 import { db } from "../firebase";
 import { doc, onSnapshot } from "firebase/firestore";
-import { Smartphone, Download, X, ExternalLink, Sparkles } from "lucide-react";
+import { Smartphone, Download, X, ExternalLink } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export function DeepLinkHandler() {

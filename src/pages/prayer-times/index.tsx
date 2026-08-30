@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   MapPin, Calendar, ChevronLeft, 
   Sun, Moon, Check, ArrowRight,
-  Bell, BellOff, Sparkles
+  Bell, BellOff
 } from "lucide-react";
 import { PrayerBackgroundEffect } from "../../components/PrayerBackgroundEffect";
 import { PrayerWeatherService } from "../../services/PrayerWeatherService";

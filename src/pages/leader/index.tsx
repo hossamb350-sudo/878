@@ -3,7 +3,7 @@ import { collection, query, orderBy, getDocs, onSnapshot } from "firebase/firest
 import { db } from "../../firebase";
 import { LeaderContent } from "../../types";
 import { SEO } from "../../components/SEO";
-import { Sparkles } from "lucide-react";
+import { Search } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { LeaderFilterBar } from "../../components/leader/LeaderFilterBar";
 import { LeaderVideoCard } from "../../components/leader/LeaderVideoCard";
@@ -152,7 +152,7 @@ export function Leader() {
             className="text-center py-14 px-6 bg-surface-card rounded-[20px] border border-dashed border-slate-300 shadow-soft text-slate-400 space-y-3"
           >
             <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-taiz-sky">
-              <Sparkles className="w-7 h-7" />
+              <Search className="w-7 h-7" />
             </div>
             <h3 className="text-sm sm:text-base font-bold text-text-primary">
               لم يتم العثور على أي نتائج

@@ -13,7 +13,6 @@ import {
   Save,
   RotateCcw,
   Bell,
-  Sparkles,
   CheckCircle2,
   AlertCircle,
   Eye,
@@ -239,7 +238,7 @@ export const AdminPrayerWeather: React.FC<{ isAdmin?: boolean }> = ({ isAdmin = 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Clock className="w-3.5 h-3.5" />
               <span>لوحة الإدارة والتحكم المركزي</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white">

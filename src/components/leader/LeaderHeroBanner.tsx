@@ -1,6 +1,6 @@
 import React from "react";
 import { IslamicGeometricPattern, GoldenCornerFrame } from "./LeaderIslamicOrnaments";
-import { Video, BookOpen, Layers, Sparkles, User } from "lucide-react";
+import { Video, BookOpen, Layers, User } from "lucide-react";
 import { motion } from "motion/react";
 
 interface LeaderHeroBannerProps {
@@ -35,7 +35,7 @@ export const LeaderHeroBanner: React.FC<LeaderHeroBannerProps> = ({
         <div className="flex items-center gap-3.5 sm:gap-4 w-full sm:w-auto">
           {/* Platform Icon Badge */}
           <div className="w-11 h-11 sm:w-13 sm:h-13 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-amber-300 shadow-md shrink-0">
-            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 fill-current animate-pulse" />
+            <User className="w-5 h-5 sm:w-6 sm:h-6 text-amber-300" />
           </div>
 
           <div className="flex flex-col text-right">

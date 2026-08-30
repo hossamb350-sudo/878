@@ -7,8 +7,7 @@ import {
   X, 
   Check, 
   Tag, 
-  ChevronDown,
-  Sparkles
+  ChevronDown
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 

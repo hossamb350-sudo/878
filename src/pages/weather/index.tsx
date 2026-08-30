@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { 
   MapPin, Eye, Gauge, Wind, Droplets, Calendar, 
-  ArrowUp, ArrowDown, RefreshCw, AlertCircle, Sparkles, Check, CloudRain,
+  ArrowUp, ArrowDown, RefreshCw, AlertCircle, Check, CloudRain,
   X, Clock, Sun, Sunrise, Sunset, Moon, Cloud, ShieldCheck, Thermometer, Compass, 
   CloudLightning, Info, ChevronLeft, Activity, ShieldAlert, BarChart3, Layers, Palette,
   TrendingUp, Sliders, Wind as WindIcon, HeartPulse, ChevronRight
@@ -1301,7 +1301,7 @@ export const WeatherDetail: React.FC = () => {
       description: `الحالة الجوية الحالية هي (${conditionStr}) بجهة رياح ${getWindDirectionArabic(windDeg)} (${windDeg}°) وسرعة ${windSpeed} م/ث مع مستوى رطوبة ${humidity}%.`,
       metrics: [
         { label: "درجة الحرارة", value: `${displayTemp(rawTemp)}°${unit}`, icon: Thermometer, color: "text-amber-500" },
-        { label: "الشعور الحراري", value: `${displayTemp(rawFeelsLike)}°${unit}`, icon: Sparkles, color: "text-orange-500" },
+        { label: "الشعور الحراري", value: `${displayTemp(rawFeelsLike)}°${unit}`, icon: Sun, color: "text-orange-500" },
         { label: "أعلى درجة اليوم", value: `${displayTemp(rawTempMax)}°${unit}`, icon: ArrowUp, color: "text-red-500" },
         { label: "أدنى درجة اليوم", value: `${displayTemp(rawTempMin)}°${unit}`, icon: ArrowDown, color: "text-sky-500" },
         { label: "الرطوبة النسبية", value: `${humidity}%`, icon: Droplets, color: "text-cyan-500" },
@@ -1342,7 +1342,7 @@ export const WeatherDetail: React.FC = () => {
       description: `تشير التوقعات الجوية للساعة ${timeFormatted} إلى حالة (${hDesc}) مع احتمالية أمطار بنسبة ${hPop}% ورطوبة ${hHum}%.`,
       metrics: [
         { label: "درجة الحرارة المتوقعة", value: `${displayTemp(hTemp)}°${unit}`, icon: Thermometer, color: "text-amber-500" },
-        { label: "الشعور الحراري", value: `${displayTemp(hFeels)}°${unit}`, icon: Sparkles, color: "text-orange-500" },
+        { label: "الشعور الحراري", value: `${displayTemp(hFeels)}°${unit}`, icon: Sun, color: "text-orange-500" },
         { label: "الحالة العامة", value: hDesc, icon: Cloud, color: "text-sky-500" },
         { label: "احتمال الأمطار", value: `${hPop}%`, icon: CloudRain, color: "text-blue-500" },
         { label: "سرعة الرياح", value: `${hWind} م/ث (${Math.round(hWind * 3.6)} كم/س)`, icon: Wind, color: "text-teal-500" },

@@ -14,7 +14,6 @@ import {
   Calendar, 
   Eye, 
   Play, 
-  Sparkles, 
   Clock, 
   Search,
   Filter,
@@ -184,7 +183,7 @@ export function TopicDetail() {
     return (
       <div className="min-h-screen p-6 flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 font-cairo text-right" dir="rtl">
         <div className="max-w-md w-full bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 text-center shadow-lg space-y-4">
-          <Sparkles className="w-12 h-12 text-amber-500 mx-auto" />
+          <Tag className="w-12 h-12 text-amber-500 mx-auto" />
           <h2 className="text-xl font-black text-slate-900 dark:text-white">الموضوع غير موجود</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">قد يكون تم حذف الموضوع أو التعديل عليه مؤخراً</p>
           <button 

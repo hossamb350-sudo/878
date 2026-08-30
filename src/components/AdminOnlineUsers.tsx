@@ -15,7 +15,6 @@ import {
   Users,
   Info,
   Clock,
-  Sparkles,
   Play,
   Pause,
 } from "lucide-react";

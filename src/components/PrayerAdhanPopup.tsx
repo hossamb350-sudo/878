@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, Bell, Clock, Sparkles } from "lucide-react";
+import { X, Bell, Clock } from "lucide-react";
 import { PrayerWeatherService } from "../services/PrayerWeatherService";
 import { PrayerAlertBroadcast, PrayerTimesConfig } from "../types";
 
@@ -265,13 +265,6 @@ export const PrayerAdhanPopup: React.FC = () => {
 
           {/* Popup Body Content */}
           <div className="p-5 pt-3 text-center space-y-4">
-            {/* Islamic Quranic Bismillah / Sub-banner */}
-            <div className="flex items-center justify-center gap-2 text-amber-300/90 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>حَيَّ عَلَى الصَّلَاةِ • حَيَّ عَلَى الْفَلَاحِ</span>
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-            </div>
-
             {/* Main Required Announcement Text */}
             <div className="p-4 rounded-2xl bg-white/5 border border-amber-500/20 backdrop-blur-md shadow-inner">
               <p className="text-base sm:text-lg font-bold text-amber-100 leading-relaxed font-cairo">

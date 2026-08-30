@@ -9,7 +9,6 @@ import {
   ChevronLeft, 
   Moon, 
   Calendar as CalendarIcon,
-  Sparkles, 
   Clock, 
   Loader2, 
   Bookmark, 
@@ -802,7 +801,7 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
             >
               <div className="flex items-center justify-between pb-2 border-b border-[#E5A921]/30">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#E5A921] shrink-0" />
+                  <CalendarIcon className="w-4 h-4 text-[#E5A921] shrink-0" />
                   <span className="text-xs sm:text-sm font-black text-[#015028] font-cairo">
                     مناسبة هذا اليوم ({selectedDayNumber} {currentMonthName})
                   </span>

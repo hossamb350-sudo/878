@@ -24,7 +24,6 @@ import {
   Users,
   Video as VideoIcon,
   Filter,
-  Sparkles,
   Pause,
   Volume2,
   VolumeX,

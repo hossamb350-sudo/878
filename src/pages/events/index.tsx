@@ -27,7 +27,6 @@ import {
   Share2,
   BookOpen,
   History as HistoryIcon,
-  Sparkles,
   Tag,
   ArrowRight,
   CheckCircle2,

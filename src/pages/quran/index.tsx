@@ -32,7 +32,6 @@ import {
   BookText,
   Scroll,
   Compass,
-  Sparkles,
   CheckCircle2,
   AlertTriangle,
   Trash2,

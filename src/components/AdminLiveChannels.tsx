@@ -17,7 +17,6 @@ import {
   Tag, 
   Eye, 
   EyeOff, 
-  Sparkles, 
   RefreshCw,
   ExternalLink,
   Layers,
@@ -343,7 +342,7 @@ export function AdminLiveChannels() {
         
         <div className="space-y-2 relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-bold border border-white/20">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            <Tv className="w-3.5 h-3.5 text-amber-300" />
             <span>نظام إدارة البث والترتيب الذكي</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black font-cairo">

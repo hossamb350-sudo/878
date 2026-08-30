@@ -18,7 +18,6 @@ import {
   Bookmark, 
   BookOpen, 
   Clock, 
-  Sparkles,
   ChevronLeft,
   Layers,
   Facebook,
@@ -622,7 +621,7 @@ export function LeaderItem() {
               {/* Lecture Conclusion Footer */}
               <div className="mt-8 pt-5 border-t border-slate-200/80 dark:border-white/10 text-center space-y-2">
                 <IslamicStarMedallion size="w-10 h-10" className="mx-auto">
-                  <Sparkles className="w-4 h-4 text-amber-300" />
+                  <BookOpen className="w-4 h-4 text-amber-300" />
                 </IslamicStarMedallion>
                 <p className="text-xs font-bold text-text-muted font-cairo">
                   تمت بعون الله وتوفيقه — مكتبة توثيق خطابات السيد القائد

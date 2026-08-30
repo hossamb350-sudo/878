@@ -14,7 +14,6 @@ import {
   Bell, 
   Palette, 
   Bookmark, 
-  Sparkles, 
   CheckCircle2, 
   Share2, 
   Sliders,
@@ -241,7 +240,7 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false }
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             className="fixed top-6 left-1/2 -translate-x-1/2 z-[9999] bg-slate-900/95 text-white text-xs sm:text-sm font-bold px-5 py-3 rounded-2xl shadow-2xl border border-emerald-500/40 backdrop-blur-md flex items-center gap-3"
           >
-            <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
             <span>{toastMessage}</span>
           </motion.div>
         )}
