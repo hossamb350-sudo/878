@@ -171,13 +171,13 @@ export function Leader() {
           </motion.div>
         ) : (
           /* Cards List with spacing matching news cards */
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-5">
             <AnimatePresence mode="popLayout">
               {filteredAndSortedContent.map((item, index) => {
                 const isFavorited = favorites.includes(item.id);
 
                 return (
-                  <div key={item.id} className="w-full">
+                  <div key={item.id} className="w-full relative after:content-[''] after:absolute after:-bottom-2.5 after:left-[10%] after:right-[10%] after:h-px after:bg-gradient-to-r after:from-transparent after:via-slate-200 dark:after:via-slate-800 after:to-transparent last:after:hidden">
                     {item.type === "video" ? (
                       <LeaderVideoCard
                         item={item}

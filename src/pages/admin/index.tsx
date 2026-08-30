@@ -113,6 +113,7 @@ import { FavoritesList } from "../../components/FavoritesList";
 import { UserProfileSection } from "../../components/UserProfileSection";
 
 import { AdminNewsWizard } from "../../components/AdminNewsWizard";
+import { AdminNotificationManagement } from "../../components/AdminNotificationManagement";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES, sortQuranLessons } from "../../data/staticQuranData";
 import { loadQuranMetadata } from "../../data/importedQuranData";
 import { AdminCategoryManager } from "../../components/AdminCategoryManager";
@@ -516,6 +517,7 @@ export function Admin() {
     { id: "registered-users", icon: Users, label: "إدارة عدد المستخدمين", access: isAdmin },
     { id: "version-lock", icon: Shield, label: "قفل وإصدار التطبيق", access: isAdmin },
     { id: "roles", icon: Users, label: "إدارة الصلاحيات", access: isAdmin },
+    { id: "notifications", icon: Bell, label: "إدارة الإشعارات", access: isAdmin },
   ];
 
   const filteredTabs = sidebarTabs.filter((tab) => tab.access);
@@ -945,6 +947,7 @@ export function Admin() {
                 {activeTab === "excerpts" && <AdminQuranExcerpts />}
                 {activeTab === "events" && <AdminEvents />}
                 {activeTab === "social" && <AdminSocialLinks />}
+                {activeTab === "notifications" && isAdmin && <AdminNotificationManagement />}
                 {activeTab === "roles" && isAdmin && <AdminRoles />}
                 {activeTab === "prayer-weather" && (isAdmin || isManager) && <AdminPrayerWeather isAdmin={isAdmin} />}
                 {activeTab === "registered-users" && isAdmin && <AdminRegisteredUsers isAdmin={isAdmin} />}

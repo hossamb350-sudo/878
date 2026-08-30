@@ -1,0 +1,111 @@
+app.post("/api/admin/send-notification", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorized: Missing token" });
+  }
+  const idToken = authHeader.split("Bearer ")[1];
+
+  try {
+    const db = getDb();
+    if (!db || !adminApp) {
+      return res.status(500).json({ error: "Firebase Admin not initialized" });
+    }
+
+    const auth = getAuth(adminApp);
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const uid = decodedToken.uid;
+
+    const userDoc = await db.collection("users").doc(uid).get();
+    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+      return res.status(403).json({ error: "Forbidden: Admins only" });
+    }
+
+    const { title, body, image, data, contentType, contentId, contentTitle } = req.body;
+
+    if (!title || !body) {
+      return res.status(400).json({ error: "Title and body are required" });
+    }
+
+    const messaging = getMessaging(adminApp);
+
+    // Fetch all tokens
+    const snapshot = await db.collection("fcm_tokens").get();
+    const tokens = snapshot.docs.map((doc: any) => doc.id);
+
+    if (tokens.length === 0) {
+      return res.json({ success: true, message: "No FCM tokens found" });
+    }
+
+    const chunkSize = 500;
+    let successCount = 0;
+    let failureCount = 0;
+    const failedTokens: string[] = [];
+
+    for (let i = 0; i < tokens.length; i += chunkSize) {
+      const tokenChunk = tokens.slice(i, i + chunkSize);
+      const message: any = {
+        notification: {
+          title,
+          body,
+        },
+        data: data || {},
+        android: {
+          priority: "high",
+          notification: {
+            sound: "default",
+            channelId: "fcm_high_priority_channel",
+            visibility: "PUBLIC",
+            notificationPriority: "PRIORITY_MAX",
+            defaultSound: true,
+            defaultVibrateTimings: true,
+            defaultLightSettings: true,
+          },
+        },
+        tokens: tokenChunk,
+      };
+
+      if (image) {
+        message.notification.imageUrl = image;
+      }
+
+      const response = await messaging.sendEachForMulticast(message);
+      successCount += response.successCount;
+      failureCount += response.failureCount;
+
+      if (response.failureCount > 0) {
+        response.responses.forEach((resp: any, idx: number) => {
+          if (!resp.success) {
+            failedTokens.push(tokenChunk[idx]);
+          }
+        });
+      }
+    }
+
+    if (failedTokens.length > 0) {
+      const batch = db.batch();
+      failedTokens.forEach((token) => {
+        batch.delete(db.collection("fcm_tokens").doc(token));
+      });
+      await batch.commit();
+    }
+
+    // Save to history
+    await db.collection("notifications_history").add({
+      title,
+      body,
+      contentType: contentType || "general",
+      contentId: contentId || "",
+      contentTitle: contentTitle || "",
+      sentBy: uid,
+      successCount,
+      failureCount,
+      createdAt: Date.now(),
+    });
+
+    res.json({ success: true, successCount, failureCount });
+  } catch (error: any) {
+    console.error("Error sending admin notification:", error);
+    res.status(500).json({ error: "Failed to send notification.", message: error.message });
+  }
+});
+

@@ -114,6 +114,16 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false }
           
           if (permStatus?.receive === "granted") {
             try {
+              if (Capacitor.getPlatform() === 'android') {
+                await PushNotifications.createChannel({
+                  id: 'fcm_high_priority_channel',
+                  name: 'المنصة الإعلامية',
+                  description: 'إشعارات المنصة الإعلامية للأخبار والتحديثات',
+                  importance: 5,
+                  visibility: 1,
+                  vibration: true,
+                });
+              }
               await PushNotifications.register();
             } catch (regErr) {
               console.error("[PushNotification] Manual registration failed caught safely:", regErr);

@@ -344,9 +344,11 @@ export function LeaderItem() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-main text-text-primary p-4 py-12 flex flex-col items-center justify-center space-y-3" dir="rtl">
-        <div className="w-10 h-10 border-3 border-taiz-sky border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs font-bold text-text-muted font-cairo">جاري تحميل مادة السيد القائد...</p>
+      <div className="min-h-[75vh] w-full flex flex-col items-center justify-center space-y-3.5 font-cairo" dir="rtl">
+        <div className="w-10 h-10 border-3 border-slate-200 dark:border-stone-700 border-t-taiz-royal dark:border-t-taiz-sky rounded-full animate-spin" />
+        <p className="text-sm font-bold text-slate-700 dark:text-slate-300 font-cairo">
+          جاري التحميل...
+        </p>
       </div>
     );
   }
@@ -440,9 +442,7 @@ export function LeaderItem() {
           </div>
         </div>
 
-        {/* ============================================================== */}
         {/* 1. VIDEO VIEW COMPONENT (Single Unified Card) */}
-        {/* ============================================================== */}
         {isVideo ? (
           <div className="relative rounded-[20px] sm:rounded-[24px] bg-surface-card border border-border-subtle overflow-hidden shadow-soft">
             {/* Embedded Custom Video Player */}
@@ -528,9 +528,7 @@ export function LeaderItem() {
             </div>
           </div>
         ) : (
-          /* ============================================================== */
           /* 2. TEXT / LECTURE VIEW COMPONENT (Single Unified Card) */
-          /* ============================================================== */
           <div className={`relative rounded-[20px] sm:rounded-[24px] border overflow-hidden shadow-soft transition-colors duration-300 ${getThemeContainerClasses()}`}>
             {/* Header Title Card with Uploaded Image Background (Matched to Home Slider Dimensions: h-[376px]) */}
             <div className="relative w-full h-[376px] overflow-hidden select-none">
@@ -627,41 +625,6 @@ export function LeaderItem() {
                   تمت بعون الله وتوفيقه — مكتبة توثيق خطابات السيد القائد
                 </p>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* ============================================================== */}
-        {/* RELATED MATERIALS SECTION */}
-        {/* ============================================================== */}
-        {relatedContent.length > 0 && (
-          <div className="mt-8 space-y-3 pt-4">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-taiz-sky" />
-                <h3 className="text-sm sm:text-base font-bold text-text-primary font-cairo">
-                  محاضرات وخطابات مقترحة
-                </h3>
-              </div>
-              <Link
-                to={routes.leader()}
-                className="text-xs font-bold text-taiz-sky hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <span>عرض الكل</span>
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {relatedContent.map((item, idx) => (
-                <div key={item.id}>
-                  {item.type === "video" ? (
-                    <LeaderVideoCard item={item} index={idx} isFavorited={false} />
-                  ) : (
-                    <LeaderTextCard item={item} index={idx} isFavorited={false} />
-                  )}
-                </div>
-              ))}
             </div>
           </div>
         )}

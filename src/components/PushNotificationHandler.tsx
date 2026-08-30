@@ -91,6 +91,18 @@ export function PushNotificationHandler() {
           setTimeout(async () => {
             try {
               console.log("[PushNotification] Executing delayed registration...");
+              
+              if (Capacitor.getPlatform() === 'android') {
+                await PushNotifications.createChannel({
+                  id: 'fcm_high_priority_channel',
+                  name: 'المنصة الإعلامية',
+                  description: 'إشعارات المنصة الإعلامية للأخبار والتحديثات',
+                  importance: 5,
+                  visibility: 1,
+                  vibration: true,
+                });
+              }
+
               await PushNotifications.register();
             } catch (regErr) {
               console.error("[PushNotification] Delayed native registration failed caught safely:", regErr);

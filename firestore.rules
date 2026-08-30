@@ -200,6 +200,15 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isManager();
     }
+    
+    match /notifications_history/{id} {
+      allow read, write: if isAdmin();
+    }
+
+    match /fcm_tokens/{id} {
+      allow create, update: if true;
+      allow read, delete: if isAdmin();
+    }
   }
 }
 

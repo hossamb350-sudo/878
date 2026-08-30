@@ -148,6 +148,19 @@ export interface ActivityItem {
   createdAt: number;
 }
 
+export interface NotificationHistoryItem {
+  id: string;
+  title: string;
+  body: string;
+  contentType: string;
+  contentId: string;
+  contentTitle?: string;
+  createdAt: number;
+  sentBy?: string;
+  successCount?: number;
+  failureCount?: number;
+}
+
 export interface NotificationItem {
   id: string;
   title: string;

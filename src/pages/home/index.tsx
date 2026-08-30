@@ -229,8 +229,14 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
                 {/* Play Button Overlay in center for Videos */}
                 {isVideo && (
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-2xl backdrop-blur-sm group-hover:scale-110 group-hover:bg-red-600 transition-all duration-300">
-                      <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-current ml-1" />
+                    <div className="relative flex items-center justify-center">
+                      {/* Subtle outer pulse wave */}
+                      <div className="absolute w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 animate-ping opacity-30 pointer-events-none" />
+
+                      {/* Play Button Icon */}
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/30 backdrop-blur-md border-2 border-white/80 text-white flex items-center justify-center shadow-2xl group-hover:scale-110 group-hover:bg-white/45 group-hover:border-white transition-all duration-300">
+                        <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-white text-white ml-1 drop-shadow-md" />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -795,9 +801,9 @@ export function Home() {
                                   <CategoryBadges category={video.category || "فيديو"} isSecondary={true} className="drop-shadow-sm" />
                                </div>
                                
-                               <div className="absolute inset-0 flex items-center justify-center z-20">
-                                  <div className="bg-white/20 backdrop-blur-sm p-2 rounded-full group-hover:scale-110 group-active:scale-90 transition-transform border border-white/40 shadow-lg">
-                                     <PlayCircle className="w-6 h-6 text-white ml-0.5" />
+                               <div className="absolute top-2 left-2 z-30 pointer-events-none">
+                                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/40 text-white flex items-center justify-center shadow-md group-hover:scale-110 group-hover:bg-taiz-sky group-hover:border-white transition-all duration-300">
+                                     <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-white text-white ml-0.5 drop-shadow-sm" />
                                   </div>
                                </div>
                                

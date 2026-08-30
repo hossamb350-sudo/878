@@ -146,7 +146,7 @@ export function DeepLinkHandler() {
             <div className="flex flex-col min-w-0 text-right leading-tight">
               <div className="flex items-center gap-1">
                 <span className="font-bold text-[11px] sm:text-xs text-white font-cairo whitespace-nowrap">
-                  تطبيق المنصة الإعلامية
+                  منصة تعز الإعلامية
                 </span>
                 <span className="bg-amber-400 text-[#07152B] text-[8px] sm:text-[9px] font-black px-1 py-0.2 rounded-full shrink-0">
                   Android
