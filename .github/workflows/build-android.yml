@@ -102,85 +102,81 @@ jobs:
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
         run: |
-          set -euo pipefail
-          mkdir -p android/app
+          node -e '
+          const fs = require("fs");
+          const path = require("path");
 
-          if [ -n "${GOOGLE_SERVICES_JSON:-}" ]; then
-            echo "Found GOOGLE_SERVICES_JSON secret — normalizing and validating..."
-            # Write raw secret to temp file
-            printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/_gs_json_raw
+          const targetPath = path.join("android", "app", "google-services.json");
+          let raw = process.env.GOOGLE_SERVICES_JSON || "";
 
-            # If looks like base64 and size reasonable, try decode (safe attempt)
-            if printf '%s' "$(<android/app/_gs_json_raw)" | grep -Eq '^[A-Za-z0-9+/=]+\s*$' && [ $(wc -c < android/app/_gs_json_raw) -gt 100 ]; then
-              if base64 --decode android/app/_gs_json_raw > /dev/null 2>&1; then
-                echo "Secret appears base64-encoded — decoding..."
-                base64 --decode android/app/_gs_json_raw > android/app/_gs_json_decoded || true
-              fi
-            fi
+          if (raw.trim()) {
+            console.log("Found GOOGLE_SERVICES_JSON secret — normalizing and validating...");
+            let content = raw.trim();
 
-            # Prefer decoded if present
-            if [ -f android/app/_gs_json_decoded ]; then
-              mv android/app/_gs_json_decoded android/app/google-services.json
-            else
-              # Remove surrounding quotes and convert literal \n into real newlines
-              python3 - <<'PY'
-p='android/app/_gs_json_raw'
-s=open(p,'r',encoding='utf8').read()
-# Strip surrounding quotes if entire content is quoted
-if (s.startswith('"') and s.endswith('"')) or (s.startswith("'") and s.endswith("'")):
-    s=s[1:-1]
-# Convert literal \n into real newlines
-s=s.replace('\\n','\n')
-open('android/app/google-services.json','w',encoding='utf8').write(s)
-PY
-            fi
+            // Try base64 decode if it looks base64 encoded
+            if (/^[A-Za-z0-9+/=\s]+$/.test(content) && content.length > 100) {
+              try {
+                const decoded = Buffer.from(content, "base64").toString("utf8");
+                if (decoded.includes("project_info")) {
+                  console.log("Secret appears base64-encoded — decoded successfully.");
+                  content = decoded;
+                }
+              } catch (e) {}
+            }
 
-            # Validate JSON (fail loudly if invalid)
-            node -e "
-const fs = require('fs');
-try {
-  const s = fs.readFileSync('android/app/google-services.json','utf8');
-  JSON.parse(s);
-  console.log('google-services.json parsed OK');
-} catch (e) {
-  console.error('Invalid google-services.json ->', e.message);
-  process.exit(2);
-}
-"
-          else
-            echo "GOOGLE_SERVICES_JSON secret not set or empty. Injecting fallback google-services.json for build..."
-            cat > android/app/google-services.json <<'EOF'
-{
-  "project_info": {
-    "project_number": "123456789012",
-    "project_id": "taiz-platform",
-    "storage_bucket": "taiz-platform.appspot.com"
-  },
-  "client": [
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:1234567890123456789012",
-        "android_client_info": {
-          "package_name": "com.taiz.platform"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDummyKeyForBuildVerificationOnly"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    }
-  ],
-  "configuration_version": "1"
-}
-EOF
-          fi
+            // Strip surrounding quotes if whole string is wrapped in quotes
+            if ((content.startsWith(`"`) && content.endsWith(`"`)) || (content.startsWith(`'`) && content.endsWith(`'`))) {
+              content = content.slice(1, -1);
+            }
+
+            // Replace literal \n with actual newline
+            content = content.replace(/\\n/g, "\n");
+
+            try {
+              JSON.parse(content);
+              fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+              fs.writeFileSync(targetPath, content, "utf8");
+              console.log("google-services.json created and validated successfully!");
+            } catch (err) {
+              console.error("Invalid google-services.json format:", err.message);
+              process.exit(1);
+            }
+          } else {
+            console.log("GOOGLE_SERVICES_JSON secret not set or empty. Injecting fallback google-services.json...");
+            const fallback = {
+              project_info: {
+                project_number: "123456789012",
+                project_id: "taiz-platform",
+                storage_bucket: "taiz-platform.appspot.com"
+              },
+              client: [
+                {
+                  client_info: {
+                    mobilesdk_app_id: "1:123456789012:android:1234567890123456789012",
+                    android_client_info: {
+                      package_name: "com.taiz.platform"
+                    }
+                  },
+                  oauth_client: [],
+                  api_key: [
+                    {
+                      current_key: "AIzaSyDummyKeyForBuildVerificationOnly"
+                    }
+                  ],
+                  services: {
+                    appinvite_service: {
+                      other_platform_oauth_client: []
+                    }
+                  }
+                }
+              ],
+              configuration_version: "1"
+            };
+            fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+            fs.writeFileSync(targetPath, JSON.stringify(fallback, null, 2), "utf8");
+            console.log("Fallback google-services.json generated successfully.");
+          }
+          '
 
       - name: Build APK
         working-directory: ./android
