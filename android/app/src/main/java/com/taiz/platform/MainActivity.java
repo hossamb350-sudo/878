@@ -9,12 +9,12 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(Media3Plugin.class);
-        super.onCreate(savedInstanceState);
         try {
             FirebaseApp.initializeApp(this);
         } catch (Exception e) {
             e.printStackTrace();
         }
+        super.onCreate(savedInstanceState);
     }
 }
 
