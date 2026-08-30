@@ -5,7 +5,15 @@
       "headers": [
         {
           "key": "Content-Type",
-          "value": "application/json"
+          "value": "application/json; charset=utf-8"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
         }
       ]
     }
@@ -38,6 +46,10 @@
     {
       "source": "/events/activity/:slug",
       "destination": "/api/og.js?type=activities&slug=:slug"
+    },
+    {
+      "source": "/topic/:slug",
+      "destination": "/api/og.js?type=topics&slug=:slug"
     },
     {
       "source": "/(.*)",

@@ -20,19 +20,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <!-- Android App Links (HTTPS Deep Linking with autoVerify) -->
+            <!-- Verified Android App Links (HTTPS & HTTP for Primary Domain taiz-media-ye.vercel.app) -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="taiz-media-ye.vercel.app" />
-                <data android:scheme="https" android:host="ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" />
-                <data android:scheme="https" android:host="ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" />
-                <data android:pathPrefix="/news" />
-                <data android:pathPrefix="/articles" />
-                <data android:pathPrefix="/watch" />
-                <data android:pathPrefix="/leader" />
-                <data android:pathPrefix="/events" />
+                <data android:scheme="https" />
+                <data android:scheme="http" />
+                <data android:host="taiz-media-ye.vercel.app" />
+                <data android:pathPattern="/.*" />
             </intent-filter>
 
             <!-- Custom URI Scheme Deep Linking (taizmedia:// and taizapp://) -->
@@ -42,6 +38,17 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="taizmedia" />
                 <data android:scheme="taizapp" />
+            </intent-filter>
+
+            <!-- Staging and Preview Environments Deep Linking -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="ais-dev-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" />
+                <data android:host="ais-pre-oci535fuagpr75jdwcw57v-955809935515.europe-west2.run.app" />
+                <data android:pathPattern="/.*" />
             </intent-filter>
         </activity>
 

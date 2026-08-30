@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Capacitor } from "@capacitor/core";
 import { App } from "@capacitor/app";
-import { isAndroidWebBrowser, buildAndroidIntentUrl, openInAndroidApp } from "../utils/deepLink";
+import { isAndroidWebBrowser, openInAndroidApp, parseAndResolveDeepLink } from "../utils/deepLink";
 import { db } from "../firebase";
 import { doc, onSnapshot } from "firebase/firestore";
-import { Smartphone, Download, X, ExternalLink } from "lucide-react";
+import { Smartphone, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
 export function DeepLinkHandler() {
@@ -15,17 +15,32 @@ export function DeepLinkHandler() {
   const [downloadUrl, setDownloadUrl] = useState<string>("");
   const [dismissed, setDismissed] = useState(false);
 
+  function handleIncomingDeepLink(rawUrl: string) {
+    try {
+      const parsed = parseAndResolveDeepLink(rawUrl);
+      if (parsed && parsed.fullPath) {
+        console.log("[DeepLink] App Link received:", rawUrl, "=> Target route:", parsed.fullPath);
+        const currentFull = location.pathname + location.search + location.hash;
+        if (currentFull !== parsed.fullPath) {
+          navigate(parsed.fullPath);
+        }
+      }
+    } catch (err) {
+      console.warn("[DeepLink] Failed to process URL:", rawUrl, err);
+    }
+  }
+
   // 1. Native Capacitor deep linking listener
   useEffect(() => {
     if (Capacitor.isNativePlatform()) {
-      // Check initial launch URL
+      // Check initial launch URL (Cold start)
       App.getLaunchUrl().then((launchUrl) => {
         if (launchUrl && launchUrl.url) {
           handleIncomingDeepLink(launchUrl.url);
         }
       });
 
-      // Listen for runtime deep link intents
+      // Listen for runtime deep link intents (Warm/Hot start)
       const listenerPromise = App.addListener("appUrlOpen", (data) => {
         if (data && data.url) {
           handleIncomingDeepLink(data.url);
@@ -36,29 +51,7 @@ export function DeepLinkHandler() {
         listenerPromise.then((handle) => handle.remove());
       };
     }
-  }, [navigate]);
-
-  function handleIncomingDeepLink(rawUrl: string) {
-    try {
-      let targetPath = "";
-      if (rawUrl.startsWith("taizmedia://") || rawUrl.startsWith("taizapp://")) {
-        targetPath = rawUrl.replace(/^taiz(media|app):\/\//, "/");
-        if (!targetPath.startsWith("/")) targetPath = "/" + targetPath;
-      } else if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://")) {
-        const parsed = new URL(rawUrl);
-        targetPath = parsed.pathname + parsed.search + parsed.hash;
-      } else {
-        targetPath = rawUrl.startsWith("/") ? rawUrl : "/" + rawUrl;
-      }
-
-      if (targetPath) {
-        console.log("[DeepLink] Navigating to:", targetPath);
-        navigate(targetPath, { replace: true });
-      }
-    } catch (err) {
-      console.warn("[DeepLink] Failed to parse URL:", rawUrl, err);
-    }
-  }
+  }, [navigate, location.pathname]);
 
   // 2. Fetch app download URL from Firestore settings
   useEffect(() => {

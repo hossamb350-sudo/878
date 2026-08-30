@@ -126,9 +126,11 @@ app.get("/api/health", (req, res) => {
 
 // Android App Links verification
 app.get("/.well-known/assetlinks.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "public, max-age=3600");
   const filePath = path.join(process.cwd(), "public/.well-known/assetlinks.json");
   if (fs.existsSync(filePath)) {
-    res.setHeader("Content-Type", "application/json");
     return res.sendFile(filePath);
   }
   res.json([

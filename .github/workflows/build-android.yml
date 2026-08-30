@@ -92,6 +92,37 @@ jobs:
             }
           '
 
+      - name: Verify Android App Links Configuration
+        run: |
+          echo "=== Verifying Digital Asset Links & Manifest Config ==="
+          node -e '
+            const fs = require("fs");
+            // Check assetlinks.json
+            const assetLinksPath = "public/.well-known/assetlinks.json";
+            if (!fs.existsSync(assetLinksPath)) {
+              console.error("❌ Missing " + assetLinksPath);
+              process.exit(1);
+            }
+            const assetLinks = JSON.parse(fs.readFileSync(assetLinksPath, "utf8"));
+            if (!Array.isArray(assetLinks) || !assetLinks[0]?.target?.package_name) {
+              console.error("❌ Invalid assetlinks.json format");
+              process.exit(1);
+            }
+            console.log("✅ assetlinks.json is valid. Package:", assetLinks[0].target.package_name);
+            console.log("✅ Configured SHA-256 fingerprints:", assetLinks[0].target.sha256_cert_fingerprints);
+
+            // Check AndroidManifest.xml
+            const manifestPath = "android/app/src/main/AndroidManifest.xml";
+            if (fs.existsSync(manifestPath)) {
+              const manifest = fs.readFileSync(manifestPath, "utf8");
+              if (manifest.includes("android:autoVerify=\"true\"") && manifest.includes("taiz-media-ye.vercel.app")) {
+                console.log("✅ AndroidManifest.xml contains autoVerify=true for taiz-media-ye.vercel.app");
+              } else {
+                console.warn("⚠️ Warning: autoVerify or host not found in AndroidManifest.xml");
+              }
+            }
+          '
+
       - name: Build Web App
         run: npm run build
 
@@ -115,9 +146,22 @@ jobs:
           echo "Gradle build succeeded! Printing the full build log:"
           cat gradle_build.log
 
-      - name: Print SHA-1 fingerprint
+      - name: Extract and Print Signing Fingerprints (SHA-256 & SHA-1)
         working-directory: ./android
-        run: ./gradlew signingReport
+        run: |
+          echo "=========================================================================="
+          echo "🔑 ANDROID SIGNING REPORT & SHA-256 CERTIFICATE FINGERPRINTS"
+          echo "=========================================================================="
+          ./gradlew signingReport | tee signing_report.log || true
+          
+          echo "### 📱 Android App Links & Signing Info" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package Name**: \`com.taiz.platform\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Domain**: \`https://taiz-media-ye.vercel.app\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Asset Links URL**: \`https://taiz-media-ye.vercel.app/.well-known/assetlinks.json\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          grep -E "Variant:|Config:|Store:|SHA-256:|SHA1:" signing_report.log >> $GITHUB_STEP_SUMMARY || true
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload Gradle problems report (if present)
         if: always()

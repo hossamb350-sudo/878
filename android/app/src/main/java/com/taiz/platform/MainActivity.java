@@ -1,5 +1,6 @@
 package com.taiz.platform;
 
+import android.content.Intent;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
 import com.taiz.platform.media.Media3Plugin;
@@ -25,6 +26,12 @@ public class MainActivity extends BridgeActivity {
             e.printStackTrace();
         }
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
     }
 }
 
