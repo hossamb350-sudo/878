@@ -1139,9 +1139,13 @@ app.post("/api/admin/send-notification", async (req, res) => {
     const auth = getAuth(adminApp);
     const decodedToken = await auth.verifyIdToken(idToken);
     const uid = decodedToken.uid;
+    const email = decodedToken.email?.toLowerCase();
 
+    const isSuperAdmin = email === "hossamb350@gmail.com";
     const userDoc = await db.collection("users").doc(uid).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    const userRole = userDoc.exists ? userDoc.data()?.role : null;
+
+    if (!isSuperAdmin && userRole !== "admin" && userRole !== "manager") {
       return res.status(403).json({ error: "Forbidden: Admins only" });
     }
 

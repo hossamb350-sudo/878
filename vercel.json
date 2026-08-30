@@ -20,6 +20,14 @@
   ],
   "rewrites": [
     {
+      "source": "/api/admin/send-notification",
+      "destination": "/api/admin-send-notification.js"
+    },
+    {
+      "source": "/api/push/fcm-broadcast",
+      "destination": "/api/admin-send-notification.js"
+    },
+    {
       "source": "/.well-known/assetlinks.json",
       "destination": "/.well-known/assetlinks.json"
     },

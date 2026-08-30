@@ -157,10 +157,22 @@ export function AdminNotificationManagement() {
         },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
+
+      const contentTypeHeader = res.headers.get("content-type") || "";
+      let data: any = {};
+      
+      if (contentTypeHeader.includes("application/json")) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        if (text.includes("<!doctype") || text.includes("<html")) {
+          throw new Error("تعذر الاتصال بخادم إرسال الإشعارات (الاستضافة الحالية لم تقم بتشغيل دالة الخادم /api/admin/send-notification).");
+        }
+        throw new Error(text || "فشل الاتصال بالخادم");
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to send");
+        throw new Error(data.error || data.message || "فشل إرسال الإشعار");
       }
       
       setSendResult({ success: true, message: `تم الإرسال بنجاح! نجاح: ${data.successCount}, فشل: ${data.failureCount}` });
