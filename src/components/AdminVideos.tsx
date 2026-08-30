@@ -230,15 +230,18 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
     setSaving(true);
     try {
       const finalCategories = categoriesList.length > 0 ? categoriesList : (category ? [category] : []);
-      const primaryCategory = finalCategories[0] || "";
+      const catLink = await CategoryService.linkContentCategories(finalCategories);
 
       const payload = {
         title: title.trim(),
         description: description.trim(),
         url: url.trim(),
         thumbnailUrl: thumbnailUrl.trim() || null,
-        category: primaryCategory,
-        categories: finalCategories,
+        category: catLink.category,
+        categories: catLink.categories,
+        categoryColor: catLink.categoryColor,
+        categoryColors: catLink.categoryColors,
+        categoryIds: catLink.categoryIds,
         views: Number(views) || 0,
         hijriDate: hijriDate.trim(),
         gregorianDate: gregorianDate.trim(),
@@ -292,10 +295,15 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
   const handleQuickUpdateCategory = async (id: string, newCategory: string, allCategories: string[]) => {
     try {
       const docRef = doc(db, "videos", id);
-      const finalCats = allCategories && allCategories.length > 0 ? allCategories : [newCategory];
+      const finalCats = allCategories && allCategories.length > 0 ? allCategories : (newCategory ? [newCategory] : []);
+      const catLink = await CategoryService.linkContentCategories(finalCats);
+
       const updateData = {
-        category: newCategory,
-        categories: finalCats,
+        category: catLink.category,
+        categories: catLink.categories,
+        categoryColor: catLink.categoryColor,
+        categoryColors: catLink.categoryColors,
+        categoryIds: catLink.categoryIds,
         updatedAt: Date.now()
       };
       await updateDoc(docRef, updateData);

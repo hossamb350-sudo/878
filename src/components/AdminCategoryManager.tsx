@@ -88,13 +88,21 @@ export const AdminCategoryManager: React.FC = () => {
     setErrorMessage("");
 
     try {
-      await CategoryService.saveCategory({
-        id: editingCategory?.id,
-        name: formName.trim(),
-        color: formColor,
-        description: formDescription.trim(),
-        order: Number(formOrder) || 0
-      });
+      if (editingCategory?.id) {
+        await CategoryService.updateCategoryAndCascade(editingCategory.id, {
+          name: formName.trim(),
+          color: formColor,
+          description: formDescription.trim(),
+          order: Number(formOrder) || 0
+        });
+      } else {
+        await CategoryService.saveCategory({
+          name: formName.trim(),
+          color: formColor,
+          description: formDescription.trim(),
+          order: Number(formOrder) || 0
+        });
+      }
       setShowModal(false);
     } catch (err: any) {
       setErrorMessage(err.message || "حدث خطأ أثناء حفظ التصنيف");

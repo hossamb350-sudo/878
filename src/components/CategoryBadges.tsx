@@ -2,9 +2,16 @@ import React, { useEffect, useState } from "react";
 import { CategoryService } from "../services/CategoryService";
 
 interface CategoryBadgesProps {
-  item?: { category?: string; categories?: string[] };
+  item?: { 
+    category?: string; 
+    categories?: string[]; 
+    categoryColor?: string; 
+    categoryColors?: Record<string, string>; 
+  };
   category?: string;
   categories?: string[];
+  categoryColor?: string;
+  categoryColors?: Record<string, string>;
   isHero?: boolean;
   isSecondary?: boolean;
   className?: string;
@@ -15,6 +22,8 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({
   item, 
   category, 
   categories: categoriesProp, 
+  categoryColor,
+  categoryColors,
   isHero = false, 
   isSecondary = false, 
   className = "",
@@ -40,10 +49,21 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({
 
   if (cats.length === 0) return null;
 
+  const itemColorMap = categoryColors || item?.categoryColors || {};
+  const primaryItemColor = categoryColor || item?.categoryColor;
+
   return (
     <div className={`flex flex-wrap items-center gap-1 z-20 ${className}`}>
-      {cats.map((c) => {
-        const color = categoriesMap[c] || CategoryService.getFallbackColor(c);
+      {cats.map((c, index) => {
+        // Priority 1: Direct item categoryColors map stored in Firestore
+        // Priority 2: Direct item primary categoryColor if index === 0
+        // Priority 3: Live real-time category map from categories collection
+        // Priority 4: Fallback color
+        const color = 
+          itemColorMap[c] || 
+          (index === 0 && primaryItemColor ? primaryItemColor : null) || 
+          categoriesMap[c] || 
+          CategoryService.getFallbackColor(c);
         
         if (isSecondary) {
           return (
@@ -101,4 +121,3 @@ export const CategoryBadges: React.FC<CategoryBadgesProps> = ({
     </div>
   );
 };
-

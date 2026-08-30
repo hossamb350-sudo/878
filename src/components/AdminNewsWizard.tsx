@@ -353,6 +353,13 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
 
     const filteredAdditionalImages = additionalImages.map(l => l.trim()).filter(l => l.length > 0);
 
+    // Ensure database link with categories and get colors/ids
+    const colorOverrides: Record<string, string> = {};
+    if (customCatName && customCatColor) {
+      colorOverrides[customCatName] = customCatColor;
+    }
+    const catLink = await CategoryService.linkContentCategories(finalSelectedCats, colorOverrides);
+
     const payload: any = {
       title,
       content,
@@ -360,8 +367,11 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       author: author || "منصة تعز",
       imageUrl: imageUrl || null,
       additionalImages: filteredAdditionalImages.length > 0 ? filteredAdditionalImages : null,
-      category: finalSelectedCats[0] || "",
-      categories: finalSelectedCats,
+      category: catLink.category,
+      categories: catLink.categories,
+      categoryColor: catLink.categoryColor,
+      categoryColors: catLink.categoryColors,
+      categoryIds: catLink.categoryIds,
       isBreaking,
       isPinned,
       isFeaturedLayout,
@@ -374,15 +384,6 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     };
     
     try {
-      // Save Metadata (Category)
-      if (cat === "custom" && customCat) {
-        try {
-          await CategoryService.saveCategory({ name: customCat, color: customCatColor });
-        } catch (e) {
-          console.warn("Error saving custom category to CategoryService", e);
-        }
-      }
-
       // Save Metadata (Author)
       if (author && !savedAuthors.includes(author)) {
         const newList = [...savedAuthors, author];
@@ -472,10 +473,15 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
   const handleQuickUpdateCategory = async (id: string, newCategory: string, allCategories: string[]) => {
     try {
       const docRef = doc(db, "news", id);
-      const finalCats = allCategories && allCategories.length > 0 ? allCategories : [newCategory];
+      const finalCats = allCategories && allCategories.length > 0 ? allCategories : (newCategory ? [newCategory] : []);
+      const catLink = await CategoryService.linkContentCategories(finalCats);
+
       const updateData = {
-        category: newCategory,
-        categories: finalCats,
+        category: catLink.category,
+        categories: catLink.categories,
+        categoryColor: catLink.categoryColor,
+        categoryColors: catLink.categoryColors,
+        categoryIds: catLink.categoryIds,
         updatedAt: Date.now()
       };
       await updateDoc(docRef, updateData);

@@ -247,7 +247,7 @@ export function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
     setSaving(true);
     try {
       const finalCategories = categoriesList.length > 0 ? categoriesList : (category ? [category] : []);
-      const primaryCategory = finalCategories[0] || "";
+      const catLink = await CategoryService.linkContentCategories(finalCategories);
       const parsedOrder = order.trim() ? Number(order) : 9999;
 
       const payload = {
@@ -256,8 +256,11 @@ export function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
         content: content.trim(),
         description: type === "video" ? description.trim() : "",
         thumbnailUrl: thumbnailUrl.trim() || null,
-        category: primaryCategory,
-        categories: finalCategories,
+        category: catLink.category,
+        categories: catLink.categories,
+        categoryColor: catLink.categoryColor,
+        categoryColors: catLink.categoryColors,
+        categoryIds: catLink.categoryIds,
         order: parsedOrder,
         views: Number(views) || 0,
         hijriDate: hijriDate.trim(),
@@ -325,10 +328,15 @@ export function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
   const handleQuickUpdateCategory = async (id: string, newCategory: string, allCategories: string[]) => {
     try {
       const docRef = doc(db, "leader", id);
-      const finalCats = allCategories && allCategories.length > 0 ? allCategories : [newCategory];
+      const finalCats = allCategories && allCategories.length > 0 ? allCategories : (newCategory ? [newCategory] : []);
+      const catLink = await CategoryService.linkContentCategories(finalCats);
+
       const updateData = {
-        category: newCategory,
-        categories: finalCats,
+        category: catLink.category,
+        categories: catLink.categories,
+        categoryColor: catLink.categoryColor,
+        categoryColors: catLink.categoryColors,
+        categoryIds: catLink.categoryIds,
         updatedAt: Date.now()
       };
       await updateDoc(docRef, updateData);

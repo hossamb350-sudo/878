@@ -16,6 +16,9 @@ export interface NewsItem {
   additionalImages?: string[];
   category: string;
   categories?: string[];
+  categoryColor?: string;
+  categoryColors?: Record<string, string>;
+  categoryIds?: string[];
   isBreaking: boolean;
   isPinned?: boolean;
   isFeaturedLayout?: boolean;
@@ -48,6 +51,9 @@ export interface VideoItem {
   duration?: string;
   category?: string;
   categories?: string[];
+  categoryColor?: string;
+  categoryColors?: Record<string, string>;
+  categoryIds?: string[];
   views: number;
   order?: number;
   createdAt: number;
@@ -102,6 +108,9 @@ export interface LeaderContent {
   thumbnailUrl?: string;
   category?: string;
   categories?: string[];
+  categoryColor?: string;
+  categoryColors?: Record<string, string>;
+  categoryIds?: string[];
   order?: number;
   isFeatured?: boolean;
   showInSlider?: boolean;
@@ -293,6 +302,9 @@ export interface Article {
   content: string;
   category: string;
   categories?: string[];
+  categoryColor?: string;
+  categoryColors?: Record<string, string>;
+  categoryIds?: string[];
   imageUrl?: string;
   additionalImages?: string[];
   authorName: string;
@@ -319,6 +331,8 @@ export interface FeaturedTopic {
   title: string;
   imageUrl: string;
   categories: string[];
+  categoryColors?: Record<string, string>;
+  categoryIds?: string[];
   isVisible: boolean;
   order: number;
   createdAt: number;
@@ -330,6 +344,7 @@ export interface Category {
   color: string;
   description?: string;
   order?: number;
+  count?: number;
   createdAt?: number;
   updatedAt?: number;
 }

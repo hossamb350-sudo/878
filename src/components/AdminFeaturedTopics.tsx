@@ -54,15 +54,24 @@ export function AdminFeaturedTopics() {
         return;
       }
 
+      const catLink = await CategoryService.linkContentCategories(formData.categories || []);
+
+      const payload = {
+        ...formData,
+        categories: catLink.categories,
+        categoryColors: catLink.categoryColors,
+        categoryIds: catLink.categoryIds
+      };
+
       if (editingId === "new") {
         const newId = `topic-${Date.now()}`;
         await setDoc(doc(db, "featured_topics", newId), {
-          ...formData,
+          ...payload,
           createdAt: Date.now(),
         });
       } else if (editingId) {
         await updateDoc(doc(db, "featured_topics", editingId), {
-          ...formData,
+          ...payload,
           updatedAt: Date.now(),
         });
       }
