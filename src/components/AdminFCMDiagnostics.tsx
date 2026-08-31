@@ -13,19 +13,33 @@ export function AdminFCMDiagnostics() {
     setLoading(true);
     setError("");
     try {
-      // 1. Fetch server-side diagnostics
-      const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error("يجب تسجيل الدخول");
-      const token = await currentUser.getIdToken();
-
-      const res = await fetch("/api/admin/fcm-diagnostics", {
-        headers: { "Authorization": `Bearer ${token}` }
+      const { collection, getDocs, query, orderBy, limit } = await import("firebase/firestore");
+      
+      // 1. Fetch tokens directly from Firestore
+      const tokensSnapshot = await getDocs(collection(db, "fcm_tokens"));
+      const tokensCount = tokensSnapshot.size;
+      
+      // Check for Service Account Key in localStorage
+      const savedKey = localStorage.getItem("fcm_server_key");
+      let hasValidKey = false;
+      if (savedKey) {
+        try {
+          const credentials = JSON.parse(savedKey);
+          if (credentials.private_key && credentials.client_email && credentials.project_id) {
+            hasValidKey = true;
+          }
+        } catch (e) {
+          // invalid json
+        }
+      }
+      
+      setDiagnostics({
+        isAdminSdkReady: hasValidKey, // We use the client-side mechanism now
+        hasLegacyServerKey: false,
+        tokensCount: tokensCount,
+        vercelEnv: "Client-Side (Local Storage)",
+        dryRunStatus: hasValidKey ? "مستعد للإرسال (Ready)" : "غير جاهز (Missing Service Account JSON)",
       });
-      
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to fetch diagnostics");
-      
-      setDiagnostics(data.diagnostics);
 
       // 2. Fetch recent notification history from Firestore
       const historyRef = collection(db, "notifications_history");
