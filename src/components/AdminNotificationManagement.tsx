@@ -4,6 +4,8 @@ import { db, auth } from "../firebase";
 import { Search, Bell, Send, CheckCircle, XCircle, Clock, AlertCircle, X, ExternalLink, Activity, PlayCircle, BookOpen, User, Book, CalendarIcon } from "lucide-react";
 import { NewsItem, Article, VideoItem, LeaderContent, QuranLesson, ActivityItem, NotificationHistoryItem } from "../types";
 
+import { AdminFCMDiagnostics } from "./AdminFCMDiagnostics";
+
 // Helper components
 const Modal = ({ isOpen, onClose, title, children }: any) => {
   if (!isOpen) return null;
@@ -12,7 +14,7 @@ const Modal = ({ isOpen, onClose, title, children }: any) => {
       <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Bell className="w-5 h-5 text-primary-500" />
+            <Bell className="w-5 h-5 text-blue-500" />
             {title}
           </h2>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
@@ -47,6 +49,7 @@ export function AdminNotificationManagement() {
     { id: "lessons", label: "مقرر الدروس", icon: Book },
     { id: "activities", label: "الأنشطة", icon: CalendarIcon },
     { id: "history", label: "سجل الإشعارات", icon: Clock },
+    { id: "diagnostics", label: "فحص الإشعارات", icon: AlertCircle },
   ];
 
   useEffect(() => {
@@ -54,6 +57,11 @@ export function AdminNotificationManagement() {
   }, [activeTab]);
 
   const fetchData = async () => {
+    if (activeTab === "diagnostics") {
+      setItems([]);
+      return;
+    }
+
     setLoading(true);
     setItems([]);
     try {
@@ -229,7 +237,7 @@ export function AdminNotificationManagement() {
           <div className="pt-4 border-t border-gray-100 dark:border-gray-700 mt-auto">
             <button
               onClick={() => handleOpenModal(item)}
-              className="w-full py-2 bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400 font-medium rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 font-medium rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors flex items-center justify-center gap-2"
             >
               <Send className="w-4 h-4" />
               إرسال إشعار
@@ -286,7 +294,7 @@ export function AdminNotificationManagement() {
             placeholder="بحث في المحتوى..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-primary-500 text-gray-900 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
           />
           <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
@@ -315,9 +323,11 @@ export function AdminNotificationManagement() {
 
       {/* Content */}
       <div className="min-h-[400px]">
-        {loading ? (
+        {activeTab === "diagnostics" ? (
+          <AdminFCMDiagnostics />
+        ) : loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-20 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
@@ -353,7 +363,7 @@ export function AdminNotificationManagement() {
                   type="text"
                   value={notifTitle}
                   onChange={(e) => setNotifTitle(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white"
+                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-white"
                 />
               </div>
               
@@ -363,7 +373,7 @@ export function AdminNotificationManagement() {
                   value={notifBody}
                   onChange={(e) => setNotifBody(e.target.value)}
                   rows={3}
-                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 dark:text-white resize-none"
+                  className="w-full px-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 dark:text-white resize-none"
                 />
               </div>
 
@@ -371,8 +381,8 @@ export function AdminNotificationManagement() {
               <div className="mt-6 border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-100 dark:bg-gray-800/50">
                 <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">معاينة الإشعار على الهاتف</h4>
                 <div className="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-4 flex gap-4 max-w-sm">
-                  <div className="w-10 h-10 rounded bg-primary-100 dark:bg-primary-900/50 flex shrink-0 items-center justify-center">
-                    <Bell className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                  <div className="w-10 h-10 rounded bg-blue-100 dark:bg-blue-900/50 flex shrink-0 items-center justify-center">
+                    <Bell className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-gray-900 dark:text-white text-sm truncate">{notifTitle || "العنوان هنا"}</p>
@@ -396,27 +406,27 @@ export function AdminNotificationManagement() {
               </div>
             )}
 
-            <div className="pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-3">
+            <div className="pt-6 mt-2 border-t border-gray-100 dark:border-gray-800 flex flex-col-reverse sm:flex-row justify-end gap-3">
               <button
                 onClick={() => setIsModalOpen(false)}
                 disabled={sending}
-                className="px-6 py-2 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="w-full sm:w-auto px-6 py-3 text-gray-600 dark:text-gray-300 font-medium hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
               >
                 إلغاء
               </button>
               <button
                 onClick={handleSendNotification}
                 disabled={sending || !notifTitle || !notifBody}
-                className="px-6 py-2 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {sending ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     جاري الإرسال...
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
+                    <Send className="w-5 h-5" />
                     إرسال الإشعار
                   </>
                 )}

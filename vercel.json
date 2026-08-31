@@ -20,6 +20,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/admin/fcm-diagnostics",
+      "destination": "/api/admin-fcm-diagnostics.js"
+    },
+    {
       "source": "/api/admin/send-notification",
       "destination": "/api/admin-send-notification.js"
     },
