@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, orderBy, limit, startAfter, Timestamp, addDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { Search, Bell, Send, CheckCircle, XCircle, Clock, AlertCircle, X, ExternalLink, Activity, PlayCircle, BookOpen, User, Book, CalendarIcon } from "lucide-react";
+import { Search, Bell, Send, CheckCircle, XCircle, Clock, AlertCircle, X, ExternalLink, Activity, PlayCircle, BookOpen, User, Book, CalendarIcon, Key, Settings } from "lucide-react";
 import { NewsItem, Article, VideoItem, LeaderContent, QuranLesson, ActivityItem, NotificationHistoryItem } from "../types";
 
 import { AdminFCMDiagnostics } from "./AdminFCMDiagnostics";
@@ -40,6 +40,10 @@ export function AdminNotificationManagement() {
   const [notifBody, setNotifBody] = useState("");
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{success: boolean, message: string} | null>(null);
+  
+  // FCM Server Key (Legacy)
+  const [serverKey, setServerKey] = useState(localStorage.getItem("fcm_server_key") || "");
+  const [showSettings, setShowSettings] = useState(false);
 
   const tabs = [
     { id: "news", label: "الأخبار", icon: Activity },
@@ -144,12 +148,12 @@ export function AdminNotificationManagement() {
       }
 
       const payload = {
-        title: notifTitle,
-        body: notifBody,
-        image: selectedItem.imageUrl || selectedItem.thumbnailUrl,
-        contentType,
-        contentId: selectedItem.id,
-        contentTitle: selectedItem.title,
+        notification: {
+          title: notifTitle,
+          body: notifBody,
+          image: selectedItem.imageUrl || selectedItem.thumbnailUrl,
+          sound: "default"
+        },
         data: {
           contentType,
           contentId: selectedItem.id,
@@ -158,19 +162,126 @@ export function AdminNotificationManagement() {
       };
 
       try {
-        // Write the notification to Firestore directly, to be picked up by Cloud Functions
-        const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
+        if (!serverKey) {
+          throw new Error("يرجى إدخال مفتاح الخدمة (Service Account JSON) أولاً من إعدادات الإشعارات (رمز الترس).");
+        }
+
+        let credentials;
+        try {
+          credentials = JSON.parse(serverKey);
+          if (!credentials.private_key || !credentials.client_email || !credentials.project_id) {
+            throw new Error("JSON غير صالح");
+          }
+        } catch (e) {
+          throw new Error("الملف المدخل ليس بصيغة Service Account JSON صحيحة. يرجى إنشاء مفتاح جديد من إعدادات Firebase.");
+        }
+
+        const { collection, getDocs, addDoc } = await import("firebase/firestore");
         
-        await addDoc(collection(db, "notifications_queue"), {
-          ...payload,
-          senderId: auth.currentUser?.uid || "admin",
-          status: "pending",
-          createdAt: serverTimestamp()
+        // Fetch all tokens
+        const tokensSnapshot = await getDocs(collection(db, "fcm_tokens"));
+        const tokens = tokensSnapshot.docs.map(doc => doc.id);
+        
+        if (tokens.length === 0) {
+          throw new Error("لا توجد أي أجهزة مسجلة لإرسال الإشعارات إليها.");
+        }
+
+        setSendResult({ success: true, message: "جاري توليد الرموز وإرسال الإشعارات، يرجى الانتظار..." });
+
+        // Generate OAuth2 token using jose
+        const { SignJWT, importPKCS8 } = await import("jose");
+        
+        const iat = Math.floor(Date.now() / 1000);
+        const exp = iat + 3600;
+        
+        const privateKey = await importPKCS8(credentials.private_key, "RS256");
+        
+        const jwt = await new SignJWT({
+          iss: credentials.client_email,
+          sub: credentials.client_email,
+          aud: "https://oauth2.googleapis.com/token",
+          scope: "https://www.googleapis.com/auth/firebase.messaging",
+        })
+          .setProtectedHeader({ alg: "RS256", typ: "JWT" })
+          .setIssuedAt(iat)
+          .setExpirationTime(exp)
+          .sign(privateKey);
+          
+        const oauthRes = await fetch("https://oauth2.googleapis.com/token", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
         });
+        
+        const oauthData = await oauthRes.json();
+        if (!oauthRes.ok) {
+          throw new Error("فشل الحصول على تصريح الإرسال. تأكد من أن الـ JSON صحيح.");
+        }
+        
+        const accessToken = oauthData.access_token;
+        const projectId = credentials.project_id;
+
+        let successCount = 0;
+        let failureCount = 0;
+
+        // Send to each token
+        for (let i = 0; i < tokens.length; i++) {
+          const v1Payload = {
+            message: {
+              token: tokens[i],
+              notification: {
+                title: payload.notification.title,
+                body: payload.notification.body,
+                image: payload.notification.image || undefined
+              },
+              data: payload.data,
+              android: {
+                priority: "high"
+              }
+            }
+          };
+
+          const fcmRes = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${accessToken}`
+            },
+            body: JSON.stringify(v1Payload)
+          });
+
+          if (fcmRes.ok) {
+            successCount++;
+          } else {
+            failureCount++;
+          }
+        }
+
+        // Record to history
+        try {
+          await addDoc(collection(db, "notifications_history"), {
+            title: notifTitle,
+            body: notifBody,
+            imageUrl: selectedItem.imageUrl || selectedItem.thumbnailUrl || "",
+            contentType,
+            contentId: selectedItem.id,
+            contentTitle: selectedItem.title,
+            successCount,
+            failureCount,
+            tokensCount: tokens.length,
+            createdAt: Date.now(),
+            sentBy: auth.currentUser?.email || "Admin",
+            method: "legacy_client_side"
+          });
+        } catch (e) {
+          console.warn("Failed to record history", e);
+        }
 
         setSendResult({
           success: true,
-          message: "تم وضع الإشعار في طابور الإرسال السحابي (Firebase Cloud Functions) بنجاح."
+          message: `تم الإرسال بنجاح! وصل لـ ${successCount} وفشل ${failureCount}.`
         });
         
         // Reset form
@@ -178,17 +289,19 @@ export function AdminNotificationManagement() {
         setNotifBody("");
 
       } catch (err: any) {
-        console.error("Error queueing push notification:", err);
+        console.error("Error sending push notification:", err);
         setSendResult({
           success: false,
-          message: "حدث خطأ أثناء وضع الإشعار في طابور الإرسال: " + err.message
+          message: err.message
         });
       } finally {
         setSending(false);
       }
       
       setTimeout(() => {
-        setIsModalOpen(false);
+        if (sendResult?.success || !sendResult) {
+          setIsModalOpen(false);
+        }
       }, 3500);
     } catch (err: any) {
       setSendResult({ success: false, message: err.message || "حدث خطأ أثناء إرسال الإشعار" });
@@ -266,17 +379,57 @@ export function AdminNotificationManagement() {
           <p className="text-gray-500 dark:text-gray-400 mt-1">إرسال إشعارات مخصصة للمستخدمين وربطها بالمحتوى</p>
         </div>
         
-        <div className="relative w-full sm:w-64">
-          <input
-            type="text"
-            placeholder="بحث في المحتوى..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
-          />
-          <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl transition-colors text-sm font-medium shrink-0"
+          >
+            <Settings className="w-4 h-4" />
+            إعدادات المفتاح
+          </button>
+
+          <div className="relative flex-1 sm:w-64">
+            <input
+              type="text"
+              placeholder="بحث في المحتوى..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 text-gray-900 dark:text-white"
+            />
+            <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
         </div>
       </div>
+
+      {showSettings && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-5 rounded-2xl border border-blue-100 dark:border-blue-900/30 shadow-sm animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-blue-100 dark:bg-blue-800/50 rounded-lg shrink-0 mt-1">
+              <Key className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex-1 space-y-3">
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-white text-sm">مفتاح الخدمة (Service Account JSON)</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
+                  بما أنك لا تستخدم خادم خارجي أو خطة مدفوعة، يتم إرسال الإشعارات مباشرة من متصفحك بشكل مجاني 100% باستخدام واجهة HTTP v1 الحديثة. يرجى إدخال محتوى ملف Service Account JSON من إعدادات مشروعك في Firebase (Project Settings {'>'} Service Accounts {'>'} Generate New Private Key). سيتم حفظه في متصفحك الحالي فقط.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <textarea
+                  value={serverKey}
+                  onChange={(e) => {
+                    setServerKey(e.target.value);
+                    localStorage.setItem("fcm_server_key", e.target.value);
+                  }}
+                  placeholder='{"type": "service_account", "project_id": "...", ...}'
+                  className="flex-1 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-left font-mono text-sm dark:text-white min-h-[120px]"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex overflow-x-auto gap-2 pb-2 scrollbar-hide">
