@@ -1135,6 +1135,12 @@ app.post("/api/push/fcm-broadcast", async (req, res) => {
     res.json({ success: true, successCount, failureCount });
   } catch (error: any) {
     console.error("Error broadcasting FCM notification:", error);
+    if (error.message && error.message.includes("PERMISSION_DENIED")) {
+      return res.status(500).json({ 
+        error: "Permission Denied: Missing Firebase Admin Credentials.", 
+        message: "لم يتم العثور على صلاحيات إرسال الإشعارات. إذا كنت تختبر من بيئة التطوير، فهذا طبيعي. يرجى التأكد من إضافة المتغيرات (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) في Vercel وتجربة الإرسال من المنصة الحية." 
+      });
+    }
     res.status(500).json({ error: "Failed to broadcast FCM notifications.", message: error.message });
   }
 });
@@ -1251,6 +1257,15 @@ app.post("/api/admin/send-notification", async (req, res) => {
     res.json({ success: true, successCount, failureCount });
   } catch (error: any) {
     console.error("Error sending admin notification:", error);
+    
+    // Check for Permission Denied error (usually due to missing Service Account credentials)
+    if (error.message && error.message.includes("PERMISSION_DENIED")) {
+      return res.status(500).json({ 
+        error: "Permission Denied: Missing Firebase Admin Credentials.", 
+        message: "لم يتم العثور على صلاحيات إرسال الإشعارات. إذا كنت تختبر من بيئة التطوير، فهذا طبيعي. يرجى التأكد من إضافة المتغيرات (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) في Vercel وتجربة الإرسال من المنصة الحية." 
+      });
+    }
+
     res.status(500).json({ error: "Failed to send notification.", message: error.message });
   }
 });
