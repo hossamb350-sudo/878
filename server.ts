@@ -1146,6 +1146,38 @@ app.post("/api/push/fcm-broadcast", async (req, res) => {
 });
 
 // AI Newspaper Assistant Route
+app.get("/api/admin/fcm-diagnostics", async (req, res) => {
+  try {
+    const db = getDb();
+    if (!db || !adminApp) {
+      return res.status(500).json({ error: "Firebase Admin not initialized" });
+    }
+    
+    // Check if we have credentials (if we can read tokens, we likely have valid admin credentials)
+    let isAdminSdkReady = false;
+    let tokensCount = 0;
+    
+    try {
+      const snapshot = await db.collection("fcm_tokens").get();
+      tokensCount = snapshot.docs.length;
+      isAdminSdkReady = true;
+    } catch (e) {
+      console.warn("Could not read fcm_tokens for diagnostics:", e);
+    }
+    
+    res.json({
+      isAdminSdkReady,
+      hasLegacyServerKey: !!process.env.FCM_SERVER_KEY || !!process.env.FIREBASE_SERVER_KEY,
+      tokensCount,
+      vercelEnv: process.env.VERCEL_ENV || "development (AI Studio)",
+      dryRunStatus: isAdminSdkReady ? "مستعد للإرسال (Ready)" : "غير جاهز (Not Ready)",
+    });
+  } catch (error: any) {
+    console.error("Error in fcm-diagnostics:", error);
+    res.status(500).json({ error: "Failed to get diagnostics", message: error.message });
+  }
+});
+
 app.post("/api/admin/send-notification", async (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
