@@ -157,58 +157,36 @@ export function AdminNotificationManagement() {
         }
       };
 
-      let data: any = null;
-      let apiSuccess = false;
-
       try {
-        const res = await fetch("/api/admin/send-notification", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify(payload)
-        });
-
-        const contentTypeHeader = res.headers.get("content-type") || "";
+        // Write the notification to Firestore directly, to be picked up by Cloud Functions
+        const { collection, addDoc, serverTimestamp } = await import("firebase/firestore");
         
-        if (contentTypeHeader.includes("application/json")) {
-          data = await res.json();
-          if (res.ok) {
-            apiSuccess = true;
-          }
-        }
-      } catch (e) {
-        console.warn("API direct call failed, falling back to direct Firestore recording", e);
+        await addDoc(collection(db, "notifications_queue"), {
+          ...payload,
+          senderId: auth.currentUser?.uid || "admin",
+          status: "pending",
+          createdAt: serverTimestamp()
+        });
+
+        setSendResult({
+          success: true,
+          message: "تم وضع الإشعار في طابور الإرسال السحابي (Firebase Cloud Functions) بنجاح."
+        });
+        
+        // Reset form
+        setNotifTitle("");
+        setNotifBody("");
+
+      } catch (err: any) {
+        console.error("Error queueing push notification:", err);
+        setSendResult({
+          success: false,
+          message: "حدث خطأ أثناء وضع الإشعار في طابور الإرسال: " + err.message
+        });
+      } finally {
+        setSending(false);
       }
-
-      if (apiSuccess && data) {
-        setSendResult({ 
-          success: true, 
-          message: data.message || `تم الإرسال بنجاح! تم استهداف ${data.totalTokens || data.successCount || 0} جهاز.` 
-        });
-      } else {
-        // Fallback: Save notification directly to Firestore
-        await addDoc(collection(db, "notifications_history"), {
-          title: notifTitle,
-          body: notifBody,
-          imageUrl: selectedItem.imageUrl || selectedItem.thumbnailUrl || "",
-          contentType,
-          contentId: selectedItem.id,
-          contentTitle: selectedItem.title,
-          successCount: 0,
-          failureCount: 0,
-          tokensCount: 0,
-          createdAt: Date.now(),
-          sentBy: auth.currentUser?.email || "Admin"
-        });
-
-        setSendResult({ 
-          success: true, 
-          message: "تم حفظ الإشعار في السجل بنجاح. (ملاحظة: لضمان وصول الإشعار لجميع الهواتف، تأكد من نشر آخر تحديث للموقع على Vercel)." 
-        });
-      }
-
+      
       setTimeout(() => {
         setIsModalOpen(false);
       }, 3500);
