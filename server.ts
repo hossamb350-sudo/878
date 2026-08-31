@@ -39,13 +39,30 @@ function getDb() {
   if (!dbInstance) {
     try {
       if (getApps().length === 0) {
-        adminApp = initializeApp({
+        const adminConfig: any = {
           projectId: firebaseConfig.projectId,
-        });
+        };
+        
+        // Use environment credentials if available (required for Vercel/FCM)
+        if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+          try {
+            const { cert } = require("firebase-admin/app");
+            adminConfig.credential = cert({
+              projectId: firebaseConfig.projectId,
+              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+              privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+            });
+            console.log("Firebase Admin initialized with explicit service account credentials.");
+          } catch (e) {
+            console.error("Error setting up Firebase Admin credentials:", e);
+          }
+        }
+        
+        adminApp = initializeApp(adminConfig);
       } else {
         adminApp = getApps()[0];
       }
-      dbInstance = getFirestore(adminApp);
+      dbInstance = getFirestore(adminApp, firebaseConfig.firestoreDatabaseId || "(default)");
     } catch (err) {
       console.error("Failed to initialize Firebase Admin / Firestore:", err);
       return null;
