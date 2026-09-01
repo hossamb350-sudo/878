@@ -55,18 +55,29 @@ export function PushNotificationHandler() {
                   case "news":
                     targetPath = `/news/${slugOrId}`;
                     break;
+                  case "urgent":
+                  case "urgentNews":
+                    targetPath = `/news`;
+                    break;
                   case "article":
+                  case "articles":
                     targetPath = `/articles/${slugOrId}`;
                     break;
                   case "video":
+                  case "videos":
                     targetPath = `/watch/${slugOrId}`;
                     break;
                   case "event":
                   case "activity":
+                  case "activities":
                     targetPath = `/events/activity/${slugOrId}`;
                     break;
                   case "leader":
                     targetPath = `/leader/${slugOrId}`;
+                    break;
+                  case "quran":
+                  case "lessons":
+                    targetPath = `/quran`;
                     break;
                   default:
                     targetPath = `/${data.contentType}/${slugOrId}`;

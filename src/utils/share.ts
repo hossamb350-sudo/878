@@ -3,8 +3,9 @@ import { getShareableUrl } from "../config/apiConfig";
 
 export interface ShareOptions {
   title: string;
-  type: 'news' | 'video' | 'article' | 'activity' | 'leader' | 'channel' | 'radio';
+  type: 'news' | 'video' | 'article' | 'activity' | 'leader' | 'channel' | 'radio' | 'quran' | 'lesson' | 'syllabus' | 'excerpt';
   id: string;
+  seriesId?: string;
   imageUrl?: string;
   authorPhoto?: string;
 }
@@ -14,7 +15,7 @@ export interface ShareOptions {
  * Returns true if native share succeeded/was triggered, false if clipboard fallback was used.
  */
 export async function shareContent(options: ShareOptions): Promise<{ success: boolean; native: boolean }> {
-  const { title, type, id, imageUrl, authorPhoto } = options;
+  const { title, type, id, imageUrl, authorPhoto, seriesId } = options;
   
   // 1. Generate clean URL (Shortened format using only the ID to prevent long Arabic encoded slugs)
   let path = "";
@@ -33,6 +34,18 @@ export async function shareContent(options: ShareOptions): Promise<{ success: bo
       break;
     case "activity":
       path = routes.activity(id);
+      break;
+    case "lesson":
+      path = routes.quranLesson(id, seriesId);
+      break;
+    case "syllabus":
+      path = routes.quranSyllabus(id);
+      break;
+    case "excerpt":
+      path = routes.quranExcerpt(id);
+      break;
+    case "quran":
+      path = routes.quran();
       break;
     case "channel":
     case "radio":

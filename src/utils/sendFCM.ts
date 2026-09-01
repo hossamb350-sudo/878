@@ -1,6 +1,43 @@
-import { collection, getDocs, addDoc } from "firebase/firestore";
+import { collection, getDocs, addDoc, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import * as jose from "jose";
+
+export async function getStoredFCMKey(): Promise<string | null> {
+  const localKey = localStorage.getItem("fcm_server_key");
+  if (localKey && localKey.trim()) {
+    return localKey.trim();
+  }
+
+  try {
+    const snap = await getDoc(doc(db, "settings", "fcm"));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data?.serviceAccount && typeof data.serviceAccount === "string") {
+        localStorage.setItem("fcm_server_key", data.serviceAccount);
+        return data.serviceAccount;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch FCM settings from Firestore:", err);
+  }
+
+  return null;
+}
+
+export async function saveStoredFCMKey(keyJson: string): Promise<void> {
+  const trimmed = keyJson.trim();
+  if (trimmed) {
+    localStorage.setItem("fcm_server_key", trimmed);
+    await setDoc(doc(db, "settings", "fcm"), {
+      serviceAccount: trimmed,
+      updatedAt: Date.now(),
+      updatedBy: auth.currentUser?.email || "admin",
+    }, { merge: true });
+  } else {
+    localStorage.removeItem("fcm_server_key");
+    await deleteDoc(doc(db, "settings", "fcm"));
+  }
+}
 
 export async function sendFCMNotification(
   title: string,
@@ -22,12 +59,12 @@ export async function sendFCMNotification(
     };
 
     // 1. Try to send via Client-Side logic first if Service Account is configured
-    const savedKey = localStorage.getItem("fcm_server_key");
+    const savedKey = await getStoredFCMKey();
     if (savedKey) {
       try {
         const credentials = JSON.parse(savedKey);
         if (credentials.private_key && credentials.client_email && credentials.project_id) {
-          console.log("Found Service Account JSON in localStorage, sending from client...");
+          console.log("Found Service Account JSON, sending from client...");
           
           const tokensSnapshot = await getDocs(collection(db, "fcm_tokens"));
           const tokens = tokensSnapshot.docs.map(doc => doc.id);
@@ -67,8 +104,13 @@ export async function sendFCMNotification(
           let failureCount = 0;
 
           let targetUrl = `/${contentType}/${slugOrId}`;
-          if (contentType === "events") targetUrl = `/events/activity/${slugOrId}`;
-          if (contentType === "quran") targetUrl = `/quran`;
+          if (contentType === "urgent" || contentType === "urgentNews") targetUrl = `/news`;
+          if (contentType === "events" || contentType === "activity" || contentType === "activities") targetUrl = `/events/activity/${slugOrId}`;
+          if (contentType === "quran" || contentType === "lessons") targetUrl = `/quran`;
+          if (contentType === "video" || contentType === "videos") targetUrl = `/watch/${slugOrId}`;
+          if (contentType === "leader") targetUrl = `/leader/${slugOrId}`;
+          if (contentType === "article" || contentType === "articles") targetUrl = `/articles/${slugOrId}`;
+          if (contentType === "news") targetUrl = `/news/${slugOrId}`;
 
           // Send to each token
           for (let i = 0; i < tokens.length; i++) {
@@ -77,15 +119,50 @@ export async function sendFCMNotification(
                 token: tokens[i],
                 notification: {
                   title: title,
-                  body: body,
+                  body: body || undefined,
                   image: imageUrl || undefined
                 },
                 data: {
+                  title: title,
+                  body: body || "",
                   contentType: contentType,
                   contentId: slugOrId,
-                  url: targetUrl
+                  url: targetUrl,
+                  dir: "rtl",
+                  lang: "ar"
                 },
-                android: { priority: "high" }
+                android: {
+                  priority: "high",
+                  notification: {
+                    title: title,
+                    body: body || undefined,
+                    ticker: title,
+                    image: imageUrl || undefined,
+                    icon: "ic_launcher",
+                    color: "#1e3a8a",
+                    sound: "default",
+                    channelId: "fcm_high_priority_channel",
+                    defaultSound: true,
+                    defaultVibrateTimings: true
+                  }
+                },
+                webpush: {
+                  headers: {
+                    Urgency: "high"
+                  },
+                  notification: {
+                    title: title,
+                    body: body || undefined,
+                    icon: "/ic_launcher.png",
+                    badge: "/ic_launcher.png",
+                    image: imageUrl || undefined,
+                    dir: "rtl",
+                    lang: "ar"
+                  },
+                  fcm_options: {
+                    link: targetUrl
+                  }
+                }
               }
             };
 
@@ -114,7 +191,7 @@ export async function sendFCMNotification(
               failureCount,
               tokensCount: tokens.length,
               createdAt: Date.now(),
-              sentBy: auth.currentUser?.email || "Auto Broadcast",
+              sentBy: auth.currentUser?.displayName || auth.currentUser?.email || "Auto Broadcast",
               method: "client_side_v1"
             });
           } catch (e) {

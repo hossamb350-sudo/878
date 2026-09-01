@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { Activity, Server, Smartphone, AlertTriangle, CheckCircle, RefreshCw } from "lucide-react";
+import { getStoredFCMKey } from "../utils/sendFCM";
 
 export function AdminFCMDiagnostics() {
   const [loading, setLoading] = useState(false);
@@ -19,8 +20,8 @@ export function AdminFCMDiagnostics() {
       const tokensSnapshot = await getDocs(collection(db, "fcm_tokens"));
       const tokensCount = tokensSnapshot.size;
       
-      // Check for Service Account Key in localStorage
-      const savedKey = localStorage.getItem("fcm_server_key");
+      // Check for Service Account Key (from Firestore or localStorage)
+      const savedKey = await getStoredFCMKey();
       let hasValidKey = false;
       if (savedKey) {
         try {
@@ -37,7 +38,7 @@ export function AdminFCMDiagnostics() {
         isAdminSdkReady: hasValidKey, // We use the client-side mechanism now
         hasLegacyServerKey: false,
         tokensCount: tokensCount,
-        vercelEnv: "Client-Side (Local Storage)",
+        vercelEnv: "Client-Side (FCM v1 / Firestore Config)",
         dryRunStatus: hasValidKey ? "مستعد للإرسال (Ready)" : "غير جاهز (Missing Service Account JSON)",
       });
 

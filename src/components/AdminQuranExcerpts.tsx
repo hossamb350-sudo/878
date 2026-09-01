@@ -12,6 +12,7 @@ import { db } from "../firebase";
 import { QuranExcerpt } from "../types";
 import { SyncService } from "../services/SyncService";
 import { getShareableUrl } from "../config/apiConfig";
+import { shareContent } from "../utils/share";
 import { del as delIDB } from "idb-keyval";
 import {
   Quote,
@@ -104,22 +105,12 @@ export const IslamicExcerptCard = ({
 
   const handleShare = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (navigator.share) {
-      try {
-        let shareText = `« ${excerpt.title || "مقتطف"} »\n\n"${excerpt.content || ""}"`;
-        if (hasAuthor) shareText += `\n👤 ${excerpt.author}`;
-        if (hasSource) shareText += `\n📌 ${excerpt.source}`;
-        await navigator.share({
-          title: excerpt.title || "مقتطف",
-          text: shareText,
-          url: getShareableUrl("/quran"),
-        });
-      } catch (err) {
-        // Share cancelled or failed
-      }
-    } else {
-      handleCopy(e);
-    }
+    await shareContent({
+      title: excerpt.title || "مقتطف",
+      type: "excerpt",
+      id: excerpt.id,
+      imageUrl: excerpt.mediaUrl,
+    });
   };
 
   if (isCompact) {

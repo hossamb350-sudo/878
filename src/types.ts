@@ -7,7 +7,24 @@ export interface LiveUpdate {
   timestamp?: number;
 }
 
-export interface NewsItem {
+export type ApprovalStatus = "pending_approval" | "approved" | "published" | "rejected";
+
+export interface ApprovalAuditFields {
+  approvalStatus?: ApprovalStatus;
+  createdByUid?: string;
+  createdByName?: string;
+  createdByRole?: "admin" | "manager" | "editor" | "user";
+  submittedAt?: number;
+  approvedByUid?: string;
+  approvedByName?: string;
+  approvedAt?: number;
+  rejectedByUid?: string;
+  rejectedByName?: string;
+  rejectedAt?: number;
+  rejectionReason?: string;
+}
+
+export interface NewsItem extends ApprovalAuditFields {
   id: string;
   title: string;
   shortDescription?: string;
@@ -32,7 +49,7 @@ export interface NewsItem {
   isLeader?: boolean;
 }
 
-export interface UrgentNews {
+export interface UrgentNews extends ApprovalAuditFields {
   id: string;
   text: string;
   createdAt: number;
@@ -42,7 +59,7 @@ export interface UrgentNews {
   scrollingExpiresAt?: number;
 }
 
-export interface VideoItem {
+export interface VideoItem extends ApprovalAuditFields {
   id: string;
   title: string;
   description?: string;
@@ -98,7 +115,7 @@ export interface LiveStreamSettings {
   updatedAt?: number;
 }
 
-export interface LeaderContent {
+export interface LeaderContent extends ApprovalAuditFields {
   id: string;
   title: string;
   type: "text" | "video";
@@ -161,6 +178,7 @@ export interface NotificationHistoryItem {
   id: string;
   title: string;
   body: string;
+  imageUrl?: string;
   contentType: string;
   contentId: string;
   contentTitle?: string;
@@ -296,7 +314,7 @@ export interface FavoriteItem {
   savedAt: number;
 }
 
-export interface Article {
+export interface Article extends ApprovalAuditFields {
   id: string;
   title: string;
   content: string;

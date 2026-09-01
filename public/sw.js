@@ -2,17 +2,29 @@ self.addEventListener('push', function(event) {
   if (event.data) {
     try {
       const data = event.data.json();
-      const title = data.title || 'إشعار جديد';
+      const notif = data.notification || {};
+      const customData = data.data || {};
+      
+      const title = notif.title || data.title || customData.title || 'المنصة الإعلامية';
+      const rawBody = notif.body !== undefined ? notif.body : (data.body !== undefined ? data.body : customData.body);
+      const body = rawBody ? String(rawBody).trim() : '';
+      const icon = notif.icon || data.icon || '/ic_launcher.png';
+      const badge = data.badge || '/ic_launcher.png';
+      const image = notif.image || data.image || customData.image || undefined;
+      const url = customData.url || data.url || notif.click_action || '/';
+
       const options = {
-        body: data.body || '',
-        icon: data.icon || '/ic_launcher.png',
-        badge: data.badge || '/ic_launcher.png',
-        image: data.image || undefined,
+        body: body,
+        icon: icon,
+        badge: badge,
+        image: image,
         data: {
-          url: data.url || '/'
+          url: url,
+          ...customData
         },
         dir: 'rtl',
-        lang: 'ar'
+        lang: 'ar',
+        vibrate: [200, 100, 200]
       };
       
       event.waitUntil(
@@ -22,10 +34,12 @@ self.addEventListener('push', function(event) {
       console.error('Error parsing push data:', e);
       const text = event.data.text();
       event.waitUntil(
-        self.registration.showNotification('تنبيه جديد', {
-          body: text,
+        self.registration.showNotification('المنصة الإعلامية', {
+          body: text || '',
           icon: '/ic_launcher.png',
-          dir: 'rtl'
+          badge: '/ic_launcher.png',
+          dir: 'rtl',
+          lang: 'ar'
         })
       );
     }

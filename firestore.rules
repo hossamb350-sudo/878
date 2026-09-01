@@ -33,6 +33,17 @@ service cloud.firestore {
       );
     }
 
+    function isStaff() {
+      return isSignedIn() && (
+        isSuperAdminEmail() ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && (
+          getUserData().get('role', '') == 'admin' ||
+          getUserData().get('role', '') == 'manager' ||
+          getUserData().get('role', '') == 'editor'
+        ))
+      );
+    }
+
     function isValidId(id) {
       return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
@@ -48,21 +59,21 @@ service cloud.firestore {
 
     match /featured_topics/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /categories/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read: if isSignedIn() && (request.auth.uid == userId || isStaff());
       allow create: if isSignedIn() && request.auth.uid == userId;
       allow update: if isSignedIn() && (
         (request.auth.uid == userId && (
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'lastLogin', 'email', 'notificationSettings', 'phoneNumber', 'bio']) ||
-          (isSuperAdminEmail() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'displayName', 'photoURL', 'lastLogin', 'email']))
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'permissions']) ||
+          isSuperAdminEmail()
         )) ||
         isAdmin()
       );
@@ -70,25 +81,25 @@ service cloud.firestore {
     }
 
     match /users/{userId}/bookmarks/{id} {
-      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
     }
 
     match /users/{userId}/notes/{id} {
-      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
     }
 
     match /users/{userId}/highlights/{id} {
-      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
     }
 
     match /users/{userId}/stats/{id} {
-      allow read, write: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow read, write: if isSignedIn() && (request.auth.uid == userId || isStaff());
     }
 
     match /news/{id} {
       allow read: if true;
-      allow create, delete: if isManager();
-      allow update: if isManager() || (
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
         (request.resource.data.views is number || request.resource.data.views is int)
       );
@@ -96,8 +107,8 @@ service cloud.firestore {
 
     match /articles/{id} {
       allow read: if true;
-      allow create, delete: if isManager();
-      allow update: if isManager() || (
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
         (request.resource.data.views is number || request.resource.data.views is int)
       );
@@ -105,18 +116,18 @@ service cloud.firestore {
 
     match /urgentNews/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /newsMetadata/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /videos/{id} {
       allow read: if true;
-      allow create, delete: if isManager();
-      allow update: if isManager() || (
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
         (request.resource.data.views is number || request.resource.data.views is int)
       );
@@ -124,28 +135,28 @@ service cloud.firestore {
 
     match /events/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /activities/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /livestreams/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /notifications/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /leader/{id} {
       allow read: if true;
-      allow create, delete: if isManager();
-      allow update: if isManager() || (
+      allow create, delete: if isStaff();
+      allow update: if isStaff() || (
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) &&
         (request.resource.data.views is number || request.resource.data.views is int)
       );
@@ -153,61 +164,62 @@ service cloud.firestore {
 
     match /social_links/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /settings/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /authors/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /deletions/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /quran_series/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /quran_lessons/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /quran_excerpts/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /quran_syllabuses/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /newspapers/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
 
     match /newspaper_logs/{id} {
       allow read: if true;
-      allow write: if isManager();
+      allow write: if isStaff();
     }
     
     match /notifications_history/{id} {
-      allow read, write: if isAdmin();
+      allow read, write: if isStaff();
     }
 
     match /fcm_tokens/{id} {
       allow create, update: if true;
-      allow read, delete: if isAdmin();
+      allow read: if isStaff();
+      allow delete: if isAdmin();
     }
   }
 }

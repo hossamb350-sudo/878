@@ -43,6 +43,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { getShareableUrl } from "../../config/apiConfig";
+import { shareContent } from "../../utils/share";
 import { SEO } from "../../components/SEO";
 import { QuranReader } from "../../components/QuranReader";
 import { QuranStats } from "../../components/QuranStats";
@@ -302,6 +303,17 @@ const LessonsView = ({
   const seriesLessons = sortQuranLessons(
     lessonsList.filter((l: any) => l.seriesId === selectedSeries?.id)
   );
+
+  const handleShareLesson = async (e: React.MouseEvent, lesson: any, displayTitle: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await shareContent({
+      title: displayTitle,
+      type: "lesson",
+      id: lesson.id,
+      seriesId: lesson.seriesId || selectedSeries?.id,
+    });
+  };
   
   return (
     <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-4 sm:py-6 relative bg-white" ref={scrollRef}>
@@ -344,9 +356,9 @@ const LessonsView = ({
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.04 }}
                 >
-                  <button
+                  <div
                     onClick={() => onNavigateToLesson(lesson, selectedSeries!)}
-                    className="w-full group relative bg-white dark:bg-stone-900 rounded-[12px] sm:rounded-[14px] p-3 sm:p-3.5 flex items-center justify-between gap-3 text-right transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 shadow-xs border border-slate-200/60 dark:border-slate-800/60 active:scale-[0.99]"
+                    className="w-full group relative bg-white dark:bg-stone-900 rounded-[12px] sm:rounded-[14px] p-3 sm:p-3.5 flex items-center justify-between gap-3 text-right transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 shadow-xs border border-slate-200/60 dark:border-slate-800/60 active:scale-[0.99] cursor-pointer"
                     dir="rtl"
                   >
                     {/* Middle: Content */}
@@ -384,11 +396,22 @@ const LessonsView = ({
                       )}
                     </div>
 
-                    {/* Left Side: Arrow Button */}
-                    <div className="shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 dark:bg-stone-800 text-slate-400 group-hover:bg-taiz-sky group-hover:text-white transition-all shadow-xs">
-                      <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    {/* Left Side: Actions (Share + Arrow Button) */}
+                    <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => handleShareLesson(e, lesson, displayTitle)}
+                        className="p-1.5 sm:p-2 rounded-lg bg-slate-50 dark:bg-stone-800 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-all shadow-xs cursor-pointer active:scale-95"
+                        title="مشاركة الدرس"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+
+                      <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 dark:bg-stone-800 text-slate-400 group-hover:bg-taiz-sky group-hover:text-white transition-all shadow-xs">
+                        <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
                     </div>
-                  </button>
+                  </div>
                 </motion.div>
               );
             })}
@@ -415,6 +438,17 @@ const SyllabusesView = ({
     }
     return true;
   });
+
+  const handleShareSyllabus = async (e: React.MouseEvent, syllabus: any, lessonTitle: string, seriesId?: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await shareContent({
+      title: `المقرر: ${lessonTitle}`,
+      type: "syllabus",
+      id: syllabus.id,
+      seriesId: seriesId,
+    });
+  };
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 relative" ref={scrollRef}>
@@ -466,15 +500,24 @@ const SyllabusesView = ({
               }
 
               return (
-                <button
+                <div
                   key={item.id}
                   onClick={() => onSelectLesson(lesson, series)}
-                  className="bg-white dark:bg-stone-900 p-3 sm:p-3.5 rounded-[12px] sm:rounded-[14px] shadow-xs border border-slate-200/60 dark:border-slate-800/60 hover:border-taiz-sky/40 hover:shadow-md transition-all duration-300 text-right flex flex-col items-start gap-2 focus:outline-none relative overflow-hidden group active:scale-[0.99]"
+                  className="bg-white dark:bg-stone-900 p-3 sm:p-3.5 rounded-[12px] sm:rounded-[14px] shadow-xs border border-slate-200/60 dark:border-slate-800/60 hover:border-taiz-sky/40 hover:shadow-md transition-all duration-300 text-right flex flex-col justify-between items-start gap-2 focus:outline-none relative overflow-hidden group active:scale-[0.99] cursor-pointer"
                 >
                   <div className="flex justify-between w-full items-center">
                     <span className="text-[10px] sm:text-[11px] bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold font-cairo">
                       المقرر الأسبوعي
                     </span>
+
+                    <button
+                      type="button"
+                      onClick={(e) => handleShareSyllabus(e, item, displayTitle, series.id)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer active:scale-95"
+                      title="مشاركة المقرر"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
                   </div>
                   <div className="flex flex-col gap-0.5 text-right w-full">
                     <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white font-cairo group-hover:text-taiz-sky transition-colors line-clamp-2">
@@ -490,7 +533,7 @@ const SyllabusesView = ({
                       <span>{dateText}</span>
                     </div>
                   )}
-                </button>
+                </div>
               );
             })
           )}
@@ -585,20 +628,12 @@ const ExcerptDetailView = ({
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        let shareText = `« ${selectedExcerpt.title || "مقتطف"} »\n\n"${selectedExcerpt.content || ""}"`;
-        if (hasAuthor) shareText += `\n👤 ${selectedExcerpt.author}`;
-        if (hasSource) shareText += `\n📌 ${selectedExcerpt.source}`;
-        await navigator.share({
-          title: selectedExcerpt.title || "مقتطف",
-          text: shareText,
-          url: getShareableUrl("/quran"),
-        });
-      } catch (err) {}
-    } else {
-      handleCopy();
-    }
+    await shareContent({
+      title: selectedExcerpt.title || "مقتطف",
+      type: "excerpt",
+      id: selectedExcerpt.id,
+      imageUrl: selectedExcerpt.mediaUrl,
+    });
   };
 
   return (
@@ -1330,13 +1365,6 @@ export function Quran() {
   const [activeView, setActiveView] = useState<QuranView>("quran");
   const [previousView, setPreviousView] = useState<QuranView>("quran");
 
-  useEffect(() => {
-    const viewParam = searchParams.get("view");
-    if (viewParam === "quran") {
-      setActiveView("quran");
-    }
-  }, [searchParams]);
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Data State - Loaded from Firestore
@@ -1628,6 +1656,60 @@ export function Quran() {
       alert("لا يوجد سجل لآخر قراءة");
     }
   };
+
+  useEffect(() => {
+    if (loading) return;
+
+    const lessonParam = searchParams.get("lesson");
+    const seriesParam = searchParams.get("series");
+    const syllabusParam = searchParams.get("syllabus");
+    const excerptParam = searchParams.get("excerpt");
+    const viewParam = searchParams.get("view");
+
+    if (lessonParam && lessonsList.length > 0) {
+      const matchLesson = lessonsList.find((l) => l.id === lessonParam);
+      if (matchLesson) {
+        const matchSeries = seriesList.find(
+          (s) => s.id === (seriesParam || matchLesson.seriesId)
+        );
+        navigateToLesson(matchLesson, matchSeries);
+        return;
+      }
+    }
+
+    if (syllabusParam && syllabusesList.length > 0) {
+      const matchSyllabus = syllabusesList.find((s) => s.id === syllabusParam);
+      if (matchSyllabus) {
+        const matchLesson = lessonsList.find((l) => l.id === matchSyllabus.lessonId);
+        if (matchLesson) {
+          const matchSeries = seriesList.find((s) => s.id === (matchLesson.seriesId || matchSyllabus.seriesId));
+          navigateToLesson(matchLesson, matchSeries);
+          return;
+        } else {
+          setActiveView("syllabuses");
+          return;
+        }
+      }
+    }
+
+    if (excerptParam && excerptsList.length > 0) {
+      const matchExcerpt = excerptsList.find((e) => e.id === excerptParam);
+      if (matchExcerpt) {
+        setSelectedExcerpt(matchExcerpt);
+        setActiveView("excerpt-detail");
+        return;
+      }
+    }
+
+    if (viewParam) {
+      if (viewParam === "quran") setActiveView("quran");
+      else if (viewParam === "series") setActiveView("series");
+      else if (viewParam === "syllabuses") setActiveView("syllabuses");
+      else if (viewParam === "excerpts") setActiveView("excerpts");
+      else if (viewParam === "stats") setActiveView("stats");
+      else if (viewParam === "leader") setActiveView("leader");
+    }
+  }, [loading, searchParams, lessonsList, seriesList, syllabusesList, excerptsList]);
 
   // PERSISTENCE TRIGGERS:
   const handleToggleBookmark = async (paragraphIndex: number, text: string) => {

@@ -52,7 +52,9 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 
-export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
+import { UserProfile } from "../types";
+
+export function AdminArticles({ isAdmin, role, userProfile }: { isAdmin?: boolean; role?: string; userProfile?: UserProfile | null }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [authors, setAuthors] = useState<Author[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -213,6 +215,11 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
       const finalCategories = categoriesList.length > 0 ? categoriesList : (category ? [category] : []);
       const catLink = await CategoryService.linkContentCategories(finalCategories);
 
+      const isEditorUser = role === "editor";
+      const currentRole = role || (isAdmin ? "admin" : "editor");
+      const officialName = userProfile?.displayName || authorName || "كاتب المنصة";
+      const isStaffReadOnlyAuthor = isEditorUser || role === "manager" || (!isAdmin && role !== "admin");
+
       const payload = {
         title: title.trim(),
         content: content.trim(),
@@ -224,13 +231,18 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
         imageUrl: imageUrl.trim() || null,
         additionalImages: additionalImages.filter(img => img.trim() !== ""),
         authorId: finalAuthorId || null,
-        authorName: finalAuthorName || "كاتب المنصة",
+        authorName: isStaffReadOnlyAuthor ? officialName : (finalAuthorName || "كاتب المنصة"),
         authorPhoto: finalAuthorPhoto || null,
         isFeatured,
         hijriDate: hijriDate.trim(),
         gregorianDate: gregorianDate.trim(),
         views: Number(views) || 0,
-        updatedAt: Date.now()
+        updatedAt: Date.now(),
+        approvalStatus: isEditorUser ? "pending_approval" : "published",
+        createdByUid: userProfile?.uid || "",
+        createdByName: officialName,
+        createdByRole: currentRole,
+        submittedAt: Date.now(),
       };
 
       if (editingId) {
@@ -240,13 +252,18 @@ export function AdminArticles({ isAdmin }: { isAdmin?: boolean }) {
           ...payload,
           createdAt: Date.now()
         });
-        sendFCMNotification(
-          "مقال جديد | " + title,
-          authorName || "تم إضافة مقال جديد",
-          "article",
-          docRef.id,
-          imageUrl
-        );
+        if (!isEditorUser) {
+          const cleanTitle = title.trim() || "مقال جديد";
+          const cleanAuthor = (officialName || authorName)?.trim() || "";
+          const notifTitle = cleanAuthor ? `${cleanAuthor} | ${cleanTitle}` : cleanTitle;
+          sendFCMNotification(
+            notifTitle,
+            "",
+            "article",
+            docRef.id,
+            imageUrl
+          );
+        }
       }
 
       setMode("list");

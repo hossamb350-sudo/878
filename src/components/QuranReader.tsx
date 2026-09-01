@@ -24,6 +24,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { QuranLesson, QuranSeries } from "../types";
 import { formatLessonDisplayTitle } from "../data/staticQuranData";
+import { shareContent } from "../utils/share";
 
 interface QuranReaderProps {
   lesson: QuranLesson;
@@ -633,6 +634,21 @@ export function QuranReader({
     loose: "leading-[2.3] md:leading-[2.6]",
   };
 
+  const handleShareLesson = async () => {
+    const displayTitle = formatLessonDisplayTitle(
+      lesson.title,
+      lesson.order,
+      undefined,
+      series.title
+    );
+    await shareContent({
+      title: displayTitle,
+      type: "lesson",
+      id: lesson.id,
+      seriesId: series.id || lesson.seriesId,
+    });
+  };
+
   return (
     <div
       className={`absolute inset-0 z-[60] flex flex-col font-sans transition-colors duration-300 ${themeClasses[readerTheme]}`}
@@ -659,6 +675,13 @@ export function QuranReader({
           </div>
 
           <div className="flex items-center gap-1.5">
+            <button
+              onClick={handleShareLesson}
+              className="p-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition duration-200"
+              title="مشاركة الدرس"
+            >
+              <Share2 className="w-4 h-4" />
+            </button>
             <button
               onClick={() => {
                 setFocusMode(true);

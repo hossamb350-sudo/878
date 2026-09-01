@@ -112,6 +112,7 @@ import { AuthModals } from "../../components/AuthModals";
 import { FavoritesList } from "../../components/FavoritesList";
 import { UserProfileSection } from "../../components/UserProfileSection";
 
+import { AdminContentApprovals } from "../../components/AdminContentApprovals";
 import { AdminNewsWizard } from "../../components/AdminNewsWizard";
 import { AdminNotificationManagement } from "../../components/AdminNotificationManagement";
 import { STATIC_QURAN_LESSONS, STATIC_QURAN_SERIES, sortQuranLessons } from "../../data/staticQuranData";
@@ -514,10 +515,16 @@ export function Admin() {
       label: "مواقيت الصلاة والطقس",
       access: isAdmin || isManager,
     },
+    {
+      id: "contentApprovals",
+      icon: CheckCircle,
+      label: "مراجعة والموافقة على المحتوى",
+      access: isAdmin || isManager,
+    },
     { id: "registered-users", icon: Users, label: "إدارة عدد المستخدمين", access: isAdmin },
     { id: "version-lock", icon: Shield, label: "قفل وإصدار التطبيق", access: isAdmin },
     { id: "roles", icon: Users, label: "إدارة الصلاحيات", access: isAdmin },
-    { id: "notifications", icon: Bell, label: "إدارة الإشعارات", access: isAdmin },
+    { id: "notifications", icon: Bell, label: "إدارة الإشعارات", access: isAdmin || isManager },
   ];
 
   const filteredTabs = sidebarTabs.filter((tab) => tab.access);
@@ -933,6 +940,8 @@ export function Admin() {
                 {activeTab === "news" && (
                   <AdminNews
                     isAdmin={isAdmin}
+                    role={profile?.role}
+                    userProfile={profile}
                     onBackToDashboard={() => setActiveTab("dashboard")}
                   />
                 )}
@@ -942,12 +951,21 @@ export function Admin() {
                 {activeTab === "videos" && <AdminVideos isAdmin={isAdmin} />}
                 {activeTab === "live" && <AdminLiveChannels />}
                 {activeTab === "leader" && <AdminLeader isAdmin={isAdmin} />}
-                {activeTab === "articles" && <AdminArticles isAdmin={isAdmin} />}
+                {activeTab === "articles" && (
+                  <AdminArticles
+                    isAdmin={isAdmin}
+                    role={profile?.role}
+                    userProfile={profile}
+                  />
+                )}
                 {activeTab === "quran" && <AdminQuran />}
                 {activeTab === "excerpts" && <AdminQuranExcerpts />}
                 {activeTab === "events" && <AdminEvents />}
                 {activeTab === "social" && <AdminSocialLinks />}
-                {activeTab === "notifications" && isAdmin && <AdminNotificationManagement />}
+                {activeTab === "notifications" && (isAdmin || isManager) && <AdminNotificationManagement role={profile?.role} isAdmin={isAdmin} />}
+                {activeTab === "contentApprovals" && (isAdmin || isManager) && (
+                  <AdminContentApprovals userProfile={profile} isAdmin={isAdmin} />
+                )}
                 {activeTab === "roles" && isAdmin && <AdminRoles />}
                 {activeTab === "prayer-weather" && (isAdmin || isManager) && <AdminPrayerWeather isAdmin={isAdmin} />}
                 {activeTab === "registered-users" && isAdmin && <AdminRegisteredUsers isAdmin={isAdmin} />}
@@ -1008,6 +1026,8 @@ function AdminSummaryDashboard({
     events: 0,
   });
 
+  const isPrivileged = isAdmin || isManager || isEditor;
+
   const [onlineCountDisplay, setOnlineCountDisplay] = useState<number>(34);
   const [registeredCountDisplay, setRegisteredCountDisplay] = useState<number>(() => {
     const savedDisplay = localStorage.getItem("registered_users_display_count");
@@ -1037,7 +1057,7 @@ function AdminSummaryDashboard({
           const cnt = data.customCount ?? 14;
           setRegisteredCountDisplay(cnt);
           localStorage.setItem("registered_users_display_count", String(cnt));
-        } else {
+        } else if (isPrivileged) {
           getDocs(collection(db, "users")).then((usersSnap) => {
             const cnt = usersSnap.size || 1;
             setRegisteredCountDisplay(cnt);
@@ -1049,24 +1069,27 @@ function AdminSummaryDashboard({
       console.warn("Could not fetch registered_users_config:", err);
     });
 
-    const unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
-      const docRef = doc(db, "settings", "registered_users_config");
-      getDoc(docRef).then((cfgSnap) => {
-        if (!cfgSnap.exists() || !(cfgSnap.data() as RegisteredUsersConfig).isCustomOverride) {
-          const cnt = snap.size || 1;
-          setRegisteredCountDisplay(cnt);
-          localStorage.setItem("registered_users_display_count", String(cnt));
-        }
-      }).catch(() => {});
-    }, (err) => {
-      console.warn("Could not listen to users collection:", err);
-    });
+    let unsubUsers = () => {};
+    if (isPrivileged) {
+      unsubUsers = onSnapshot(collection(db, "users"), (snap) => {
+        const docRef = doc(db, "settings", "registered_users_config");
+        getDoc(docRef).then((cfgSnap) => {
+          if (!cfgSnap.exists() || !(cfgSnap.data() as RegisteredUsersConfig).isCustomOverride) {
+            const cnt = snap.size || 1;
+            setRegisteredCountDisplay(cnt);
+            localStorage.setItem("registered_users_display_count", String(cnt));
+          }
+        }).catch(() => {});
+      }, (err) => {
+        console.warn("Could not listen to users collection:", err);
+      });
+    }
 
     return () => {
       unsubRegConfig();
       unsubUsers();
     };
-  }, []);
+  }, [isPrivileged]);
 
   useEffect(() => {
     // 2. Online Users Config & Simulation Fluctuations
@@ -1736,7 +1759,7 @@ function AdminUrgentNews() {
           }
 
           // Offset createdAt slightly to preserve exact input order (newest goes first, so we might want to offset negatively so they sort naturally)
-          await addDoc(collection(db, "urgentNews"), {
+          const docRef = await addDoc(collection(db, "urgentNews"), {
             text: draft.text,
             isActive: true,
             createdAt: now + i, 
@@ -1744,6 +1767,17 @@ function AdminUrgentNews() {
             scrollingExpiresAt: newScrollingExpiresAt,
             expiresAt: newScrollingExpiresAt,
           });
+          
+          // Send FCM Notification for Urgent News
+          const urgentText = draft.text.trim();
+          sendFCMNotification(
+            `عاجل | ${urgentText}`,
+            "",
+            "urgent",
+            docRef.id,
+            ""
+          );
+          
           createdCount++;
         }
         alert(`تم إضافة ${createdCount} خبر عاجل بنجاح`);
@@ -2369,13 +2403,22 @@ function AdminUrgentNews() {
 
 function AdminNews({
   isAdmin,
+  role,
+  userProfile,
   onBackToDashboard,
 }: {
   isAdmin?: boolean;
+  role?: string;
+  userProfile?: UserProfile | null;
   onBackToDashboard: () => void;
 }) {
   return (
-    <AdminNewsWizard isAdmin={isAdmin} onBackToDashboard={onBackToDashboard} />
+    <AdminNewsWizard
+      isAdmin={isAdmin}
+      role={role}
+      userProfile={userProfile}
+      onBackToDashboard={onBackToDashboard}
+    />
   );
 }
 
@@ -4348,6 +4391,17 @@ function AdminQuranSyllabuses() {
       await setDoc(doc(db, "quran_syllabuses", id), payload, { merge: true });
       await delIDB('quran_data_cache');
 
+      if (!editingId) {
+        const cleanLessonTitle = (lessonTitle || "درس مقرر").trim();
+        sendFCMNotification(
+          `المقرر | ${cleanLessonTitle}`,
+          "",
+          "quran",
+          id,
+          ""
+        );
+      }
+
       alert("تم اعتماد المقرر بنجاح وربطه بالدرس المخزن مسبقًا في المنصة");
       setEditingId(null);
       setLessonId("");
@@ -5212,9 +5266,10 @@ function AdminActivitiesContent() {
         alert("تم تعديل الفعالية بنجاح");
       } else {
         const docRef = await addDoc(collection(db, "activities"), { ...data, createdAt: Date.now() });
+        const cleanActTitle = data.title.trim();
         sendFCMNotification(
-          "نشاط جديد | " + data.title,
-          "تابع أحدث الأنشطة والفعاليات",
+          cleanActTitle,
+          "",
           "activity",
           docRef.id,
           data.imageUrl
@@ -5520,6 +5575,7 @@ function AdminRoles() {
   const [isUsersCollapsed, setIsUsersCollapsed] = useState(true);
 
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
+  const [editDisplayName, setEditDisplayName] = useState<string>("");
   const [editRole, setEditRole] = useState<string>("user");
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [editJobTitle, setEditJobTitle] = useState<string>("");
@@ -5536,6 +5592,7 @@ function AdminRoles() {
     { id: "events", label: "تقويم المناسبات" },
     { id: "social", label: "روابط تابعنا" },
     { id: "categories", label: "إدارة التصنيفات" },
+    { id: "notifications", label: "إدارة الإشعارات" },
   ];
 
   useEffect(() => {
@@ -5563,11 +5620,12 @@ function AdminRoles() {
     setSaving(true);
     try {
       await updateDoc(doc(db, "users", editingUser.uid), {
+        displayName: editDisplayName.trim() || editingUser.displayName || "مستخدم",
         role: editRole,
         permissions: editRole === "editor" ? editPermissions : null,
         jobTitle: editRole === "editor" ? editJobTitle : null,
       });
-      alert("تم تحديث الصلاحيات بنجاح");
+      alert("تم تحديث الصلاحيات والمعلومات بنجاح");
       setEditingUser(null);
     } catch (e) {
       console.error(e);
@@ -5679,6 +5737,7 @@ function AdminRoles() {
       <button
         onClick={() => {
           setEditingUser(u);
+          setEditDisplayName(u.displayName || "");
           setEditRole(u.role);
           setEditPermissions(u.permissions || []);
           setEditJobTitle(u.jobTitle || "");
@@ -5815,6 +5874,22 @@ function AdminRoles() {
                 className="space-y-4 overflow-y-auto pr-2 flex-1 scrollbar-hide text-right"
                 dir="rtl"
               >
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                    الاسم الرسمي المعروض (Display Name)
+                  </label>
+                  <input
+                    type="text"
+                    value={editDisplayName}
+                    onChange={(e) => setEditDisplayName(e.target.value)}
+                    placeholder="أدخل الاسم الرسمي المعروض للمستخدم"
+                    className="w-full p-3 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-taiz-sky text-sm font-bold"
+                  />
+                  <p className="text-[10px] text-text-muted mt-1 font-bold">
+                    هذا الاسم يعتمده المشرف وسيظهر تلقائياً في خانة الكاتب/المصدر ولا يمكن للمحرر تغييره.
+                  </p>
+                </div>
+
                 <div>
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                     الصلاحية

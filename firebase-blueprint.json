@@ -309,6 +309,37 @@
         "triggeredBy": { "type": "string" }
       },
       "required": ["prayerKey", "prayerName", "timestamp"]
+    },
+    "FCMSettings": {
+      "title": "FCM Settings",
+      "description": "Firebase Cloud Messaging service account credentials for push notifications",
+      "type": "object",
+      "properties": {
+        "serviceAccount": { "type": "string" },
+        "updatedAt": { "type": "number" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["serviceAccount"]
+    },
+    "NotificationHistory": {
+      "title": "Notification History",
+      "description": "Log of sent push notifications",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "contentType": { "type": "string" },
+        "contentId": { "type": "string" },
+        "contentTitle": { "type": "string" },
+        "successCount": { "type": "number" },
+        "failureCount": { "type": "number" },
+        "tokensCount": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "sentBy": { "type": "string" },
+        "method": { "type": "string" }
+      },
+      "required": ["title", "createdAt"]
     }
   },
   "firestore": {
@@ -403,6 +434,14 @@
     "/quran_syllabuses/{id}": {
       "schema": { "$ref": "QuranSyllabus" },
       "description": "Quran scheduled syllabuses"
+    },
+    "/settings/fcm": {
+      "schema": { "$ref": "FCMSettings" },
+      "description": "FCM Push Notifications Service Account Configuration"
+    },
+    "/notifications_history/{id}": {
+      "schema": { "$ref": "NotificationHistory" },
+      "description": "Push notification sent history logs"
     }
   }
 }

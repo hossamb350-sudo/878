@@ -260,9 +260,11 @@ export function AdminVideos({ isAdmin }: { isAdmin?: boolean }) {
           ...payload,
           createdAt: Date.now()
         });
+        const cleanTitle = title.trim() || "فيديو جديد";
+        const notifTitle = `ميديا | ${cleanTitle}`;
         sendFCMNotification(
-          "ميديا | " + title,
-          "فيديو جديد تمت إضافته في قسم الميديا",
+          notifTitle,
+          "",
           "video",
           docRef.id,
           thumbnailUrl

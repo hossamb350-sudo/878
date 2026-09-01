@@ -287,14 +287,24 @@ export function LiveStreamProvider({ children }: { children: React.ReactNode }) 
     }
 
     // Inside broadcast window or 24/7 stream - retry once or show error
-    if (retryCountRef.current < 2 && isPlaying) {
+    if (retryCountRef.current < 3 && isPlaying) {
       retryCountRef.current += 1;
+      const rawSrc = activeStream.streamUrl || activeStream.url;
+      // On web, if initial attempt failed and audio isn't already using proxy, switch to proxy stream
+      if (!Capacitor.isNativePlatform() && rawSrc && audioRef.current && !audioRef.current.src.includes('/api/proxy/stream')) {
+        const proxyUrl = `/api/proxy/stream?url=${encodeURIComponent(rawSrc)}`;
+        const absoluteProxySrc = new URL(proxyUrl, window.location.origin).href;
+        audioRef.current.src = absoluteProxySrc;
+        audioRef.current.load();
+        audioRef.current.play().catch(() => {});
+        return;
+      }
       setTimeout(() => {
         if (audioRef.current && isPlaying) {
           audioRef.current.load();
           audioRef.current.play().catch(() => {});
         }
-      }, 2500);
+      }, 2000);
     } else {
       setIsPlaying(false);
       setStreamError("تعذر الاتصال بالبث المباشر حالياً");

@@ -43,6 +43,8 @@ interface NewsItem {
   videoUrl?: string;
 }
 
+import { UserProfile, ApprovalStatus } from "../types";
+
 interface CategoryItem {
   name: string;
   color?: string;
@@ -50,10 +52,12 @@ interface CategoryItem {
 
 interface NewsWizardProps {
   isAdmin?: boolean;
+  role?: string;
+  userProfile?: UserProfile | null;
   onBackToDashboard?: () => void;
 }
 
-export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps) {
+export function AdminNewsWizard({ isAdmin, role, userProfile, onBackToDashboard }: NewsWizardProps) {
   const [newsMode, setNewsMode] = useState<"add" | "list" | "edit">("list");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isListExpanded, setIsListExpanded] = useState(false);
@@ -173,11 +177,17 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       setSavedCats(items);
       localStorage.setItem("wizard_saved_cats", JSON.stringify(items));
     });
-  
-  
 
-  return () => unsubCats();
+    return () => unsubCats();
   }, []);
+
+  useEffect(() => {
+    const isStaffReadOnly = role === "editor" || role === "manager" || (!isAdmin && role !== "admin");
+    if (isStaffReadOnly) {
+      const officialName = userProfile?.displayName || userProfile?.email?.split("@")[0] || "محرر المنصة";
+      setAuthor(officialName);
+    }
+  }, [userProfile, role, isAdmin, newsMode]);
 
   // formatting helper
   const insertText = (before: string, after: string) => {
@@ -255,7 +265,9 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     setTitle("");
     setShortDesc("");
     setContent("");
-    setAuthor("");
+    const isStaffReadOnly = role === "editor" || role === "manager" || (!isAdmin && role !== "admin");
+    const defaultAuthorName = isStaffReadOnly ? (userProfile?.displayName || userProfile?.email?.split("@")[0] || "محرر المنصة") : "";
+    setAuthor(defaultAuthorName);
     setImageUrl("");
     setAdditionalImages([]);
     setCat("");
@@ -360,11 +372,16 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
     }
     const catLink = await CategoryService.linkContentCategories(finalSelectedCats, colorOverrides);
 
+    const isEditorUser = role === "editor";
+    const currentRole = role || (isAdmin ? "admin" : "editor");
+    const officialName = userProfile?.displayName || author || "منصة تعز";
+    const isStaffReadOnlyAuthor = isEditorUser || role === "manager" || (!isAdmin && role !== "admin");
+
     const payload: any = {
       title,
       content,
       shortDescription: finalSnippet,
-      author: author || "منصة تعز",
+      author: isStaffReadOnlyAuthor ? officialName : (author || "منصة تعز"),
       imageUrl: imageUrl || null,
       additionalImages: filteredAdditionalImages.length > 0 ? filteredAdditionalImages : null,
       category: catLink.category,
@@ -378,7 +395,12 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
       liveUpdates: parsedUpdates || null,
       views: Number(views) || 0,
       updatedAt: Date.now(),
-      publishStatus,
+      publishStatus: isEditorUser ? "draft" : publishStatus,
+      approvalStatus: isEditorUser ? "pending_approval" : "published",
+      createdByUid: userProfile?.uid || "",
+      createdByName: officialName,
+      createdByRole: currentRole,
+      submittedAt: Date.now(),
       tags: tags.split(",").map(t => t.trim()).filter(t => t.length > 0),
       videoUrl: videoUrl || null
     };
@@ -402,21 +424,30 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
           ...payload,
           createdAt: Date.now()
         });
-        // Send FCM
-        sendFCMNotification(
-          "عاجل | " + (title || "خبر جديد"),
-          finalSnippet || "تم إضافة خبر جديد على منصة تعز",
-          "news",
-          docRef.id,
-          imageUrl
-        );
+
+        // Only send FCM if content is published directly (Manager/Admin), NOT for pending Editor news
+        if (!isEditorUser) {
+          const cleanTitle = title.trim() || "خبر جديد";
+          const notifTitle = `الأخبار | ${cleanTitle}`;
+          sendFCMNotification(
+            notifTitle,
+            "",
+            "news",
+            docRef.id,
+            imageUrl
+          );
+        }
         savedId = docRef.id;
       }
       
       setLastSavedId(savedId);
       localStorage.removeItem("news_draft");
 
-      const msg = isEditingMode ? "تم تعديل الخبر بنجاح" : "تم نشر الخبر بنجاح";
+      const msg = isEditingMode 
+        ? "تم تعديل الخبر بنجاح" 
+        : (isEditorUser 
+            ? "تم حفظ الخبر وإرساله بانتظار موافقة الإدارة قبل النشر" 
+            : "تم نشر الخبر بنجاح");
       setSuccessToastMessage(msg);
       setShowSuccessModal(true);
 
@@ -604,20 +635,43 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="relative">
-                            <label className="block text-sm font-black text-gray-700 dark:text-gray-300 mb-2.5">المحرر أو المصدر *</label>
+                            <div className="flex items-center justify-between mb-2.5">
+                              <label className="block text-sm font-black text-gray-700 dark:text-gray-300">المحرر أو المصدر *</label>
+                              {(role === "editor" || role === "manager" || (!isAdmin && role !== "admin")) && (
+                                <span className="text-[10px] font-black bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300 px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                                  الاسم المعتمد (للقراءة فقط)
+                                </span>
+                              )}
+                            </div>
                             <div className="relative">
                               <input 
-                                className="w-full p-3.5 pr-11 bg-gray-50 dark:bg-gray-950 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs placeholder:text-gray-300 dark:text-white" 
-                                placeholder="" 
-                                value={author} 
-                                onChange={e=>setAuthor(e.target.value)}
-                                onFocus={() => setShowAuthorDropdown(true)}
+                                className={`w-full p-3.5 pr-11 border-none rounded-2xl focus:ring-2 focus:ring-blue-500 transition-all font-bold text-xs ${
+                                  (role === "editor" || role === "manager" || (!isAdmin && role !== "admin"))
+                                    ? "bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 cursor-not-allowed opacity-90"
+                                    : "bg-gray-50 dark:bg-gray-950 dark:text-white"
+                                }`} 
+                                placeholder="اسم المحرر أو المصدر" 
+                                value={
+                                  (role === "editor" || role === "manager" || (!isAdmin && role !== "admin"))
+                                    ? (userProfile?.displayName || author || "محرر المنصة")
+                                    : author
+                                } 
+                                onChange={e => {
+                                  if (role !== "editor" && role !== "manager" && (isAdmin || role === "admin")) {
+                                    setAuthor(e.target.value);
+                                  }
+                                }}
+                                readOnly={role === "editor" || role === "manager" || (!isAdmin && role !== "admin")}
+                                disabled={role === "editor" || role === "manager" || (!isAdmin && role !== "admin")}
+                                onFocus={() => {
+                                  if (isAdmin || role === "admin") setShowAuthorDropdown(true);
+                                }}
                                 onBlur={() => setTimeout(() => setShowAuthorDropdown(false), 200)}
                               />
                               <User className="absolute right-4 top-3.5 w-4 h-4 text-gray-400" />
                               
                               <AnimatePresence>
-                                {showAuthorDropdown && savedAuthors.length > 0 && (
+                                {showAuthorDropdown && (isAdmin || role === "admin") && savedAuthors.length > 0 && (
                                   <motion.div 
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -1186,18 +1240,25 @@ export function AdminNewsWizard({ isAdmin, onBackToDashboard }: NewsWizardProps)
 
             <div className="flex items-center gap-3">
               {currentStep < 4 ? (
-                <button 
-                  disabled={currentStep === 1 && (!title || !author)}
-                  onClick={() => setCurrentStep(s => s + 1)}
-                  className={`flex items-center gap-2 px-8 py-3 rounded-2xl font-black transition-all shadow-lg text-sm ${
-                    currentStep === 1 && (!title || !author) 
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
-                    : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98]"
-                  }`}
-                >
-                  التالي
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
+                (() => {
+                  const isStaffReadOnly = role === "editor" || role === "manager" || (!isAdmin && role !== "admin");
+                  const effectiveAuthor = isStaffReadOnly ? (userProfile?.displayName || userProfile?.email?.split("@")[0] || author || "محرر المنصة") : author;
+                  const isStep1Disabled = currentStep === 1 && (!title.trim() || !effectiveAuthor.trim());
+                  return (
+                    <button 
+                      disabled={isStep1Disabled}
+                      onClick={() => setCurrentStep(s => s + 1)}
+                      className={`flex items-center gap-2 px-8 py-3 rounded-2xl font-black transition-all shadow-lg text-sm ${
+                        isStep1Disabled 
+                        ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
+                        : "bg-blue-600 text-white hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98]"
+                      }`}
+                    >
+                      التالي
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  );
+                })()
               ) : (
                 <button 
                   onClick={save}

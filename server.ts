@@ -1089,10 +1089,19 @@ app.post("/api/push/fcm-broadcast", async (req, res) => {
           title: title,
           body: body || "",
         },
-        data: data || {},
+        data: {
+          ...(data || {}),
+          title: title,
+          body: body || "",
+          dir: "rtl",
+          lang: "ar"
+        },
         android: {
           priority: "high",
           notification: {
+            title: title,
+            body: body || undefined,
+            ticker: title,
             sound: "default",
             channelId: "fcm_high_priority_channel",
             visibility: "PUBLIC",
@@ -1100,7 +1109,22 @@ app.post("/api/push/fcm-broadcast", async (req, res) => {
             defaultSound: true,
             defaultVibrateTimings: true,
             defaultLightSettings: true,
+            icon: "ic_launcher",
+            color: "#1e3a8a"
           },
+        },
+        webpush: {
+          headers: {
+            Urgency: "high",
+          },
+          notification: {
+            title: title,
+            body: body || undefined,
+            icon: "/ic_launcher.png",
+            badge: "/ic_launcher.png",
+            dir: "rtl",
+            lang: "ar"
+          }
         },
         tokens: tokenChunk,
       };
@@ -1206,8 +1230,8 @@ app.post("/api/admin/send-notification", async (req, res) => {
 
     const { title, body, image, data, contentType, contentId, contentTitle } = req.body;
 
-    if (!title || !body) {
-      return res.status(400).json({ error: "Title and body are required" });
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
     }
 
     const messaging = getMessaging(adminApp);
@@ -1230,12 +1254,21 @@ app.post("/api/admin/send-notification", async (req, res) => {
       const message: any = {
         notification: {
           title,
-          body,
+          body: body || "",
         },
-        data: data || {},
+        data: {
+          ...(data || {}),
+          title: title,
+          body: body || "",
+          dir: "rtl",
+          lang: "ar"
+        },
         android: {
           priority: "high",
           notification: {
+            title,
+            body: body || undefined,
+            ticker: title,
             sound: "default",
             channelId: "fcm_high_priority_channel",
             visibility: "PUBLIC",
@@ -1243,7 +1276,22 @@ app.post("/api/admin/send-notification", async (req, res) => {
             defaultSound: true,
             defaultVibrateTimings: true,
             defaultLightSettings: true,
+            icon: "ic_launcher",
+            color: "#1e3a8a"
           },
+        },
+        webpush: {
+          headers: {
+            Urgency: "high",
+          },
+          notification: {
+            title,
+            body: body || undefined,
+            icon: "/ic_launcher.png",
+            badge: "/ic_launcher.png",
+            dir: "rtl",
+            lang: "ar"
+          }
         },
         tokens: tokenChunk,
       };

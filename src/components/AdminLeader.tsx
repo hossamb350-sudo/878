@@ -281,8 +281,8 @@ export function AdminLeader({ isAdmin }: { isAdmin?: boolean }) {
           createdAt: Date.now()
         });
         sendFCMNotification(
-          "السيد القائد | " + title,
-          "تمت إضافة مرئية جديدة للسيد القائد",
+          title.trim() || "محتوى جديد للسيد القائد",
+          "",
           "leader",
           docRef.id,
           thumbnailUrl

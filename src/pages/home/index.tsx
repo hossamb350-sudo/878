@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { routes, generateSlug } from "../../utils/routes";
-import { collection, query, orderBy, getDocs, limit, doc, getDoc } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, limit, doc, getDoc, where } from "firebase/firestore";
 import { db } from "../../firebase";
 import { SyncService } from "../../services/SyncService";
 import { CategoryService } from "../../services/CategoryService";
@@ -351,6 +351,71 @@ export function Home() {
   const [activeSubTab, setActiveSubTab] = useState<"news" | "articles">("news");
   const [sliderShowLatest, setSliderShowLatest] = useState(true);
 
+  // Pagination / Infinite Scroll states for news
+  const [hasMoreNews, setHasMoreNews] = useState(true);
+  const [loadingMoreNews, setLoadingMoreNews] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  const loadMoreNews = async () => {
+    if (loadingMoreNews || !hasMoreNews) return;
+    setLoadingMoreNews(true);
+    try {
+      let minCreatedAt = Date.now();
+      if (rawNews.length > 0) {
+        minCreatedAt = Math.min(...rawNews.map(n => n.createdAt || Date.now()));
+      }
+
+      const q = query(
+        collection(db, "news"),
+        orderBy("createdAt", "desc"),
+        where("createdAt", "<", minCreatedAt),
+        limit(20)
+      );
+
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        setHasMoreNews(false);
+      } else {
+        const fetched = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as NewsItem));
+        const approvedOnly = fetched.filter(item => item.approvalStatus !== "pending_approval");
+        
+        setRawNews(prev => {
+          const existingIds = new Set(prev.map(i => i.id));
+          const newUnique = approvedOnly.filter(i => !existingIds.has(i.id));
+          const updated = [...prev, ...newUnique];
+          localStorage.setItem("taiz_news_cache", JSON.stringify(updated.slice(0, 100)));
+          return updated;
+        });
+
+        if (fetched.length < 20) {
+          setHasMoreNews(false);
+        }
+      }
+    } catch (err) {
+      console.warn("Error loading more news:", err);
+      setHasMoreNews(false);
+    } finally {
+      setLoadingMoreNews(false);
+    }
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMoreNews && !loadingMoreNews && !loading) {
+          loadMoreNews();
+        }
+      },
+      { rootMargin: "300px" }
+    );
+
+    if (loadMoreRef.current) {
+      observer.observe(loadMoreRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMoreNews, loadingMoreNews, loading, rawNews]);
+
   useEffect(() => {
     const fetchSliderConfig = async () => {
       try {
@@ -407,7 +472,7 @@ export function Home() {
     
     const combined = [...rawNews, ...mappedLeaderTexts];
     combined.sort((a, b) => b.createdAt - a.createdAt);
-    return combined.slice(0, 30);
+    return combined.filter(item => item.approvalStatus !== "pending_approval");
   }, [rawNews, rawLeader]);
 
   // Derived combined videos (regular videos + leader videos)
@@ -1009,6 +1074,21 @@ export function Home() {
                 </motion.div>
               ))}
               {/* End of news items list */}
+            </div>
+
+            {/* News Infinite Scroll Sentinel & Loader */}
+            <div ref={loadMoreRef} className="py-6 text-center select-none font-cairo my-2">
+              {loadingMoreNews && (
+                <div className="flex items-center justify-center gap-2 text-taiz-sky font-bold text-sm bg-slate-50 dark:bg-slate-800/60 py-3 px-4 rounded-xl mx-3 shadow-xs border border-slate-200/60 dark:border-slate-700/60">
+                  <div className="w-5 h-5 border-2 border-taiz-sky border-t-transparent rounded-full animate-spin"></div>
+                  <span>جاري تحميل المزيد من الأخبار...</span>
+                </div>
+              )}
+              {!hasMoreNews && news.length > 0 && (
+                <p className="text-xs font-bold text-slate-400 dark:text-slate-500 py-2">
+                  تم عرض جميع الأخبار
+                </p>
+              )}
             </div>
           </div>
         )}

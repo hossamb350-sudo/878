@@ -20,6 +20,10 @@
   ],
   "rewrites": [
     {
+      "source": "/api/proxy/stream",
+      "destination": "/api/proxy-stream.js"
+    },
+    {
       "source": "/api/admin/fcm-diagnostics",
       "destination": "/api/admin-fcm-diagnostics.js"
     },
