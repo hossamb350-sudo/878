@@ -100,8 +100,20 @@ export function PushNotificationHandler() {
           }
         });
 
-        // 2. Check permissions: if already granted and not explicitly disabled, register with a safe delay
-        const permStatus = await PushNotifications.checkPermissions();
+        // 2. Check permissions and handle first-time prompt
+        let permStatus = await PushNotifications.checkPermissions();
+        const hasPrompted = localStorage.getItem("push_prompted_once");
+
+        if (!hasPrompted && permStatus?.receive === "prompt") {
+          localStorage.setItem("push_prompted_once", "true");
+          permStatus = await PushNotifications.requestPermissions();
+          
+          if (permStatus.receive === "granted") {
+            // Automatically enable both push notifications and direct alerts upon user consent
+            localStorage.setItem("push_notifications_enabled", "true");
+          }
+        }
+
         const isDisabled = localStorage.getItem("push_notifications_enabled") === "false";
 
         if (permStatus?.receive === "granted" && !isDisabled) {
