@@ -5,7 +5,7 @@ self.addEventListener('push', function(event) {
       const notif = data.notification || {};
       const customData = data.data || {};
       
-      const title = notif.title || data.title || customData.title || 'المنصة الإعلامية';
+      const title = notif.title || data.title || customData.title || 'منصة تعز الإعلامية';
       const rawBody = notif.body !== undefined ? notif.body : (data.body !== undefined ? data.body : customData.body);
       const body = rawBody ? String(rawBody).trim() : '';
       const icon = notif.icon || data.icon || '/ic_launcher.png';
@@ -34,7 +34,7 @@ self.addEventListener('push', function(event) {
       console.error('Error parsing push data:', e);
       const text = event.data.text();
       event.waitUntil(
-        self.registration.showNotification('المنصة الإعلامية', {
+        self.registration.showNotification('منصة تعز الإعلامية', {
           body: text || '',
           icon: '/ic_launcher.png',
           badge: '/ic_launcher.png',

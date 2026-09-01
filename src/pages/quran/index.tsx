@@ -1715,22 +1715,20 @@ export function Quran() {
       }
     }
 
-    if (syllabusParam && syllabusesList.length > 0) {
-      const matchSyllabus = syllabusesList.find((s) => s.id === syllabusParam);
-      if (matchSyllabus) {
-        setActiveView("syllabuses");
-        setHighlightSyllabusId(syllabusParam);
-        return;
-      }
+    if (syllabusParam) {
+      setSelectedLesson(null);
+      setSelectedSeries(null);
+      setActiveView("syllabuses");
+      setHighlightSyllabusId(syllabusParam);
+      return;
     }
 
-    if (excerptParam && excerptsList.length > 0) {
-      const matchExcerpt = excerptsList.find((e) => e.id === excerptParam);
-      if (matchExcerpt) {
-        setActiveView("excerpts");
-        setHighlightExcerptId(excerptParam);
-        return;
-      }
+    if (excerptParam) {
+      setSelectedLesson(null);
+      setSelectedSeries(null);
+      setActiveView("excerpts");
+      setHighlightExcerptId(excerptParam);
+      return;
     }
 
     if (viewParam) {

@@ -76,14 +76,16 @@ export function PushNotificationHandler() {
                     targetPath = `/leader/${slugOrId}`;
                     break;
                   case "quran":
-                  case "lessons":
                     targetPath = `/quran`;
                     break;
+                  case "lessons":
                   case "syllabus":
-                    targetPath = `/quran?syllabus=${slugOrId}`;
+                  case "syllabuses":
+                    targetPath = slugOrId ? `/quran?syllabus=${slugOrId}&view=syllabuses` : `/quran?view=syllabuses`;
                     break;
                   case "excerpt":
-                    targetPath = `/quran?excerpt=${slugOrId}`;
+                  case "excerpts":
+                    targetPath = slugOrId ? `/quran?excerpt=${slugOrId}&view=excerpts` : `/quran?view=excerpts`;
                     break;
                   default:
                     targetPath = `/${data.contentType}/${slugOrId}`;

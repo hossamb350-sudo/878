@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, orderBy, limit, startAfter, Timestamp, addDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { Search, Bell, Send, CheckCircle, XCircle, Clock, AlertCircle, X, ExternalLink, Activity, PlayCircle, BookOpen, User, Book, CalendarIcon, Key, Settings, Zap, Image, Upload, Link2, Sparkles, PlusCircle, Save, Trash2 } from "lucide-react";
+import { Search, Bell, Send, CheckCircle, XCircle, Clock, AlertCircle, X, ExternalLink, Activity, PlayCircle, BookOpen, User, Book, CalendarIcon, Key, Settings, Zap, Image, Upload, Link2, Sparkles, PlusCircle, Save, Trash2, Quote } from "lucide-react";
 import { NewsItem, Article, VideoItem, LeaderContent, QuranLesson, ActivityItem, NotificationHistoryItem } from "../types";
 import { getStoredFCMKey, saveStoredFCMKey } from "../utils/sendFCM";
 
@@ -116,6 +116,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
     { id: "videos", label: "الفيديوهات (ميديا)", icon: PlayCircle },
     { id: "leader", label: "السيد القائد", icon: User },
     { id: "lessons", label: "مقرر الدروس", icon: Book },
+    { id: "excerpts", label: "المقتطفات", icon: Quote },
     { id: "activities", label: "الأنشطة", icon: CalendarIcon },
     { id: "history", label: "سجل الإشعارات", icon: Clock },
     { id: "diagnostics", label: "فحص الإشعارات", icon: AlertCircle },
@@ -142,6 +143,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
         case "videos": colName = "videos"; break;
         case "leader": colName = "leader"; break;
         case "lessons": colName = "quran_syllabuses"; break;
+        case "excerpts": colName = "quran_excerpts"; break;
         case "activities": colName = "activities"; break;
         case "history": colName = "notifications_history"; break;
       }
@@ -157,8 +159,11 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
           item.title = item.text || "خبر عاجل";
           item.shortDescription = item.isActive ? "🟢 نشط حالياً على شريط الأخبار العاجلة" : "⚪ غير نشط / منتهي الصلاحية";
         } else if (activeTab === "lessons") {
-          item.title = item.lessonTitle || "درس قرآن";
-          item.shortDescription = item.seriesTitle ? `سلسلة: ${item.seriesTitle}` : "";
+          item.title = item.lessonTitle || item.title || "المقرر الأسبوعي";
+          item.shortDescription = item.seriesTitle ? `سلسلة: ${item.seriesTitle}` : (item.dateRange || "مقرر دراسي");
+        } else if (activeTab === "excerpts") {
+          item.title = item.title || item.quote || item.text || "مقتطف من هدي القرآن";
+          item.shortDescription = item.source || item.author || item.speaker || "الشهيد القائد / السيد القائد";
         }
         return item;
       });
@@ -208,9 +213,15 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
     } else if (activeTab === "lessons") {
       const rawTitle = (item.lessonTitle || item.title || "").trim();
       const cleanTitle = rawTitle.replace(/^المقرر\s*\|\s*/, '').trim();
-      const formattedTitle = cleanTitle ? `المقرر | ${cleanTitle}` : "المقرر";
+      const formattedTitle = cleanTitle ? `المقرر | ${cleanTitle}` : "المقرر الأسبوعي";
       setNotifTitle(formattedTitle);
-      setNotifBody("");
+      setNotifBody(item.seriesTitle ? `سلسلة: ${item.seriesTitle}` : "");
+    } else if (activeTab === "excerpts") {
+      const rawTitle = (item.title || item.quote || item.text || "").trim();
+      const cleanTitle = rawTitle.replace(/^مقتطف\s*\|\s*/, '').trim();
+      const formattedTitle = cleanTitle ? `مقتطف | ${cleanTitle}` : "مقتطف من هدي القرآن";
+      setNotifTitle(formattedTitle);
+      setNotifBody((item.source || item.author || item.speaker || "").trim());
     } else if (activeTab === "activities") {
       setNotifTitle((item.title || "").trim());
       setNotifBody("");
@@ -237,8 +248,11 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
         contentType = "event"; 
         targetUrl = `/events/activity/${selectedItem.id}`;
       } else if (activeTab === "lessons") {
-        contentType = "quran";
-        targetUrl = `/quran`; 
+        contentType = "syllabus";
+        targetUrl = `/quran?syllabus=${selectedItem.id}&view=syllabuses`; 
+      } else if (activeTab === "excerpts") {
+        contentType = "excerpt";
+        targetUrl = `/quran?excerpt=${selectedItem.id}&view=excerpts`;
       } else if (activeTab === "leader") {
         targetUrl = `/leader/${selectedItem.id}`;
       } else if (activeTab === "videos") {
@@ -298,6 +312,8 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
         case "watch": targetUrl = "/watch"; break;
         case "leader": targetUrl = "/leader"; break;
         case "quran": targetUrl = "/quran"; break;
+        case "syllabuses": targetUrl = "/quran?view=syllabuses"; break;
+        case "excerpts": targetUrl = "/quran?view=excerpts"; break;
         case "events": targetUrl = "/events"; break;
         case "custom": targetUrl = customCustomUrl || "/"; break;
         default: targetUrl = "/";
@@ -838,6 +854,8 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
                       { id: "watch", label: "ميديا" },
                       { id: "leader", label: "السيد القائد" },
                       { id: "quran", label: "القرآن الكريم" },
+                      { id: "syllabuses", label: "مقرر الدروس" },
+                      { id: "excerpts", label: "المقتطفات" },
                       { id: "events", label: "الأنشطة" },
                       { id: "custom", label: "رابط مخصص" },
                     ].map((dest) => (
@@ -921,7 +939,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <span className="text-[11px] font-bold text-blue-400">منصة تعز الثقافية</span>
+                        <span className="text-[11px] font-bold text-blue-400">منصة تعز الإعلامية</span>
                         <span className="text-[10px] text-slate-400">الآن</span>
                       </div>
                       <p className="font-bold text-white text-xs truncate mt-0.5">
@@ -945,7 +963,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
                         <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
                           <Bell className="w-3 h-3 text-white" />
                         </div>
-                        <span className="text-xs font-bold text-slate-300">منصة تعز الثقافية</span>
+                        <span className="text-xs font-bold text-slate-300">منصة تعز الإعلامية</span>
                       </div>
                       <span className="text-[10px] text-slate-400">الآن</span>
                     </div>

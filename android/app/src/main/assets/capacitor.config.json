@@ -1,6 +1,6 @@
 {
 	"appId": "com.taiz.platform",
-	"appName": "المنصة الإعلامية",
+	"appName": "منصة تعز الإعلامية",
 	"webDir": "dist",
 	"plugins": {
 		"GoogleAuth": {
