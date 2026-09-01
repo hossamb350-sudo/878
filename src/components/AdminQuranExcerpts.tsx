@@ -13,6 +13,7 @@ import { QuranExcerpt } from "../types";
 import { SyncService } from "../services/SyncService";
 import { getShareableUrl } from "../config/apiConfig";
 import { shareContent } from "../utils/share";
+import { sendFCMNotification } from "../utils/sendFCM";
 import { del as delIDB } from "idb-keyval";
 import {
   Quote,
@@ -437,6 +438,16 @@ export function AdminQuranExcerpts() {
 
       await setDoc(doc(db, "quran_excerpts", id), payload, { merge: true });
       await delIDB("quran_data_cache");
+
+      if (!editingId) {
+        sendFCMNotification(
+          "مقتطف جديد",
+          payload.title || "مقتطف جديد من هدي القرآن",
+          "excerpt",
+          id,
+          ""
+        );
+      }
 
       closeForm();
     } catch (err) {

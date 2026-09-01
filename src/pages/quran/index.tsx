@@ -428,6 +428,7 @@ const SyllabusesView = ({
   seriesList,
   onSelectLesson,
   scrollRef,
+  highlightId,
 }: any) => {
   const now = Date.now();
   const activeSyllabuses = (syllabusesList || []).filter((s: any) => {
@@ -438,6 +439,21 @@ const SyllabusesView = ({
     }
     return true;
   });
+
+  useEffect(() => {
+    if (highlightId) {
+      setTimeout(() => {
+        const el = document.getElementById(`syllabus-${highlightId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('ring-2', 'ring-taiz-sky', 'ring-offset-2', 'dark:ring-offset-slate-900', 'animate-pulse');
+          setTimeout(() => {
+            el.classList.remove('ring-2', 'ring-taiz-sky', 'ring-offset-2', 'dark:ring-offset-slate-900', 'animate-pulse');
+          }, 3000);
+        }
+      }, 300);
+    }
+  }, [highlightId, activeSyllabuses.length]);
 
   const handleShareSyllabus = async (e: React.MouseEvent, syllabus: any, lessonTitle: string, seriesId?: string) => {
     e.stopPropagation();
@@ -502,6 +518,7 @@ const SyllabusesView = ({
               return (
                 <div
                   key={item.id}
+                  id={`syllabus-${item.id}`}
                   onClick={() => onSelectLesson(lesson, series)}
                   className="bg-white dark:bg-stone-900 p-3 sm:p-3.5 rounded-[12px] sm:rounded-[14px] shadow-xs border border-slate-200/60 dark:border-slate-800/60 hover:border-taiz-sky/40 hover:shadow-md transition-all duration-300 text-right flex flex-col justify-between items-start gap-2 focus:outline-none relative overflow-hidden group active:scale-[0.99] cursor-pointer"
                 >
@@ -547,11 +564,28 @@ const ExcerptsView = ({
   excerptsList,
   onSelectExcerpt,
   scrollRef,
+  highlightId,
 }: {
   excerptsList: QuranExcerpt[];
   onSelectExcerpt: (excerpt: QuranExcerpt) => void;
   scrollRef: any;
+  highlightId?: string | null;
 }) => {
+  useEffect(() => {
+    if (highlightId) {
+      setTimeout(() => {
+        const el = document.getElementById(`excerpt-${highlightId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('ring-2', 'ring-taiz-sky', 'ring-offset-2', 'dark:ring-offset-slate-900', 'animate-pulse');
+          setTimeout(() => {
+            el.classList.remove('ring-2', 'ring-taiz-sky', 'ring-offset-2', 'dark:ring-offset-slate-900', 'animate-pulse');
+          }, 3000);
+        }
+      }, 300);
+    }
+  }, [highlightId, excerptsList.length]);
+
   return (
     <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 sm:py-6 relative" ref={scrollRef} dir="rtl">
       <div className="space-y-4 max-w-4xl mx-auto">
@@ -564,11 +598,12 @@ const ExcerptsView = ({
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {excerptsList.map((item) => (
-              <IslamicExcerptCard
-                key={item.id}
-                excerpt={item}
-                onSelect={() => onSelectExcerpt(item)}
-              />
+              <div key={item.id} id={`excerpt-${item.id}`}>
+                <IslamicExcerptCard
+                  excerpt={item}
+                  onSelect={() => onSelectExcerpt(item)}
+                />
+              </div>
             ))}
           </div>
         )}
@@ -1386,6 +1421,9 @@ export function Quran() {
     null
   );
 
+  const [highlightSyllabusId, setHighlightSyllabusId] = useState<string | null>(null);
+  const [highlightExcerptId, setHighlightExcerptId] = useState<string | null>(null);
+
   let title = "الدروس";
   if (activeView === "leader") title = "الشهيد القائد";
   if (activeView === "lessons" && selectedSeries) title = selectedSeries.title;
@@ -1680,23 +1718,17 @@ export function Quran() {
     if (syllabusParam && syllabusesList.length > 0) {
       const matchSyllabus = syllabusesList.find((s) => s.id === syllabusParam);
       if (matchSyllabus) {
-        const matchLesson = lessonsList.find((l) => l.id === matchSyllabus.lessonId);
-        if (matchLesson) {
-          const matchSeries = seriesList.find((s) => s.id === (matchLesson.seriesId || matchSyllabus.seriesId));
-          navigateToLesson(matchLesson, matchSeries);
-          return;
-        } else {
-          setActiveView("syllabuses");
-          return;
-        }
+        setActiveView("syllabuses");
+        setHighlightSyllabusId(syllabusParam);
+        return;
       }
     }
 
     if (excerptParam && excerptsList.length > 0) {
       const matchExcerpt = excerptsList.find((e) => e.id === excerptParam);
       if (matchExcerpt) {
-        setSelectedExcerpt(matchExcerpt);
-        setActiveView("excerpt-detail");
+        setActiveView("excerpts");
+        setHighlightExcerptId(excerptParam);
         return;
       }
     }
@@ -2270,6 +2302,7 @@ export function Quran() {
                       navigateToLesson(resolvedLesson, resolvedSeries);
                     }}
                     scrollRef={scrollRef}
+                    highlightId={highlightSyllabusId}
                   />
                 )}
                 {activeView === "syllabus-detail" && (
@@ -2289,6 +2322,7 @@ export function Quran() {
                       setJumpToParagraphIndex(null);
                     }}
                     scrollRef={scrollRef}
+                    highlightId={highlightExcerptId}
                   />
                 )}
                 {activeView === "excerpt-detail" && (

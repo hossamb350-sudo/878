@@ -1,71 +1,49 @@
-import http from 'http';
-import https from 'https';
-import { parse } from 'url';
+export const config = {
+  runtime: 'edge',
+};
 
-export default function handler(req, res) {
-  const targetUrl = req.query.url;
+export default async function handler(req) {
+  const url = new URL(req.url);
+  const targetUrl = url.searchParams.get('url');
+
   if (!targetUrl) {
-    return res.status(400).json({ error: "Missing url parameter" });
+    return new Response(JSON.stringify({ error: "Missing url parameter" }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
   try {
-    const parsedUrl = parse(targetUrl);
-    const client = parsedUrl.protocol === 'https:' ? https : http;
-
-    const options = {
-      hostname: parsedUrl.hostname,
-      port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
-      path: parsedUrl.path || '/',
-      method: 'GET',
+    const proxyRes = await fetch(targetUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': '*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Icy-MetaData': '0'
-      },
-      timeout: 15000
-    };
-
-    const proxyReq = client.request(options, (proxyRes) => {
-      // Handle HTTP redirects (301, 302, 307, 308)
-      if (proxyRes.statusCode >= 300 && proxyRes.statusCode < 400 && proxyRes.headers.location) {
-        let redirectUrl = proxyRes.headers.location;
-        if (!redirectUrl.startsWith('http')) {
-          redirectUrl = `${parsedUrl.protocol}//${parsedUrl.host}${redirectUrl}`;
-        }
-        res.redirect(302, `/api/proxy/stream?url=${encodeURIComponent(redirectUrl)}`);
-        return;
-      }
-
-      const contentType = proxyRes.headers['content-type'] || 'audio/mpeg';
-      res.setHeader('Content-Type', String(contentType));
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-
-      if (proxyRes.headers['icy-metaint']) {
-        res.setHeader('icy-metaint', String(proxyRes.headers['icy-metaint']));
-      }
-      if (proxyRes.headers['icy-name']) {
-        res.setHeader('icy-name', String(proxyRes.headers['icy-name']));
-      }
-
-      proxyRes.pipe(res);
-    });
-
-    proxyReq.on('error', (err) => {
-      console.error('Proxy stream request error:', err);
-      if (!res.headersSent) {
-        res.status(500).json({ error: 'Failed to proxy stream' });
       }
     });
 
-    req.on('close', () => {
-      proxyReq.destroy();
+    const responseHeaders = new Headers();
+    responseHeaders.set('Access-Control-Allow-Origin', '*');
+    responseHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    
+    // Copy content-type
+    const contentType = proxyRes.headers.get('content-type');
+    if (contentType) responseHeaders.set('content-type', contentType);
+    
+    // Copy icy headers
+    const icyMetaInt = proxyRes.headers.get('icy-metaint');
+    if (icyMetaInt) responseHeaders.set('icy-metaint', icyMetaInt);
+    
+    const icyName = proxyRes.headers.get('icy-name');
+    if (icyName) responseHeaders.set('icy-name', icyName);
+
+    return new Response(proxyRes.body, {
+      status: proxyRes.status,
+      headers: responseHeaders,
     });
-  } catch (e) {
-    if (!res.headersSent) {
-      res.status(500).json({ error: e.message || 'Stream error' });
-    }
+  } catch (err) {
+    return new Response(JSON.stringify({ error: err.message || 'Stream error' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }

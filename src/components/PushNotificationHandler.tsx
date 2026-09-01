@@ -79,6 +79,12 @@ export function PushNotificationHandler() {
                   case "lessons":
                     targetPath = `/quran`;
                     break;
+                  case "syllabus":
+                    targetPath = `/quran?syllabus=${slugOrId}`;
+                    break;
+                  case "excerpt":
+                    targetPath = `/quran?excerpt=${slugOrId}`;
+                    break;
                   default:
                     targetPath = `/${data.contentType}/${slugOrId}`;
                 }

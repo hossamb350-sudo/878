@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { X, Bell, Clock } from "lucide-react";
 import { PrayerWeatherService } from "../services/PrayerWeatherService";
 import { PrayerAlertBroadcast, PrayerTimesConfig } from "../types";
+import { PrayerNotificationService } from "../services/PrayerNotificationService";
 
 const PRAYER_IMAGES: Record<string, string> = {
   Fajr: "/Fajr.jpg",
@@ -13,7 +14,7 @@ const PRAYER_IMAGES: Record<string, string> = {
   Isha: "/Isha.jpg",
 };
 
-const PRAYER_ARABIC_NAMES: Record<string, string> = {
+export const PRAYER_ARABIC_NAMES: Record<string, string> = {
   Fajr: "الفجر",
   Sunrise: "الشروق",
   Dhuhr: "الظهر",
@@ -45,6 +46,29 @@ export const PrayerAdhanPopup: React.FC = () => {
     });
     return () => unsub();
   }, []);
+
+  // Schedule local notifications for prayers
+  useEffect(() => {
+    let timings: Record<string, string> = {
+      Fajr: "04:27",
+      Dhuhr: "12:10",
+      Asr: "15:30",
+      Maghrib: "18:34",
+      Isha: "20:04",
+    };
+    if (prayerConfig?.mode === "manual" && prayerConfig.timings) {
+      timings = prayerConfig.timings;
+    } else {
+      try {
+        const cached = localStorage.getItem("cached_detail_raw_timings");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed.Fajr) timings = parsed;
+        }
+      } catch {}
+    }
+    PrayerNotificationService.scheduleDailyPrayers(timings);
+  }, [prayerConfig]);
 
   // Open the popup for 10 seconds
   const triggerPopup = (prayerKey: string, prayerName: string, customMessage?: string) => {

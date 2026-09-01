@@ -1540,7 +1540,7 @@ async function startServer() {
       if (fs.existsSync(indexPath)) {
         let html = fs.readFileSync(indexPath, "utf-8");
         const host = req.headers.host || "taiz-media-ye.vercel.app";
-        html = await injectDynamicMetaTags(req.path, html, getDb(), host);
+        html = await injectDynamicMetaTags(req.url, html, getDb(), host);
         res.send(html);
       } else {
         res.status(404).send("Not found");

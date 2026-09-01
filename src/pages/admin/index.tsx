@@ -4396,7 +4396,7 @@ function AdminQuranSyllabuses() {
         sendFCMNotification(
           `المقرر | ${cleanLessonTitle}`,
           "",
-          "quran",
+          "syllabus",
           id,
           ""
         );
