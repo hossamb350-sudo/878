@@ -157,10 +157,10 @@ export function DeepLinkHandler() {
             <button
               onClick={handleOpenApp}
               className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-[10px] sm:text-xs px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg shadow-md transition-transform active:scale-95 cursor-pointer font-cairo whitespace-nowrap"
-              title="فتح الرابط في تطبيق الأندرويد"
+              title="تحميل تطبيق الأندرويد"
             >
               <Smartphone className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span>فتح في التطبيق</span>
+              <span>تحميل التطبيق</span>
             </button>
 
             {/* Download APK Button if download URL is available */}

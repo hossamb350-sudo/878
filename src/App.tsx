@@ -211,7 +211,7 @@ export default function App() {
 
           {/* Subtle footer */}
           <p className="text-[10px] text-slate-500 mt-5 font-medium">
-            منصة تعز الإعلامية الثقافية المتكاملة © {new Date().getFullYear()}
+            منصة تعز الإعلامية 1448هـ - 2026م
           </p>
         </motion.div>
       </div>

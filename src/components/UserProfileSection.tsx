@@ -117,8 +117,8 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false }
               if (Capacitor.getPlatform() === 'android') {
                 await PushNotifications.createChannel({
                   id: 'fcm_high_priority_channel',
-                  name: 'المنصة الإعلامية',
-                  description: 'إشعارات المنصة الإعلامية للأخبار والتحديثات',
+                  name: 'منصة تعز الإعلامية',
+                  description: 'إشعارات منصة تعز الإعلامية للأخبار والتحديثات',
                   importance: 5,
                   visibility: 1,
                   vibration: true,

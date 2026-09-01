@@ -41,7 +41,7 @@ export const LeaderHeroBanner: React.FC<LeaderHeroBannerProps> = ({
           <div className="flex flex-col text-right">
             <div className="flex items-center gap-2">
               <span className="inline-block px-2.5 py-0.5 rounded-full bg-white/15 border border-white/20 text-amber-300 text-[10px] sm:text-[11px] font-bold font-cairo shadow-xs">
-                المنصة الإعلامية الرسمية
+                منصة تعز الإعلامية الرسمية
               </span>
               <span className="text-[10px] sm:text-[11px] text-white/80 font-medium">خطابات ومحاضرات</span>
             </div>
