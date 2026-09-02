@@ -269,7 +269,7 @@ export function WatchItem() {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="min-h-screen bg-[#f8fafc] text-slate-900 py-3 sm:py-5 px-3 sm:px-4 md:px-6 font-cairo pb-20 transition-colors duration-300 relative select-none"
+      className="min-h-screen bg-surface-main text-text-primary py-3 sm:py-5 px-3 sm:px-4 md:px-6 font-cairo pb-20 transition-colors duration-300 relative select-none"
       dir="rtl"
     >
       <SEO 
@@ -283,15 +283,15 @@ export function WatchItem() {
       <div className="max-w-4xl mx-auto w-full space-y-3.5">
         
         {/* Navigation Breadcrumb Bar */}
-        <div className="flex items-center justify-between bg-white rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-slate-200 shadow-soft text-xs">
+        <div className="flex items-center justify-between bg-surface-card rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-border-light shadow-soft text-xs">
           <Link
             to={routes.watch()}
-            className="flex items-center gap-1.5 font-bold text-slate-700 hover:text-taiz-sky transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-white hover:text-taiz-sky dark:hover:text-sky-300 transition-colors cursor-pointer"
           >
-            <ArrowRight className="w-4 h-4 text-taiz-sky" />
-            <span>قسم ميديا</span>
-            <span className="text-slate-400">/</span>
-            <span className="text-taiz-royal font-bold truncate max-w-[200px] sm:max-w-xs">
+            <ArrowRight className="w-4 h-4 text-taiz-sky dark:text-white" />
+            <span className="text-slate-800 dark:text-white">قسم ميديا</span>
+            <span className="text-slate-400 dark:text-slate-300">/</span>
+            <span className="text-slate-800 dark:text-white font-bold truncate max-w-[200px] sm:max-w-xs">
               عرض مرئي
             </span>
           </Link>
@@ -301,7 +301,7 @@ export function WatchItem() {
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                 isFavorited
                   ? "bg-taiz-sky text-white"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                  : "bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text-primary"
               }`}
               title="حفظ"
             >
@@ -313,7 +313,7 @@ export function WatchItem() {
         {/* ============================================================== */}
         {/* 1. VIDEO VIEW COMPONENT (Single Unified Card) */}
         {/* ============================================================== */}
-        <div className="relative rounded-[20px] sm:rounded-[24px] bg-white border border-slate-200 overflow-hidden shadow-soft mb-6 sm:mb-8">
+        <div className="relative rounded-[20px] sm:rounded-[24px] bg-surface-card border border-border-light overflow-hidden shadow-soft mb-6 sm:mb-8">
           {/* Embedded Custom Video Player */}
           <LeaderCustomPlayer
             videoUrl={video.url}
@@ -325,37 +325,37 @@ export function WatchItem() {
 
           {/* Video Metadata & Details inside same card */}
           <div className="p-4 sm:p-5 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
-              <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-light pb-2.5">
+              <div className="flex items-center gap-3 text-xs text-text-muted font-medium">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5 text-slate-400" />
                   <span>{mDate}</span>
                 </span>
                 {hDate && <span className="text-slate-500">{hDate}</span>}
               </div>
-              <div className="flex items-center gap-1 text-xs text-slate-500 font-medium">
+              <div className="flex items-center gap-1 text-xs text-text-muted font-medium">
                 <Eye className="w-3.5 h-3.5 text-red-500 animate-pulse" />
                 <span>{(video.views || 0).toLocaleString("ar-EG")} مشاهدة</span>
               </div>
             </div>
 
             {/* Title */}
-            <h1 className="text-base sm:text-xl font-bold leading-snug text-slate-900 font-cairo">
+            <h1 className="text-base sm:text-xl font-bold leading-snug text-text-primary font-cairo">
               {video.title}
             </h1>
 
             {/* Description */}
             {video.description && (
-              <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-700 text-xs sm:text-sm font-tajawal leading-relaxed whitespace-pre-line">
+              <div className="p-3 sm:p-3.5 rounded-xl bg-surface-hover border border-border-light text-text-secondary text-xs sm:text-sm font-tajawal leading-relaxed whitespace-pre-line">
                 {video.description}
               </div>
             )}
             
             {/* Social Sharing Bar */}
-            <div className="bg-[#fafafa] border border-slate-200/70 rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm mt-4">
+            <div className="bg-[#fafafa]/90 dark:bg-[#070F1E] border border-slate-200/70 dark:border-[#1E355B] rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm mt-4">
               <button 
                 onClick={toggleBookmark}
-                className={`p-2 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${isFavorited ? 'text-taiz-sky' : 'text-slate-400 hover:text-slate-700'}`}
+                className={`p-2 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${isFavorited ? 'text-taiz-sky' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                 title="حفظ"
               >
                 <Bookmark className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
@@ -364,21 +364,21 @@ export function WatchItem() {
               <div className="flex items-center gap-2" dir="ltr">
                 <button 
                   onClick={() => handleShare("telegram")} 
-                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E355B] bg-white dark:bg-[#0D1A33] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
                   title="مشاركة عبر تليجرام"
                 >
                   <Send className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => handleShare("facebook")} 
-                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E355B] bg-white dark:bg-[#0D1A33] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
                   title="مشاركة عبر فيسبوك"
                 >
                   <Facebook className="w-4.5 h-4.5" />
                 </button>
                 <button 
                   onClick={() => handleShare("twitter")} 
-                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-black transition-all duration-200 cursor-pointer shadow-2xs"
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E355B] bg-white dark:bg-[#0D1A33] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
                   title="مشاركة عبر إكس"
                 >
                   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current">
@@ -387,7 +387,7 @@ export function WatchItem() {
                 </button>
                 <button 
                   onClick={() => handleShare("whatsapp")} 
-                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 bg-white flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E355B] bg-white dark:bg-[#0D1A33] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
                   title="مشاركة عبر واتساب"
                 >
                   <MessageCircle className="w-4.5 h-4.5" />

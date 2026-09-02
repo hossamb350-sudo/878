@@ -333,8 +333,8 @@ export function NewsDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center" dir="rtl">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-taiz-sky mb-4"></div>
+      <div className="min-h-screen bg-white dark:bg-[#070F1E] flex flex-col items-center justify-center transition-colors" dir="rtl">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 dark:border-slate-800 border-t-taiz-sky mb-4"></div>
         <p className="font-bold text-text-secondary font-alexandria text-sm">جاري التحميل...</p>
       </div>
     );
@@ -342,7 +342,7 @@ export function NewsDetail() {
 
   if (!news) {
     return (
-      <div className="min-h-screen bg-white text-text-primary flex flex-col items-center justify-center p-6" dir="rtl">
+      <div className="min-h-screen bg-white dark:bg-[#070F1E] text-text-primary flex flex-col items-center justify-center p-6 transition-colors" dir="rtl">
         <h2 className="text-xl font-bold mb-4 font-alexandria">الخبر غير موجود</h2>
         <button onClick={() => navigate("/")} className="btn-primary">العودة للرئيسية</button>
       </div>
@@ -354,7 +354,7 @@ export function NewsDetail() {
   const modInfo = isModified ? formatPublishInfo(news.updatedAt!) : null;
 
   return (
-    <div className="min-h-screen bg-white text-text-primary pb-20 font-sans relative" dir="rtl">
+    <div className="min-h-screen bg-white dark:bg-[#070F1E] text-text-primary pb-20 font-sans relative transition-colors" dir="rtl">
       <SEO 
         title={news.title}
         description={news.shortDescription || ""}

@@ -301,9 +301,16 @@ export interface AppNotification {
   id: string;
   title: string;
   body: string;
-  category: "quran" | "leader" | "general" | "news";
+  category?: "quran" | "leader" | "general" | "news" | "urgent" | "prayer" | "custom";
+  contentType?: string;
+  contentId?: string;
+  imageUrl?: string;
+  targetUrl?: string;
   link?: string;
   createdAt: number;
+  status?: "pending" | "delivered";
+  deliveredAt?: number;
+  isPrayerNotification?: boolean;
 }
 
 export interface FavoriteItem {

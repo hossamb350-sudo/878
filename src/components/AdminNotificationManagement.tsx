@@ -4,6 +4,7 @@ import { db, auth } from "../firebase";
 import { Search, Bell, Send, CheckCircle, XCircle, Clock, AlertCircle, X, ExternalLink, Activity, PlayCircle, BookOpen, User, Book, CalendarIcon, Key, Settings, Zap, Image, Upload, Link2, Sparkles, PlusCircle, Save, Trash2, Quote } from "lucide-react";
 import { NewsItem, Article, VideoItem, LeaderContent, QuranLesson, ActivityItem, NotificationHistoryItem } from "../types";
 import { getStoredFCMKey, saveStoredFCMKey } from "../utils/sendFCM";
+import { NotificationSyncService } from "../services/NotificationSyncService";
 
 import { AdminFCMDiagnostics } from "./AdminFCMDiagnostics";
 
@@ -494,8 +495,26 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
             sentBy: auth.currentUser?.displayName || auth.currentUser?.email || "Staff",
             method: "client_side_v1"
           });
+
+          // Also queue in NotificationSyncService for offline clients (excluding prayer notifications)
+          const isPrayer = NotificationSyncService.isPrayerNotification({ title, body, contentType });
+          if (!isPrayer) {
+            await NotificationSyncService.addPendingNotification({
+              id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+              title,
+              body,
+              category: "general",
+              contentType,
+              contentId,
+              imageUrl: imageUrl || "",
+              targetUrl,
+              createdAt: Date.now(),
+              status: "pending",
+              isPrayerNotification: false
+            });
+          }
         } catch (e) {
-          console.warn("Failed to record history", e);
+          console.warn("Failed to record history / queue pending notification", e);
         }
 
         return;

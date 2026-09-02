@@ -612,13 +612,13 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-gradient-to-br from-[#EEFAF2] via-[#E0F5E8] to-[#CDEDD8] border border-[#0B6B3D]/30 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between overflow-hidden"
+          className="bg-gradient-to-br from-[#EEFAF2] via-[#E0F5E8] to-[#CDEDD8] dark:from-[#0D1A33] dark:via-[#09152B] dark:to-[#070F1E] border border-[#0B6B3D]/30 dark:border-emerald-800/40 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between overflow-hidden"
         >
           <div className="flex flex-col space-y-0.5">
-            <span className="text-xs font-bold text-[#015028] font-cairo">
+            <span className="text-xs font-bold text-[#015028] dark:text-emerald-400 font-cairo">
               بداية الشهر
             </span>
-            <span className="text-xs sm:text-sm font-black text-slate-900 font-cairo tracking-tight">
+            <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-cairo tracking-tight">
               {firstDayName} (1 {currentMonthName})
             </span>
           </div>
@@ -633,13 +633,13 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-gradient-to-br from-[#FFFDF5] via-[#FEF5D9] to-[#FDE8A5] border border-[#E5A921]/50 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between overflow-hidden"
+          className="bg-gradient-to-br from-[#FFFDF5] via-[#FEF5D9] to-[#FDE8A5] dark:from-[#1F1905] dark:via-[#261E08] dark:to-[#171303] border border-[#E5A921]/50 dark:border-amber-700/40 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between overflow-hidden"
         >
           <div className="flex flex-col space-y-0.5">
-            <span className="text-xs font-bold text-[#A36A00] font-cairo">
+            <span className="text-xs font-bold text-[#A36A00] dark:text-amber-400 font-cairo">
               نهاية الشهر
             </span>
-            <span className="text-xs sm:text-sm font-black text-slate-900 font-cairo tracking-tight">
+            <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-cairo tracking-tight">
               {lastDayName} ({calendarData.length || 29} {currentMonthName})
             </span>
           </div>
@@ -656,7 +656,7 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-white/90 backdrop-blur-md rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 border border-[#0B6B3D]/20 shadow-[0_8px_30px_rgba(1,80,40,0.06)] overflow-hidden space-y-3"
+        className="bg-white/90 dark:bg-[#0D1A33] backdrop-blur-md rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 border border-[#0B6B3D]/20 dark:border-[#1E355B] shadow-[0_8px_30px_rgba(1,80,40,0.06)] overflow-hidden space-y-3"
       >
         {/* Month Selector Capsule */}
         <div className="relative bg-gradient-to-r from-[#015028] via-[#0B6B3D] to-[#015028] rounded-full px-3 py-1.5 sm:py-2 shadow-[0_4px_20px_rgba(1,80,40,0.25)] border-2 border-[#E5A921]/70 flex items-center justify-between text-white">
@@ -690,9 +690,9 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
         </div>
 
         {/* Weekdays Row */}
-        <div className="bg-[#EBF7EF] rounded-xl py-1.5 px-1 grid grid-cols-7 gap-1 text-center font-cairo border border-[#0B6B3D]/10">
+        <div className="bg-[#EBF7EF] dark:bg-[#070F1E] rounded-xl py-1.5 px-1 grid grid-cols-7 gap-1 text-center font-cairo border border-[#0B6B3D]/10 dark:border-[#1E355B]">
           {weekDays.map(day => (
-            <div key={day} className="text-[11px] sm:text-xs font-black text-[#015028]">
+            <div key={day} className="text-[11px] sm:text-xs font-black text-[#015028] dark:text-emerald-400">
               {day}
             </div>
           ))}
@@ -701,7 +701,7 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
         {/* Days Grid */}
         <div className="relative">
           {loading && (
-            <div className="absolute inset-0 bg-white/80 backdrop-blur-xs z-10 flex items-center justify-center rounded-2xl">
+            <div className="absolute inset-0 bg-white/80 dark:bg-[#0A1324]/80 backdrop-blur-xs z-10 flex items-center justify-center rounded-2xl">
               <Loader2 className="w-6 h-6 text-[#0B6B3D] animate-spin" />
             </div>
           )}
@@ -757,7 +757,7 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
                   {isSelected ? (
                     <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] text-white flex flex-col items-center justify-center transition-transform scale-105 ${
                       isToday 
-                        ? 'ring-3 ring-emerald-400 ring-offset-2 ring-offset-emerald-50 shadow-[0_0_16px_rgba(16,185,129,0.5)]' 
+                        ? 'ring-3 ring-emerald-400 ring-offset-2 ring-offset-emerald-50 dark:ring-offset-[#0A1324] shadow-[0_0_16px_rgba(16,185,129,0.5)]' 
                         : 'ring-2 ring-[#E5A921] shadow-[0_4px_16px_rgba(229,169,33,0.4)]'
                     }`}>
                       <span className="text-xs sm:text-sm font-black font-cairo leading-none text-[#FFF2A8]">
@@ -770,15 +770,15 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
                   ) : (
                     <div className={`w-full h-full flex flex-col items-center justify-center rounded-xl transition-all ${
                       isToday
-                        ? 'bg-gradient-to-br from-[#E6F7ED] via-[#D8F2E2] to-[#C7EBD3] border-2 border-emerald-600 text-[#015028] shadow-md ring-2 ring-emerald-500/40'
+                        ? 'bg-gradient-to-br from-[#E6F7ED] via-[#D8F2E2] to-[#C7EBD3] dark:from-[#082618] dark:via-[#053620] dark:to-[#032014] border-2 border-emerald-600 dark:border-emerald-500 text-[#015028] dark:text-emerald-300 shadow-md ring-2 ring-emerald-500/40'
                         : hasEvent 
-                          ? 'bg-[#FEF9E6] border-2 border-[#E5A921]/70 text-[#015028] shadow-xs hover:bg-[#FDEEB3]' 
-                          : 'hover:bg-[#EBF7EF]'
+                          ? 'bg-[#FEF9E6] dark:bg-[#1E1906] border-2 border-[#E5A921]/70 dark:border-[#E5A921]/50 text-[#015028] dark:text-amber-300 shadow-xs hover:bg-[#FDEEB3] dark:hover:bg-[#2A230A]' 
+                          : 'hover:bg-[#EBF7EF] dark:hover:bg-[#070F1E]'
                     }`}>
-                      <span className={`text-xs sm:text-sm font-black font-cairo leading-none ${isToday ? 'text-emerald-950 font-black' : hasEvent ? 'text-[#015028]' : 'text-slate-800'}`}>
+                      <span className={`text-xs sm:text-sm font-black font-cairo leading-none ${isToday ? 'text-emerald-950 dark:text-emerald-200 font-black' : hasEvent ? 'text-[#015028] dark:text-amber-300' : 'text-slate-800 dark:text-slate-200'}`}>
                         {hDayNum}
                       </span>
-                      <span className={`text-[8px] sm:text-[9px] font-bold mt-0.5 leading-none ${isToday ? 'text-emerald-700 font-extrabold' : hasEvent ? 'text-[#A36A00]' : 'text-slate-400'}`}>
+                      <span className={`text-[8px] sm:text-[9px] font-bold mt-0.5 leading-none ${isToday ? 'text-emerald-700 dark:text-emerald-400 font-extrabold' : hasEvent ? 'text-[#A36A00] dark:text-amber-400' : 'text-slate-400 dark:text-slate-500'}`}>
                         {gDayNum}
                       </span>
                     </div>
@@ -797,12 +797,12 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
               initial={{ opacity: 0, y: 10, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
-              className="bg-gradient-to-br from-[#FFFDF2] via-[#FEF9E6] to-[#FDEEB3] border-2 border-[#E5A921] rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-md space-y-2.5 text-right mt-3"
+              className="bg-gradient-to-br from-[#FFFDF2] via-[#FEF9E6] to-[#FDEEB3] dark:from-[#1A1504] dark:via-[#221A06] dark:to-[#171103] border-2 border-[#E5A921] dark:border-amber-600/70 rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 shadow-md space-y-2.5 text-right mt-3"
             >
-              <div className="flex items-center justify-between pb-2 border-b border-[#E5A921]/30">
+              <div className="flex items-center justify-between pb-2 border-b border-[#E5A921]/30 dark:border-amber-700/40">
                 <div className="flex items-center gap-2">
                   <CalendarIcon className="w-4 h-4 text-[#E5A921] shrink-0" />
-                  <span className="text-xs sm:text-sm font-black text-[#015028] font-cairo">
+                  <span className="text-xs sm:text-sm font-black text-[#015028] dark:text-amber-300 font-cairo">
                     مناسبة هذا اليوم ({selectedDayNumber} {currentMonthName})
                   </span>
                 </div>
@@ -813,20 +813,20 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
 
               {selectedDayEvents.map((ev, i) => (
                 <div key={i} className="space-y-1.5 pt-0.5">
-                  <h4 className="text-sm sm:text-base font-black text-slate-900 font-cairo leading-snug">
+                  <h4 className="text-sm sm:text-base font-black text-slate-900 dark:text-white font-cairo leading-snug">
                     {ev.title}
                   </h4>
                   {ev.description && (
-                    <p className="text-xs font-medium text-slate-700 font-cairo leading-relaxed">
+                    <p className="text-xs font-medium text-slate-700 dark:text-slate-300 font-cairo leading-relaxed">
                       {ev.description}
                     </p>
                   )}
-                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 pt-1">
-                    <span className="text-[#015028]">التاريخ: {ev.hijriDate} {ev.gregorianDate ? `(${ev.gregorianDate})` : ''}</span>
+                  <div className="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-400 pt-1">
+                    <span className="text-[#015028] dark:text-emerald-400">التاريخ: {ev.hijriDate} {ev.gregorianDate ? `(${ev.gregorianDate})` : ''}</span>
                     {onSelectEvent && (
                       <button 
                         onClick={() => onSelectEvent(ev.id)}
-                        className="inline-flex items-center gap-1 text-[#015028] hover:text-[#0B6B3D] font-extrabold text-[11px] hover:underline cursor-pointer"
+                        className="inline-flex items-center gap-1 text-[#015028] dark:text-emerald-400 hover:text-[#0B6B3D] dark:hover:text-emerald-300 font-extrabold text-[11px] hover:underline cursor-pointer"
                       >
                         <span>عرض التفاصيل</span>
                         <ExternalLink className="w-3 h-3" />
@@ -845,29 +845,29 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.25 }}
-        className="bg-white/90 backdrop-blur-md rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 border border-[#0B6B3D]/20 shadow-[0_8px_30px_rgba(1,80,40,0.06)] overflow-hidden space-y-3"
+        className="bg-white/90 dark:bg-[#0A1324] backdrop-blur-md rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 border border-[#0B6B3D]/20 dark:border-[#1E355B] shadow-[0_8px_30px_rgba(1,80,40,0.06)] overflow-hidden space-y-3"
       >
         {/* Header Row */}
-        <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-[#14274B]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E4F4EB] text-[#015028] flex items-center justify-center shrink-0 border border-[#E5A921]/30">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#E4F4EB] dark:bg-[#071F13] text-[#015028] dark:text-emerald-400 flex items-center justify-center shrink-0 border border-[#E5A921]/30 dark:border-amber-700/40">
               <Bookmark className="w-4 h-4 text-[#E5A921]" />
             </div>
-            <h3 className="text-sm sm:text-base font-black text-[#015028] font-cairo">
+            <h3 className="text-sm sm:text-base font-black text-[#015028] dark:text-emerald-400 font-cairo">
               المناسبات في هذا الشهر ({currentMonthName})
             </h3>
           </div>
           
-          <span className="text-xs font-black text-[#A36A00] bg-[#FFFDF2] border border-[#E5A921]/40 px-2.5 py-1 rounded-full font-cairo">
+          <span className="text-xs font-black text-[#A36A00] dark:text-amber-300 bg-[#FFFDF2] dark:bg-[#1E1906] border border-[#E5A921]/40 dark:border-amber-700/50 px-2.5 py-1 rounded-full font-cairo">
             {currentMonthEvents.length} مناسبة
           </span>
         </div>
 
         {/* Events List Cards */}
         {currentMonthEvents.length === 0 ? (
-          <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-2 bg-[#FAFCFA] rounded-2xl border border-dashed border-slate-200">
-            <CalendarDays className="w-8 h-8 text-slate-300" />
-            <p className="text-xs sm:text-sm font-bold text-slate-500 font-cairo">
+          <div className="py-8 px-4 text-center flex flex-col items-center justify-center space-y-2 bg-[#FAFCFA] dark:bg-[#070F1E] rounded-2xl border border-dashed border-slate-200 dark:border-[#1E355B]">
+            <CalendarDays className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+            <p className="text-xs sm:text-sm font-bold text-slate-500 dark:text-slate-400 font-cairo">
               لا توجد مناسبات مسجلة في شهر {currentMonthName}
             </p>
           </div>
@@ -884,8 +884,8 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
                   }}
                   className={`rounded-xl p-2.5 sm:p-3 border flex items-center justify-between gap-2.5 transition-all cursor-pointer group ${
                     isSelectedDayEv
-                      ? 'bg-[#FEF9E6] border-2 border-[#E5A921] shadow-md ring-2 ring-[#E5A921]/30 scale-[1.01]'
-                      : 'bg-gradient-to-r from-[#FAFCFA] to-[#F0FAF4] border-[#0B6B3D]/15 hover:border-[#E5A921]/60 hover:shadow-xs'
+                      ? 'bg-[#FEF9E6] dark:bg-[#1E1906] border-2 border-[#E5A921] shadow-md ring-2 ring-[#E5A921]/30 scale-[1.01]'
+                      : 'bg-gradient-to-r from-[#FAFCFA] to-[#F0FAF4] dark:from-[#070F1E] dark:to-[#0A1628] border-[#0B6B3D]/15 dark:border-[#1E355B] hover:border-[#E5A921]/60 dark:hover:border-amber-500/50 hover:shadow-xs'
                   }`}
                 >
                   {/* Right Tag: Hijri Day/Month Badge */}
@@ -896,11 +896,11 @@ export function HijriCalendarWidget({ onSelectEvent }: HijriCalendarWidgetProps)
 
                   {/* Details */}
                   <div className="flex flex-col flex-1 text-right space-y-0.5">
-                    <span className="font-black text-slate-800 text-xs sm:text-sm font-cairo group-hover:text-[#015028] transition-colors leading-snug">
+                    <span className="font-black text-slate-800 dark:text-slate-100 text-xs sm:text-sm font-cairo group-hover:text-[#015028] dark:group-hover:text-emerald-400 transition-colors leading-snug">
                       {ev.title}
                     </span>
                     {ev.gregorianDate && (
-                      <span className="text-slate-500 text-[10px] sm:text-xs font-bold">
+                      <span className="text-slate-500 dark:text-slate-400 text-[10px] sm:text-xs font-bold">
                         المقابل: {ev.gregorianDate}
                       </span>
                     )}

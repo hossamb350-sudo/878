@@ -53,9 +53,9 @@ interface QuranProgressData {
 }
 
 const themeClasses = {
-  day: "bg-white text-slate-900 border-slate-200",
-  night: "bg-[#121214] text-zinc-100 border-zinc-800",
-  sepia: "bg-[#F4ECD8] text-[#422F1E] border-[#EADFCA]",
+  day: "bg-white text-slate-950 border-slate-200",
+  night: "bg-[#070F1E] text-slate-100 border-[#1E355B]",
+  sepia: "bg-[#FAF4E8] text-[#7C2D12] border-[#E8DCC4]",
 };
 
 const fontSizeClasses = {
@@ -233,7 +233,7 @@ export function QuranKareem() {
                     {/* Section Header */}
                     <div className="flex items-center justify-between gap-3 px-1 py-1 select-none mb-2" dir="rtl">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-xs shrink-0 text-white">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky dark:from-transparent dark:to-transparent dark:bg-[#F26522]/15 dark:border dark:border-[#F26522]/40 flex items-center justify-center shadow-xs shrink-0 text-white dark:text-[#F26522] transition-colors">
                           <BookOpen className="w-4 h-4" />
                         </div>
                         <div className="flex flex-col text-right">

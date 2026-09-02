@@ -22,11 +22,11 @@ function NotificationCenter() {
 function NewsNavIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="16" rx="2.5" className="text-slate-700" />
+      <rect x="3" y="4" width="18" height="16" rx="2.5" className="text-slate-700 dark:text-slate-300" />
       <line x1="7" y1="8" x2="17" y2="8" className="text-[#F26522]" strokeWidth="2.5" />
-      <line x1="12" y1="12" x2="17" y2="12" className="text-slate-700" />
-      <line x1="12" y1="15" x2="17" y2="15" className="text-slate-700" />
-      <rect x="7" y="11" width="3.5" height="4" rx="0.5" className="text-slate-700" strokeWidth="1.5" />
+      <line x1="12" y1="12" x2="17" y2="12" className="text-slate-700 dark:text-slate-300" />
+      <line x1="12" y1="15" x2="17" y2="15" className="text-slate-700 dark:text-slate-300" />
+      <rect x="7" y="11" width="3.5" height="4" rx="0.5" className="text-slate-700 dark:text-slate-300" strokeWidth="1.5" />
     </svg>
   );
 }
@@ -34,8 +34,8 @@ function NewsNavIcon({ className = "w-5 h-5" }: { className?: string }) {
 function MediaNavIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8 3l3.5 4M16 3l-3.5 4" className="text-slate-700" />
-      <rect x="2" y="7" width="20" height="14" rx="3.5" className="text-slate-700" />
+      <path d="M8 3l3.5 4M16 3l-3.5 4" className="text-slate-700 dark:text-slate-300" />
+      <rect x="2" y="7" width="20" height="14" rx="3.5" className="text-slate-700 dark:text-slate-300" />
       <polygon points="10,11 15,14 10,17" className="text-[#F26522]" fill="#F26522" stroke="none" />
     </svg>
   );
@@ -44,8 +44,8 @@ function MediaNavIcon({ className = "w-5 h-5" }: { className?: string }) {
 function LeaderNavIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="7" r="4" className="text-slate-700" />
-      <path d="M5 21v-1.5a6 6 0 0 1 12 0V21" className="text-slate-700" />
+      <circle cx="12" cy="7" r="4" className="text-slate-700 dark:text-slate-300" />
+      <path d="M5 21v-1.5a6 6 0 0 1 12 0V21" className="text-slate-700 dark:text-slate-300" />
       <line x1="9.5" y1="16.5" x2="14.5" y2="16.5" className="text-[#F26522]" strokeWidth="2.5" />
       <line x1="12" y1="16.5" x2="12" y2="20" className="text-[#F26522]" strokeWidth="2" />
     </svg>
@@ -55,7 +55,7 @@ function LeaderNavIcon({ className = "w-5 h-5" }: { className?: string }) {
 function QuranNavIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M2 5.5C4.5 4 7.5 4 12 6.5C16.5 4 19.5 4 22 5.5V18.5C19.5 17 16.5 17 12 19.5C7.5 17 4.5 17 2 18.5V5.5Z" className="text-slate-700" />
+      <path d="M2 5.5C4.5 4 7.5 4 12 6.5C16.5 4 19.5 4 22 5.5V18.5C19.5 17 16.5 17 12 19.5C7.5 17 4.5 17 2 18.5V5.5Z" className="text-slate-700 dark:text-slate-300" />
       <path d="M12 6.5V19.5" className="text-[#F26522]" strokeWidth="2.5" />
     </svg>
   );
@@ -64,10 +64,10 @@ function QuranNavIcon({ className = "w-5 h-5" }: { className?: string }) {
 function EventsNavIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="5" width="18" height="15" rx="3" className="text-slate-700" />
+      <rect x="3" y="5" width="18" height="15" rx="3" className="text-slate-700 dark:text-slate-300" />
       <line x1="8" y1="3" x2="8" y2="7" className="text-[#F26522]" strokeWidth="2.5" />
       <line x1="16" y1="3" x2="16" y2="7" className="text-[#F26522]" strokeWidth="2.5" />
-      <line x1="3" y1="9.5" x2="21" y2="9.5" className="text-slate-700" />
+      <line x1="3" y1="9.5" x2="21" y2="9.5" className="text-slate-700 dark:text-slate-300" />
     </svg>
   );
 }
@@ -75,8 +75,8 @@ function EventsNavIcon({ className = "w-5 h-5" }: { className?: string }) {
 function AccountNavIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="7" r="4" className="text-slate-700" />
-      <path d="M5 21v-1.5a6 6 0 0 1 12 0V21" className="text-slate-700" />
+      <circle cx="12" cy="7" r="4" className="text-slate-700 dark:text-slate-300" />
+      <path d="M5 21v-1.5a6 6 0 0 1 12 0V21" className="text-slate-700 dark:text-slate-300" />
       <path d="M7.5 17.5l3.5 1.5" className="text-[#F26522]" strokeWidth="2.5" />
     </svg>
   );
@@ -478,11 +478,11 @@ export function Layout({ children }: { children?: React.ReactNode }) {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 text-text-primary transition-colors" dir="rtl">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-[#070F1E] text-text-primary dark:text-slate-100 transition-colors" dir="rtl">
       <UrgentNewsBanner />
 
       {/* Platform Logo & Widgets Area */}
-      <div className="w-full bg-white relative z-30 border-b border-slate-200/40">
+      <div className="w-full bg-white dark:bg-[#070F1E] relative z-30 border-b border-slate-200/40 dark:border-[#1E355B]">
           <HeaderWidgets />
           {/* Visual Separator: thin crisp border with no extra vertical spacing */}
           <div className="w-full" />
@@ -595,7 +595,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       </div>
 
       {/* Main Content Area */}
-      <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto pb-16 min-w-0 w-full overflow-x-hidden bg-slate-50/60">
+      <main ref={mainRef} className="flex-1 flex flex-col overflow-y-auto pb-16 min-w-0 w-full overflow-x-hidden bg-slate-50/60 dark:bg-[#070F1E] transition-colors duration-200">
         {children || <Outlet />}
       </main>
 
@@ -664,7 +664,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       <PrayerAdhanPopup />
 
       {/* Navigation for All Devices */}
-      <nav className={`fixed bottom-0 left-0 right-0 bg-white shadow-[0_-4px_25px_rgba(0,0,0,0.06)] border-t border-slate-100 z-40 pb-safe transition-transform duration-300 h-[62px] sm:h-[66px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+      <nav className={`fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-[#0A1324]/95 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)] border-t border-slate-100 dark:border-[#1E355B]/80 z-40 pb-safe transition-transform duration-300 h-[62px] sm:h-[66px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
         <div className="grid grid-cols-6 w-full max-w-2xl mx-auto h-full px-0.5 relative">
           {[
             { to: routes.home(), icon: NewsNavIcon, label: "الرئيسية" },
@@ -683,14 +683,14 @@ export function Layout({ children }: { children?: React.ReactNode }) {
                 key={item.to}
                 to={item.to}
                 className={`flex flex-col items-center justify-center w-full relative h-full px-0.5 ${
-                  index < 5 ? 'border-l border-slate-200/50' : ''
+                  index < 5 ? 'border-l border-slate-200/50 dark:border-[#1E355B]/40' : ''
                 }`}
               >
                 <div className="flex flex-col items-center justify-center w-full py-1 transition-all duration-300">
                   <div className="h-5 sm:h-5.5 flex items-center justify-center mb-0.5 shrink-0">
                     <item.icon className="w-4.5 h-4.5 sm:w-5 sm:h-5" />
                   </div>
-                  <span className="text-[8.5px] min-[360px]:text-[9.5px] sm:text-[10px] font-bold text-center leading-tight tracking-tight px-0.5 w-full font-cairo text-slate-800 line-clamp-2">
+                  <span className="text-[8.5px] min-[360px]:text-[9.5px] sm:text-[10px] font-bold text-center leading-tight tracking-tight px-0.5 w-full font-cairo text-slate-800 dark:text-slate-200 line-clamp-2">
                     {item.label}
                   </span>
                   <div className="mt-1 flex items-center justify-center h-1.5">

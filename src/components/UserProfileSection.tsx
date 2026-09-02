@@ -18,8 +18,12 @@ import {
   Share2, 
   Sliders,
   BellRing,
-  ShieldCheck
+  ShieldCheck,
+  Moon,
+  Sun,
+  Laptop
 } from "lucide-react";
+import { useTheme, ThemeMode } from "../context/ThemeContext";
 import { FavoritesList } from "./FavoritesList";
 import { ContactUsSection } from "./ContactUsSection";
 import { getShareableUrl } from "../config/apiConfig";
@@ -32,8 +36,9 @@ interface UserProfileSectionProps {
   hideHeaderLogout?: boolean;
 }
 
-export function UserProfileSection({ profile, logout, hideHeaderLogout = false }: UserProfileSectionProps) {
+export function UserProfileSection({ profile, logout, hideHeaderLogout = false, onProfileUpdated }: UserProfileSectionProps) {
   const [activeTab, setActiveTab] = useState<"favorites" | "preferences" | "notifications">("favorites");
+  const { theme, isDark, setTheme, toggleTheme } = useTheme();
   
   // Local profile state
   const [localProfile] = useState<UserProfile>(profile);
@@ -262,7 +267,7 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false }
       </AnimatePresence>
 
       {/* 1. LUXURY PROFILE HERO & COVER HEADER */}
-      <div className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xl mb-6">
+      <div className="relative rounded-[28px] sm:rounded-[36px] overflow-hidden bg-white dark:bg-[#0D1A33] border border-slate-200/80 dark:border-[#1E355B] shadow-xl mb-6">
         
         {/* Cover Background with Royal Gradient Pattern */}
         <div className="h-36 sm:h-52 w-full bg-gradient-to-r from-emerald-900 via-teal-900 to-slate-950 relative overflow-hidden">
@@ -376,7 +381,7 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false }
               className={`flex items-center gap-2 px-4 py-3 rounded-2xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-300 cursor-pointer ${
                 isActive
                   ? "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-lg shadow-emerald-600/25 scale-[1.02]"
-                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200/60 dark:border-slate-800"
+                  : "bg-white dark:bg-[#0D1A33] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] border border-slate-200/60 dark:border-[#1E355B]"
               }`}
             >
               <Icon className={`w-4 h-4 ${isActive ? "text-white" : "text-emerald-600 dark:text-emerald-400"}`} />
@@ -405,7 +410,117 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false }
         {activeTab === "preferences" && (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-8 animate-fade-in">
             
-            {/* Reading Font Size Customization */}
+            {/* 1. Dark Mode / Theme Mode Customization */}
+            <div className="space-y-4 border-b border-slate-100 dark:border-slate-800/80 pb-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                    <Moon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900 dark:text-white font-cairo">
+                      مظهر وثيم المنصة (Dark Mode)
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      التبديل بين الوضع الفاتح والوضع الداكن الكحلي المريح للعينين في جميع أقسام المنصة.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Toggle Switch */}
+                <button
+                  onClick={toggleTheme}
+                  className={`w-14 h-7 rounded-full transition-colors relative shrink-0 cursor-pointer ${
+                    isDark ? "bg-indigo-600" : "bg-slate-300 dark:bg-slate-700"
+                  }`}
+                  title={isDark ? "التبديل إلى الوضع الفاتح" : "التبديل إلى الوضع الداكن"}
+                >
+                  <div
+                    className={`w-6 h-6 rounded-full bg-white shadow-md absolute top-0.5 transition-all flex items-center justify-center text-[10px] ${
+                      isDark ? "right-7 text-indigo-600" : "right-0.5 text-amber-500"
+                    }`}
+                  >
+                    {isDark ? <Moon className="w-3.5 h-3.5" /> : <Sun className="w-3.5 h-3.5" />}
+                  </div>
+                </button>
+              </div>
+
+              {/* Theme Mode Option Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                {[
+                  {
+                    id: "light",
+                    title: "الوضع الفاتح",
+                    desc: "ألوان كلاسيكية ناصعة وواضحة",
+                    icon: Sun,
+                    badge: "نهاري",
+                    badgeColor: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                  },
+                  {
+                    id: "dark",
+                    title: "الوضع الداكن (كحلي)",
+                    desc: "ألوان كحلية عميقة ومريحة للعينين",
+                    icon: Moon,
+                    badge: "Dark Navy",
+                    badgeColor: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/60 dark:text-indigo-300"
+                  },
+                  {
+                    id: "system",
+                    title: "تلقائي حسب الجهاز",
+                    desc: "يتكيف تلقائياً مع إعدادات هاتفك",
+                    icon: Laptop,
+                    badge: "تلقائي",
+                    badgeColor: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300"
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isSelected = theme === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setTheme(item.id as ThemeMode);
+                        showToast(`تم تفعيل: ${item.title}`);
+                      }}
+                      className={`p-4 rounded-2xl border text-right transition-all cursor-pointer relative flex flex-col justify-between gap-3 ${
+                        isSelected
+                          ? "bg-gradient-to-br from-indigo-500/10 via-slate-50 to-indigo-500/5 dark:from-indigo-950/50 dark:via-[#0E1B33] dark:to-indigo-900/30 border-indigo-500 dark:border-indigo-400 shadow-md ring-2 ring-indigo-500/20"
+                          : "bg-slate-50/70 dark:bg-[#0A1324]/80 border-slate-200/80 dark:border-[#1E355B] hover:bg-slate-100 dark:hover:bg-[#11223F]"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className={`p-2 rounded-xl ${isSelected ? "bg-indigo-600 text-white shadow-sm" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700"}`}>
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${item.badgeColor}`}>
+                          {item.badge}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 dark:text-white font-cairo flex items-center gap-1.5">
+                          {item.title}
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-indigo-600 dark:text-indigo-400 inline" />}
+                        </h4>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-cairo mt-0.5 leading-snug">
+                          {item.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Theme description callout */}
+              <div className="p-3.5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/25 border border-indigo-200/50 dark:border-indigo-900/40 flex items-start gap-2.5 text-xs text-indigo-900 dark:text-indigo-200">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-indigo-600 dark:text-indigo-400 mt-0.5" />
+                <span className="leading-relaxed">
+                  يعتمد الوضع الداكن للمنصة على درجات <strong className="font-black text-indigo-700 dark:text-indigo-300">الكحلي الغامق الفاخر (Dark Navy)</strong> مع درجات تباين متناسقة تضمن راحة العين أثناء القراءة ليلاً وتوفير طاقة البطارية.
+                </span>
+              </div>
+            </div>
+            
+            {/* 2. Reading Font Size Customization */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
                 <Sliders className="w-5 h-5 text-emerald-600" />

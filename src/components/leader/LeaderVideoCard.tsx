@@ -59,10 +59,10 @@ export const LeaderVideoCard: React.FC<LeaderVideoCardProps> = ({
     >
       <Link
         to={itemSlug}
-        className="group relative w-full rounded-[16px] sm:rounded-[20px] overflow-hidden bg-white border border-slate-200/90 hover:border-taiz-sky/50 shadow-soft hover:shadow-medium flex flex-col md:flex-row items-stretch transition-all duration-300 block"
+        className="group relative w-full rounded-[16px] sm:rounded-[20px] overflow-hidden bg-surface-card border border-border-light hover:border-taiz-sky/50 shadow-soft hover:shadow-medium flex flex-col md:flex-row items-stretch transition-all duration-300 block"
       >
         {/* THUMBNAIL ZONE */}
-        <div className="relative w-full md:w-[42%] shrink-0 aspect-video md:aspect-auto min-h-[175px] sm:min-h-[200px] overflow-hidden bg-slate-900 border-b md:border-b-0 md:border-l border-slate-100 flex items-center justify-center">
+        <div className="relative w-full md:w-[42%] shrink-0 aspect-video md:aspect-auto min-h-[175px] sm:min-h-[200px] overflow-hidden bg-slate-900 border-b md:border-b-0 md:border-l border-border-light flex items-center justify-center">
           {item.thumbnailUrl ? (
             <img
               src={item.thumbnailUrl}
@@ -124,7 +124,7 @@ export const LeaderVideoCard: React.FC<LeaderVideoCardProps> = ({
           </div>
 
           {/* Footer Metadata Row */}
-          <div className="flex items-center justify-between text-text-muted text-[10px] sm:text-[11px] font-medium pt-2.5 border-t border-slate-100 mt-2">
+          <div className="flex items-center justify-between text-text-muted text-[10px] sm:text-[11px] font-medium pt-2.5 border-t border-border-light mt-2">
             {/* Gregorian Date */}
             <span className="flex items-center gap-1 text-slate-500">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />

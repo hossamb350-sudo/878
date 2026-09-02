@@ -54,8 +54,8 @@ export function FeaturedTopicsSlider() {
     <section className="py-1 relative" aria-label="أبرز المواضيع">
       {/* Header aligned with News Section Identity */}
       <div className="flex items-center gap-2 px-3 sm:px-4 mb-2.5 select-none" dir="rtl">
-        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-          <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky dark:from-transparent dark:to-transparent dark:bg-[#F26522]/15 dark:border dark:border-[#F26522]/40 flex items-center justify-center shadow-sm shrink-0 transition-colors">
+          <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white dark:text-[#F26522]" />
         </div>
         <div className="flex flex-col">
           <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أبرز المواضيع</h3>
@@ -67,14 +67,14 @@ export function FeaturedTopicsSlider() {
         <div className="hidden sm:flex items-center gap-1.5 mr-2">
           <button
             onClick={() => scrollContainer('right')}
-            className="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-taiz-sky dark:hover:text-taiz-sky hover:border-taiz-sky/30 transition-all active:scale-95 shadow-xs"
+            className="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-[#0D1A33] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#14274B] hover:text-[#F26522] dark:hover:text-[#F26522] hover:border-[#F26522]/40 dark:hover:border-[#F26522]/40 transition-all active:scale-95 shadow-xs"
             aria-label="التمرير لليمين"
           >
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={() => scrollContainer('left')}
-            className="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-taiz-sky dark:hover:text-taiz-sky hover:border-taiz-sky/30 transition-all active:scale-95 shadow-xs"
+            className="w-6 h-6 flex items-center justify-center rounded-md border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-[#0D1A33] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#14274B] hover:text-[#F26522] dark:hover:text-[#F26522] hover:border-[#F26522]/40 dark:hover:border-[#F26522]/40 transition-all active:scale-95 shadow-xs"
             aria-label="التمرير لليسار"
           >
             <ChevronLeft className="w-3.5 h-3.5" />

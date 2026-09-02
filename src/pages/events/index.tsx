@@ -380,29 +380,29 @@ export function Events() {
         {/* ==================== 1. ACTIVITIES SECTION (قسم الأنشطة) ==================== */}
         <section className="space-y-6">
           {/* Section Header */}
-          <div className="bg-gradient-to-r from-[#015028]/10 via-[#015028]/5 to-transparent p-5 sm:p-6 rounded-3xl border border-[#015028]/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+          <div className="bg-gradient-to-r from-[#015028]/10 via-[#015028]/5 to-transparent dark:from-emerald-950/30 dark:via-emerald-950/10 p-5 sm:p-6 rounded-3xl border border-[#015028]/20 dark:border-emerald-800/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#015028] animate-pulse"></span>
-                <span className="text-xs font-black text-[#015028] font-cairo uppercase tracking-wider">أنشطة وفعاليات محافظة تعز</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#015028] dark:bg-emerald-400 animate-pulse"></span>
+                <span className="text-xs font-black text-[#015028] dark:text-emerald-400 font-cairo uppercase tracking-wider">أنشطة وفعاليات محافظة تعز</span>
               </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-cairo">
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-cairo">
                 الأنشطة والفعاليات
               </h2>
             </div>
 
             {/* Segmented Tab Controls for Activities */}
-            <div className="bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-1 shrink-0 self-start sm:self-center">
+            <div className="bg-white dark:bg-[#0A1324] p-1.5 rounded-2xl border border-slate-200/80 dark:border-[#1E355B] shadow-xs flex items-center gap-1 shrink-0 self-start sm:self-center">
               <button
                 onClick={() => setActivityTab("today")}
                 className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer font-cairo flex items-center gap-1.5 ${
                   activityTab === "today"
-                    ? "bg-[#015028] text-white shadow-md"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "bg-[#015028] dark:bg-emerald-600 text-white shadow-md"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
                 <span>أنشطة اليوم</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "today" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "today" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
                   {partitionedActivities.todayActivities.length}
                 </span>
               </button>
@@ -411,12 +411,12 @@ export function Events() {
                 onClick={() => setActivityTab("upcoming")}
                 className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer font-cairo flex items-center gap-1.5 ${
                   activityTab === "upcoming"
-                    ? "bg-[#015028] text-white shadow-md"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "bg-[#015028] dark:bg-emerald-600 text-white shadow-md"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
                 <span>الأنشطة القادمة</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "upcoming" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "upcoming" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
                   {partitionedActivities.upcomingActivities.length}
                 </span>
               </button>
@@ -425,12 +425,12 @@ export function Events() {
                 onClick={() => setActivityTab("past")}
                 className={`px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all cursor-pointer font-cairo flex items-center gap-1.5 ${
                   activityTab === "past"
-                    ? "bg-[#015028] text-white shadow-md"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "bg-[#015028] dark:bg-emerald-600 text-white shadow-md"
+                    : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
                 <span>الأنشطة السابقة</span>
-                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "past" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${activityTab === "past" ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"}`}>
                   {partitionedActivities.pastActivities.length}
                 </span>
               </button>
@@ -450,14 +450,14 @@ export function Events() {
               {activityTab === "today" && (
                 <div>
                   {partitionedActivities.todayActivities.length === 0 ? (
-                    <div className="bg-white border border-slate-200/80 shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
-                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#015028] flex items-center justify-center mb-3 border border-emerald-100">
+                    <div className="bg-white dark:bg-[#0A1324] border border-slate-200/80 dark:border-[#1E355B] shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
+                      <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 text-[#015028] dark:text-emerald-400 flex items-center justify-center mb-3 border border-emerald-100 dark:border-emerald-800/40">
                         <CalendarIcon className="w-6 h-6" />
                       </div>
-                      <p className="text-slate-700 font-extrabold text-sm font-cairo">
+                      <p className="text-slate-700 dark:text-slate-200 font-extrabold text-sm font-cairo">
                         لا توجد فعاليات لهذه اليوم
                       </p>
-                      <p className="text-slate-400 text-xs font-bold mt-1">
+                      <p className="text-slate-400 dark:text-slate-500 text-xs font-bold mt-1">
                         يمكنك الاطلاع على الأنشطة القادمة من التبويب المبتكر أعلاه
                       </p>
                     </div>
@@ -480,11 +480,11 @@ export function Events() {
               {activityTab === "upcoming" && (
                 <div>
                   {partitionedActivities.upcomingActivities.length === 0 ? (
-                    <div className="bg-white border border-slate-200/80 shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 border border-blue-100">
+                    <div className="bg-white dark:bg-[#0A1324] border border-slate-200/80 dark:border-[#1E355B] shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 border border-blue-100 dark:border-blue-800/40">
                         <CalendarDays className="w-6 h-6" />
                       </div>
-                      <p className="text-slate-700 font-extrabold text-sm font-cairo">
+                      <p className="text-slate-700 dark:text-slate-200 font-extrabold text-sm font-cairo">
                         لا توجد أنشطة قادمة حالياً
                       </p>
                     </div>
@@ -507,11 +507,11 @@ export function Events() {
               {activityTab === "past" && (
                 <div>
                   {partitionedActivities.pastActivities.length === 0 ? (
-                    <div className="bg-white border border-slate-200/80 shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
-                      <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-500 flex items-center justify-center mb-3 border border-slate-200">
+                    <div className="bg-white dark:bg-[#0A1324] border border-slate-200/80 dark:border-[#1E355B] shadow-xs p-8 text-center flex flex-col items-center justify-center rounded-3xl min-h-[180px]">
+                      <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-[#070F1E] text-slate-500 dark:text-slate-400 flex items-center justify-center mb-3 border border-slate-200 dark:border-[#1E355B]">
                         <HistoryIcon className="w-6 h-6" />
                       </div>
-                      <p className="text-slate-700 font-extrabold text-sm font-cairo">
+                      <p className="text-slate-700 dark:text-slate-200 font-extrabold text-sm font-cairo">
                         لا توجد أنشطة سابقة مدونة في الأرشيف
                       </p>
                     </div>
@@ -534,7 +534,7 @@ export function Events() {
         </section>
 
         {/* ==================== 2. CALENDAR / OCCASIONS SECTION (قسم التاريخ الهجري) ==================== */}
-        <section className="space-y-6 pt-8 border-t border-slate-200/80">
+        <section className="space-y-6 pt-8 border-t border-slate-200/80 dark:border-[#14274B]">
           <HijriCalendarWidget onSelectEvent={(id) => setSelectedEventId(id)} />
         </section>
 
@@ -571,13 +571,13 @@ function EventCard({
     <motion.div
       onClick={onView}
       whileHover={{ y: -4, scale: 1.01 }}
-      className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between"
+      className="bg-white dark:bg-[#0A1324] rounded-3xl p-5 sm:p-6 border border-slate-200/80 dark:border-[#1E355B] shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between"
     >
       <div className={`absolute top-0 right-0 w-1.5 h-full ${status.color}`}></div>
 
       <div className="text-right">
         <div className="flex justify-between items-start mb-3">
-          <div className="bg-[#FEF9E6] border border-[#E5A921]/40 px-3 py-1 rounded-xl font-black text-[#8C6200] text-xs font-cairo">
+          <div className="bg-[#FEF9E6] dark:bg-amber-950/40 border border-[#E5A921]/40 dark:border-amber-700/50 px-3 py-1 rounded-xl font-black text-[#8C6200] dark:text-amber-300 text-xs font-cairo">
             {event.hijriDate}
           </div>
           <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border font-cairo ${status.text}`}>
@@ -585,21 +585,21 @@ function EventCard({
           </span>
         </div>
 
-        <h3 className="text-base font-black text-slate-900 leading-snug mb-2 group-hover:text-[#015028] transition-colors font-cairo">
+        <h3 className="text-base font-black text-slate-900 dark:text-white leading-snug mb-2 group-hover:text-[#015028] dark:group-hover:text-emerald-400 transition-colors font-cairo">
           {event.title}
         </h3>
 
-        <p className="text-slate-600 text-xs line-clamp-2 leading-relaxed mb-4 font-medium">
+        <p className="text-slate-600 dark:text-slate-300 text-xs line-clamp-2 leading-relaxed mb-4 font-medium">
           {event.description || "استعرض التفاصيل لمعرفة الأبعاد التوعوية والثقافية للحدث."}
         </p>
       </div>
 
-      <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-auto">
-        <span className="text-xs font-black text-[#015028] group-hover:underline flex items-center gap-1 font-cairo">
+      <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-[#14274B] mt-auto">
+        <span className="text-xs font-black text-[#015028] dark:text-emerald-400 group-hover:underline flex items-center gap-1 font-cairo">
           التفاصيل كاملة <ChevronLeft className="w-3.5 h-3.5" />
         </span>
         {remaining > 0 && (
-          <span className="text-[10px] font-black text-[#10264A] flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-100">
+          <span className="text-[10px] font-black text-[#10264A] dark:text-blue-300 flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-lg border border-blue-100 dark:border-blue-900/50">
             <Timer className="w-3.5 h-3.5" />
             متبقي {remaining} يوم
           </span>
@@ -623,28 +623,28 @@ function TimelineItem({
   const isEven = idx % 2 === 0;
   return (
     <div className={`relative flex items-center gap-6 ${isEven ? "flex-row" : "flex-row-reverse"}`}>
-      <div className={`absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white z-10 shadow-sm ${status.color}`}></div>
+      <div className={`absolute top-1/2 right-1/2 translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-white dark:border-[#0A1324] z-10 shadow-sm ${status.color}`}></div>
 
       <div className={`w-1/2 ${isEven ? "text-left pl-2" : "text-right pr-2"}`}>
         <motion.div
           whileHover={{ scale: 1.02 }}
           onClick={onView}
-          className="inline-block bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs cursor-pointer hover:shadow-md transition-all text-right"
+          className="inline-block bg-white dark:bg-[#0A1324] p-4 rounded-2xl border border-slate-200/80 dark:border-[#1E355B] shadow-xs cursor-pointer hover:shadow-md transition-all text-right"
         >
-          <div className="bg-emerald-50 text-[#015028] text-[10px] font-black px-2.5 py-0.5 rounded-md inline-block mb-1.5 font-cairo">
+          <div className="bg-emerald-50 dark:bg-emerald-950/40 text-[#015028] dark:text-emerald-400 text-[10px] font-black px-2.5 py-0.5 rounded-md inline-block mb-1.5 font-cairo border border-transparent dark:border-emerald-800/40">
             {event.hijriDate}
           </div>
-          <h4 className="text-xs sm:text-sm font-black text-slate-900 mb-1 leading-tight font-cairo">
+          <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white mb-1 leading-tight font-cairo">
             {event.title}
           </h4>
-          <div className="text-[10px] text-slate-500 font-bold">
+          <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">
             {event.gregorianDate}
           </div>
         </motion.div>
       </div>
 
       <div className={`w-1/2 text-center ${isEven ? "text-right pr-2" : "text-left pl-2"}`}>
-        <div className="text-lg font-black text-slate-300 font-cairo">
+        <div className="text-lg font-black text-slate-300 dark:text-slate-600 font-cairo">
           #{idx + 1}
         </div>
       </div>
@@ -654,12 +654,12 @@ function TimelineItem({
 
 function NoResultsFound({ monthName, className = "" }: { monthName?: string; className?: string }) {
   return (
-    <div className={`flex flex-col items-center justify-center py-12 bg-white rounded-3xl border border-dashed border-slate-200 text-center p-6 w-full ${className}`}>
-      <Search className="w-10 h-10 text-slate-300 mb-3" />
-      <div className="text-sm font-black text-slate-800 font-cairo">
+    <div className={`flex flex-col items-center justify-center py-12 bg-white dark:bg-[#0A1324] rounded-3xl border border-dashed border-slate-200 dark:border-[#1E355B] text-center p-6 w-full ${className}`}>
+      <Search className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+      <div className="text-sm font-black text-slate-800 dark:text-slate-200 font-cairo">
         لا توجد نتائج مطابقة في {monthName ? `شهر ${monthName}` : "هذا القسم"}
       </div>
-      <p className="text-slate-500 text-xs mt-1 font-bold max-w-sm">
+      <p className="text-slate-500 dark:text-slate-400 text-xs mt-1 font-bold max-w-sm">
         يمكنك تصفح بقية الأشهر من خلال التنقل بين أسماء الأشهر الهجرية أعلاه
       </p>
     </div>
@@ -693,48 +693,48 @@ function EventDetailsModal({
         initial={{ opacity: 0, scale: 0.95, y: 10 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col p-6 max-h-[90vh]"
+        className="relative w-full max-w-lg bg-white dark:bg-[#0A1324] rounded-3xl shadow-2xl border border-slate-200 dark:border-[#1E355B] overflow-hidden flex flex-col p-6 max-h-[90vh]"
       >
-        <div className="flex items-start justify-between pb-4 border-b border-slate-100">
+        <div className="flex items-start justify-between pb-4 border-b border-slate-100 dark:border-[#14274B]">
           <div className="space-y-1 text-right">
-            <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-emerald-50 text-[#015028] border border-emerald-200 font-cairo">
+            <span className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-[#015028] dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-cairo">
               {statusLabel}
             </span>
-            <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-tight mt-1 font-cairo">
+            <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-tight mt-1 font-cairo">
               {event.title}
             </h2>
-            <p className="text-xs text-slate-500 font-bold">
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-bold">
               {event.gregorianDate} - {event.dayName || ""}
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 bg-slate-100 p-2 rounded-xl transition cursor-pointer"
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-100 dark:bg-[#070F1E] p-2 rounded-xl transition cursor-pointer"
           >
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
         <div className="grow overflow-y-auto py-5 space-y-4 text-right">
-          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs sm:text-sm text-slate-800 leading-relaxed font-medium">
+          <div className="bg-slate-50 dark:bg-[#070F1E] border border-slate-200/80 dark:border-[#1E355B] rounded-2xl p-4 text-xs sm:text-sm text-slate-800 dark:text-slate-200 leading-relaxed font-medium">
             {event.description || "معلومات تفصيلية تنشر قريباً لتغطية هذه المناسبة الإسلامية والوطنية الهامة."}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#FEF9E6] border border-[#E5A921]/30 p-3.5 rounded-2xl">
-              <span className="text-[10px] font-black text-[#8C6200] block mb-0.5 font-cairo">
+            <div className="bg-[#FEF9E6] dark:bg-amber-950/40 border border-[#E5A921]/30 dark:border-amber-700/50 p-3.5 rounded-2xl">
+              <span className="text-[10px] font-black text-[#8C6200] dark:text-amber-300 block mb-0.5 font-cairo">
                 التاريخ الهجري
               </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900">
+              <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                 {event.hijriDate}
               </span>
             </div>
-            <div className="bg-blue-50 border border-blue-200/60 p-3.5 rounded-2xl">
-              <span className="text-[10px] font-black text-blue-800 block mb-0.5 font-cairo">
+            <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/50 p-3.5 rounded-2xl">
+              <span className="text-[10px] font-black text-blue-800 dark:text-blue-300 block mb-0.5 font-cairo">
                 المسافة الزمنية
               </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900">
+              <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
                 {diff > 0 ? `متبقي ${diff} يوم` : diff === 0 ? "يصادف اليوم" : "منتهية"}
               </span>
             </div>
@@ -743,30 +743,30 @@ function EventDetailsModal({
           {relatedSyllabus && (
             <div
               onClick={onNavigateToSyllabus}
-              className="bg-emerald-50 border border-emerald-300 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100/80 transition flex items-center justify-between group"
+              className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800/60 rounded-2xl p-4 cursor-pointer hover:bg-emerald-100/80 dark:hover:bg-emerald-900/30 transition flex items-center justify-between group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#015028] text-white rounded-xl flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 bg-[#015028] dark:bg-emerald-600 text-white rounded-xl flex items-center justify-center shrink-0">
                   <BookOpen className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-xs font-black text-emerald-950 font-cairo">
+                  <div className="text-xs font-black text-emerald-950 dark:text-emerald-200 font-cairo">
                     المقرر الحالي للمناسبة
                   </div>
-                  <div className="text-[11px] text-emerald-700 mt-0.5 font-bold">
+                  <div className="text-[11px] text-emerald-700 dark:text-emerald-400 mt-0.5 font-bold">
                     انقر هنا للانتقال إلى دروس هدي القرآن
                   </div>
                 </div>
               </div>
-              <ChevronLeft className="w-5 h-5 text-emerald-600" />
+              <ChevronLeft className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
           )}
         </div>
 
-        <div className="pt-4 border-t border-slate-100 flex gap-3">
+        <div className="pt-4 border-t border-slate-100 dark:border-[#14274B] flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 bg-[#015028] hover:bg-[#083b20] text-white py-3 rounded-2xl text-xs sm:text-sm font-black shadow-md transition duration-200 cursor-pointer text-center font-cairo"
+            className="flex-1 bg-[#015028] dark:bg-emerald-600 hover:bg-[#083b20] dark:hover:bg-emerald-700 text-white py-3 rounded-2xl text-xs sm:text-sm font-black shadow-md transition duration-200 cursor-pointer text-center font-cairo"
           >
             إغلاق
           </button>
@@ -775,7 +775,7 @@ function EventDetailsModal({
               navigator.clipboard.writeText(`${event.title} - ${event.hijriDate}`);
               alert("تم نسخ تفاصيل المناسبة بنجاح!");
             }}
-            className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 rounded-2xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer font-cairo"
+            className="bg-slate-100 dark:bg-[#070F1E] hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-transparent dark:border-[#1E355B] px-4 rounded-2xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer font-cairo"
           >
             <Share2 className="w-4 h-4" />
             <span>مشاركة</span>

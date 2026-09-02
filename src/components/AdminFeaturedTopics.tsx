@@ -127,8 +127,8 @@ export function AdminFeaturedTopics() {
     <div className="space-y-6 font-cairo" style={{ direction: "rtl" }}>
       <div className="flex items-center justify-between bg-white dark:bg-slate-800 p-4 rounded-2xl border border-gray-100 dark:border-slate-700/80 shadow-sm">
         <div className="flex items-center gap-2 select-none" dir="rtl">
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-            <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky dark:from-transparent dark:to-transparent dark:bg-[#F26522]/15 dark:border dark:border-[#F26522]/40 flex items-center justify-center shadow-sm shrink-0 transition-colors">
+            <Tag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white dark:text-[#F26522]" />
           </div>
           <div className="flex flex-col">
             <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">إدارة أبرز المواضيع</h3>

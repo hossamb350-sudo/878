@@ -27,8 +27,10 @@ import { NavigationController } from "./components/NavigationController";
 import { SplashScreen } from "./components/SplashScreen";
 import { DeepLinkHandler } from "./components/DeepLinkHandler";
 import { PushNotificationHandler } from "./components/PushNotificationHandler";
+import { OfflineNotificationSyncHandler } from "./components/OfflineNotificationSyncHandler";
 import { QuranAudioProvider } from "./context/QuranAudioContext";
 import { LiveStreamProvider } from "./context/LiveStreamContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { GoogleAuth } from "@southdevs/capacitor-google-auth";
@@ -220,31 +222,34 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <DeepLinkHandler />
-      <PushNotificationHandler />
-      <LiveStreamProvider>
-        <QuranAudioProvider>
-          <NavigationController />
-          <div className="relative min-h-screen">
-            <Layout>
-              <AnimatedRoutes />
-            </Layout>
-            <AnimatePresence>
-              {showSplash && (
-                <motion.div
-                  key="splash-screen-container"
-                  initial={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                  className="fixed inset-0 z-[9999]"
-                >
-                  <SplashScreen onComplete={() => setShowSplash(false)} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </QuranAudioProvider>
-      </LiveStreamProvider>
+      <ThemeProvider>
+        <DeepLinkHandler />
+        <PushNotificationHandler />
+        <OfflineNotificationSyncHandler />
+        <LiveStreamProvider>
+          <QuranAudioProvider>
+            <NavigationController />
+            <div className="relative min-h-screen">
+              <Layout>
+                <AnimatedRoutes />
+              </Layout>
+              <AnimatePresence>
+                {showSplash && (
+                  <motion.div
+                    key="splash-screen-container"
+                    initial={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5, ease: "easeInOut" }}
+                    className="fixed inset-0 z-[9999]"
+                  >
+                    <SplashScreen onComplete={() => setShowSplash(false)} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </QuranAudioProvider>
+        </LiveStreamProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

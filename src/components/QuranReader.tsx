@@ -72,9 +72,19 @@ export function QuranReader({
   // Reading Prefs (saved in local storage)
   const [readerTheme, setReaderTheme] = useState<"day" | "night" | "sepia">(
     () => {
+      const isDarkMode = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+      if (isDarkMode) return "night";
       return (localStorage.getItem("quran_pref_theme") as any) || "day";
     }
   );
+
+  // Auto-switch to Night mode if global platform dark mode is active upon opening lesson
+  useEffect(() => {
+    const isDarkMode = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+    if (isDarkMode) {
+      setReaderTheme("night");
+    }
+  }, [lesson?.id]);
   const [fontSize, setFontSize] = useState<"sm" | "md" | "lg" | "xl">(() => {
     return (localStorage.getItem("quran_pref_size") as any) || "md";
   });
@@ -616,9 +626,15 @@ export function QuranReader({
 
   // Styles formatting
   const themeClasses = {
-    day: "bg-surface-main text-text-primary border-border-light",
-    night: "bg-[#121214] text-zinc-100 border-zinc-800",
-    sepia: "bg-[#F4ECD8] text-[#422F1E] border-[#EADFCA]",
+    day: "bg-white text-slate-950 border-slate-200",
+    night: "bg-[#070F1E] text-slate-100 border-[#1E355B]",
+    sepia: "bg-[#FAF4E8] text-[#7C2D12] border-[#E8DCC4]",
+  };
+
+  const paragraphHoverClasses = {
+    day: "hover:bg-slate-100/70 hover:border-slate-300/60",
+    night: "hover:bg-[#0E1E38] hover:border-[#1E355B]",
+    sepia: "hover:bg-[#F2E8D2]/70 hover:border-[#DED2BA]",
   };
 
   const fontSizeClasses = {
@@ -719,31 +735,40 @@ export function QuranReader({
               {/* Eye-safety back-themes */}
               <div className="grid grid-cols-3 gap-1.5">
                 <button
-                  onClick={() => setReaderTheme("day")}
-                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all text-text-primary ${
+                  onClick={() => {
+                    setReaderTheme("day");
+                    localStorage.setItem("quran_pref_theme", "day");
+                  }}
+                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                     readerTheme === "day"
-                      ? "bg-surface-main border-taiz-royal"
-                      : "bg-surface-main/80 border-transparent hover:bg-surface-main"
+                      ? "bg-white text-slate-950 border-emerald-500 shadow-xs"
+                      : "bg-white/10 text-white border-transparent hover:bg-white/20"
                   }`}
                 >
                   <span>🎨 نهاراً</span>
                 </button>
                 <button
-                  onClick={() => setReaderTheme("sepia")}
-                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all text-[#422F1E] ${
+                  onClick={() => {
+                    setReaderTheme("sepia");
+                    localStorage.setItem("quran_pref_theme", "sepia");
+                  }}
+                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                     readerTheme === "sepia"
-                      ? "bg-[#F4ECD8] border-[#7F6E5D]"
-                      : "bg-[#F4ECD8]/80 border-transparent hover:bg-[#F4ECD8]"
+                      ? "bg-[#FAF4E8] text-[#7C2D12] border-amber-600 shadow-xs font-bold"
+                      : "bg-white/10 text-white border-transparent hover:bg-white/20"
                   }`}
                 >
                   <span>👁️ دافئ</span>
                 </button>
                 <button
-                  onClick={() => setReaderTheme("night")}
-                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all text-white ${
+                  onClick={() => {
+                    setReaderTheme("night");
+                    localStorage.setItem("quran_pref_theme", "night");
+                  }}
+                  className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                     readerTheme === "night"
-                      ? "bg-[#121214] border-taiz-sky"
-                      : "bg-[#121214]/85 border-transparent hover:bg-[#121214]"
+                      ? "bg-[#070F1E] text-slate-100 border-sky-400 shadow-xs"
+                      : "bg-white/10 text-white border-transparent hover:bg-white/20"
                   }`}
                 >
                   <span>🌙 ليلاً</span>
@@ -1084,8 +1109,12 @@ export function QuranReader({
             <span className="text-xs font-bold text-taiz-royal border border-taiz-royal/30 px-3 py-1 rounded-full uppercase tracking-wider">
               الدرس الحالي
             </span>
-            <h2 className="text-3xl font-black mt-3 mb-2">{lesson.title}</h2>
-            <p className="text-xs text-text-secondary font-bold">
+            <h2 className="text-3xl font-black mt-3 mb-2" style={{ color: "inherit" }}>{lesson.title}</h2>
+            <p className={`text-xs font-bold ${
+              readerTheme === 'day' ? 'text-slate-600' :
+              readerTheme === 'sepia' ? 'text-[#8C3A18]' :
+              'text-slate-300'
+            }`}>
               سلسلة: {series.title}
             </p>
           </div>
@@ -1097,7 +1126,7 @@ export function QuranReader({
               <p className="text-taiz-royal font-bold animate-pulse">جاري تحميل محتوى الدرس...</p>
             </div>
           ) : paragraphs.length === 0 ? (
-            <p className="text-center text-text-muted py-10 font-sans">
+            <p className="text-center opacity-70 py-10 font-sans" style={{ color: "inherit" }}>
               لم يتم تزويد الدرس بمحتوى بعد.
             </p>
           ) : (
@@ -1148,7 +1177,7 @@ export function QuranReader({
                       );
                       if (noteEditIndex !== idx) setNoteEditIndex(null);
                     }}
-                    className={`relative group px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 border border-transparent hover:border-border-light hover:bg-surface-hover ${
+                    className={`relative group px-4 py-3 rounded-2xl cursor-pointer transition-all duration-300 border border-transparent ${paragraphHoverClasses[readerTheme]} ${
                       fontSizeClasses[fontSize]
                     } ${lineHeightClasses[lineHeight]} ${
                       fontMedium ? "font-medium" : "font-natural"
@@ -1168,9 +1197,10 @@ export function QuranReader({
                     <div
                       className={`flex-1 transition-colors ${
                         selectedParaIndex === idx
-                          ? "text-text-primary"
-                          : "text-text-primary/90"
+                          ? "opacity-100 font-extrabold"
+                          : "opacity-95"
                       }`}
+                      style={{ color: "inherit" }}
                     >
                       {renderParagraphText(
                         paraText,
@@ -1182,16 +1212,21 @@ export function QuranReader({
 
                     {/* Render Multiple Notes Sticky below */}
                     {paragraphNotes.map((note, nIdx) => {
-                      console.log("QuranReader: rendering note:", note);
                       return (
                         <div
                           key={note.id || `note-${idx}-${nIdx}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="mt-3 bg-surface-card p-3 rounded-xl border-r-4 border-taiz-royal text-text-primary text-sm shadow-sm flex items-start gap-3"
+                          className={`mt-3 p-3 rounded-xl border-r-4 text-sm shadow-xs flex items-start gap-3 ${
+                            readerTheme === "day"
+                              ? "bg-slate-100/90 text-slate-900 border-emerald-600"
+                              : readerTheme === "sepia"
+                              ? "bg-[#F3E7CE] text-[#7C2D12] border-amber-700"
+                              : "bg-[#0D1A33] text-slate-100 border-sky-500"
+                          }`}
                         >
                           <FileText className="w-4 h-4 shrink-0 text-red-600 mt-1" />
                           <div className="flex-1">
-                            <span className="font-bold text-xs text-text-muted block mb-1">
+                            <span className="font-bold text-xs opacity-70 block mb-1">
                               ملاحظة {paragraphNotes.length > 1 ? nIdx + 1 : ""}:
                             </span>
                             <p className="leading-relaxed whitespace-pre-wrap">
@@ -1200,10 +1235,9 @@ export function QuranReader({
                           </div>
                           <button
                             onClick={() => {
-                              console.log("QuranReader: deleting note:", note.id);
                               onDeleteNote(note.id);
                             }}
-                            className="text-text-muted hover:text-status-error transition-colors p-1 bg-surface-hover rounded-lg shrink-0"
+                            className="opacity-70 hover:opacity-100 hover:text-red-500 transition-colors p-1 rounded-lg shrink-0"
                             title="حذف الملاحظة"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1220,10 +1254,10 @@ export function QuranReader({
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="mt-4 border-t border-border-light pt-3 flex flex-wrap items-center gap-2"
+                          className="mt-4 border-t border-white/10 dark:border-white/10 pt-3 flex flex-wrap items-center gap-2"
                         >
                           {/* التظليل والحفظ سريع */}
-                          <div className="flex items-center gap-1 bg-surface-hover p-1 rounded-full border border-border-light">
+                          <div className="flex items-center gap-1 bg-black/5 dark:bg-white/5 p-1 rounded-full border border-black/10 dark:border-white/10">
                             <button
                               onClick={() => onToggleHighlight(idx, "yellow")}
                               className={`w-6 h-6 rounded-full bg-yellow-400 border border-white hover:scale-110 transition ${
@@ -1250,22 +1284,26 @@ export function QuranReader({
                               inlineHighlights.length > 0) && (
                               <button
                                 onClick={() => onDeleteHighlight(idx)}
-                                className="text-[10px] text-status-error font-black px-1.5 hover:underline"
+                                className="text-[10px] text-red-600 font-black px-1.5 hover:underline"
                               >
                                 حذف التظليل
                               </button>
                             )}
                           </div>
 
-                          <span className="text-text-muted text-xs">|</span>
+                          <span className="opacity-40 text-xs">|</span>
 
                           {/* Bookmark add */}
                           <button
                             onClick={() => onToggleBookmark(idx, paraText)}
                             className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl font-bold border transition ${
                               isBookmarked
-                                ? "bg-status-error text-white border-status-error"
-                                : "bg-black/10 text-text-primary dark:bg-white/5 border-transparent"
+                                ? "bg-red-600 text-white border-red-600"
+                                : readerTheme === "day"
+                                ? "bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200"
+                                : readerTheme === "sepia"
+                                ? "bg-[#F0E4CE] hover:bg-[#E5D7BD] text-[#7C2D12] border-[#DED2BA]"
+                                : "bg-[#14274B] hover:bg-[#1E355B] text-slate-100 border-[#1E355B]"
                             }`}
                           >
                             <Bookmark
@@ -1289,7 +1327,13 @@ export function QuranReader({
                                   : ""
                               );
                             }}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-text-primary dark:bg-white/5 border-transparent font-bold"
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl font-bold border transition ${
+                              readerTheme === "day"
+                                ? "bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200"
+                                : readerTheme === "sepia"
+                                ? "bg-[#F0E4CE] hover:bg-[#E5D7BD] text-[#7C2D12] border-[#DED2BA]"
+                                : "bg-[#14274B] hover:bg-[#1E355B] text-slate-100 border-[#1E355B]"
+                            }`}
                           >
                             <Edit className="w-3.5 h-3.5" />
                             <span>ملحوظة</span>
@@ -1298,7 +1342,13 @@ export function QuranReader({
                           {/* Copy paragraph text */}
                           <button
                             onClick={() => copyText(paraText)}
-                            className="flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl bg-black/10 text-text-primary dark:bg-white/5 border-transparent font-bold"
+                            className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-xl font-bold border transition ${
+                              readerTheme === "day"
+                                ? "bg-slate-100 hover:bg-slate-200 text-slate-900 border-slate-200"
+                                : readerTheme === "sepia"
+                                ? "bg-[#F0E4CE] hover:bg-[#E5D7BD] text-[#7C2D12] border-[#DED2BA]"
+                                : "bg-[#14274B] hover:bg-[#1E355B] text-slate-100 border-[#1E355B]"
+                            }`}
                           >
                             <FileText className="w-3.5 h-3.5" />
                             <span>نسخ</span>

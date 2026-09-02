@@ -530,14 +530,14 @@ export function Watch() {
         type="website"
         path={window.location.pathname}
       />
-      <div className="min-h-screen bg-white font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
+      <div className="min-h-screen bg-white dark:bg-[#070F1E] font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
         <div className="max-w-[760px] mx-auto space-y-3.5">
 
           {/* 0. HEADER & TAB SWITCHER (MOVED TO TOP) */}
-          <div className="pt-1.5 pb-2 px-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800 shadow-soft mb-2 -mx-2 sm:-mx-3 px-2 sm:px-3">
+          <div className="pt-1.5 pb-2 px-0 bg-white/95 dark:bg-[#070F1E]/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-[#1E355B] shadow-soft mb-2 -mx-2 sm:-mx-3 px-2 sm:px-3">
             <div className="max-w-[760px] mx-auto w-full px-1">
               {/* Premium Segmented Switcher Pills (Full Width) */}
-              <div className="w-full bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 grid grid-cols-2 gap-1 shadow-inner select-none">
+              <div className="w-full bg-slate-100 dark:bg-[#0D1A33] p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-[#1E355B] grid grid-cols-2 gap-1 shadow-inner select-none">
                 {/* Tab 1: قنوات التلفزيون */}
                 <button
                   type="button"
@@ -547,7 +547,7 @@ export function Watch() {
                   className={`relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-cairo transition-all duration-300 active:scale-95 cursor-pointer outline-none ${
                     channelTab === "tv"
                       ? "font-black text-white"
-                      : "font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
+                      : "font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#14274B]/80"
                   }`}
                 >
                   {channelTab === "tv" && (
@@ -565,7 +565,7 @@ export function Watch() {
                     <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded leading-none border transition-colors ${
                       channelTab === "tv"
                         ? "bg-white/20 text-white border-white/25 shadow-xs"
-                        : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600"
+                        : "bg-slate-200 dark:bg-[#14274B] text-slate-500 dark:text-slate-400 border-slate-300 dark:border-[#1E355B]"
                     }`}>
                       HD
                     </span>
@@ -581,7 +581,7 @@ export function Watch() {
                   className={`relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-cairo transition-all duration-300 active:scale-95 cursor-pointer outline-none ${
                     channelTab === "radio"
                       ? "font-black text-white"
-                      : "font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60"
+                      : "font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-[#14274B]/80"
                   }`}
                 >
                   {channelTab === "radio" && (
@@ -599,7 +599,7 @@ export function Watch() {
                     <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded leading-none border transition-colors ${
                       channelTab === "radio"
                         ? "bg-white/20 text-white border-white/25 shadow-xs"
-                        : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600"
+                        : "bg-slate-200 dark:bg-[#14274B] text-slate-500 dark:text-slate-400 border-slate-300 dark:border-[#1E355B]"
                     }`}>
                       FM
                     </span>
@@ -807,7 +807,7 @@ export function Watch() {
                   )}
 
                   {/* Play/Listen Button */}
-                  <button className="relative z-10 bg-white dark:bg-slate-800 rounded-full p-1.5 pr-2 pl-4 shadow-[0_4px_15px_rgba(0,0,0,0.05)] dark:shadow-black/40 flex items-center justify-between min-w-[170px] border border-slate-100 dark:border-slate-700 mb-5 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300"
+                  <button className="relative z-10 bg-white dark:bg-[#0D1A33] rounded-full p-1.5 pr-2 pl-4 shadow-[0_4px_15px_rgba(0,0,0,0.05)] dark:shadow-black/40 flex items-center justify-between min-w-[170px] border border-slate-100 dark:border-[#1E355B] mb-5 cursor-pointer hover:scale-105 active:scale-95 transition-all duration-300"
                     onClick={() => {
                       if (activeStream?.id === activeRadioStation?.id) {
                         globalTogglePlay();
@@ -892,7 +892,7 @@ export function Watch() {
                             className={`flex items-center gap-2 px-3.5 py-2 rounded-full border transition-all duration-300 cursor-pointer ${
                               isSelected
                                 ? "bg-amber-500 text-white border-amber-500 shadow-md ring-2 ring-amber-500/30 scale-105"
-                                : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                                : "bg-white dark:bg-[#0D1A33] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#1E355B] hover:bg-slate-50 dark:hover:bg-[#14274B]"
                             }`}
                           >
                             <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-white shadow-sm border border-slate-100 dark:border-slate-600">
@@ -923,12 +923,12 @@ export function Watch() {
             <div className="space-y-2.5">
               {/* View Mode Selector Icons */}
               <div className="flex items-center justify-end px-1">
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#0D1A33] p-0.5 rounded-xl border border-slate-200/60 dark:border-[#1E355B]">
                   <button
                     onClick={() => setTvDisplayMode("grid")}
                     className={`p-1.5 rounded-lg transition-colors ${
                       tvDisplayMode === "grid" 
-                        ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-2xs" 
+                        ? "bg-white dark:bg-[#14274B] text-red-600 dark:text-red-400 shadow-2xs" 
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                     title="عرض شبكي"
@@ -940,7 +940,7 @@ export function Watch() {
                     onClick={() => setTvDisplayMode("carousel")}
                     className={`p-1.5 rounded-lg transition-colors ${
                       tvDisplayMode === "carousel" 
-                        ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-2xs" 
+                        ? "bg-white dark:bg-[#14274B] text-red-600 dark:text-red-400 shadow-2xs" 
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                     title="عرض شريط تمرير أفقي"
@@ -952,7 +952,7 @@ export function Watch() {
                     onClick={() => setTvDisplayMode("cards")}
                     className={`p-1.5 rounded-lg transition-colors ${
                       tvDisplayMode === "cards" 
-                        ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-2xs" 
+                        ? "bg-white dark:bg-[#14274B] text-red-600 dark:text-red-400 shadow-2xs" 
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                     title="عرض بطاقات فاخرة"
@@ -964,7 +964,7 @@ export function Watch() {
                     onClick={() => setTvDisplayMode("compact")}
                     className={`p-1.5 rounded-lg transition-colors ${
                       tvDisplayMode === "compact" 
-                        ? "bg-white dark:bg-slate-700 text-red-600 dark:text-red-400 shadow-2xs" 
+                        ? "bg-white dark:bg-[#14274B] text-red-600 dark:text-red-400 shadow-2xs" 
                         : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     }`}
                     title="عرض كبسولات مدمجة"
@@ -996,13 +996,13 @@ export function Watch() {
                           className={`flex flex-col items-center justify-center py-2 sm:py-2.5 px-1.5 rounded-xl sm:rounded-2xl border transition-all duration-200 cursor-pointer gap-1.5 relative ${
                             isSelected 
                               ? 'bg-red-50/90 dark:bg-red-950/40 border-red-500 shadow-sm ring-1.5 ring-red-500/20 scale-[1.02]'
-                              : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-2xs hover:scale-[1.01]'
+                              : 'bg-white dark:bg-[#0D1A33] border-slate-200/80 dark:border-[#1E355B] hover:border-slate-300 dark:hover:border-[#2A4778] shadow-2xs hover:scale-[1.01]'
                           }`}
                         >
                           {isSelected && (
                             <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white dark:border-slate-900" />
+                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600 border border-white dark:border-[#0D1A33]" />
                             </span>
                           )}
 
@@ -1015,7 +1015,7 @@ export function Watch() {
                           <div className={`relative w-8 h-8 sm:w-9 sm:h-9 rounded-full p-0.5 border shadow-2xs flex items-center justify-center overflow-hidden shrink-0 transition-transform ${
                             isSelected 
                               ? 'border-red-500 bg-white ring-1.5 ring-red-500/20'
-                              : 'border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800'
+                              : 'border-slate-200 dark:border-[#1E355B] bg-slate-100 dark:bg-[#14274B]'
                           }`}>
                             <img 
                               src={ch.iconUrl || "/splash_first.png"} 
@@ -1055,7 +1055,7 @@ export function Watch() {
                         carouselRef.current.scrollBy({ left: -200, behavior: "smooth" });
                       }
                     }}
-                    className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-white shadow-md border border-slate-200 dark:border-slate-700 hidden sm:flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                    className="absolute -right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 dark:bg-[#0D1A33]/90 text-slate-700 dark:text-white shadow-md border border-slate-200 dark:border-[#1E355B] hidden sm:flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
@@ -1066,7 +1066,7 @@ export function Watch() {
                         carouselRef.current.scrollBy({ left: 200, behavior: "smooth" });
                       }
                     }}
-                    className="absolute -left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 text-slate-700 dark:text-white shadow-md border border-slate-200 dark:border-slate-700 hidden sm:flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
+                    className="absolute -left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/90 dark:bg-[#0D1A33]/90 text-slate-700 dark:text-white shadow-md border border-slate-200 dark:border-[#1E355B] hidden sm:flex items-center justify-center hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
                   >
                     <ChevronLeft className="w-4 h-4" />
                   </button>
@@ -1093,10 +1093,10 @@ export function Watch() {
                           className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl border transition-all duration-200 shrink-0 cursor-pointer snap-start ${
                             isSelected
                               ? "bg-red-500 text-white border-red-500 shadow-md ring-2 ring-red-500/20 scale-[1.03]"
-                              : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:border-slate-300"
+                              : "bg-white dark:bg-[#0D1A33] text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-[#1E355B] hover:border-slate-300"
                           }`}
                         >
-                          <div className="w-7 h-7 rounded-full bg-white overflow-hidden shrink-0 shadow-2xs border border-slate-100 dark:border-slate-700">
+                          <div className="w-7 h-7 rounded-full bg-white overflow-hidden shrink-0 shadow-2xs border border-slate-100 dark:border-[#1E355B]">
                             <img
                               src={ch.iconUrl || "/splash_first.png"}
                               alt={ch.name}
@@ -1148,14 +1148,14 @@ export function Watch() {
                         className={`p-3.5 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-3 cursor-pointer relative overflow-hidden ${
                           isSelected
                             ? "bg-red-50/80 dark:bg-red-950/40 border-red-500 shadow-md ring-2 ring-red-500/20"
-                            : "bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-red-300 dark:hover:border-slate-700 shadow-2xs"
+                            : "bg-white dark:bg-[#0D1A33] border-slate-200/80 dark:border-[#1E355B] hover:border-red-300 dark:hover:border-[#2A4778] shadow-2xs"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <div className={`w-11 h-11 rounded-2xl p-0.5 border flex items-center justify-center overflow-hidden shrink-0 shadow-sm ${
                             isSelected
                               ? "border-red-500 bg-white ring-2 ring-red-500/30"
-                              : "border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                              : "border-slate-200 dark:border-[#1E355B] bg-slate-50 dark:bg-[#14274B]"
                           }`}>
                             <img
                               src={ch.iconUrl || "/splash_first.png"}
@@ -1184,7 +1184,7 @@ export function Watch() {
                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
                           isSelected
                             ? "bg-red-600 text-white shadow-md shadow-red-600/30 animate-pulse"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+                            : "bg-slate-100 dark:bg-[#14274B] text-slate-600 dark:text-slate-300"
                         }`}>
                           <Play className="w-3.5 h-3.5 fill-current" />
                         </div>
@@ -1215,7 +1215,7 @@ export function Watch() {
                         className={`flex items-center gap-2 px-3.5 py-2 rounded-full border transition-all duration-200 cursor-pointer ${
                           isSelected
                             ? "bg-red-600 text-white border-red-600 shadow-md ring-2 ring-red-600/20 scale-[1.03]"
-                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50"
+                            : "bg-white dark:bg-[#0D1A33] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#1E355B] hover:bg-slate-50"
                         }`}
                       >
                         <div className="w-5 h-5 rounded-full overflow-hidden shrink-0 bg-white border border-slate-100">
@@ -1249,9 +1249,9 @@ export function Watch() {
           {/* SECTION TITLE SEPARATOR: "المحتوى المرئي" */}
           <div className="relative flex items-center justify-center pt-1 pb-0.5 my-1">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200/80 dark:border-slate-800" />
+              <div className="w-full border-t border-slate-200/80 dark:border-[#1E355B]" />
             </div>
-            <div className="relative bg-white dark:bg-slate-900 px-3 flex items-center gap-1.5 text-[11px] font-bold text-slate-500 font-cairo">
+            <div className="relative bg-white dark:bg-[#070F1E] px-3 flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 font-cairo">
               <VideoIcon className="w-3.5 h-3.5 text-taiz-sky" />
               <span>المحتوى المرئي</span>
             </div>
@@ -1262,14 +1262,14 @@ export function Watch() {
             {/* Filter Circle Button (Far Left in RTL) */}
             <button
               onClick={() => setIsFilterModalOpen(true)}
-              className="w-10 h-10 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-taiz-sky dark:hover:bg-taiz-sky transition-colors cursor-pointer"
+              className="w-10 h-10 rounded-full bg-slate-900 dark:bg-[#0D1A33] border border-transparent dark:border-[#1E355B] text-white flex items-center justify-center shrink-0 shadow-xs hover:bg-taiz-sky dark:hover:bg-taiz-sky transition-colors cursor-pointer"
               title="تصفية الفيديوهات"
             >
               <SlidersHorizontal className="w-4 h-4 stroke-[2.5]" />
             </button>
 
             {/* Search Input Bar (Floating White Capsule) */}
-            <div className="relative flex-1 h-10 rounded-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center px-3.5">
+            <div className="relative flex-1 h-10 rounded-full bg-white dark:bg-[#0D1A33] border border-slate-200/80 dark:border-[#1E355B] shadow-xs flex items-center px-3.5">
               <input 
                 type="text"
                 placeholder="ابحث عن فيديو..."
@@ -1291,21 +1291,21 @@ export function Watch() {
           </div>
 
           {/* 5. MOST WATCHED SECTION (الأكثر مشاهدة) */}
-          <div className="space-y-2 pt-1 border-b border-slate-200/60 dark:border-slate-800/60 pb-3 mb-2">
+          <div className="space-y-2 pt-1 border-b border-slate-200/60 dark:border-[#1E355B]/60 pb-3 mb-2">
             <div className="flex items-center gap-2 px-1 select-none" dir="rtl">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-                <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white fill-current" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky dark:from-transparent dark:to-transparent dark:bg-[#F26522]/15 dark:border dark:border-[#F26522]/40 flex items-center justify-center shadow-sm shrink-0 transition-colors">
+                <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white dark:text-[#F26522] fill-current" />
               </div>
               <div className="flex flex-col text-right">
                 <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">الأكثر مشاهدة</h2>
-                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">الفيديوهات والتغطيات الأكثر رواجاً وتفاعلاً</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-400 font-medium font-cairo">الفيديوهات والتغطيات الأكثر رواجاً وتفاعلاً</p>
               </div>
               
-              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-[#1E355B] to-transparent ml-2 mr-3"></div>
 
               <button 
                 onClick={() => setShowAllMostViewed(!showAllMostViewed)}
-                className="text-[10px] sm:text-[11px] font-bold text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-2.5 py-1 rounded-full border border-taiz-sky/10 transition-all hover:scale-105 shrink-0"
+                className="text-[11px] sm:text-[12px] font-bold text-amber-500 dark:text-amber-400 flex items-center gap-1 hover:underline cursor-pointer bg-amber-500/10 dark:bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-500/20 dark:border-amber-400/20 transition-all hover:scale-105 shrink-0 font-cairo"
               >
                 <span>{showAllMostViewed ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -1326,7 +1326,7 @@ export function Watch() {
                 >
                   <Link
                     to={vid.isLeader ? routes.leaderItem(generateSlug(vid.title || "", vid.id)) : routes.watchItem(generateSlug(vid.title || "", vid.id))}
-                    className="group flex flex-col bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5 h-full"
+                    className="group flex flex-col bg-white dark:bg-[#0D1A33] rounded-[14px] border border-slate-200/80 dark:border-[#1E355B] shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5 h-full"
                   >
                     {/* Thumbnail Image */}
                     <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
@@ -1371,7 +1371,7 @@ export function Watch() {
                       </h3>
 
                       {/* Bottom Metadata: Views count in brand color + Date */}
-                      <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
+                      <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-[#1E355B] pt-2">
                         {/* Views Badge */}
                         <span className="flex items-center gap-1 text-taiz-sky font-black">
                           <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
@@ -1394,19 +1394,19 @@ export function Watch() {
           {/* 6. LATEST VIDEOS SECTION (أحدث الفيديوهات) */}
           <div className="space-y-2 pt-1 pb-2">
             <div className="flex items-center gap-2 px-1 select-none" dir="rtl">
-              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky flex items-center justify-center shadow-sm shrink-0">
-                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[2.5]" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky dark:from-transparent dark:to-transparent dark:bg-[#F26522]/15 dark:border dark:border-[#F26522]/40 flex items-center justify-center shadow-sm shrink-0 transition-colors">
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white dark:text-[#F26522] stroke-[2.5]" />
               </div>
               <div className="flex flex-col text-right">
                 <h2 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">أحدث الفيديوهات</h2>
-                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
+                <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-400 font-medium font-cairo">شاهد آخر التغطيات والتقارير المرئية</p>
               </div>
               
-              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-3"></div>
+              <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-[#1E355B] to-transparent ml-2 mr-3"></div>
 
               <button 
                 onClick={() => setShowAllLatest(!showAllLatest)}
-                className="text-[10px] sm:text-[11px] font-bold text-taiz-sky dark:text-taiz-sky flex items-center gap-1 hover:underline cursor-pointer bg-taiz-sky/5 dark:bg-taiz-sky/10 px-2.5 py-1 rounded-full border border-taiz-sky/10 transition-all hover:scale-105 shrink-0"
+                className="text-[11px] sm:text-[12px] font-bold text-amber-500 dark:text-amber-400 flex items-center gap-1 hover:underline cursor-pointer bg-amber-500/10 dark:bg-amber-400/10 px-2.5 py-1 rounded-full border border-amber-500/20 dark:border-amber-400/20 transition-all hover:scale-105 shrink-0 font-cairo"
               >
                 <span>{showAllLatest ? "عرض أقل" : "عرض المزيد"}</span>
                 <ChevronLeft className="w-3.5 h-3.5" />
@@ -1427,7 +1427,7 @@ export function Watch() {
                 >
                   <Link
                     to={vid.isLeader ? routes.leaderItem(generateSlug(vid.title || "", vid.id)) : routes.watchItem(generateSlug(vid.title || "", vid.id))}
-                    className="group flex flex-col bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200/80 dark:border-slate-800 shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5 h-full"
+                    className="group flex flex-col bg-white dark:bg-[#0D1A33] rounded-[14px] border border-slate-200/80 dark:border-[#1E355B] shadow-soft hover:shadow-medium hover:border-taiz-sky/30 transition-all duration-300 p-2.5 gap-2.5 h-full"
                   >
                     {/* Thumbnail Image */}
                     <div className="relative aspect-video w-full rounded-[16px] overflow-hidden bg-slate-900">
@@ -1472,7 +1472,7 @@ export function Watch() {
                       </h3>
 
                       {/* Bottom Metadata: Views count in brand color + Date */}
-                      <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-slate-800 pt-2">
+                      <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-[#1E355B] pt-2">
                         {/* Views Badge */}
                         <span className="flex items-center gap-1 text-taiz-sky font-black">
                           <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
@@ -1500,16 +1500,16 @@ export function Watch() {
                   initial={{ opacity: 0, scale: 0.9, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                  className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[28px] shadow-2xl border border-slate-100 dark:border-slate-800 p-6 text-right space-y-6"
+                  className="relative w-full max-w-md bg-white dark:bg-[#0D1A33] rounded-[28px] shadow-2xl border border-slate-100 dark:border-[#1E355B] p-6 text-right space-y-6"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1E355B] pb-3">
                     <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2 font-cairo">
                       <Filter className="w-5 h-5 text-taiz-sky" />
                       تصفية الفيديوهات
                     </h3>
                     <button 
                       onClick={() => setIsFilterModalOpen(false)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-[#14274B] rounded-full transition text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -1530,7 +1530,7 @@ export function Watch() {
                           className={`py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                             tempSort === opt.id 
                               ? 'bg-taiz-sky text-white shadow-sm' 
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                              : 'bg-slate-100 dark:bg-[#14274B] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-[#1C3666]'
                           }`}
                         >
                           {opt.label}
@@ -1552,7 +1552,7 @@ export function Watch() {
                     </button>
                     <button 
                       onClick={() => setIsFilterModalOpen(false)}
-                      className="px-5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 py-3 rounded-xl text-xs font-black hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+                      className="px-5 bg-slate-100 dark:bg-[#14274B] text-slate-600 dark:text-slate-300 py-3 rounded-xl text-xs font-black hover:bg-slate-200 dark:hover:bg-[#1C3666] transition cursor-pointer"
                     >
                       إلغاء
                     </button>

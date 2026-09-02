@@ -1,6 +1,7 @@
 import { collection, getDocs, addDoc, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import * as jose from "jose";
+import { NotificationSyncService } from "../services/NotificationSyncService";
 
 export async function getStoredFCMKey(): Promise<string | null> {
   const localKey = localStorage.getItem("fcm_server_key");
@@ -194,8 +195,26 @@ export async function sendFCMNotification(
               sentBy: auth.currentUser?.displayName || auth.currentUser?.email || "Auto Broadcast",
               method: "client_side_v1"
             });
+
+            // Queue pending notification for offline users (EXCLUDING prayer notifications)
+            const isPrayer = NotificationSyncService.isPrayerNotification({ title, body, contentType });
+            if (!isPrayer) {
+              await NotificationSyncService.addPendingNotification({
+                id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                title,
+                body,
+                category: "general",
+                contentType,
+                contentId: slugOrId,
+                imageUrl: imageUrl || "",
+                targetUrl,
+                createdAt: Date.now(),
+                status: "pending",
+                isPrayerNotification: false
+              });
+            }
           } catch (e) {
-            console.warn("Failed to record history", e);
+            console.warn("Failed to record history / queue pending notification", e);
           }
 
           console.log(`FCM broadcast triggered from client: ${successCount} success, ${failureCount} failed.`);

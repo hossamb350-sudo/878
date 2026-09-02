@@ -45,11 +45,11 @@ export function ModernEventCard({ activity, onClick, statusOverride }: ModernEve
       onClick={onClick}
       whileHover={{ y: -4, scale: 1.005 }}
       whileTap={{ scale: 0.99 }}
-      className="group bg-white rounded-3xl border border-slate-200/80 shadow-xs hover:shadow-lg hover:border-[#015028]/30 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col sm:flex-row w-full font-ibm relative"
+      className="group bg-white dark:bg-[#0A1324] rounded-3xl border border-slate-200/80 dark:border-[#1E355B] shadow-xs hover:shadow-lg hover:border-[#015028]/50 dark:hover:border-emerald-500/40 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col sm:flex-row w-full font-ibm relative"
       dir="rtl"
     >
       {/* Visual Image Banner */}
-      <div className="relative w-full sm:w-48 aspect-[16/9] sm:aspect-auto overflow-hidden shrink-0 bg-slate-100">
+      <div className="relative w-full sm:w-48 aspect-[16/9] sm:aspect-auto overflow-hidden shrink-0 bg-slate-100 dark:bg-slate-800">
         <img
           src={activity.imageUrl || defaultImage}
           alt={eventTitle}
@@ -81,13 +81,13 @@ export function ModernEventCard({ activity, onClick, statusOverride }: ModernEve
         <div>
           {/* Header Row: Category Badge & Location */}
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <span className="inline-flex items-center gap-1.5 bg-[#FEF9E6] text-[#8C6200] border border-[#E5A921]/40 px-2.5 py-0.5 rounded-lg text-[10px] font-black font-cairo">
+            <span className="inline-flex items-center gap-1.5 bg-[#FEF9E6] dark:bg-amber-950/40 text-[#8C6200] dark:text-amber-300 border border-[#E5A921]/40 dark:border-amber-700/50 px-2.5 py-0.5 rounded-lg text-[10px] font-black font-cairo">
               <Tag className="w-3 h-3 text-[#E5A921]" />
               {categoryBadge}
             </span>
 
             {location && (
-              <span className="inline-flex items-center gap-1 text-slate-500 text-[11px] font-bold">
+              <span className="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400 text-[11px] font-bold">
                 <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
                 <span className="truncate max-w-[140px]">{location}</span>
               </span>
@@ -95,36 +95,36 @@ export function ModernEventCard({ activity, onClick, statusOverride }: ModernEve
           </div>
 
           {/* Title */}
-          <h3 className="text-slate-900 text-base sm:text-lg font-black leading-snug group-hover:text-[#015028] transition-colors font-cairo line-clamp-2">
+          <h3 className="text-slate-900 dark:text-white text-base sm:text-lg font-black leading-snug group-hover:text-[#015028] dark:group-hover:text-emerald-400 transition-colors font-cairo line-clamp-2">
             {eventTitle}
           </h3>
 
           {/* Description Preview */}
           {description && (
-            <p className="text-slate-600 text-xs leading-relaxed font-medium line-clamp-2 mt-1.5">
+            <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed font-medium line-clamp-2 mt-1.5">
               {description}
             </p>
           )}
         </div>
 
         {/* Footer: Dates & Chevron Button */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-1">
-          <div className="flex flex-wrap items-center gap-3 text-slate-600">
+        <div className="pt-3 border-t border-slate-100 dark:border-[#14274B] flex items-center justify-between gap-2 mt-1">
+          <div className="flex flex-wrap items-center gap-3 text-slate-600 dark:text-slate-300">
             {activity.hijriDate && (
-              <div className="flex items-center gap-1 text-[11px] font-bold bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200/60">
-                <Calendar className="w-3.5 h-3.5 text-[#015028]" />
-                <span className="text-slate-800 font-extrabold">{activity.hijriDate}</span>
+              <div className="flex items-center gap-1 text-[11px] font-bold bg-slate-50 dark:bg-[#070F1E] px-2.5 py-1 rounded-lg border border-slate-200/60 dark:border-[#1E355B]">
+                <Calendar className="w-3.5 h-3.5 text-[#015028] dark:text-emerald-400" />
+                <span className="text-slate-800 dark:text-slate-200 font-extrabold">{activity.hijriDate}</span>
               </div>
             )}
             {activity.gregorianDate && (
-              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500">
+              <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
                 <span>{activity.gregorianDate}</span>
               </div>
             )}
           </div>
 
-          <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 group-hover:bg-[#015028] group-hover:text-white transition-all flex items-center justify-center shrink-0 shadow-xs">
+          <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#070F1E] text-slate-600 dark:text-slate-300 group-hover:bg-[#015028] dark:group-hover:bg-emerald-600 group-hover:text-white transition-all flex items-center justify-center shrink-0 shadow-xs border border-transparent dark:border-[#1E355B]">
             <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
           </div>
         </div>
