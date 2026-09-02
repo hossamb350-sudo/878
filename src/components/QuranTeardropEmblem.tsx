@@ -85,30 +85,21 @@ export const IslamicBannerHeader = ({
   className?: string;
 }) => {
   return (
-    <div className={`relative flex items-center justify-center my-3 sm:my-4 ${className}`} dir="rtl">
-      {/* Decorative Frame */}
-      <div className="relative flex items-center justify-center px-6 py-2 bg-gradient-to-r from-emerald-50 via-teal-50/80 to-emerald-50 dark:from-[#0c2e33] dark:via-[#11424a] dark:to-[#0c2e33] border border-teal-600/30 dark:border-teal-400/30 rounded-xl shadow-xs">
-        {/* Left Islamic side flourish */}
-        <div className="absolute -left-3 flex items-center text-teal-600 dark:text-teal-400">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" opacity="0.8" />
-            <circle cx="12" cy="12" r="3" fill="#1b7a82" />
-          </svg>
-        </div>
-
-        {/* Title */}
-        <h2 className="text-xs sm:text-sm md:text-base font-black text-teal-900 dark:text-teal-100 font-cairo tracking-wide mx-3">
-          {title}
-        </h2>
-
-        {/* Right Islamic side flourish */}
-        <div className="absolute -right-3 flex items-center text-teal-600 dark:text-teal-400">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" opacity="0.8" />
-            <circle cx="12" cy="12" r="3" fill="#1b7a82" />
-          </svg>
-        </div>
-      </div>
+    <div className={`relative flex items-center justify-center my-2 sm:my-3 ${className}`} dir="rtl">
+      {/* Light Mode Banner Artwork */}
+      <img
+        src="/Hudaah1.webp"
+        alt={title}
+        className="w-full max-w-[280px] sm:max-w-[330px] md:max-w-[360px] h-auto object-contain block dark:hidden select-none drop-shadow-xs hover:scale-[1.02] transition-transform duration-300"
+        loading="eager"
+      />
+      {/* Dark Mode Banner Artwork */}
+      <img
+        src="/Hudaah2.webp"
+        alt={title}
+        className="w-full max-w-[280px] sm:max-w-[330px] md:max-w-[360px] h-auto object-contain hidden dark:block select-none drop-shadow-xs hover:scale-[1.02] transition-transform duration-300"
+        loading="eager"
+      />
     </div>
   );
 };
