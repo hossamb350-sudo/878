@@ -275,18 +275,25 @@ const SeriesView = ({
                       >
                         <div
                           onClick={() => onSelectSeries(series)}
-                          className="w-[190px] sm:w-[220px] md:w-[235px] h-[280px] sm:h-[310px] rounded-3xl overflow-hidden relative shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-gradient-to-b from-[#1b7a82] via-[#166770] to-[#0e484e] flex flex-col justify-between items-center p-3 text-center border border-teal-500/20 active:scale-[0.98] cursor-pointer group select-none"
+                          className="w-[190px] sm:w-[220px] md:w-[235px] h-[280px] sm:h-[310px] rounded-3xl overflow-hidden relative shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-slate-900 flex flex-col justify-end items-center p-3 text-center border border-teal-500/30 active:scale-[0.98] cursor-pointer group select-none"
                         >
-                          {/* Subtle top ambient sheen */}
-                          <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+                          {/* Background Artwork Image: Hudaa.jpg */}
+                          <img
+                            src="/Hudaa.jpg"
+                            alt={series.title}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            onError={(e) => {
+                              // Fallback if image fails to load
+                              (e.currentTarget as HTMLElement).style.display = "none";
+                            }}
+                          />
 
-                          {/* Center: Teardrop Islamic Arabic Calligraphy */}
-                          <div className="my-auto pt-3 flex flex-col items-center justify-center">
-                            <QuranTeardropEmblem size="lg" showText={true} />
-                          </div>
+                          {/* Ambient Bottom Gradient for Title Readability */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
 
                           {/* Bottom pill container with Series Title */}
-                          <div className="w-full bg-[#0c393e]/90 backdrop-blur-md rounded-2xl py-2.5 px-2 border border-white/10 shadow-inner z-10">
+                          <div className="w-full bg-[#0c393e]/90 dark:bg-[#0c393e]/95 backdrop-blur-md rounded-2xl py-2.5 px-2.5 border border-white/15 shadow-lg z-10">
                             <h3 className="text-white font-bold font-cairo text-xs sm:text-[13px] line-clamp-2 leading-snug">
                               {series.title}
                             </h3>
@@ -557,9 +564,14 @@ const LessonsView = ({
                     className="w-full group relative bg-white dark:bg-[#0D1A33] rounded-2xl p-0 flex items-stretch text-right transition-all duration-300 hover:shadow-md hover:border-teal-500/40 dark:hover:border-teal-400/40 shadow-xs border border-slate-200/80 dark:border-[#1E355B] active:scale-[0.99] cursor-pointer overflow-hidden"
                     dir="rtl"
                   >
-                    {/* Right Side: Distinct Vertical Teal Badge with Quran Teardrop Emblem */}
-                    <div className="w-20 sm:w-24 shrink-0 bg-gradient-to-b from-[#1b7a82] via-[#166770] to-[#104d53] rounded-2xl flex flex-col items-center justify-center p-2 text-white shadow-inner m-1">
-                      <QuranTeardropEmblem size="sm" showText={true} />
+                    {/* Right Side: Distinct Vertical Badge with Hudaa image */}
+                    <div className="w-16 sm:w-20 shrink-0 self-stretch rounded-2xl overflow-hidden relative m-1 border border-teal-500/20 shadow-xs bg-slate-900 flex items-center justify-center">
+                      <img
+                        src="/Hudaa.jpg"
+                        alt="هدي القرآن"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
                     </div>
 
                     {/* Middle: Content */}
