@@ -277,16 +277,18 @@ const SeriesView = ({
                           onClick={() => onSelectSeries(series)}
                           className="w-[190px] sm:w-[220px] md:w-[235px] h-[280px] sm:h-[310px] rounded-3xl overflow-hidden relative shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-slate-900 flex flex-col justify-end items-center p-3 text-center border border-teal-500/30 active:scale-[0.98] cursor-pointer group select-none"
                         >
-                          {/* Background Artwork Image: Hudaa.jpg */}
+                          {/* Background Artwork Image: Hudaa1.jpg for light mode, Hudaa.jpg for dark mode */}
+                          <img
+                            src="/Hudaa1.jpg"
+                            alt={series.title}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 block dark:hidden"
+                            loading="lazy"
+                          />
                           <img
                             src="/Hudaa.jpg"
                             alt={series.title}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 hidden dark:block"
                             loading="lazy"
-                            onError={(e) => {
-                              // Fallback if image fails to load
-                              (e.currentTarget as HTMLElement).style.display = "none";
-                            }}
                           />
 
                           {/* Ambient Bottom Gradient for Title Readability */}
@@ -564,12 +566,18 @@ const LessonsView = ({
                     className="w-full group relative bg-white dark:bg-[#0D1A33] rounded-2xl p-0 flex items-stretch text-right transition-all duration-300 hover:shadow-md hover:border-teal-500/40 dark:hover:border-teal-400/40 shadow-xs border border-slate-200/80 dark:border-[#1E355B] active:scale-[0.99] cursor-pointer overflow-hidden"
                     dir="rtl"
                   >
-                    {/* Right Side: Distinct Vertical Badge with Hudaa image */}
-                    <div className="w-16 sm:w-20 shrink-0 self-stretch rounded-2xl overflow-hidden relative m-1 border border-teal-500/20 shadow-xs bg-slate-900 flex items-center justify-center">
+                    {/* Right Side: Distinct Vertical Badge with Hudaa/Hudaa1 image */}
+                    <div className="w-16 sm:w-20 shrink-0 self-stretch rounded-2xl overflow-hidden relative m-1 border border-teal-500/20 shadow-xs bg-slate-100 dark:bg-slate-900 flex items-center justify-center">
+                      <img
+                        src="/Hudaa1.jpg"
+                        alt="هدي القرآن"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 block dark:hidden"
+                        loading="lazy"
+                      />
                       <img
                         src="/Hudaa.jpg"
                         alt="هدي القرآن"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 hidden dark:block"
                         loading="lazy"
                       />
                     </div>
