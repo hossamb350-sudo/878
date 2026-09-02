@@ -157,3 +157,12 @@ export const ExcerptsBannerHeader = ({
     </div>
   );
 };
+
+export const GradientSectionDivider = ({ className = "" }: { className?: string }) => {
+  return (
+    <div className={`w-full flex items-center justify-center py-1 select-none ${className}`} dir="rtl">
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-200/90 dark:via-slate-800/90 to-transparent" />
+    </div>
+  );
+};
+

@@ -21,9 +21,24 @@ import {
   ShieldCheck,
   Moon,
   Sun,
-  Laptop
+  Laptop,
+  Type,
+  Sparkles,
+  RotateCcw,
+  Eye,
+  Check,
+  X
 } from "lucide-react";
 import { useTheme, ThemeMode } from "../context/ThemeContext";
+import { useTextSize, TextSizeMode, TEXT_SIZE_MAP } from "../context/TextSizeContext";
+import { 
+  NOTIFICATION_CHANNELS_LIST, 
+  NotificationChannelsState, 
+  getSavedNotificationChannels, 
+  saveNotificationChannels,
+  requestNativeNotificationPermission 
+} from "../services/NotificationPreferencesService";
+import { OnboardingWizard } from "./OnboardingWizard";
 import { FavoritesList } from "./FavoritesList";
 import { ContactUsSection } from "./ContactUsSection";
 import { getShareableUrl } from "../config/apiConfig";
@@ -39,13 +54,17 @@ interface UserProfileSectionProps {
 export function UserProfileSection({ profile, logout, hideHeaderLogout = false, onProfileUpdated }: UserProfileSectionProps) {
   const [activeTab, setActiveTab] = useState<"favorites" | "preferences" | "notifications">("favorites");
   const { theme, isDark, setTheme, toggleTheme } = useTheme();
+  const { textSize, setTextSize, sliderValue, setSliderValue, getTextSizeLabel } = useTextSize();
   
   // Local profile state
   const [localProfile] = useState<UserProfile>(profile);
 
-  // Preference States
-  const [fontSize, setFontSize] = useState<number>(() => {
-    return parseInt(localStorage.getItem("article_font_size") || "18");
+  // Show Onboarding Wizard Modal state
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+
+  // Notification Channels (All 8 Sections)
+  const [notificationChannels, setNotificationChannels] = useState<NotificationChannelsState>(() => {
+    return getSavedNotificationChannels();
   });
 
   // Single Notification Toggle State
@@ -106,6 +125,28 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
     setTimeout(() => setToastMessage(null), 3500);
   };
 
+  const handleToggleChannel = async (channelId: string) => {
+    const updated = {
+      ...notificationChannels,
+      [channelId]: !notificationChannels[channelId],
+    };
+    setNotificationChannels(updated);
+    await saveNotificationChannels(updated);
+    showToast(`تم تحديث إعدادات تنبيهات ${NOTIFICATION_CHANNELS_LIST.find(c => c.id === channelId)?.name || ""}`);
+  };
+
+  const handleToggleAllChannels = async (enable: boolean) => {
+    const updated: NotificationChannelsState = {};
+    NOTIFICATION_CHANNELS_LIST.forEach((ch) => {
+      updated[ch.id] = enable;
+    });
+    setNotificationChannels(updated);
+    await saveNotificationChannels(updated);
+    showToast(enable ? "تم تفعيل إشعارات كافة الأقسام" : "تم تعطيل إشعارات كافة الأقسام");
+  };
+
+  const areAllChannelsEnabled = NOTIFICATION_CHANNELS_LIST.every((ch) => notificationChannels[ch.id]);
+
   const handleToggleNotifications = async () => {
     if (isRequestingNotif) return;
 
@@ -113,80 +154,16 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
       // User is enabling notifications -> Trigger native permissions dialog
       setIsRequestingNotif(true);
       try {
-        if (Capacitor.isNativePlatform()) {
-          // Request permissions (Triggers Android 13+ system permission prompt)
-          const permStatus = await PushNotifications.requestPermissions();
-          
-          if (permStatus?.receive === "granted") {
-            try {
-              if (Capacitor.getPlatform() === 'android') {
-                await PushNotifications.createChannel({
-                  id: 'fcm_high_priority_channel',
-                  name: 'منصة تعز الإعلامية',
-                  description: 'إشعارات منصة تعز الإعلامية للأخبار والتحديثات',
-                  importance: 5,
-                  visibility: 1,
-                  vibration: true,
-                });
-              }
-              await PushNotifications.register();
-            } catch (regErr) {
-              console.error("[PushNotification] Manual registration failed caught safely:", regErr);
-              showToast("حدث خطأ أثناء الاتصال بخادم الإشعارات. يرجى التحقق من اتصال الإنترنت وجوجل بلاي.");
-            }
-            setNotifEnabled(true);
-            localStorage.setItem("push_notifications_enabled", "true");
-            
-            // Save to Firestore user doc
-            if (profile?.uid) {
-              const userRef = doc(db, "users", profile.uid);
-              await setDoc(userRef, { 
-                notificationSettings: { 
-                  enabled: true,
-                  urgent: true,
-                  dailyEvents: true,
-                  prayerTimes: true,
-                  quranAudio: true,
-                  articles: true
-                } 
-              }, { merge: true });
-            }
-            showToast("تم تفعيل الإشعارات والتنبيهات المباشرة بنجاح 🔔");
-          } else {
-            setNotifEnabled(false);
-            localStorage.setItem("push_notifications_enabled", "false");
-            showToast("لم يتم منح إذن الإشعارات من النظام");
-          }
-        } else if (typeof window !== "undefined" && "Notification" in window) {
-          // Web / PWA Notification Permission
-          const permission = await Notification.requestPermission();
-          if (permission === "granted") {
-            setNotifEnabled(true);
-            localStorage.setItem("push_notifications_enabled", "true");
-            if (profile?.uid) {
-              const userRef = doc(db, "users", profile.uid);
-              await setDoc(userRef, { 
-                notificationSettings: { 
-                  enabled: true,
-                  urgent: true,
-                  dailyEvents: true,
-                  prayerTimes: true,
-                  quranAudio: true,
-                  articles: true
-                } 
-              }, { merge: true });
-            }
-            showToast("تم تفعيل الإشعارات والتنبيهات المباشرة بنجاح 🔔");
-          } else {
-            setNotifEnabled(false);
-            localStorage.setItem("push_notifications_enabled", "false");
-            showToast("لم يتم منح إذن الإشعارات من المتصفح");
-          }
-        } else {
-          // Fallback
+        const granted = await requestNativeNotificationPermission();
+        if (granted) {
           setNotifEnabled(true);
           localStorage.setItem("push_notifications_enabled", "true");
-          showToast("تم تفعيل الإشعارات بنجاح");
+          await saveNotificationChannels(notificationChannels);
+          showToast("تم تفعيل الإشعارات والتنبيهات المباشرة بنجاح 🔔");
+        } else {
+          setNotifEnabled(false);
+          localStorage.setItem("push_notifications_enabled", "false");
+          showToast("لم يتم منح إذن الإشعارات من النظام");
         }
       } catch (e) {
         console.error("Notification permission error:", e);
@@ -205,10 +182,13 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
             notificationSettings: { 
               enabled: false,
               urgent: false,
-              dailyEvents: false,
-              prayerTimes: false,
-              quranAudio: false,
-              articles: false
+              news: false,
+              articles: false,
+              videos: false,
+              leader: false,
+              live: false,
+              lessons: false,
+              activities: false,
             } 
           }, { merge: true });
         }
@@ -217,12 +197,6 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
         console.error(e);
       }
     }
-  };
-
-  const handleFontSizeChange = (size: number) => {
-    setFontSize(size);
-    localStorage.setItem("article_font_size", size.toString());
-    showToast(`تم ضبط حجم خط القراءة على ${size}px`);
   };
 
   const exportUserData = () => {
@@ -520,49 +494,110 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
               </div>
             </div>
             
-            {/* 2. Reading Font Size Customization */}
+            {/* 2. Reading Font Size Customization with Global Slider */}
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <Sliders className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-base font-black text-slate-900 dark:text-white font-cairo">
-                  حجم الخط في المقالات والأخبار
-                </h3>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Type className="w-5 h-5 text-[#D9A441]" />
+                  <h3 className="text-base font-black text-slate-900 dark:text-white font-cairo">
+                    حجم النصوص في المنصة بالكامل
+                  </h3>
+                </div>
+                <span className="px-3 py-1 rounded-full bg-[#D9A441]/15 text-[#BF841F] dark:text-[#E6B758] border border-[#D9A441]/30 font-black text-xs">
+                  {getTextSizeLabel()} ({TEXT_SIZE_MAP[textSize].px})
+                </span>
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                اختر حجم الخط المناسب لك لتسهيل القراءة والمتابعة في جميع صفحات المنصة.
+                يتم تطبيق حجم الخط المختار على كافة نصوص وعناصر وأخبار المنصة بالكامل وبشكل فوري.
               </p>
 
-              {/* Font Size Selectors */}
-              <div className="flex flex-wrap gap-2 sm:gap-3">
-                {[
-                  { size: 14, label: "صغير (14px)" },
-                  { size: 16, label: "عادي (16px)" },
-                  { size: 18, label: "كبير (18px)" },
-                  { size: 22, label: "ضخم (22px)" },
-                ].map((item) => (
-                  <button
-                    key={item.size}
-                    onClick={() => handleFontSizeChange(item.size)}
-                    className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
-                      fontSize === item.size
-                        ? "bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20"
-                        : "bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+              {/* Interactive Slider Track */}
+              <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-4">
+                <div className="relative flex items-center select-none py-1">
+                  <input
+                    type="range"
+                    min="1"
+                    max="3"
+                    step="1"
+                    value={sliderValue}
+                    onChange={(e) => {
+                      setSliderValue(Number(e.target.value));
+                      showToast(`تم ضبط حجم النص على: ${getTextSizeLabel()}`);
+                    }}
+                    className="w-full h-2.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-[#D9A441] focus:outline-none"
+                  />
+                </div>
+
+                {/* Step Labels: تكبير ————— وسط ————— تصغير */}
+                <div className="flex justify-between items-center text-xs font-bold text-slate-600 dark:text-slate-300">
+                  {[
+                    { val: 1, label: "تصغير", sub: "14px" },
+                    { val: 2, label: "وسط (الافتراضي)", sub: "16px" },
+                    { val: 3, label: "تكبير", sub: "18.5px" },
+                  ].map((item) => {
+                    const isCurrent = sliderValue === item.val;
+                    return (
+                      <button
+                        key={item.val}
+                        type="button"
+                        onClick={() => {
+                          setSliderValue(item.val);
+                          showToast(`تم ضبط حجم النص على: ${item.label}`);
+                        }}
+                        className={`flex flex-col items-center gap-0.5 transition-all cursor-pointer ${
+                          isCurrent
+                            ? "text-[#D9A441] dark:text-[#E6B758] font-black scale-105"
+                            : "text-slate-400 dark:text-slate-500 hover:text-slate-600"
+                        }`}
+                      >
+                        <span className="text-xs sm:text-sm">{item.label}</span>
+                        <span className="text-[10px] opacity-75">{item.sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Live Preview Box */}
               <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">معاينة النص الحية</span>
-                <p 
-                  style={{ fontSize: `${fontSize}px` }} 
-                  className="font-cairo leading-relaxed text-slate-800 dark:text-slate-200 transition-all"
-                >
+                <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-700/60 pb-2">
+                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                    <Eye className="w-3.5 h-3.5 text-emerald-500" />
+                    معاينة النص الحية
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-md">
+                    مطبق على التطبيق بالكامل
+                  </span>
+                </div>
+                <p className="font-cairo leading-relaxed text-slate-800 dark:text-slate-200 transition-all text-base">
                   منصة تعز الإعلامية: التغطية الشاملة والمباشرة للأحداث السياسية، الاجتماعية، والأنشطة الثقافية في محافظة تعز واليمن.
                 </p>
+              </div>
+            </div>
+
+            {/* 3. Re-run Onboarding Wizard Banner */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-[#D9A441]/10 via-slate-50 to-transparent dark:from-[#D9A441]/15 dark:via-slate-800/40 dark:to-transparent border border-[#D9A441]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#D9A441]" />
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-cairo">
+                      معالج الإعداد الأولي (Onboarding Wizard)
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
+                    يمكنك إعادة تشغيل المعالج الاسترشادي المكون من 3 خطوات لضبط المظهر وحجم الخط والإشعارات دفعة واحدة.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowOnboardingModal(true)}
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-[#D9A441] to-[#BF841F] text-white text-xs sm:text-sm font-extrabold shadow-md shadow-[#D9A441]/25 hover:brightness-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2 shrink-0"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span>إعادة تشغيل المعالج</span>
+                </button>
               </div>
             </div>
 
@@ -572,43 +607,103 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
         {/* TAB 3: NOTIFICATION SETTINGS */}
         {activeTab === "notifications" && (
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-6 animate-fade-in">
-            <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white font-cairo flex items-center gap-2">
-                <Bell className="w-5 h-5 text-emerald-600" /> إعدادات التنبيهات والإشعارات المباشرة
-              </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                التحكم في استقبال الإشعارات والتنبيهات المباشرة لكافة الأحداث والأخبار والأنشطة في المنصة.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white font-cairo flex items-center gap-2">
+                  <Bell className="w-5 h-5 text-emerald-600" /> إعدادات التنبيهات والإشعارات المباشرة
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  التحكم في استقبال الإشعارات والتنبيهات المباشرة لكافة أقسام وأنشطة المنصة.
+                </p>
+              </div>
+
+              {/* Master Push Toggle Button */}
+              <button
+                type="button"
+                onClick={handleToggleNotifications}
+                className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer border ${
+                  notifEnabled
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700"
+                }`}
+              >
+                <BellRing className="w-4 h-4" />
+                <span>{notifEnabled ? "خدمة الإشعارات مفعلة" : "تفعيل خدمة الإشعارات"}</span>
+              </button>
             </div>
 
+            {/* Notification Sections Grid (All 8 Channels) */}
             <div className="space-y-4">
-              {/* Single Push Notifications Toggle Card */}
-              <div
-                onClick={handleToggleNotifications}
-                className="flex items-center justify-between p-5 rounded-2xl bg-slate-50/90 dark:bg-slate-800/40 border border-slate-200/70 dark:border-slate-700/70 hover:bg-slate-100/90 dark:hover:bg-slate-800/80 transition-all cursor-pointer shadow-xs select-none"
-              >
-                <div className="space-y-1 pl-4">
-                  <div className="flex items-center gap-2">
-                    <BellRing className={`w-4 h-4 ${notifEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`} />
-                    <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-cairo">
-                      تفعيل الإشعارات والتنبيهات المباشرة
-                    </h4>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    استقبال تنبيهات فورية للأخبار العاجلة، التقارير والمواد المرئية، والمناسبات اليومية عبر خدمة الإشعارات.
-                  </p>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  تخصيص تنبيهات الأقسام (8 أقسام):
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleToggleAllChannels(!areAllChannelsEnabled)}
+                  className="text-xs font-bold text-[#D9A441] dark:text-[#E6B758] hover:underline cursor-pointer"
+                >
+                  {areAllChannelsEnabled ? "تعطيل الكل" : "تفعيل الكل"}
+                </button>
+              </div>
 
-                <div className={`w-14 h-7 rounded-full transition-colors relative shrink-0 ${notifEnabled ? "bg-emerald-600" : "bg-slate-300 dark:bg-slate-700"}`}>
-                  <div className={`w-6 h-6 rounded-full bg-white shadow-md absolute top-0.5 transition-all ${notifEnabled ? "right-7" : "right-0.5"}`} />
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {NOTIFICATION_CHANNELS_LIST.map((channel) => {
+                  const Icon = channel.icon;
+                  const isEnabled = !!notificationChannels[channel.id];
+
+                  return (
+                    <div
+                      key={channel.id}
+                      onClick={() => handleToggleChannel(channel.id)}
+                      className={`p-3.5 rounded-2xl border text-right transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                        isEnabled
+                          ? "bg-slate-50/90 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 shadow-xs"
+                          : "bg-slate-100/60 dark:bg-slate-900/40 border-slate-200/50 dark:border-slate-800/60 opacity-60 hover:opacity-80"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`p-2 rounded-xl shrink-0 ${channel.bgColor} ${channel.borderColor} border`}>
+                          <Icon className={`w-4 h-4 ${channel.color}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white truncate">
+                            {channel.name}
+                          </h4>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[170px] sm:max-w-[150px]">
+                            {channel.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Interactive Toggle Switch */}
+                      <div
+                        className={`w-11 h-6 rounded-full transition-colors relative shrink-0 p-0.5 ${
+                          isEnabled ? "bg-emerald-600" : "bg-slate-300 dark:bg-slate-700"
+                        }`}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-full bg-white shadow-sm flex items-center justify-center transition-all ${
+                            isEnabled ? "mr-auto" : "ml-auto"
+                          }`}
+                        >
+                          {isEnabled ? (
+                            <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
+                          ) : (
+                            <X className="w-2.5 h-2.5 text-slate-400 stroke-[2.5]" />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Status Note */}
               <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/30 text-xs text-emerald-800 dark:text-emerald-300">
                 <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
                 <p className="leading-relaxed">
-                  عند تفعيل هذا الخيار، سيطلب منك النظام السماح بإرسال الإشعارات. يتم تفعيل واستقبال كافة التنبيهات المباشرة فور الموافقة.
+                  يتم حفظ تفضيلات التنبيهات محلياً ومزامنتها مع حسابك. ستصلك الإشعارات الفورية للأقسام المحددة أعلاه فقط.
                 </p>
               </div>
             </div>
@@ -616,6 +711,19 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
         )}
 
       </div>
+
+      {/* Manual Onboarding Wizard Modal */}
+      <AnimatePresence>
+        {showOnboardingModal && (
+          <OnboardingWizard
+            onComplete={() => {
+              setShowOnboardingModal(false);
+              showToast("تم تحديث وحفظ كافة التفضيلات بنجاح ✨");
+            }}
+            isManualReopen
+          />
+        )}
+      </AnimatePresence>
 
       {/* 4. RESTORED SOCIAL LINKS SECTION (تابعنا) AT THE BOTTOM */}
       <div className="mt-12 pt-8 border-t border-slate-200/80 dark:border-slate-800">

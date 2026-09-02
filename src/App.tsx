@@ -31,6 +31,8 @@ import { OfflineNotificationSyncHandler } from "./components/OfflineNotification
 import { QuranAudioProvider } from "./context/QuranAudioContext";
 import { LiveStreamProvider } from "./context/LiveStreamContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { TextSizeProvider } from "./context/TextSizeContext";
+import { OnboardingWizard, ONBOARDING_STORAGE_KEY } from "./components/OnboardingWizard";
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { GoogleAuth } from "@southdevs/capacitor-google-auth";
@@ -77,6 +79,14 @@ function AnimatedRoutes() {
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    try {
+      const completed = localStorage.getItem(ONBOARDING_STORAGE_KEY);
+      return completed !== "true";
+    } catch {
+      return false;
+    }
+  });
   const [versionConfig, setVersionConfig] = useState<AppVersionConfig | null>(null);
   const [isOutdated, setIsOutdated] = useState(false);
 
@@ -223,32 +233,39 @@ export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <DeepLinkHandler />
-        <PushNotificationHandler />
-        <OfflineNotificationSyncHandler />
-        <LiveStreamProvider>
-          <QuranAudioProvider>
-            <NavigationController />
-            <div className="relative min-h-screen">
-              <Layout>
-                <AnimatedRoutes />
-              </Layout>
-              <AnimatePresence>
-                {showSplash && (
-                  <motion.div
-                    key="splash-screen-container"
-                    initial={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.5, ease: "easeInOut" }}
-                    className="fixed inset-0 z-[9999]"
-                  >
-                    <SplashScreen onComplete={() => setShowSplash(false)} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          </QuranAudioProvider>
-        </LiveStreamProvider>
+        <TextSizeProvider>
+          <DeepLinkHandler />
+          <PushNotificationHandler />
+          <OfflineNotificationSyncHandler />
+          <LiveStreamProvider>
+            <QuranAudioProvider>
+              <NavigationController />
+              <div className="relative min-h-screen">
+                <Layout>
+                  <AnimatedRoutes />
+                </Layout>
+                <AnimatePresence>
+                  {showSplash && (
+                    <motion.div
+                      key="splash-screen-container"
+                      initial={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.5, ease: "easeInOut" }}
+                      className="fixed inset-0 z-[9999]"
+                    >
+                      <SplashScreen onComplete={() => setShowSplash(false)} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <AnimatePresence>
+                  {!showSplash && showOnboarding && (
+                    <OnboardingWizard onComplete={() => setShowOnboarding(false)} />
+                  )}
+                </AnimatePresence>
+              </div>
+            </QuranAudioProvider>
+          </LiveStreamProvider>
+        </TextSizeProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

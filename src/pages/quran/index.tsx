@@ -49,7 +49,7 @@ import { QuranReader } from "../../components/QuranReader";
 import { QuranStats } from "../../components/QuranStats";
 import { QuranKareem } from "../../components/QuranKareem";
 import { IslamicExcerptCard, IslamicOrnamentDivider } from "../../components/AdminQuranExcerpts";
-import { QuranTeardropEmblem, IslamicBannerHeader, SyllabusBannerHeader, ExcerptsBannerHeader } from "../../components/QuranTeardropEmblem";
+import { QuranTeardropEmblem, IslamicBannerHeader, SyllabusBannerHeader, ExcerptsBannerHeader, GradientSectionDivider } from "../../components/QuranTeardropEmblem";
 import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData, sortQuranLessons, formatLessonDisplayTitle } from "../../data/staticQuranData";
 import { loadQuranMetadata, loadLessonContent } from "../../data/importedQuranData";
 
@@ -309,10 +309,13 @@ const SeriesView = ({
           )}
         </div>
 
+        {/* Subtle Gradient Section Divider */}
+        <GradientSectionDivider className="my-1 sm:my-2" />
+
         {/* ======================================================== */}
         {/* 2. قسم مقرر الدروس (Syllabuses Section) */}
         {/* ======================================================== */}
-        <div className="space-y-3 pt-2">
+        <div className="space-y-3">
           <SyllabusBannerHeader className="mb-2" />
 
           {activeSyllabuses.length === 0 ? (
@@ -413,10 +416,13 @@ const SeriesView = ({
           )}
         </div>
 
+        {/* Subtle Gradient Section Divider */}
+        <GradientSectionDivider className="my-1 sm:my-2" />
+
         {/* ======================================================== */}
         {/* 3. قسم المقتطفات (Excerpts Section) */}
         {/* ======================================================== */}
-        <div className="space-y-3 pt-2">
+        <div className="space-y-3">
           <ExcerptsBannerHeader className="mb-2" />
 
           {excerptsList.length === 0 ? (
