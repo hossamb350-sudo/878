@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Bell, Wifi, WifiOff, CheckCircle2, X } from "lucide-react";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db } from "../firebase";
 import { NotificationSyncService } from "../services/NotificationSyncService";
 import { AppNotification } from "../types";
 
@@ -12,8 +15,49 @@ export function OfflineNotificationSyncHandler() {
     typeof navigator !== "undefined" ? navigator.onLine : true
   );
   const [showNetworkStatusToast, setShowNetworkStatusToast] = useState<boolean>(false);
+  
+  // Track whether current user is Admin or Manager (Toast is ONLY visible to staff)
+  const [isAdminOrManager, setIsAdminOrManager] = useState<boolean>(() => {
+    try {
+      const cached = localStorage.getItem("admin_profile");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.role === "admin" || parsed.role === "manager") return true;
+      }
+    } catch (e) {}
+    return false;
+  });
 
   useEffect(() => {
+    // Check Auth State to verify Admin / Manager privileges
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+      if (!currentUser) {
+        setIsAdminOrManager(false);
+        return;
+      }
+
+      if (currentUser.email?.toLowerCase() === "hossamb350@gmail.com") {
+        setIsAdminOrManager(true);
+        return;
+      }
+
+      try {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const role = userDocSnap.data()?.role;
+          if (role === "admin" || role === "manager") {
+            setIsAdminOrManager(true);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("[OfflineNotificationSyncHandler] Role check error:", err);
+      }
+
+      setIsAdminOrManager(false);
+    });
+
     // Initialize notification sync engine
     NotificationSyncService.init();
 
@@ -38,6 +82,7 @@ export function OfflineNotificationSyncHandler() {
     window.addEventListener("offline", handleOffline);
 
     return () => {
+      unsubscribeAuth();
       unsubscribeToast();
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOffline);
@@ -97,58 +142,60 @@ export function OfflineNotificationSyncHandler() {
         )}
       </AnimatePresence>
 
-      {/* Delivered Pending Notifications Toasts */}
-      <div className="fixed top-20 right-6 z-[9999] flex flex-col gap-3 max-w-md w-full pointer-events-none" dir="rtl">
-        <AnimatePresence>
-          {toastNotifs.map((notif) => (
-            <motion.div
-              key={notif.id}
-              initial={{ opacity: 0, x: 100, scale: 0.9 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 100, scale: 0.9 }}
-              className="pointer-events-auto cursor-pointer bg-[#0F172A] border border-[#1E293B] text-white p-4 rounded-2xl shadow-2xl hover:border-[#F26522]/50 transition-all group overflow-hidden relative"
-              onClick={() => handleNotificationClick(notif)}
-            >
-              {/* Accent Line */}
-              <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-l from-[#F26522] to-[#D9A441]" />
+      {/* Delivered Pending Notifications Toasts - ONLY VISIBLE TO ADMINS / MANAGERS */}
+      {isAdminOrManager && (
+        <div className="fixed top-20 right-6 z-[9999] flex flex-col gap-3 max-w-md w-full pointer-events-none" dir="rtl">
+          <AnimatePresence>
+            {toastNotifs.map((notif) => (
+              <motion.div
+                key={notif.id}
+                initial={{ opacity: 0, x: 100, scale: 0.9 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: 100, scale: 0.9 }}
+                className="pointer-events-auto cursor-pointer bg-[#0F172A] border border-[#1E293B] text-white p-4 rounded-2xl shadow-2xl hover:border-[#F26522]/50 transition-all group overflow-hidden relative"
+                onClick={() => handleNotificationClick(notif)}
+              >
+                {/* Accent Line */}
+                <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-l from-[#F26522] to-[#D9A441]" />
 
-              <div className="flex items-start gap-3 mt-1">
-                <div className="w-10 h-10 rounded-xl bg-[#F26522]/10 border border-[#F26522]/20 flex items-center justify-center text-[#F26522] shrink-0 group-hover:scale-105 transition-transform">
-                  <Bell className="w-5 h-5 animate-bounce" />
-                </div>
-
-                <div className="flex-1 text-right min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F26522]/20 text-[#F26522] border border-[#F26522]/30">
-                      إشعار تم تسليمه
-                    </span>
-                    <span className="text-[10px] text-slate-400 mr-auto flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-400" /> تم التسليم
-                    </span>
+                <div className="flex items-start gap-3 mt-1">
+                  <div className="w-10 h-10 rounded-xl bg-[#F26522]/10 border border-[#F26522]/20 flex items-center justify-center text-[#F26522] shrink-0 group-hover:scale-105 transition-transform">
+                    <Bell className="w-5 h-5 animate-bounce" />
                   </div>
 
-                  <h4 className="font-bold text-sm text-white truncate leading-snug">
-                    {notif.title}
-                  </h4>
-                  <p className="text-xs text-slate-300 mt-1 line-clamp-2 leading-relaxed">
-                    {notif.body}
-                  </p>
-                </div>
+                  <div className="flex-1 text-right min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#F26522]/20 text-[#F26522] border border-[#F26522]/30">
+                        إشعار تم تسليمه (إدارة)
+                      </span>
+                      <span className="text-[10px] text-slate-400 mr-auto flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-400" /> تم التسليم
+                      </span>
+                    </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    dismissToast(notif.id);
-                  }}
-                  className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors shrink-0"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+                    <h4 className="font-bold text-sm text-white truncate leading-snug">
+                      {notif.title}
+                    </h4>
+                    <p className="text-xs text-slate-300 mt-1 line-clamp-2 leading-relaxed">
+                      {notif.body}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismissToast(notif.id);
+                    }}
+                    className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors shrink-0"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      )}
     </>
   );
 }
