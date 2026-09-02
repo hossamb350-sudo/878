@@ -40,6 +40,7 @@ import { db } from "../firebase";
 import { LiveStream, ChannelDisplayMode, LiveStreamSettings } from "../types";
 import { SyncService } from "../services/SyncService";
 import { ImageUpload } from "./ImageUpload";
+import { sendFCMNotification } from "../utils/sendFCM";
 import { motion, Reorder } from "motion/react";
 
 const DISPLAY_MODES: { id: ChannelDisplayMode; title: string; desc: string; icon: any }[] = [
@@ -269,10 +270,22 @@ export function AdminLiveChannels() {
       if (editingId) {
         await updateDoc(doc(db, "livestreams", editingId), payload);
       } else {
-        await addDoc(collection(db, "livestreams"), {
+        const newDocRef = await addDoc(collection(db, "livestreams"), {
           ...payload,
           createdAt: Date.now(),
         });
+
+        // Trigger notification for new channel addition
+        const cleanName = name.trim();
+        const notifTitle = `بث مباشر | ${cleanName}`;
+        const notifBody = type === "tv" ? `تمت إضافة قناة تلفزيونية جديدة: ${cleanName}` : `تمت إضافة إذاعة جديدة: ${cleanName}`;
+        sendFCMNotification(
+          notifTitle,
+          notifBody,
+          "tv",
+          newDocRef.id,
+          iconUrl.trim() || ""
+        );
       }
 
       // Reset form

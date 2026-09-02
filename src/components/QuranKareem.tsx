@@ -202,7 +202,7 @@ export function QuranKareem() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-white dark:bg-stone-950 font-sans min-h-0 relative">
+    <div className="flex-1 flex flex-col bg-white dark:bg-[#070F1E] font-sans min-h-0 relative">
       <AnimatePresence mode="wait">
         {!selectedSurah ? (
           // --- MAIN QURAN INTERFACE (SURAHS LIST) ---
@@ -214,14 +214,14 @@ export function QuranKareem() {
             className="flex-1 flex flex-col min-h-0"
           >
             {/* Search Box */}
-                <div className="py-2 px-3 sm:px-4 bg-white dark:bg-stone-900 border-b border-slate-200/50 dark:border-stone-800">
+                <div className="py-2 px-3 sm:px-4 bg-white dark:bg-[#0D1A33] border-b border-slate-200/50 dark:border-[#1E355B]">
                   <div className="relative max-w-md mx-auto">
                     <input
                       type="text"
                       placeholder="ابحث باسم السورة، أو رقمها..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full bg-slate-100 dark:bg-stone-800 border-none outline-none py-1.5 pr-8 pl-3 rounded-lg text-xs sm:text-[13px] font-medium text-slate-800 dark:text-white placeholder:text-slate-400"
+                      className="w-full bg-slate-100 dark:bg-[#14274B] border-none outline-none py-1.5 pr-8 pl-3 rounded-lg text-xs sm:text-[13px] font-medium text-slate-800 dark:text-white placeholder:text-slate-400"
                     />
                     <Search className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2" />
                   </div>
@@ -245,7 +245,7 @@ export function QuranKareem() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-stone-800 px-2.5 py-1 rounded-lg font-cairo shrink-0">
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-[#14274B] px-2.5 py-1 rounded-lg font-cairo shrink-0">
                         {filteredSurahs.length} سورة
                       </span>
                     </div>
@@ -261,14 +261,14 @@ export function QuranKareem() {
                         <button
                           key={surah.number}
                           onClick={() => setSelectedSurah(surah)}
-                          className="w-full bg-white dark:bg-stone-900 border border-slate-200/60 dark:border-stone-800 p-2.5 sm:p-3 flex items-center justify-between text-right transition-all duration-300 hover:shadow-md hover:border-taiz-sky/40 dark:hover:border-taiz-sky/40 hover:-translate-y-0.5 active:scale-[0.99] rounded-[12px] sm:rounded-[14px] shadow-xs group"
+                          className="w-full bg-white dark:bg-[#0D1A33] border border-slate-200/60 dark:border-[#1E355B] p-2.5 sm:p-3 flex items-center justify-between text-right transition-all duration-300 hover:shadow-md hover:border-taiz-sky/40 dark:hover:border-taiz-sky/40 hover:-translate-y-0.5 active:scale-[0.99] rounded-[12px] sm:rounded-[14px] shadow-xs group"
                         >
                           <div className="flex items-center gap-2 sm:gap-2.5">
-                            <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-stone-800 border border-slate-200/60 dark:border-stone-700 text-slate-700 dark:text-stone-300 font-bold text-[11px] sm:text-xs font-mono group-hover:bg-gradient-to-br group-hover:from-taiz-royal group-hover:to-taiz-sky group-hover:text-white group-hover:border-transparent transition-all shadow-xs">
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-[#14274B] border border-slate-200/60 dark:border-[#1E355B] text-slate-700 dark:text-slate-300 font-bold text-[11px] sm:text-xs font-mono group-hover:bg-gradient-to-br group-hover:from-taiz-royal group-hover:to-taiz-sky group-hover:text-white group-hover:border-transparent transition-all shadow-xs">
                               {surah.number}
                             </div>
                             <div className="flex flex-col items-start">
-                              <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-stone-100 font-cairo leading-snug group-hover:text-taiz-sky transition-colors">
+                              <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-slate-100 font-cairo leading-snug group-hover:text-taiz-sky transition-colors">
                                 {surah.name}
                               </span>
                               <span className="text-[10px] sm:text-[11px] text-emerald-600 dark:text-emerald-400 font-medium font-cairo">
@@ -281,7 +281,7 @@ export function QuranKareem() {
                             <span className="text-[10px] sm:text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-500/20 px-2 py-0.5 rounded-full font-cairo">
                               {getRevelationArabic(surah.revelationType)}
                             </span>
-                            <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-stone-400 font-medium font-cairo">
+                            <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium font-cairo">
                               {surah.numberOfAyahs} آية
                             </span>
                           </div>
@@ -358,10 +358,10 @@ export function QuranKareem() {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  className={`border-b px-3 py-2.5 space-y-2 shadow-xs z-30 font-sans backdrop-blur-md ${
+                  className={`border-b px-3 py-2.5 space-y-2 shadow-xs z-30 font-sans backdrop-blur-md dark:bg-taiz-navy/95 dark:border-white/10 dark:text-white ${
                     readerTheme === 'day' ? 'bg-white border-slate-200/70' : 
                     readerTheme === 'sepia' ? 'bg-[#FCF6E5] border-[#E5DEC9]' : 
-                    'bg-[#1a1a1c] border-stone-800'
+                    'bg-[#1a1a1c] border-[#1E355B]'
                   }`}
                 >
                   <div className="max-w-2xl mx-auto space-y-2">
@@ -371,8 +371,8 @@ export function QuranKareem() {
                         onClick={() => setReaderTheme("day")}
                         className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                           readerTheme === "day"
-                            ? "bg-emerald-50 border-emerald-600 text-emerald-700 shadow-2xs"
-                            : "bg-white border-slate-200/70 text-slate-700 hover:bg-slate-50"
+                            ? "bg-emerald-50 border-emerald-600 text-emerald-700 shadow-2xs dark:bg-white dark:text-slate-950 dark:border-emerald-500"
+                            : "bg-white border-slate-200/70 text-slate-700 hover:bg-slate-50 dark:bg-white/10 dark:text-white dark:border-transparent dark:hover:bg-white/20"
                         }`}
                       >
                         <span>🎨 نهاراً</span>
@@ -381,8 +381,8 @@ export function QuranKareem() {
                         onClick={() => setReaderTheme("sepia")}
                         className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                           readerTheme === "sepia"
-                            ? "bg-[#F4ECD8] border-[#7F6E5D] text-[#422F1E] shadow-2xs"
-                            : "bg-[#F4ECD8]/70 border-transparent text-[#422F1E]/80 hover:bg-[#F4ECD8]"
+                            ? "bg-[#F4ECD8] border-[#7F6E5D] text-[#422F1E] shadow-2xs dark:bg-[#FAF4E8] dark:text-[#7C2D12] dark:border-amber-600"
+                            : "bg-[#F4ECD8]/70 border-transparent text-[#422F1E]/80 hover:bg-[#F4ECD8] dark:bg-white/10 dark:text-white dark:border-transparent dark:hover:bg-white/20"
                         }`}
                       >
                         <span>👁️ دافئ</span>
@@ -391,8 +391,8 @@ export function QuranKareem() {
                         onClick={() => setReaderTheme("night")}
                         className={`py-1.5 px-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1 border transition-all ${
                           readerTheme === "night"
-                            ? "bg-[#121214] border-emerald-500 text-white shadow-2xs"
-                            : "bg-[#121214]/85 border-transparent text-zinc-300 hover:bg-[#121214]"
+                            ? "bg-[#121214] border-emerald-500 text-white shadow-2xs dark:bg-[#070F1E] dark:text-slate-100 dark:border-sky-400"
+                            : "bg-[#121214]/85 border-transparent text-zinc-300 hover:bg-[#121214] dark:bg-white/10 dark:text-white dark:border-transparent dark:hover:bg-white/20"
                         }`}
                       >
                         <span>🌙 ليلاً</span>
@@ -401,16 +401,16 @@ export function QuranKareem() {
 
                     {/* Adjust font size */}
                     <div className="flex items-center justify-between gap-2 pt-0.5">
-                      <span className="text-[11px] text-slate-500 dark:text-stone-400 font-bold font-cairo shrink-0">
+                      <span className="text-[11px] text-slate-500 dark:text-white/70 font-bold font-cairo shrink-0">
                         حجم نص الآيات:
                       </span>
-                      <div className="grid grid-cols-4 gap-1 text-[11px] flex-1 max-w-[280px]">
+                      <div className="grid grid-cols-4 gap-1 text-[11px] flex-1 max-w-[280px] dark:text-text-primary">
                         <button
                           onClick={() => setFontSize("sm")}
                           className={`py-1 px-1.5 font-bold rounded-md transition ${
                             fontSize === "sm"
                               ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:text-stone-300"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-surface-main dark:text-text-primary dark:hover:bg-surface-hover"
                           }`}
                         >
                           صغير
@@ -420,7 +420,7 @@ export function QuranKareem() {
                           className={`py-1 px-1.5 font-bold rounded-md transition ${
                             fontSize === "md"
                               ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:text-stone-300"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-surface-main dark:text-text-primary dark:hover:bg-surface-hover"
                           }`}
                         >
                           متوسط
@@ -430,7 +430,7 @@ export function QuranKareem() {
                           className={`py-1 px-1.5 font-bold rounded-md transition ${
                             fontSize === "lg"
                               ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:text-stone-300"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-surface-main dark:text-text-primary dark:hover:bg-surface-hover"
                           }`}
                         >
                           كبير
@@ -440,7 +440,7 @@ export function QuranKareem() {
                           className={`py-1 px-1.5 font-bold rounded-md transition ${
                             fontSize === "xl"
                               ? "bg-emerald-600 text-white"
-                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:text-stone-300"
+                              : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-surface-main dark:text-text-primary dark:hover:bg-surface-hover"
                           }`}
                         >
                           مضاعف
@@ -451,13 +451,13 @@ export function QuranKareem() {
                     {/* Height and weight */}
                     <div className="grid grid-cols-2 gap-2 pt-0.5">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] text-slate-500 dark:text-stone-400 font-bold font-cairo shrink-0">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-bold font-cairo shrink-0">
                           المسافة:
                         </span>
                         <select
                           value={lineHeight}
                           onChange={(e) => setLineHeight(e.target.value as any)}
-                          className="py-1 px-2 rounded-md bg-slate-100 dark:bg-stone-800 text-xs border border-slate-200/70 dark:border-stone-700 font-bold focus:outline-none dark:text-stone-100 w-full"
+                          className="py-1 px-2 rounded-md bg-slate-100 dark:bg-[#14274B] text-xs border border-slate-200/70 dark:border-[#1E355B] font-bold focus:outline-none dark:text-slate-100 w-full"
                         >
                           <option value="compact">مضغوط</option>
                           <option value="relaxed">مريح</option>
@@ -471,7 +471,7 @@ export function QuranKareem() {
                           className={`w-full py-1 px-2 rounded-md border text-[11px] font-bold transition font-cairo ${
                             fontMedium
                               ? "bg-emerald-600 border-emerald-600 text-white"
-                              : "bg-slate-100 border-slate-200/70 text-slate-700 hover:bg-slate-200 dark:bg-stone-800 dark:border-stone-700 dark:text-stone-300"
+                              : "bg-slate-100 border-slate-200/70 text-slate-700 hover:bg-slate-200 dark:bg-[#14274B] dark:border-[#1E355B] dark:text-slate-300"
                           }`}
                         >
                           خط عريض (Medium)

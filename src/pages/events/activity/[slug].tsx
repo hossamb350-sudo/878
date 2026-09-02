@@ -343,10 +343,10 @@ export function ActivityDetail() {
 
           {/* Integrated Interaction / Share Bar */}
           <div className="pt-4 border-t border-gray-100 dark:border-stone-800">
-            <div className="bg-[#fafafa]/90 dark:bg-stone-900/60 border border-slate-200/70 dark:border-stone-800/80 rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
+            <div className="bg-[#fafafa]/90 dark:bg-[#0D1D38] border border-slate-200/70 dark:border-[#1E3E6B] rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
               <button 
                 onClick={() => handleShare("copy")}
-                className="p-2 rounded-full text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold font-cairo"
+                className="p-2 rounded-full text-slate-500 hover:text-slate-800 dark:text-amber-400 dark:hover:text-amber-300 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold font-cairo"
                 title="نسخ الرابط"
               >
                 <Share2 className="w-4.5 h-4.5" />
@@ -356,21 +356,21 @@ export function ActivityDetail() {
               <div className="flex items-center gap-2" dir="ltr">
                 <button 
                   onClick={() => handleShare("telegram")} 
-                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
                   title="مشاركة عبر تليجرام"
                 >
                   <Send className="w-4 h-4" />
                 </button>
                 <button 
                   onClick={() => handleShare("facebook")} 
-                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
                   title="مشاركة عبر فيسبوك"
                 >
                   <Facebook className="w-4.5 h-4.5" />
                 </button>
                 <button 
                   onClick={() => handleShare("twitter")} 
-                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
                   title="مشاركة عبر إكس"
                 >
                   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current">
@@ -379,7 +379,7 @@ export function ActivityDetail() {
                 </button>
                 <button 
                   onClick={() => handleShare("whatsapp")} 
-                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-stone-800 bg-white dark:bg-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-700 hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
+                  className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
                   title="مشاركة عبر واتساب"
                 >
                   <MessageCircle className="w-4.5 h-4.5" />

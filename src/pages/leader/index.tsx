@@ -127,19 +127,19 @@ export function Leader() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="w-full h-32 sm:h-36 rounded-[18px] bg-white border border-slate-200/80 p-4 shadow-soft animate-pulse flex flex-col justify-between"
+                className="w-full h-32 sm:h-36 rounded-[18px] bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 p-4 shadow-soft animate-pulse flex flex-col justify-between"
               >
                 <div className="flex justify-between items-center">
-                  <div className="h-5 w-28 bg-slate-200 rounded-md" />
-                  <div className="h-5 w-20 bg-slate-200 rounded-md" />
+                  <div className="h-5 w-28 bg-slate-200 dark:bg-slate-700 rounded-md" />
+                  <div className="h-5 w-20 bg-slate-200 dark:bg-slate-700 rounded-md" />
                 </div>
                 <div className="space-y-2 my-auto">
-                  <div className="h-4 w-3/4 bg-slate-200 rounded-md" />
-                  <div className="h-3.5 w-1/2 bg-slate-100 rounded-md" />
+                  <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded-md" />
+                  <div className="h-3.5 w-1/2 bg-slate-100 dark:bg-slate-800 rounded-md" />
                 </div>
-                <div className="flex justify-between items-center pt-2.5 border-t border-slate-100">
-                  <div className="h-3.5 w-24 bg-slate-200 rounded" />
-                  <div className="h-3.5 w-20 bg-slate-200 rounded" />
+                <div className="flex justify-between items-center pt-2.5 border-t border-slate-100 dark:border-slate-700">
+                  <div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
+                  <div className="h-3.5 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
                 </div>
               </div>
             ))}
@@ -149,9 +149,9 @@ export function Leader() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-14 px-6 bg-surface-card rounded-[20px] border border-dashed border-slate-300 shadow-soft text-slate-400 space-y-3"
+            className="text-center py-14 px-6 bg-surface-card rounded-[20px] border border-dashed border-slate-300 dark:border-slate-700 shadow-soft text-slate-400 space-y-3"
           >
-            <div className="w-14 h-14 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto text-taiz-sky">
+            <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto text-taiz-sky">
               <Search className="w-7 h-7" />
             </div>
             <h3 className="text-sm sm:text-base font-bold text-text-primary">

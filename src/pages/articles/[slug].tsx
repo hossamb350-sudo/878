@@ -398,8 +398,8 @@ export function ArticleDetail() {
             </div>
 
             {/* Views badge */}
-            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 px-2.5 py-1 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
-              <Eye className="w-3.5 h-3.5 stroke-[2] text-white/80" />
+            <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 dark:text-[#F26522] px-2.5 py-1 rounded-full text-[10px] sm:text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
+              <Eye className="w-3.5 h-3.5 stroke-[2] text-white/80 dark:text-[#F26522]" />
               <span>{article.views || 0}</span>
             </div>
 
@@ -494,9 +494,9 @@ export function ArticleDetail() {
           <div className="h-px sm:h-8 w-full sm:w-px bg-slate-200 dark:bg-slate-800" />
 
           {/* Dates & Views Info */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600 dark:text-slate-300 font-bold">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-600 dark:text-amber-400 font-bold">
             <div className="flex items-center gap-1.5 shrink-0 bg-white dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
-              <Calendar className="w-3.5 h-3.5 text-taiz-sky stroke-[2]" />
+              <Calendar className="w-3.5 h-3.5 text-taiz-sky dark:text-amber-400 stroke-[2]" />
               <span>{article.hijriDate || "15 صفر 1448 هـ"}</span>
             </div>
 
@@ -507,16 +507,16 @@ export function ArticleDetail() {
               </div>
             )}
 
-            <div className="flex items-center gap-1.5 shrink-0 bg-white dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-slate-500">
-              <Eye className="w-3.5 h-3.5 text-emerald-500 stroke-[2]" />
+            <div className="flex items-center gap-1.5 shrink-0 bg-white dark:bg-slate-800/80 px-2.5 py-1 rounded-xl border border-slate-200/60 dark:border-slate-700/60 text-slate-500 dark:text-[#F26522]">
+              <Eye className="w-3.5 h-3.5 text-emerald-500 dark:text-[#F26522] stroke-[2]" />
               <span>{article.views || 0} مشاهدة</span>
             </div>
           </div>
         </div>
         {/* Floating Interaction Bar (شريط التفاعل) matching screenshot */}
-        <div className="my-2 bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 rounded-full px-6 py-2.5 shadow-sm flex items-center justify-between max-w-xl mx-auto backdrop-blur-sm">
+        <div className="my-2 bg-[#fafafa]/90 dark:bg-[#0D1D38] border border-slate-200/80 dark:border-[#1E3E6B] rounded-full px-6 py-2.5 shadow-sm flex items-center justify-between max-w-xl mx-auto backdrop-blur-sm">
           {/* Social Share Icons */}
-          <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-4 text-slate-500 dark:text-amber-400">
             <button onClick={() => handleShare("facebook")} className="hover:text-blue-600 transition-colors p-1" title="مشاركة عبر فيسبوك">
               <Facebook className="w-5 h-5" />
             </button>
@@ -534,17 +534,17 @@ export function ArticleDetail() {
           </div>
 
           {/* Separator Line */}
-          <div className="h-5 w-px bg-slate-300 dark:bg-zinc-600 mx-2" />
+          <div className="h-5 w-px bg-slate-300 dark:bg-[#1E3E6B] mx-2" />
 
           {/* Font Size Adjuster */}
-          <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200 font-bold text-sm font-ibm">
-            <button onClick={() => setFontSize(f => Math.max(f - 1, 12))} className="p-1 hover:bg-slate-200/60 dark:hover:bg-zinc-700 rounded-full transition-colors" title="تصغير الخط">
+          <div className="flex items-center gap-3 text-slate-700 dark:text-amber-400 font-bold text-sm font-ibm">
+            <button onClick={() => setFontSize(f => Math.max(f - 1, 12))} className="p-1 hover:bg-slate-200/60 dark:hover:bg-[#1D3664] rounded-full transition-colors" title="تصغير الخط">
               <Minus className="w-4 h-4" />
             </button>
-            <span className="font-mono text-sm tracking-tight text-slate-800 dark:text-slate-100 min-w-[36px] text-center font-bold">
+            <span className="font-mono text-sm tracking-tight text-slate-800 dark:text-amber-400 min-w-[36px] text-center font-bold">
               {fontSize}px
             </span>
-            <button onClick={() => setFontSize(f => Math.min(f + 1, 28))} className="p-1 hover:bg-slate-200/60 dark:hover:bg-zinc-700 rounded-full transition-colors" title="تكبير الخط">
+            <button onClick={() => setFontSize(f => Math.min(f + 1, 28))} className="p-1 hover:bg-slate-200/60 dark:hover:bg-[#1D3664] rounded-full transition-colors" title="تكبير الخط">
               <Plus className="w-4 h-4" />
             </button>
           </div>

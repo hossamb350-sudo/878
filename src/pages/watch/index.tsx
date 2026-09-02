@@ -33,7 +33,8 @@ import {
   CreditCard,
   Layers,
   Check,
-  Share2
+  Share2,
+  WifiOff
 } from "lucide-react";
 import { routes, generateSlug } from "../../utils/routes";
 import { shareContent } from "../../utils/share";
@@ -107,13 +108,6 @@ const DEFAULT_CHANNELS: Partial<LiveStream>[] = [
     name: "المسيرة", 
     iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%23B91C1C'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23EF4444' stroke-width='2'/><path d='M20 58C25 38 38 30 50 30C62 30 75 38 80 58C72 52 61 50 50 50C39 50 28 52 20 58Z' fill='white'/><text x='50' y='58' font-family='sans-serif' font-weight='900' font-size='22' fill='white' text-anchor='middle'>المسيرة</text></svg>", 
     streamUrl: "https://almasirah.net.ye/live",
-    isActive: true 
-  },
-  { 
-    id: "ch-3", 
-    name: "الساحات", 
-    iconUrl: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' fill='none'><circle cx='50' cy='50' r='50' fill='%230F172A'/><circle cx='50' cy='50' r='46' fill='none' stroke='%23334155' stroke-width='2'/><path d='M30 40Q50 20 70 40Q50 35 30 40Z' fill='%23DC2626'/><path d='M25 50Q50 30 75 50Q50 45 25 50Z' fill='%230284C7'/><text x='50' y='68' font-family='sans-serif' font-weight='900' font-size='15' fill='white' text-anchor='middle'>الساحات</text></svg>", 
-    streamUrl: "https://alsahat.tv/live",
     isActive: true 
   },
   { 
@@ -239,6 +233,19 @@ import { useLiveStream } from "../../context/LiveStreamContext";
 
 export function Watch() {
   const { id } = useParams<{ id: string }>();
+  const [isOnline, setIsOnline] = useState<boolean>(typeof navigator !== "undefined" ? navigator.onLine : true);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const [rawVideos, setRawVideos] = useState<VideoItem[]>([]);
   const [channels, setChannels] = useState<LiveStream[]>([]);
   const [loading, setLoading] = useState(true);
@@ -609,7 +616,23 @@ export function Watch() {
             </div>
           </div>
 
-          {/* 1. HERO SECTION: DEDICATED TV AND RADIO VIEWERS */}
+          {!isOnline && (channelTab === "tv" || channelTab === "radio") ? (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center justify-center py-16 px-4 bg-white dark:bg-[#0D1A33] rounded-[24px] border border-slate-200/60 dark:border-[#1E355B] text-center my-4 shadow-sm"
+            >
+              <div className="w-16 h-16 bg-slate-100 dark:bg-[#14274B] rounded-full flex items-center justify-center mb-4 border border-slate-200 dark:border-[#1E355B]">
+                <WifiOff className="w-7 h-7 text-slate-400 dark:text-slate-500" />
+              </div>
+              <h3 className="text-base font-bold text-slate-800 dark:text-white mb-2 font-cairo">غير متصل بالإنترنت</h3>
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 font-cairo max-w-xs leading-relaxed">
+                عذراً، البث المباشر (التلفزيوني والإذاعي) يتطلب اتصالاً نشطاً بالإنترنت. يرجى التحقق من اتصالك والمحاولة مرة أخرى.
+              </p>
+            </motion.div>
+          ) : (
+            <>
+              {/* 1. HERO SECTION: DEDICATED TV AND RADIO VIEWERS */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1245,6 +1268,8 @@ export function Watch() {
               )}
             </div>
           )}
+          </>
+          )}
 
           {/* SECTION TITLE SEPARATOR: "المحتوى المرئي" */}
           <div className="relative flex items-center justify-center pt-1 pb-0.5 my-1">
@@ -1371,16 +1396,16 @@ export function Watch() {
                       </h3>
 
                       {/* Bottom Metadata: Views count in brand color + Date */}
-                      <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-[#1E355B] pt-2">
+                      <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-medium border-t border-slate-100 dark:border-[#1E355B] pt-2">
                         {/* Views Badge */}
-                        <span className="flex items-center gap-1 text-taiz-sky font-black">
-                          <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
+                        <span className="flex items-center gap-1 text-taiz-sky dark:text-[#F26522] font-black">
+                          <Eye className="w-3.5 h-3.5 text-taiz-sky dark:text-[#F26522] shrink-0" />
                           <span>{formatViewsArabic(vid.views)} مشاهدة</span>
                         </span>
 
                         {/* Time ago */}
-                        <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold">
-                          <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="flex items-center gap-1 text-slate-500 dark:text-amber-400 font-semibold">
+                          <Clock className="w-3 h-3 text-slate-400 dark:text-amber-400 shrink-0" />
                           <span>{getRelativeTimeArabic(vid.createdAt)}</span>
                         </span>
                       </div>
@@ -1472,16 +1497,16 @@ export function Watch() {
                       </h3>
 
                       {/* Bottom Metadata: Views count in brand color + Date */}
-                      <div className="flex items-center justify-between text-[9.5px] sm:text-[10px] font-medium border-t border-slate-100 dark:border-[#1E355B] pt-2">
+                      <div className="flex items-center justify-between text-[8px] sm:text-[9px] font-medium border-t border-slate-100 dark:border-[#1E355B] pt-2">
                         {/* Views Badge */}
-                        <span className="flex items-center gap-1 text-taiz-sky font-black">
-                          <Eye className="w-3.5 h-3.5 text-taiz-sky shrink-0" />
+                        <span className="flex items-center gap-1 text-taiz-sky dark:text-[#F26522] font-black">
+                          <Eye className="w-3.5 h-3.5 text-taiz-sky dark:text-[#F26522] shrink-0" />
                           <span>{formatViewsArabic(vid.views)} مشاهدة</span>
                         </span>
 
                         {/* Time ago */}
-                        <span className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold">
-                          <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span className="flex items-center gap-1 text-slate-500 dark:text-amber-400 font-semibold">
+                          <Clock className="w-3 h-3 text-slate-400 dark:text-amber-400 shrink-0" />
                           <span>{getRelativeTimeArabic(vid.createdAt)}</span>
                         </span>
                       </div>

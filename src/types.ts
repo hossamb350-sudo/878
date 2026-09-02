@@ -255,6 +255,8 @@ export interface QuranSyllabus {
   startDate?: number;
   endDate?: number;
   eventId?: string; // Optional link to an Event
+  imageUrl?: string;
+  mediaUrl?: string;
   createdAt: number;
 }
 

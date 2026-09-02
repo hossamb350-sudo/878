@@ -4210,6 +4210,7 @@ function AdminQuranSyllabuses() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lessonId, setLessonId] = useState("");
+  const [imageUrl, setImageUrl] = useState<string>("");
   const [startDate, setStartDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
   const [endDate, setEndDate] = useState<string>("");
   const [durationVal, setDurationVal] = useState<string>("1");
@@ -4384,6 +4385,8 @@ function AdminQuranSyllabuses() {
         durationVal: parseInt(durationVal) || 1,
         durationType: durationType,
         eventId: eventId || null,
+        imageUrl: imageUrl.trim() || null,
+        mediaUrl: imageUrl.trim() || null,
         createdAt: editingId ? undefined : Date.now(),
         updatedAt: Date.now(),
       };
@@ -4395,16 +4398,17 @@ function AdminQuranSyllabuses() {
         const cleanLessonTitle = (lessonTitle || "درس مقرر").trim();
         sendFCMNotification(
           `المقرر | ${cleanLessonTitle}`,
-          "",
+          seriesTitle ? `سلسلة: ${seriesTitle}` : "",
           "syllabus",
           id,
-          ""
+          imageUrl.trim() || ""
         );
       }
 
       alert("تم اعتماد المقرر بنجاح وربطه بالدرس المخزن مسبقًا في المنصة");
       setEditingId(null);
       setLessonId("");
+      setImageUrl("");
       setStartDate(new Date().toISOString().split("T")[0]);
       setEndDate("");
       setDurationVal("1");
@@ -4478,6 +4482,17 @@ function AdminQuranSyllabuses() {
               ✓ سيتم ربط المقرر مباشرة بالدرس الأصلي المخزن في المنصة (المعرف: {lessonId})
             </p>
           )}
+        </div>
+
+        {/* Course Image / Cover Upload */}
+        <div className="space-y-1 pt-1">
+          <ImageUpload
+            value={imageUrl}
+            onChange={(url) => setImageUrl(url)}
+            onRemove={() => setImageUrl("")}
+            label="غلاف أو صورة مرافقة للمقرر الدراسي (اختياري)"
+            placeholder="اسحب وأفلت غلاف المقرر أو اختر من جهازك أو الصق رابط الصورة"
+          />
         </div>
 
         {/* Date Controls */}
@@ -4577,6 +4592,7 @@ function AdminQuranSyllabuses() {
               onClick={() => {
                 setEditingId(null);
                 setLessonId("");
+                setImageUrl("");
                 setStartDate(new Date().toISOString().split("T")[0]);
                 setEndDate("");
                 setDurationVal("1");
@@ -4597,6 +4613,7 @@ function AdminQuranSyllabuses() {
         </h4>
         {list.map((s) => {
           const isExpired = s.expiresAt ? Date.now() > s.expiresAt : false;
+          const coverImg = s.imageUrl || s.mediaUrl;
           
           return (
             <div
@@ -4605,34 +4622,41 @@ function AdminQuranSyllabuses() {
                 isExpired ? "border-red-200 bg-red-50/10" : "border-gray-100 dark:border-gray-800"
               }`}
             >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-slate-900 dark:text-white font-cairo text-sm sm:text-base">
-                    {s.lessonTitle || "درس غير معروف"}
-                  </span>
-                  <span className="text-xs text-slate-500 dark:text-slate-400 font-cairo bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                    {s.seriesTitle || "هدي القرآن الكريم"}
-                  </span>
-                  {isExpired ? (
-                    <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full font-cairo">
-                      منتهي الصلاحية
+              <div className="flex items-center gap-3">
+                {coverImg && (
+                  <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800">
+                    <img src={coverImg} alt="" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-bold text-slate-900 dark:text-white font-cairo text-sm sm:text-base">
+                      {s.lessonTitle || "درس غير معروف"}
                     </span>
-                  ) : (
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full font-cairo">
-                      ساري
+                    <span className="text-xs text-slate-500 dark:text-slate-400 font-cairo bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                      {s.seriesTitle || "هدي القرآن الكريم"}
                     </span>
-                  )}
-                </div>
-                <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-3 font-cairo">
-                  {s.startDate && (
-                    <span>تاريخ البدء: {typeof s.startDate === 'number' ? new Date(s.startDate).toLocaleDateString("ar-EG") : s.startDate}</span>
-                  )}
-                  {s.endDate ? (
-                    <span>تاريخ الانتهاء: {typeof s.endDate === 'number' ? new Date(s.endDate).toLocaleDateString("ar-EG") : s.endDate}</span>
-                  ) : s.expiresAt ? (
-                    <span>ينتهي في: {new Date(s.expiresAt).toLocaleDateString("ar-YE")}</span>
-                  ) : null}
-                  <span className="text-gray-400 font-mono text-[10px]">ID: {s.lessonId}</span>
+                    {isExpired ? (
+                      <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full font-cairo">
+                        منتهي الصلاحية
+                      </span>
+                    ) : (
+                      <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full font-cairo">
+                        ساري
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1 flex flex-wrap gap-3 font-cairo">
+                    {s.startDate && (
+                      <span>تاريخ البدء: {typeof s.startDate === 'number' ? new Date(s.startDate).toLocaleDateString("ar-EG") : s.startDate}</span>
+                    )}
+                    {s.endDate ? (
+                      <span>تاريخ الانتهاء: {typeof s.endDate === 'number' ? new Date(s.endDate).toLocaleDateString("ar-EG") : s.endDate}</span>
+                    ) : s.expiresAt ? (
+                      <span>ينتهي في: {new Date(s.expiresAt).toLocaleDateString("ar-YE")}</span>
+                    ) : null}
+                    <span className="text-gray-400 font-mono text-[10px]">ID: {s.lessonId}</span>
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2 opacity-80 group-hover:opacity-100 transition-opacity shrink-0">
@@ -4640,6 +4664,7 @@ function AdminQuranSyllabuses() {
                   onClick={() => {
                     setEditingId(s.id);
                     setLessonId(s.lessonId || "");
+                    setImageUrl(s.imageUrl || s.mediaUrl || "");
                     if (s.startDate) {
                       setStartDate(typeof s.startDate === 'number' ? new Date(s.startDate).toISOString().split('T')[0] : s.startDate);
                     }

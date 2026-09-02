@@ -405,7 +405,7 @@ export function LeaderItem() {
       <div className="max-w-4xl mx-auto w-full space-y-3.5">
         
         {/* Navigation Breadcrumb Bar */}
-        <div className="flex items-center justify-between bg-surface-card rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-border-subtle shadow-soft text-xs">
+        <div className="flex items-center justify-between bg-surface-card rounded-xl sm:rounded-2xl p-2.5 sm:p-3 border border-border-light dark:border-[#1E355B]/60 shadow-soft text-xs">
           <Link
             to={routes.leader()}
             className="flex items-center gap-1.5 font-bold text-slate-800 dark:text-white hover:text-taiz-sky dark:hover:text-sky-300 transition-colors cursor-pointer"
@@ -422,7 +422,7 @@ export function LeaderItem() {
             {!isVideo && (
               <button
                 onClick={() => handleShare("copy")}
-                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                className="p-1.5 rounded-lg bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text-primary dark:bg-[#14274B] dark:border dark:border-[#1E3E6B] dark:text-amber-400 transition-colors cursor-pointer"
                 title="مشاركة"
               >
                 <Share2 className="w-4 h-4" />
@@ -433,7 +433,7 @@ export function LeaderItem() {
               className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                 isFavorited
                   ? "bg-taiz-sky text-white"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                  : "bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-text-primary dark:bg-[#14274B] dark:border dark:border-[#1E3E6B] dark:text-amber-400"
               }`}
               title="حفظ"
             >
@@ -444,7 +444,7 @@ export function LeaderItem() {
 
         {/* 1. VIDEO VIEW COMPONENT (Single Unified Card) */}
         {isVideo ? (
-          <div className="relative rounded-[20px] sm:rounded-[24px] bg-surface-card border border-border-subtle overflow-hidden shadow-soft">
+          <div className="relative rounded-[20px] sm:rounded-[24px] bg-surface-card border border-border-light dark:border-[#1E355B]/60 overflow-hidden shadow-soft mb-6 sm:mb-8">
             {/* Embedded Custom Video Player */}
             <LeaderCustomPlayer
               videoUrl={content.content}
@@ -456,17 +456,17 @@ export function LeaderItem() {
 
             {/* Video Metadata & Details inside same card */}
             <div className="p-4 sm:p-5 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-light dark:border-[#1E355B]/60 pb-2.5">
                 <div className="flex items-center gap-3 text-xs text-text-muted font-medium">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                  <span className="flex items-center gap-1 dark:text-amber-400">
+                    <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-amber-400" />
                     <span>{mDate}</span>
                   </span>
-                  {hDate && <span className="text-slate-500">{hDate}</span>}
+                  {hDate && <span className="text-slate-500 dark:text-amber-400">{hDate}</span>}
                 </div>
 
-                <div className="flex items-center gap-1 text-xs text-text-muted font-medium">
-                  <Eye className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+                <div className="flex items-center gap-1 text-xs text-text-muted font-medium dark:text-[#F26522]">
+                  <Eye className="w-3.5 h-3.5 text-red-500 dark:text-[#F26522] animate-pulse" />
                   <span>{(content.views || 0).toLocaleString("ar-EG")} مشاهدة</span>
                 </div>
               </div>
@@ -478,15 +478,15 @@ export function LeaderItem() {
 
               {/* Description */}
               {content.description && (
-                <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-[#14274B] border border-slate-200/80 dark:border-[#1E355B] text-text-secondary text-xs sm:text-sm font-tajawal leading-relaxed">
+                <div className="p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-[#14274B] border border-slate-200/80 dark:border-[#1E3E6B] text-text-secondary text-xs sm:text-sm font-tajawal leading-relaxed whitespace-pre-line">
                   {content.description}
                 </div>
               )}
-              
-              <div className="bg-[#fafafa]/90 dark:bg-[#070F1E] border border-slate-200/70 dark:border-[#1E355B] rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm mt-4">
+
+              <div className="bg-[#fafafa]/90 dark:bg-[#0D1D38] border border-slate-200/70 dark:border-[#1E3E6B] rounded-full px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-xs flex items-center justify-between max-w-full mx-auto backdrop-blur-sm mt-4">
                 <button 
                   onClick={toggleBookmark}
-                  className={`p-2 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${isFavorited ? 'text-taiz-sky' : 'text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                  className={`p-2 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 ${isFavorited ? 'text-taiz-sky' : 'text-slate-400 hover:text-slate-700 dark:text-amber-400 dark:hover:text-amber-300'}`}
                   title="حفظ"
                 >
                   <Bookmark className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
@@ -495,21 +495,21 @@ export function LeaderItem() {
                 <div className="flex items-center gap-2" dir="ltr">
                   <button 
                     onClick={() => handleShare("telegram")} 
-                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E355B] bg-white dark:bg-[#0D1A33] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
+                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
                     title="مشاركة عبر تليجرام"
                   >
                     <Send className="w-4 h-4" />
                   </button>
                   <button 
                     onClick={() => handleShare("facebook")} 
-                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E355B] bg-white dark:bg-[#0D1A33] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
+                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
                     title="مشاركة عبر فيسبوك"
                   >
                     <Facebook className="w-4.5 h-4.5" />
                   </button>
                   <button 
                     onClick={() => handleShare("twitter")} 
-                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E355B] bg-white dark:bg-[#0D1A33] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
+                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
                     title="مشاركة عبر إكس"
                   >
                     <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current">
@@ -518,7 +518,7 @@ export function LeaderItem() {
                   </button>
                   <button 
                     onClick={() => handleShare("whatsapp")} 
-                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E355B] bg-white dark:bg-[#0D1A33] flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#14274B] hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
+                    className="w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
                     title="مشاركة عبر واتساب"
                   >
                     <MessageCircle className="w-4.5 h-4.5" />

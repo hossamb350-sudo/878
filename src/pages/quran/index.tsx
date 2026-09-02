@@ -49,6 +49,7 @@ import { QuranReader } from "../../components/QuranReader";
 import { QuranStats } from "../../components/QuranStats";
 import { QuranKareem } from "../../components/QuranKareem";
 import { IslamicExcerptCard, IslamicOrnamentDivider } from "../../components/AdminQuranExcerpts";
+import { QuranTeardropEmblem, IslamicBannerHeader } from "../../components/QuranTeardropEmblem";
 import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData, sortQuranLessons, formatLessonDisplayTitle } from "../../data/staticQuranData";
 import { loadQuranMetadata, loadLessonContent } from "../../data/importedQuranData";
 
@@ -209,85 +210,265 @@ const formatLessonCount = (count: number) => {
 const SeriesView = ({
   seriesList,
   lessonsList = [],
+  syllabusesList = [],
+  excerptsList = [],
   onSelectSeries,
+  onSelectLesson,
+  onSelectExcerpt,
   scrollRef,
 }: any) => {
+  const now = Date.now();
+  const activeSyllabuses = (syllabusesList || []).filter((s: any) => {
+    if (s.expiresAt && now > s.expiresAt) return false;
+    if (s.endDate) {
+      const endMs = typeof s.endDate === "number" ? s.endDate : new Date(s.endDate).setHours(23, 59, 59, 999);
+      if (!isNaN(endMs) && now > endMs) return false;
+    }
+    return true;
+  });
+
+  const handleShareSyllabus = async (e: React.MouseEvent, syllabus: any, lessonTitle: string, seriesId?: string) => {
+    e.stopPropagation();
+    e.preventDefault();
+    await shareContent({
+      title: `المقرر: ${lessonTitle}`,
+      type: "syllabus",
+      id: syllabus.id,
+      seriesId: seriesId,
+    });
+  };
+
   return (
-    <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-4 bg-white dark:bg-[#070F1E] transition-colors duration-300" ref={scrollRef}>
-      <div className="max-w-[760px] mx-auto space-y-6 pb-16">
-        {/* سلاسل هدي القرآن */}
+    <div className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 bg-white dark:bg-[#070F1E] transition-colors duration-300" ref={scrollRef} dir="rtl">
+      <div className="max-w-[850px] mx-auto space-y-7 pb-20">
+        
+        {/* ======================================================== */}
+        {/* 1. قسم السلاسل (Series Horizontal Carousel) */}
+        {/* ======================================================== */}
         <div className="space-y-3">
+          <IslamicBannerHeader title="دروس من هدي القرآن الكريم" className="mb-2" />
+
           {seriesList.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center bg-white dark:bg-[#0D1A33] rounded-[14px] border border-slate-200/60 dark:border-[#1E355B] p-6">
               <Library className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-2" />
               <p className="text-slate-400 font-bold font-cairo text-xs">لا توجد سلاسل متاحة حالياً</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-2.5 sm:gap-3">
-              {seriesList.sort((a: any, b: any) => a.order - b.order).map((series: any, idx: number) => {
-                const count = lessonsList.filter((l: any) => l.seriesId === series.id).length;
+            <div className="relative group">
+              {/* Horizontal Scroll Area */}
+              <div
+                className="flex overflow-x-auto gap-3.5 sm:gap-4.5 py-2 px-1 scrollbar-none snap-x snap-mandatory scroll-smooth"
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {seriesList
+                  .sort((a: any, b: any) => (a.order || 0) - (b.order || 0))
+                  .map((series: any, idx: number) => {
+                    const count = lessonsList.filter((l: any) => l.seriesId === series.id).length;
 
-                return (
-                  <motion.div
-                    key={series.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.03 }}
-                  >
-                    <button
-                      onClick={() => onSelectSeries(series)}
-                      className="w-full group relative bg-white dark:bg-[#0D1A33] rounded-[12px] sm:rounded-[14px] p-3 sm:p-3.5 flex items-center justify-between gap-3 text-right transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 shadow-xs border border-slate-200/60 dark:border-[#1E355B] active:scale-[0.99] cursor-pointer"
-                      dir="rtl"
-                    >
-                      {/* Middle: Content */}
-                      <div className="flex-1 flex flex-col items-start overflow-hidden min-w-0">
-                        <h3 className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white mb-1 line-clamp-1 transition-colors group-hover:text-taiz-sky font-cairo leading-tight">
-                          {series.title?.replace("سلسلة ", "").replace("السلسلة ", "")}
-                        </h3>
+                    return (
+                      <motion.div
+                        key={series.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: idx * 0.04 }}
+                        className="snap-start shrink-0"
+                      >
+                        <div
+                          onClick={() => onSelectSeries(series)}
+                          className="w-[190px] sm:w-[220px] md:w-[235px] h-[280px] sm:h-[310px] rounded-3xl overflow-hidden relative shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-gradient-to-b from-[#1b7a82] via-[#166770] to-[#0e484e] flex flex-col justify-between items-center p-3 text-center border border-teal-500/20 active:scale-[0.98] cursor-pointer group select-none"
+                        >
+                          {/* Subtle top ambient sheen */}
+                          <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
 
-                        {/* Footer Info */}
-                        <div className="w-full flex items-center gap-2 mt-1 pt-1.5 border-t border-slate-100 dark:border-[#1E355B]">
-                          {/* Lessons Count */}
-                          <div className="flex items-center gap-1 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 rounded-full border border-emerald-500/20">
-                            <BookText className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                            <span className="text-[10px] sm:text-[11px] font-bold font-cairo">
+                          {/* Center: Teardrop Islamic Arabic Calligraphy */}
+                          <div className="my-auto pt-3 flex flex-col items-center justify-center">
+                            <QuranTeardropEmblem size="lg" showText={true} />
+                          </div>
+
+                          {/* Bottom pill container with Series Title */}
+                          <div className="w-full bg-[#0c393e]/90 backdrop-blur-md rounded-2xl py-2.5 px-2 border border-white/10 shadow-inner z-10">
+                            <h3 className="text-white font-bold font-cairo text-xs sm:text-[13px] line-clamp-2 leading-snug">
+                              {series.title}
+                            </h3>
+                            <span className="text-[10px] text-teal-200/90 font-cairo font-medium mt-0.5 block">
                               {formatLessonCount(count)}
                             </span>
                           </div>
-
-                          {/* Conditional Metadata for Al-Imran and Al-Ma'idah */}
-                          {(series.title?.includes("آل عمران") || series.title?.includes("المائدة")) && (
-                            <>
-                              <div className="w-px h-2.5 bg-slate-200 dark:bg-[#1E355B]" />
-                              <div className="flex items-center gap-1">
-                                <Scroll className="w-3 h-3 text-slate-400" />
-                                <span className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400 font-cairo">
-                                  {series.title?.includes("آل عمران") ? "200" : "120"} آية
-                                </span>
-                              </div>
-                              <div className="w-px h-2.5 bg-slate-200 dark:bg-[#1E355B]" />
-                              <div className="flex items-center gap-1">
-                                <Compass className="w-3 h-3 text-slate-400" />
-                                <span className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400 font-cairo">
-                                  مدنية
-                                </span>
-                              </div>
-                            </>
-                          )}
                         </div>
-                      </div>
+                      </motion.div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
 
-                      {/* Left Side: Arrow Button */}
-                      <div className="shrink-0 flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 dark:bg-[#14274B] text-slate-400 group-hover:bg-taiz-sky group-hover:text-white transition-all shadow-xs">
-                        <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+        {/* ======================================================== */}
+        {/* 2. قسم مقرر الدروس (Syllabuses Section) */}
+        {/* ======================================================== */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between px-1" dir="rtl">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
+                <BookOpenCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
+                  مقرر الدروس
+                </h3>
+                <p className="text-[10.5px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium font-cairo">
+                  المقررات الدراسية المعتمدة والبرامج الثقافية
+                </p>
+              </div>
+            </div>
+            {activeSyllabuses.length > 0 && (
+              <span className="text-[10.5px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-cairo">
+                {activeSyllabuses.length} مقرر
+              </span>
+            )}
+          </div>
+
+          {activeSyllabuses.length === 0 ? (
+            <div className="p-8 text-center bg-white dark:bg-[#0D1A33] rounded-2xl border border-slate-200/60 dark:border-[#1E355B] text-slate-400 font-bold font-cairo text-xs">
+              لا توجد مقررات دراسية حالياً.
+            </div>
+          ) : (
+            <div className="grid gap-3 sm:gap-3.5 sm:grid-cols-2">
+              {activeSyllabuses.map((item: any) => {
+                const matchedLesson = (lessonsList || []).find((l: any) => l.id === item.lessonId);
+                const lesson = matchedLesson || {
+                  id: item.lessonId,
+                  title: item.lessonTitle || "درس مقرر",
+                  seriesId: item.seriesId || "",
+                  seriesTitle: item.seriesTitle || "",
+                  order: 0,
+                };
+
+                const matchedSeries = (seriesList || []).find((s: any) => s.id === (lesson.seriesId || item.seriesId));
+                const series = matchedSeries || {
+                  id: item.seriesId || lesson.seriesId || "default-series",
+                  title: item.seriesTitle || (lesson as any).seriesTitle || "هدي القرآن الكريم",
+                  description: "",
+                  order: 1,
+                };
+
+                const displayTitle = formatLessonDisplayTitle(
+                  lesson.title || item.lessonTitle,
+                  lesson.order,
+                  undefined,
+                  series.title || item.seriesTitle
+                );
+
+                let dateText = "";
+                if (item.startDate && item.endDate) {
+                  const sDate = typeof item.startDate === "number" ? new Date(item.startDate).toLocaleDateString("ar-EG") : item.startDate;
+                  const eDate = typeof item.endDate === "number" ? new Date(item.endDate).toLocaleDateString("ar-EG") : item.endDate;
+                  dateText = `من ${sDate} إلى ${eDate}`;
+                } else if (item.endDate) {
+                  const eDate = typeof item.endDate === "number" ? new Date(item.endDate).toLocaleDateString("ar-EG") : item.endDate;
+                  dateText = `ينتهي في: ${eDate}`;
+                } else if (item.expiresAt) {
+                  dateText = `ينتهي في: ${new Date(item.expiresAt).toLocaleDateString("ar-YE")}`;
+                }
+
+                return (
+                  <div
+                    key={item.id}
+                    id={`syllabus-${item.id}`}
+                    onClick={() => onSelectLesson(lesson, series)}
+                    className="bg-white dark:bg-[#0D1A33] p-3 sm:p-3.5 rounded-2xl shadow-xs border border-slate-200/80 dark:border-[#1E355B] hover:border-amber-500/40 hover:shadow-md transition-all duration-300 text-right flex flex-col justify-between items-start gap-2 focus:outline-none relative overflow-hidden group active:scale-[0.99] cursor-pointer"
+                  >
+                    <div className="flex justify-between w-full items-center">
+                      <span className="text-[10px] sm:text-[11px] bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-bold font-cairo">
+                        المقرر الأسبوعي
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleShareSyllabus(e, item, displayTitle, series.id)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer active:scale-95"
+                        title="مشاركة المقرر"
+                      >
+                        <Share2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {(item.imageUrl || item.mediaUrl) && (
+                      <div className="w-full h-32 rounded-xl overflow-hidden my-1 bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50">
+                        <img
+                          src={item.imageUrl || item.mediaUrl}
+                          alt={displayTitle}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
                       </div>
-                    </button>
-                  </motion.div>
+                    )}
+
+                    <div className="flex flex-col gap-0.5 text-right w-full">
+                      <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white font-cairo group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-2">
+                        {displayTitle}
+                      </span>
+                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-cairo">
+                        {series.title || item.seriesTitle || "هدي القرآن الكريم"}
+                      </span>
+                    </div>
+
+                    {dateText && (
+                      <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-amber-600 dark:text-amber-400 font-bold font-cairo mt-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{dateText}</span>
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
           )}
         </div>
+
+        {/* ======================================================== */}
+        {/* 3. قسم المقتطفات (Excerpts Section) */}
+        {/* ======================================================== */}
+        <div className="space-y-3 pt-2">
+          <div className="flex items-center justify-between px-1" dir="rtl">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20">
+                <Quote className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
+                  المقتطفات من هدي القرآن
+                </h3>
+                <p className="text-[10.5px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium font-cairo">
+                  مقتطفات نورانية ودرر من هدي القرآن الكريم
+                </p>
+              </div>
+            </div>
+            {excerptsList.length > 0 && (
+              <span className="text-[10.5px] sm:text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-500/20 px-2.5 py-0.5 rounded-full font-cairo">
+                {excerptsList.length} مقتطف
+              </span>
+            )}
+          </div>
+
+          {excerptsList.length === 0 ? (
+            <div className="p-8 text-center bg-white dark:bg-[#0D1A33] rounded-2xl border border-slate-200/60 dark:border-[#1E355B] text-slate-400 font-bold font-cairo text-xs">
+              لا توجد مقتطفات حالياً.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              {excerptsList.map((item: any) => (
+                <div key={item.id} id={`excerpt-${item.id}`}>
+                  <IslamicExcerptCard
+                    excerpt={item}
+                    onSelect={() => onSelectExcerpt(item)}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
       </div>
     </div>
   );
@@ -314,6 +495,21 @@ const LessonsView = ({
       seriesId: lesson.seriesId || selectedSeries?.id,
     });
   };
+
+  // Helper to format clean full title matching the screenshot
+  const getFullLessonTitle = (lesson: any, index: number, series: any) => {
+    const baseTitle = formatLessonDisplayTitle(lesson.title, lesson.order, index, series?.title);
+    const cleanSeries = series?.title
+      ?.replace("سلسلة دروس من ", "")
+      ?.replace("سلسلة دروس ", "")
+      ?.replace("سلسلة ", "")
+      ?.trim();
+      
+    if (cleanSeries && !baseTitle.includes(cleanSeries) && !baseTitle.includes("سورة")) {
+      return `${cleanSeries} - ${baseTitle}`;
+    }
+    return baseTitle;
+  };
   
   return (
     <div className="flex-1 overflow-y-auto px-2 sm:px-3 py-4 sm:py-6 relative bg-white dark:bg-[#070F1E] transition-colors duration-300" ref={scrollRef}>
@@ -321,7 +517,7 @@ const LessonsView = ({
         {/* Section Header */}
         <div className="flex items-center justify-between gap-3 px-1 py-1 select-none mb-2" dir="rtl">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky dark:from-transparent dark:to-transparent dark:bg-[#F26522]/15 dark:border dark:border-[#F26522]/40 flex items-center justify-center shadow-xs shrink-0 text-white dark:text-[#F26522] transition-colors">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-teal-700 to-teal-900 flex items-center justify-center shadow-xs shrink-0 text-white transition-colors">
               <BookOpenCheck className="w-4 h-4" />
             </div>
             <div className="flex flex-col text-right">
@@ -338,57 +534,55 @@ const LessonsView = ({
           </span>
         </div>
 
-        {/* Fourth: Lessons List */}
+        {/* Lessons List matching the user screenshot */}
         {seriesLessons.length === 0 ? (
-          <p className="text-center text-text-muted py-20 font-bold bg-white/50 dark:bg-[#0D1A33]/50 rounded-3xl border border-dashed border-stone-200 dark:border-[#1E355B] font-cairo">
+          <p className="text-center text-slate-400 py-20 font-bold bg-white/50 dark:bg-[#0D1A33]/50 rounded-3xl border border-dashed border-slate-200 dark:border-[#1E355B] font-cairo text-xs">
             لا توجد دروس في هذه السلسلة أو لم يتم إضافتها بعد.
           </p>
         ) : (
           <div className="flex flex-col gap-2.5 sm:gap-3">
             {seriesLessons.map((lesson: any, index: number) => {
               const progress = lessonProgress?.[lesson.id] || 0;
-              const displayTitle = formatLessonDisplayTitle(lesson.title, lesson.order, index, selectedSeries?.title);
+              const displayTitle = getFullLessonTitle(lesson, index, selectedSeries);
               
               return (
                 <motion.div
                   key={lesson.id}
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.04 }}
+                  transition={{ delay: index * 0.03 }}
                 >
                   <div
                     onClick={() => onNavigateToLesson(lesson, selectedSeries!)}
-                    className="w-full group relative bg-white dark:bg-[#0D1A33] rounded-[12px] sm:rounded-[14px] p-3 sm:p-3.5 flex items-center justify-between gap-3 text-right transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 shadow-xs border border-slate-200/60 dark:border-[#1E355B] active:scale-[0.99] cursor-pointer"
+                    className="w-full group relative bg-white dark:bg-[#0D1A33] rounded-2xl p-0 flex items-stretch text-right transition-all duration-300 hover:shadow-md hover:border-teal-500/40 dark:hover:border-teal-400/40 shadow-xs border border-slate-200/80 dark:border-[#1E355B] active:scale-[0.99] cursor-pointer overflow-hidden"
                     dir="rtl"
                   >
+                    {/* Right Side: Distinct Vertical Teal Badge with Quran Teardrop Emblem */}
+                    <div className="w-20 sm:w-24 shrink-0 bg-gradient-to-b from-[#1b7a82] via-[#166770] to-[#104d53] rounded-2xl flex flex-col items-center justify-center p-2 text-white shadow-inner m-1">
+                      <QuranTeardropEmblem size="sm" showText={true} />
+                    </div>
+
                     {/* Middle: Content */}
-                    <div className="flex-1 flex flex-col items-start min-w-0">
-                      <h3 className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white mb-0.5 line-clamp-1 group-hover:text-taiz-sky transition-colors font-cairo leading-tight">
+                    <div className="flex-1 flex flex-col justify-center py-3 px-3 sm:px-4 text-right min-w-0">
+                      <h3 className="text-[13px] sm:text-[14px] font-bold text-slate-900 dark:text-white mb-1 line-clamp-2 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors font-cairo leading-snug">
                         {displayTitle}
                       </h3>
                       
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-[10px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400 font-cairo">
-                          ضمن: {selectedSeries?.title?.replace("سلسلة ", "").replace("السلسلة ", "")}
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] sm:text-[12px] font-medium text-slate-500 dark:text-slate-400 font-cairo">
+                          شهيد القرآن
                         </span>
                       </div>
 
-                      {/* Excerpt */}
-                      {lesson.content && (
-                        <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 font-cairo mb-1 w-full">
-                          {lesson.content.split('\n')[0]}
-                        </p>
-                      )}
-                      
                       {progress > 0 && (
-                        <div className="mt-1 w-full max-w-[130px]">
+                        <div className="mt-2 w-full max-w-[130px]">
                           <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mb-0.5 font-bold font-cairo">
                             <span>نسبة الإنجاز</span>
                             <span>{Math.round(progress)}%</span>
                           </div>
                           <div className="h-1.5 w-full bg-slate-100 dark:bg-[#14274B] rounded-full overflow-hidden">
                             <div 
-                              className="h-full bg-gradient-to-r from-taiz-sky to-taiz-royal transition-all duration-500 rounded-full" 
+                              className="h-full bg-gradient-to-r from-teal-500 to-emerald-600 transition-all duration-500 rounded-full" 
                               style={{ width: `${progress}%` }}
                             />
                           </div>
@@ -396,20 +590,16 @@ const LessonsView = ({
                       )}
                     </div>
 
-                    {/* Left Side: Actions (Share + Arrow Button) */}
-                    <div className="shrink-0 flex items-center gap-1.5 sm:gap-2">
+                    {/* Left Side: Share Action */}
+                    <div className="shrink-0 flex items-center pl-3 sm:pl-4">
                       <button
                         type="button"
                         onClick={(e) => handleShareLesson(e, lesson, displayTitle)}
-                        className="p-1.5 sm:p-2 rounded-lg bg-slate-50 dark:bg-[#14274B] text-slate-500 hover:text-emerald-600 dark:text-slate-300 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-all shadow-xs cursor-pointer active:scale-95"
+                        className="p-1.5 sm:p-2 rounded-lg text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer active:scale-95"
                         title="مشاركة الدرس"
                       >
                         <Share2 className="w-4 h-4" />
                       </button>
-
-                      <div className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-slate-50 dark:bg-[#14274B] text-slate-400 group-hover:bg-taiz-sky group-hover:text-white transition-all shadow-xs">
-                        <ChevronLeft className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -536,6 +726,18 @@ const SyllabusesView = ({
                       <Share2 className="w-4 h-4" />
                     </button>
                   </div>
+
+                  {(item.imageUrl || item.mediaUrl) && (
+                    <div className="w-full h-32 rounded-lg overflow-hidden my-1 bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50">
+                      <img
+                        src={item.imageUrl || item.mediaUrl}
+                        alt={displayTitle}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+
                   <div className="flex flex-col gap-0.5 text-right w-full">
                     <span className="text-[13px] sm:text-[14px] font-bold text-slate-800 dark:text-white font-cairo group-hover:text-taiz-sky transition-colors line-clamp-2">
                       {displayTitle}
@@ -1397,8 +1599,8 @@ export function Quran() {
   const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [isFetchingLesson, setIsFetchingLesson] = useState(false);
-  const [activeView, setActiveView] = useState<QuranView>("quran");
-  const [previousView, setPreviousView] = useState<QuranView>("quran");
+  const [activeView, setActiveView] = useState<QuranView>("series");
+  const [previousView, setPreviousView] = useState<QuranView>("series");
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -2068,31 +2270,9 @@ export function Quran() {
                 <Menu className="w-4 h-4 sm:w-5 sm:h-5 text-slate-700 dark:text-slate-200 transition-transform group-hover:scale-110" />
               </button>
 
-              {/* Middle: Dual Segmented Switcher ("القرآن الكريم" | "الدروس") spanning remaining width */}
+              {/* Middle: Dual Segmented Switcher ("الدروس" على اليمين | "القرآن الكريم" على اليسار) */}
               <div className="flex-1 bg-slate-100 dark:bg-[#0D1A33] p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-[#1E355B] grid grid-cols-2 gap-1 shadow-inner select-none">
-                {/* Segment 1: القرآن الكريم */}
-                <button
-                  onClick={() => setActiveView("quran")}
-                  className={`relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm transition-all duration-300 active:scale-95 cursor-pointer ${
-                    activeView === "quran"
-                      ? "text-white font-black"
-                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60 font-bold"
-                  }`}
-                >
-                  {activeView === "quran" && (
-                    <motion.div
-                      layoutId="quran-lessons-tab-pill"
-                      className="absolute inset-0 bg-gradient-to-r from-taiz-royal via-taiz-sky to-taiz-royal rounded-lg sm:rounded-xl shadow-xs border border-taiz-sky/20"
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center justify-center gap-1.5">
-                    <BookOpen className={`w-4 h-4 ${activeView === "quran" ? "text-amber-300 animate-pulse" : "text-slate-500 dark:text-slate-400"}`} />
-                    <span className="whitespace-nowrap">القرآن الكريم</span>
-                  </span>
-                </button>
-
-                {/* Segment 2: الدروس */}
+                {/* Segment 1 (Right): الدروس */}
                 <button
                   onClick={() => setActiveView("series")}
                   className={`relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm transition-all duration-300 active:scale-95 cursor-pointer ${
@@ -2108,21 +2288,44 @@ export function Quran() {
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
-                  <span className="relative z-10 flex items-center justify-center gap-1.5">
+                  <span className="relative z-10 flex items-center justify-center gap-1.5 font-cairo">
                     <Library className={`w-4 h-4 ${activeView !== "quran" ? "text-sky-300 animate-pulse" : "text-slate-500 dark:text-slate-400"}`} />
                     <span className="whitespace-nowrap">الدروس</span>
+                  </span>
+                </button>
+
+                {/* Segment 2 (Left): القرآن الكريم */}
+                <button
+                  onClick={() => setActiveView("quran")}
+                  className={`relative flex items-center justify-center gap-1.5 py-1.5 sm:py-2 px-2 rounded-lg sm:rounded-xl text-xs sm:text-sm transition-all duration-300 active:scale-95 cursor-pointer ${
+                    activeView === "quran"
+                      ? "text-white font-black"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-700/60 font-bold"
+                  }`}
+                >
+                  {activeView === "quran" && (
+                    <motion.div
+                      layoutId="quran-lessons-tab-pill"
+                      className="absolute inset-0 bg-gradient-to-r from-taiz-royal via-taiz-sky to-taiz-royal rounded-lg sm:rounded-xl shadow-xs border border-taiz-sky/20"
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10 flex items-center justify-center gap-1.5 font-cairo">
+                    <BookOpen className={`w-4 h-4 ${activeView === "quran" ? "text-amber-300 animate-pulse" : "text-slate-500 dark:text-slate-400"}`} />
+                    <span className="whitespace-nowrap">القرآن الكريم</span>
                   </span>
                 </button>
               </div>
 
               {/* Left side: Back Button or null */}
-              {activeView !== "syllabuses" && activeView !== "excerpts" && activeView !== "series" && activeView !== "quran" ? (
+              {activeView !== "series" && activeView !== "quran" ? (
                 <button
                   onClick={() => {
                     if (activeView === "lessons") setActiveView("series");
-                    else if (activeView === "syllabus-detail") setActiveView("syllabuses");
-                    else if (activeView === "excerpt-detail") setActiveView("excerpts");
+                    else if (activeView === "syllabus-detail" || activeView === "syllabuses") setActiveView("series");
+                    else if (activeView === "excerpt-detail" || activeView === "excerpts") setActiveView("series");
                     else if (activeView === "stats" || activeView === "leader") setActiveView("series");
+                    else setActiveView("series");
                   }}
                   className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-xl sm:rounded-2xl border border-slate-200/80 dark:border-slate-700/80 transition-all text-xs font-bold font-cairo cursor-pointer active:scale-95 shadow-xs shrink-0"
                 >
@@ -2131,80 +2334,6 @@ export function Quran() {
                 </button>
               ) : null}
             </div>
-
-            {/* Sub-tabs Row (only shown when in Lessons tab, which is activeView !== "quran") */}
-            {activeView !== "quran" && activeView !== "leader" && activeView !== "stats" && (
-              <div className="w-full flex justify-center mt-1 animate-fade-in px-1">
-                {/* Modern Segmented Control for Sub-tabs */}
-                <div className="w-full max-w-md bg-slate-100/70 dark:bg-slate-800/60 p-0.5 rounded-xl border border-slate-200/50 dark:border-slate-700/60 grid grid-cols-3 gap-0.5 select-none relative">
-                  {/* Sub-tab 1: سلاسل الدروس */}
-                  <button
-                    onClick={() => setActiveView("series")}
-                    className={`relative flex items-center justify-center gap-1.5 py-1.5 px-1.5 rounded-lg text-[10.5px] sm:text-xs md:text-sm font-bold transition-all duration-300 active:scale-95 cursor-pointer ${
-                      activeView === "series" || activeView === "lessons"
-                        ? "text-blue-600 dark:text-blue-400 font-extrabold"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-bold"
-                    }`}
-                  >
-                    {(activeView === "series" || activeView === "lessons") && (
-                      <motion.div
-                        layoutId="lessons-sub-tab-pill"
-                        className="absolute inset-0 bg-blue-50/90 dark:bg-blue-950/45 rounded-lg shadow-xs border border-blue-200/80 dark:border-blue-900/80"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10 flex items-center justify-center gap-1 font-cairo">
-                      <Library className={`w-3.5 h-3.5 ${activeView === "series" || activeView === "lessons" ? "text-blue-500 dark:text-blue-400 animate-pulse" : "text-slate-500 dark:text-slate-400"}`} />
-                      <span className="whitespace-nowrap">سلاسل الدروس</span>
-                    </span>
-                  </button>
-
-                  {/* Sub-tab 2: مقرر الدروس */}
-                  <button
-                    onClick={() => setActiveView("syllabuses")}
-                    className={`relative flex items-center justify-center gap-1.5 py-1.5 px-1.5 rounded-lg text-[10.5px] sm:text-xs md:text-sm font-bold transition-all duration-300 active:scale-95 cursor-pointer ${
-                      activeView === "syllabuses" || activeView === "syllabus-detail"
-                        ? "text-amber-600 dark:text-amber-500 font-extrabold"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-bold"
-                    }`}
-                  >
-                    {(activeView === "syllabuses" || activeView === "syllabus-detail") && (
-                      <motion.div
-                        layoutId="lessons-sub-tab-pill"
-                        className="absolute inset-0 bg-amber-50/90 dark:bg-amber-950/45 rounded-lg shadow-xs border border-amber-200/80 dark:border-amber-900/80"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10 flex items-center justify-center gap-1 font-cairo">
-                      <BookOpenCheck className={`w-3.5 h-3.5 ${activeView === "syllabuses" || activeView === "syllabus-detail" ? "text-amber-500 dark:text-amber-400 animate-pulse" : "text-slate-500 dark:text-slate-400"}`} />
-                      <span className="whitespace-nowrap">مقرر الدروس</span>
-                    </span>
-                  </button>
-
-                  {/* Sub-tab 3: المقتطفات */}
-                  <button
-                    onClick={() => setActiveView("excerpts")}
-                    className={`relative flex items-center justify-center gap-1.5 py-1.5 px-1.5 rounded-lg text-[10.5px] sm:text-xs md:text-sm font-bold transition-all duration-300 active:scale-95 cursor-pointer ${
-                      activeView === "excerpts" || activeView === "excerpt-detail"
-                        ? "text-teal-600 dark:text-teal-500 font-extrabold"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white font-bold"
-                    }`}
-                  >
-                    {(activeView === "excerpts" || activeView === "excerpt-detail") && (
-                      <motion.div
-                        layoutId="lessons-sub-tab-pill"
-                        className="absolute inset-0 bg-teal-50/90 dark:bg-teal-950/45 rounded-lg shadow-xs border border-teal-200/80 dark:border-teal-900/80"
-                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                      />
-                    )}
-                    <span className="relative z-10 flex items-center justify-center gap-1 font-cairo">
-                      <Quote className={`w-3.5 h-3.5 ${activeView === "excerpts" || activeView === "excerpt-detail" ? "text-teal-500 dark:text-teal-400 animate-pulse" : "text-slate-500 dark:text-slate-400"}`} />
-                      <span className="whitespace-nowrap">المقتطفات</span>
-                    </span>
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -2246,10 +2375,22 @@ export function Quran() {
                   <SeriesView
                     seriesList={seriesList}
                     lessonsList={lessonsList}
+                    syllabusesList={syllabusesList}
+                    excerptsList={excerptsList}
                     scrollRef={scrollRef}
                     onSelectSeries={(s: any) => {
                       setSelectedSeries(s);
                       setActiveView("lessons");
+                    }}
+                    onSelectLesson={(lesson: any, series: any) => {
+                      const resolvedLesson = lessonsList.find((l: any) => l.id === lesson.id) || lesson;
+                      const resolvedSeries = series || seriesList.find((s: any) => s.id === (resolvedLesson.seriesId || lesson.seriesId));
+                      navigateToLesson(resolvedLesson, resolvedSeries);
+                    }}
+                    onSelectExcerpt={(excerpt: any) => {
+                      setSelectedExcerpt(excerpt);
+                      setActiveView("excerpt-detail");
+                      setJumpToParagraphIndex(null);
                     }}
                   />
                 )}
@@ -2270,7 +2411,7 @@ export function Quran() {
                   <LessonDetailView
                     selectedLesson={selectedLesson}
                     selectedSeries={selectedSeries}
-                    onBack={() => setActiveView(previousView === "lesson-detail" ? "syllabuses" : previousView)}
+                    onBack={() => setActiveView(previousView === "lesson-detail" ? "series" : previousView)}
                     bookmarks={bookmarks}
                     onToggleBookmark={handleToggleBookmark}
                     notes={notes}
@@ -2307,7 +2448,7 @@ export function Quran() {
                   <SyllabusDetailView
                     selectedSyllabus={selectedSyllabus}
                     scrollRef={scrollRef}
-                    onBack={() => setActiveView("syllabuses")}
+                    onBack={() => setActiveView("series")}
                     onNavigateToLesson={handleHopToLesson}
                   />
                 )}
@@ -2327,7 +2468,7 @@ export function Quran() {
                   <ExcerptDetailView
                     selectedExcerpt={selectedExcerpt}
                     scrollRef={scrollRef}
-                    onBack={() => setActiveView("excerpts")}
+                    onBack={() => setActiveView("series")}
                   />
                 )}
                 {activeView === "stats" && (

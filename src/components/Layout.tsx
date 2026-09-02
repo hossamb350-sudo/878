@@ -482,7 +482,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       <UrgentNewsBanner />
 
       {/* Platform Logo & Widgets Area */}
-      <div className="w-full bg-white dark:bg-[#070F1E] relative z-30 border-b border-slate-200/40 dark:border-[#1E355B]">
+      <div className="w-full bg-white dark:bg-[#0A1324] relative z-30 border-b border-slate-200/40 dark:border-[#1E355B]">
           <HeaderWidgets />
           {/* Visual Separator: thin crisp border with no extra vertical spacing */}
           <div className="w-full" />

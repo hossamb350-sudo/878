@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, query, orderBy, limit, startAfter, Timestamp, addDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { Search, Bell, Send, CheckCircle, XCircle, Clock, AlertCircle, X, ExternalLink, Activity, PlayCircle, BookOpen, User, Book, CalendarIcon, Key, Settings, Zap, Image, Upload, Link2, Sparkles, PlusCircle, Save, Trash2, Quote } from "lucide-react";
+import { Search, Bell, Send, CheckCircle, XCircle, Clock, AlertCircle, X, ExternalLink, Activity, PlayCircle, BookOpen, User, Book, CalendarIcon, Key, Settings, Zap, Image, Upload, Link2, Sparkles, PlusCircle, Save, Trash2, Quote, Tv } from "lucide-react";
 import { NewsItem, Article, VideoItem, LeaderContent, QuranLesson, ActivityItem, NotificationHistoryItem } from "../types";
 import { getStoredFCMKey, saveStoredFCMKey } from "../utils/sendFCM";
 import { NotificationSyncService } from "../services/NotificationSyncService";
@@ -119,6 +119,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
     { id: "lessons", label: "مقرر الدروس", icon: Book },
     { id: "excerpts", label: "المقتطفات", icon: Quote },
     { id: "activities", label: "الأنشطة", icon: CalendarIcon },
+    { id: "tv", label: "قنوات البث التلفزيوني", icon: Tv },
     { id: "history", label: "سجل الإشعارات", icon: Clock },
     { id: "diagnostics", label: "فحص الإشعارات", icon: AlertCircle },
   ];
@@ -146,13 +147,19 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
         case "lessons": colName = "quran_syllabuses"; break;
         case "excerpts": colName = "quran_excerpts"; break;
         case "activities": colName = "activities"; break;
+        case "tv": colName = "livestreams"; break;
         case "history": colName = "notifications_history"; break;
       }
       
-      const orderField = "createdAt";
-      const orderDir = "desc";
-      const q = query(collection(db, colName), orderBy(orderField, orderDir), limit(100));
-      const snap = await getDocs(q);
+      let snap;
+      if (activeTab === "tv") {
+        snap = await getDocs(collection(db, "livestreams"));
+      } else {
+        const orderField = "createdAt";
+        const orderDir = "desc";
+        const q = query(collection(db, colName), orderBy(orderField, orderDir), limit(100));
+        snap = await getDocs(q);
+      }
       
       const data = snap.docs.map(doc => {
         const item = { id: doc.id, ...doc.data() } as any;
@@ -165,6 +172,10 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
         } else if (activeTab === "excerpts") {
           item.title = item.title || item.quote || item.text || "مقتطف من هدي القرآن";
           item.shortDescription = item.source || item.author || item.speaker || "الشهيد القائد / السيد القائد";
+        } else if (activeTab === "tv") {
+          item.title = item.name || "قناة بث مباشر";
+          item.shortDescription = item.type === "tv" ? "📺 قناة تلفزيونية - بث مباشر" : "📻 إذاعة صوتية - بث مباشر";
+          item.imageUrl = item.iconUrl || item.logoUrl || item.imageUrl || "";
         }
         return item;
       });
@@ -226,6 +237,10 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
     } else if (activeTab === "activities") {
       setNotifTitle((item.title || "").trim());
       setNotifBody("");
+    } else if (activeTab === "tv") {
+      const cleanName = (item.name || item.title || "").trim();
+      setNotifTitle(cleanName ? `بث مباشر | ${cleanName}` : "بث مباشر");
+      setNotifBody(item.type === "tv" ? `شاهد البث المباشر لقناة ${cleanName}` : `استمع للبث المباشر لإذاعة ${cleanName}`);
     } else {
       setNotifTitle(item.title || "");
       setNotifBody("");
@@ -248,6 +263,9 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
       } else if (activeTab === "activities") {
         contentType = "event"; 
         targetUrl = `/events/activity/${selectedItem.id}`;
+      } else if (activeTab === "tv") {
+        contentType = "tv";
+        targetUrl = `/tv`;
       } else if (activeTab === "lessons") {
         contentType = "syllabus";
         targetUrl = `/quran?syllabus=${selectedItem.id}&view=syllabuses`; 
@@ -264,7 +282,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
         targetUrl = `/news/${selectedItem.id}`;
       }
 
-      const imageUrl = selectedItem.imageUrl || selectedItem.thumbnailUrl || "";
+      const imageUrl = selectedItem.imageUrl || selectedItem.iconUrl || selectedItem.thumbnailUrl || selectedItem.mediaUrl || "";
 
       await sendPushDirect({
         title: notifTitle,
@@ -316,6 +334,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
         case "syllabuses": targetUrl = "/quran?view=syllabuses"; break;
         case "excerpts": targetUrl = "/quran?view=excerpts"; break;
         case "events": targetUrl = "/events"; break;
+        case "tv": targetUrl = "/tv"; break;
         case "custom": targetUrl = customCustomUrl || "/"; break;
         default: targetUrl = "/";
       }
@@ -562,7 +581,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
   };
 
   const renderContentCard = (item: any) => {
-    const imageUrl = item.imageUrl || item.thumbnailUrl;
+    const imageUrl = item.imageUrl || item.thumbnailUrl || item.mediaUrl;
     
     return (
       <div key={item.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden flex flex-col font-cairo">
@@ -876,6 +895,7 @@ export function AdminNotificationManagement({ role, isAdmin = false }: AdminNoti
                       { id: "syllabuses", label: "مقرر الدروس" },
                       { id: "excerpts", label: "المقتطفات" },
                       { id: "events", label: "الأنشطة" },
+                      { id: "tv", label: "البث المباشر" },
                       { id: "custom", label: "رابط مخصص" },
                     ].map((dest) => (
                       <button

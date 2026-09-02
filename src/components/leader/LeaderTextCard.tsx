@@ -45,16 +45,7 @@ export const LeaderTextCard: React.FC<LeaderTextCardProps> = ({
     }
   };
 
-  const { mDate } = formatDateString(item.createdAt);
-
-  // Excerpt generation
-  const getExcerpt = (text: string) => {
-    if (!text) return "";
-    const clean = text.replace(/^[#\-\*\s]+/, "").replace(/﴿[^﴾]+﴾/g, "...");
-    return clean.slice(0, 140) + (clean.length > 140 ? "..." : "");
-  };
-
-  const excerpt = getExcerpt(item.content || item.description || "");
+  const { mDate, hDate } = formatDateString(item.createdAt);
 
   const handleShare = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -111,6 +102,11 @@ export const LeaderTextCard: React.FC<LeaderTextCardProps> = ({
                 <BookOpen className="w-3 h-3 text-taiz-sky dark:text-sky-400" />
                 <span>نص</span>
               </span>
+              {hDate && (
+                <span className="text-slate-500 dark:text-amber-400 text-[10px] sm:text-[11px] font-medium font-cairo">
+                  {hDate}
+                </span>
+              )}
             </div>
 
             {/* Quick Actions */}
@@ -136,31 +132,25 @@ export const LeaderTextCard: React.FC<LeaderTextCardProps> = ({
             </div>
           </div>
 
-          {/* MIDDLE: Title & Excerpt */}
+          {/* MIDDLE: Title */}
           <div className="relative z-10 my-0.5">
             <h2 className="text-text-primary text-xs sm:text-sm font-bold leading-snug group-hover:text-taiz-sky transition-colors font-cairo line-clamp-2">
               {item.title}
             </h2>
-
-            {excerpt && (
-              <p className="text-text-muted text-[10.5px] sm:text-[11.5px] mt-1 line-clamp-1 sm:line-clamp-2 font-cairo leading-relaxed">
-                {excerpt}
-              </p>
-            )}
           </div>
 
           {/* BOTTOM METADATA & READ BUTTON ROW */}
           <div className="relative z-10 flex items-center justify-between pt-1.5 border-t border-border-light mt-1 text-text-muted text-[10px] sm:text-[11px]">
             <div className="flex items-center gap-2.5 sm:gap-3 font-medium">
               {/* Gregorian Date */}
-              <span className="flex items-center gap-1 text-slate-500">
-                <Calendar className="w-3 h-3 text-slate-400" />
+              <span className="flex items-center gap-1 text-slate-500 dark:text-amber-400">
+                <Calendar className="w-3 h-3 text-slate-400 dark:text-amber-400" />
                 <span>{mDate}</span>
               </span>
 
               {/* Views */}
-              <span className="flex items-center gap-1 text-slate-500">
-                <Eye className="w-3 h-3 text-red-500 animate-pulse" />
+              <span className="flex items-center gap-1 text-slate-500 dark:text-[#F26522]">
+                <Eye className="w-3 h-3 text-red-500 dark:text-[#F26522] animate-pulse" />
                 <span>{(item.views || 0).toLocaleString("ar-EG")} مشاهدة</span>
               </span>
             </div>

@@ -445,8 +445,8 @@ export function NewsDetail() {
           )}
 
           {/* Views badge - compact eye icon with views count on the far left inside the slider */}
-          <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 px-2.5 py-1 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
-            <Eye className="w-3.5 h-3.5 stroke-[2] text-red-500 animate-pulse" />
+          <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-md text-white/90 dark:text-[#F26522] px-2.5 py-1 rounded-full text-xs font-bold font-sans tracking-wide z-20 flex items-center gap-1.5 shadow-md border border-white/10" dir="ltr">
+            <Eye className="w-3.5 h-3.5 stroke-[2] text-red-500 dark:text-[#F26522] animate-pulse" />
             <span>{news.views || 4}</span>
           </div>
 
@@ -528,38 +528,38 @@ export function NewsDetail() {
           <div className="h-px sm:h-5 w-full sm:w-px bg-slate-200/50 dark:bg-stone-800/40" />
 
           {/* Inline Dates & Times using 11px size & Navy Blue icons */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-zinc-400 font-bold">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500 dark:text-amber-400 font-bold">
             <div className="flex items-center gap-1 shrink-0">
-              <Calendar className="w-3 h-3 text-taiz-navy dark:text-taiz-soft stroke-[2.5]" />
+              <Calendar className="w-3 h-3 text-taiz-navy dark:text-amber-400 stroke-[2.5]" />
               <span>{mDate ? `${mDate} م` : "15 مايو 2024 م"}</span>
             </div>
 
             <span className="text-slate-200 dark:text-stone-800 font-normal hidden sm:inline">|</span>
 
             <div className="flex items-center gap-1 shrink-0">
-              <Clock className="w-3 h-3 text-taiz-navy dark:text-taiz-soft stroke-[2.5]" />
+              <Clock className="w-3 h-3 text-taiz-navy dark:text-amber-400 stroke-[2.5]" />
               <span>{hDate || "29 ذو القعدة 1445 هـ"}</span>
             </div>
           </div>
         </div>
 
         {/* Interaction Bar (شريط التفاعل) matching mockup design */}
-        <div className="my-2 bg-[#fafafa]/90 dark:bg-stone-900/40 border border-slate-200/50 dark:border-stone-800/80 rounded-full px-4 py-2 shadow-sm flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
+        <div className="my-2 bg-[#fafafa]/90 dark:bg-[#0D1D38] border border-slate-200/50 dark:border-[#1E3E6B] rounded-full px-4 py-2 shadow-sm flex items-center justify-between max-w-full mx-auto backdrop-blur-sm">
           {/* Left side: Font Size Adjuster in mockup (+ 28px -) */}
-          <div className="flex items-center gap-2.5 text-slate-500 dark:text-slate-400 font-bold text-sm font-cairo">
+          <div className="flex items-center gap-2.5 text-slate-500 dark:text-amber-400 font-bold text-sm font-cairo">
             <button 
               onClick={() => setFontSize(f => Math.min(f + 1, 32))} 
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-zinc-800 rounded-full transition-colors text-base font-bold"
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-[#1D3664] rounded-full transition-colors text-base font-bold cursor-pointer"
               title="تكبير الخط"
             >
               <Plus className="w-4 h-4" />
             </button>
-            <span className="font-sans text-sm tracking-tight text-slate-700 dark:text-slate-200 min-w-[34px] text-center font-bold">
+            <span className="font-sans text-sm tracking-tight text-slate-700 dark:text-amber-400 min-w-[34px] text-center font-bold">
               {fontSize}px
             </span>
             <button 
               onClick={() => setFontSize(f => Math.max(f - 1, 14))} 
-              className="w-7 h-7 flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-zinc-800 rounded-full transition-colors text-base font-bold"
+              className="w-7 h-7 flex items-center justify-center hover:bg-slate-200/60 dark:hover:bg-[#1D3664] rounded-full transition-colors text-base font-bold cursor-pointer"
               title="تصغير الخط"
             >
               <Minus className="w-4 h-4" />
@@ -570,14 +570,14 @@ export function NewsDetail() {
           <div className="flex items-center gap-2">
             <button 
               onClick={() => handleShare("whatsapp")} 
-              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-emerald-500 transition-all duration-200"
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-emerald-500 transition-all duration-200 cursor-pointer shadow-2xs"
               title="مشاركة عبر واتساب"
             >
               <MessageCircle className="w-4.5 h-4.5" />
             </button>
             <button 
               onClick={() => handleShare("twitter")} 
-              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-black dark:hover:text-white transition-all duration-200"
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-black dark:hover:text-white transition-all duration-200 cursor-pointer shadow-2xs"
               title="مشاركة عبر إكس"
             >
               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
@@ -586,14 +586,14 @@ export function NewsDetail() {
             </button>
             <button 
               onClick={() => handleShare("facebook")} 
-              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-blue-600 transition-all duration-200"
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-blue-600 transition-all duration-200 cursor-pointer shadow-2xs"
               title="مشاركة عبر فيسبوك"
             >
               <Facebook className="w-4.5 h-4.5" />
             </button>
             <button 
               onClick={() => handleShare("telegram")} 
-              className="w-9 h-9 rounded-full border border-slate-200 dark:border-stone-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-stone-800 hover:text-sky-400 transition-all duration-200"
+              className="w-9 h-9 rounded-full border border-slate-200 dark:border-[#1E3E6B] bg-white dark:bg-[#14274B] flex items-center justify-center text-slate-500 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-[#1D3664] hover:text-sky-400 transition-all duration-200 cursor-pointer shadow-2xs"
               title="مشاركة عبر تليجرام"
             >
               <Send className="w-4 h-4" />

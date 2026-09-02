@@ -232,7 +232,7 @@ export const HeaderWidgets: React.FC = () => {
       {/* 
         Master Header
       */}
-      <div className="relative w-full bg-white dark:bg-[#0A1324] border-b border-slate-200/80 dark:border-[#1E355B]/70 shadow-xs px-3 sm:px-4.5 py-2.5 sm:py-3 flex items-center justify-between transition-colors overflow-hidden">
+      <div className="relative w-full bg-white dark:bg-[#0A1324] border-b border-slate-100 dark:border-[#1E355B]/40 px-3 sm:px-4.5 py-2.5 sm:py-3 flex items-center justify-between transition-colors overflow-hidden">
         
         {/* Right Area (visually Right in RTL): Two-line Platform Typography */}
         <Link 
@@ -326,53 +326,53 @@ export const HeaderWidgets: React.FC = () => {
       </div>
 
       {/* 
-        Bottom Row: Widgets (Date, Prayer, Weather)
+        Bottom Row: Widgets (Date, Prayer, Weather) - Integrated seamlessly into the master header
       */}
-      <div className="w-full bg-slate-100/80 dark:bg-[#070F1E] px-2 sm:px-3 py-1.5 sm:py-2 flex items-center justify-between gap-1 sm:gap-1.5 overflow-hidden border-t border-slate-200/50 dark:border-[#1E355B]/60 transition-colors">
+      <div className="w-full bg-white dark:bg-[#0A1324] px-3 sm:px-4.5 py-1.5 sm:py-2 flex items-center justify-between gap-1.5 sm:gap-2 overflow-hidden transition-colors">
         
         {/* Date/Day Widget */}
         <Link 
           to="/calendar" 
           title="الذهاب إلى التقويم الهجري"
-          className="flex items-center gap-1 sm:gap-1.5 flex-1 hover:opacity-90 active:scale-95 transition-all cursor-pointer group min-w-0 bg-white/90 dark:bg-[#0D1A33] hover:bg-white dark:hover:bg-[#14274B] border border-slate-200/80 dark:border-[#1E355B] rounded-lg sm:rounded-xl p-1 sm:p-1.5 shadow-2xs"
+          className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-start hover:opacity-80 active:scale-98 transition-all cursor-pointer group min-w-0"
         >
-          <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded sm:rounded-md bg-slate-100 dark:bg-[#070F1E] border border-slate-200/80 dark:border-[#1E355B] flex items-center justify-center shadow-2xs group-hover:border-[#F26522]/50 shrink-0">
-            <Calendar className="w-3.5 h-3.5 text-[#D32027] dark:text-[#F26522]" />
-          </div>
+          <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#D32027] dark:text-[#F26522] shrink-0" />
           <div className="flex flex-col text-right min-w-0">
-            <span className="text-slate-800 dark:text-slate-100 font-black text-[9px] sm:text-[10px] leading-tight font-cairo truncate">{dayName}</span>
-            <span className="text-[#D32027] dark:text-[#F26522] font-bold text-[8px] sm:text-[9px] leading-tight font-cairo mt-0.5 truncate">{hijriDate}</span>
+            <span className="text-slate-800 dark:text-slate-100 font-bold text-[9px] sm:text-[10px] leading-tight font-cairo truncate">{dayName}</span>
+            <span className="text-[#D32027] dark:text-[#F26522] font-semibold text-[8px] sm:text-[9px] leading-tight font-cairo mt-0.5 truncate">{hijriDate}</span>
           </div>
         </Link>
+
+        {/* Subtle Divider */}
+        <div className="h-4.5 w-px bg-slate-200/60 dark:bg-[#1E355B]/50 shrink-0" />
 
         {/* Next Prayer Widget (Countdown) */}
         <Link 
           to="/prayer-times" 
           title="الذهاب إلى مواقيت الصلاة"
-          className="flex items-center gap-1 sm:gap-1.5 flex-1 justify-center border-x border-slate-200/40 dark:border-[#1E355B]/40 px-1 hover:opacity-90 active:scale-95 transition-all cursor-pointer group min-w-0 bg-white/90 dark:bg-[#0D1A33] hover:bg-white dark:hover:bg-[#14274B] border border-slate-200/80 dark:border-[#1E355B] rounded-lg sm:rounded-xl p-1 sm:p-1.5 mx-0.5 shadow-2xs"
+          className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center hover:opacity-80 active:scale-98 transition-all cursor-pointer group min-w-0"
         >
-          <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded sm:rounded-md bg-slate-100 dark:bg-[#070F1E] border border-slate-200/80 dark:border-[#1E355B] flex items-center justify-center shadow-2xs group-hover:border-emerald-500/50 shrink-0">
-            <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          </div>
+          <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <div className="flex flex-col text-right min-w-0">
-            <span className="text-slate-800 dark:text-slate-100 font-black text-[9px] sm:text-[10px] leading-tight font-cairo truncate">{nextPrayerInfo.name}</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[8px] sm:text-[9px] leading-tight font-sans tracking-wider mt-0.5 truncate">{nextPrayerInfo.countdown}</span>
+            <span className="text-slate-800 dark:text-slate-100 font-bold text-[9px] sm:text-[10px] leading-tight font-cairo truncate">{nextPrayerInfo.name}</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-[8px] sm:text-[9px] leading-tight font-sans tracking-wider mt-0.5 truncate">{nextPrayerInfo.countdown}</span>
           </div>
         </Link>
+
+        {/* Subtle Divider */}
+        <div className="h-4.5 w-px bg-slate-200/60 dark:bg-[#1E355B]/50 shrink-0" />
 
         {/* Weather Widget */}
         <Link 
           to="/weather" 
           title="الذهاب إلى حالة الطقس"
-          className="flex items-center gap-1 sm:gap-1.5 flex-1 justify-end hover:opacity-90 active:scale-95 transition-all cursor-pointer group min-w-0 bg-white/90 dark:bg-[#0D1A33] hover:bg-white dark:hover:bg-[#14274B] border border-slate-200/80 dark:border-[#1E355B] rounded-lg sm:rounded-xl p-1 sm:p-1.5 shadow-2xs"
+          className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-end hover:opacity-80 active:scale-98 transition-all cursor-pointer group min-w-0"
         >
           <div className="flex flex-col text-right min-w-0 items-end">
-            <span className="text-slate-800 dark:text-slate-100 font-black text-[9px] sm:text-[10px] leading-tight font-cairo truncate">الطقس الآن</span>
-            <span className="text-sky-500 dark:text-sky-400 font-bold text-[8px] sm:text-[9px] leading-tight font-cairo mt-0.5 truncate">{weatherDisplay.text}</span>
+            <span className="text-slate-800 dark:text-slate-100 font-bold text-[9px] sm:text-[10px] leading-tight font-cairo truncate">الطقس الآن</span>
+            <span className="text-sky-500 dark:text-sky-400 font-semibold text-[8px] sm:text-[9px] leading-tight font-cairo mt-0.5 truncate">{weatherDisplay.text}</span>
           </div>
-          <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded sm:rounded-md bg-slate-100 dark:bg-[#070F1E] border border-slate-200/80 dark:border-[#1E355B] flex items-center justify-center shadow-2xs group-hover:border-sky-500/50 shrink-0">
-            <weatherDisplay.icon className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400" />
-          </div>
+          <weatherDisplay.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-sky-500 dark:text-sky-400 shrink-0" />
         </Link>
       </div>
 

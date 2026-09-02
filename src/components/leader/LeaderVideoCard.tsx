@@ -107,7 +107,7 @@ export const LeaderVideoCard: React.FC<LeaderVideoCardProps> = ({
           {/* Header Row: Hijri date */}
           {hDate && (
             <div className="flex items-center justify-end text-text-muted text-[11px] mb-1">
-              <span className="text-slate-500 font-medium text-[10.5px] sm:text-[11px]">{hDate}</span>
+              <span className="text-slate-500 dark:text-amber-400 font-medium text-[10.5px] sm:text-[11px]">{hDate}</span>
             </div>
           )}
 
@@ -116,24 +116,19 @@ export const LeaderVideoCard: React.FC<LeaderVideoCardProps> = ({
             <h2 className="text-text-primary text-xs sm:text-sm md:text-base font-bold leading-snug sm:leading-relaxed group-hover:text-taiz-sky transition-colors font-cairo line-clamp-2">
               {item.title}
             </h2>
-            {item.description && (
-              <p className="text-text-muted text-[11px] sm:text-xs mt-1.5 line-clamp-2 font-cairo leading-relaxed">
-                {item.description}
-              </p>
-            )}
           </div>
 
           {/* Footer Metadata Row */}
           <div className="flex items-center justify-between text-text-muted text-[10px] sm:text-[11px] font-medium pt-2.5 border-t border-border-light mt-2">
             {/* Gregorian Date */}
-            <span className="flex items-center gap-1 text-slate-500">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+            <span className="flex items-center gap-1 text-slate-500 dark:text-amber-400">
+              <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-amber-400" />
               <span>{mDate}</span>
             </span>
 
             {/* Views Count */}
-            <span className="flex items-center gap-1 text-slate-500">
-              <Eye className="w-3.5 h-3.5 text-red-500 animate-pulse" />
+            <span className="flex items-center gap-1 text-slate-500 dark:text-[#F26522]">
+              <Eye className="w-3.5 h-3.5 text-red-500 dark:text-[#F26522] animate-pulse" />
               <span>{(item.views || 0).toLocaleString("ar-EG")} مشاهدة</span>
             </span>
           </div>

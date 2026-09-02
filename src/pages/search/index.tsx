@@ -93,8 +93,8 @@ export function Search() {
                         )}
                         <span className="shrink-0">{format(item.createdAt, "dd/MM/yyyy", { locale: ar })}</span>
                         {/* Views */}
-                        <span className="flex items-center gap-1 shrink-0 text-taiz-royal mr-auto">
-                          <Eye className="w-3 h-3 text-red-500 animate-pulse shrink-0"/> 
+                        <span className="flex items-center gap-1 shrink-0 text-taiz-royal dark:text-[#F26522] mr-auto font-bold">
+                          <Eye className="w-3 h-3 text-red-500 dark:text-[#F26522] animate-pulse shrink-0"/> 
                           <span>{item.views || 0}</span>
                         </span>
                      </div>

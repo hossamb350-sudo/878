@@ -385,9 +385,9 @@ export function TopicDetail() {
                           <Calendar className="w-3 h-3 text-amber-500" />
                           {format(item.createdAt || Date.now(), "dd/MM/yyyy", { locale: ar })}
                         </span>
-                        <span className="flex items-center gap-1 text-red-500 font-bold">
-                          <Eye className="w-3 h-3 text-red-500 animate-pulse shrink-0" />
-                          {item.views || 0}
+                        <span className="flex items-center gap-1 text-red-500 dark:text-[#F26522] font-bold">
+                          <Eye className="w-3 h-3 text-red-500 dark:text-[#F26522] animate-pulse shrink-0" />
+                          <span>{item.views || 0}</span>
                         </span>
                       </div>
                     </Link>
@@ -458,9 +458,9 @@ export function TopicDetail() {
                           <Clock className="w-3 h-3 text-red-500" />
                           {format(vid.createdAt || Date.now(), "dd/MM/yyyy", { locale: ar })}
                         </span>
-                        <span className="flex items-center gap-1 text-slate-500 font-bold">
-                          <Eye className="w-3 h-3 text-red-500 animate-pulse shrink-0" />
-                          {vid.views || 0} مشاهدة
+                        <span className="flex items-center gap-1 text-slate-500 dark:text-[#F26522] font-bold">
+                          <Eye className="w-3 h-3 text-red-500 dark:text-[#F26522] animate-pulse shrink-0" />
+                          <span>{vid.views || 0} مشاهدة</span>
                         </span>
                       </div>
                     </Link>

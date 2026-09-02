@@ -268,13 +268,6 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
 
                     {/* Metadata Row: Aligned beautifully in a single line RTL */}
                     <div className="flex flex-wrap items-center justify-start gap-x-4 sm:gap-x-5 gap-y-1.5 text-white/90 text-[10.5px] sm:text-[12.5px] font-medium w-full" dir="rtl">
-                      {/* Author */}
-                      {currentItem.author && (
-                        <div className="flex items-center gap-1 shrink-0">
-                          <User className="w-4 h-4 text-white/90 stroke-[1.75]" />
-                          <span>{currentItem.author}</span>
-                        </div>
-                      )}
 
                       {/* Hijri Date */}
                       {hDate && (
@@ -296,8 +289,8 @@ function NewsSlider({ sliderList }: { sliderList: NewsItem[] }) {
 
                  {/* Views Badge - Positioned at bottom-left of the slider */}
                  <div className="absolute bottom-2.5 left-3 sm:bottom-3 sm:left-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15 text-white text-[10.5px] sm:text-[12px] font-bold shadow-md pointer-events-none select-none">
-                   <Eye className="w-3.5 h-3.5 text-red-400 animate-pulse stroke-[2]" />
-                   <span>{formatViews(currentItem.views || 0)}</span>
+                   <Eye className="w-3.5 h-3.5 text-red-400 dark:text-[#F26522] animate-pulse stroke-[2]" />
+                   <span className="dark:text-[#F26522]">{formatViews(currentItem.views || 0)}</span>
                  </div>
               </Link>
             </motion.div>
@@ -981,13 +974,6 @@ export function Home() {
 
                               {/* Metadata Row: Aligned in a single line RTL */}
                               <div className="flex flex-wrap items-center justify-start gap-x-4 sm:gap-x-5 gap-y-1.5 text-white/90 text-[10.5px] sm:text-[12.5px] font-medium w-full" dir="rtl">
-                                {/* Author */}
-                                {item.author && (
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <User className="w-4 h-4 text-white/90 stroke-[1.75]" />
-                                    <span>{item.author}</span>
-                                  </div>
-                                )}
 
                                 {/* Hijri Date */}
                                 {formatPublishInfo(item.createdAt).hDate && (
@@ -1009,8 +995,8 @@ export function Home() {
 
                            {/* Views Badge - Positioned at bottom-left of the card */}
                            <div className="absolute bottom-2.5 left-3 sm:bottom-3 sm:left-4 z-20 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/15 text-white text-[10.5px] sm:text-[12px] font-bold shadow-md pointer-events-none select-none">
-                             <Eye className="w-3.5 h-3.5 text-red-400 animate-pulse stroke-[2]" />
-                             <span>{formatViews(item.views || 0)}</span>
+                             <Eye className="w-3.5 h-3.5 text-red-400 dark:text-[#F26522] animate-pulse stroke-[2]" />
+                             <span className="dark:text-[#F26522]">{formatViews(item.views || 0)}</span>
                            </div>
                         </Link>
                       </div>
@@ -1052,18 +1038,15 @@ export function Home() {
                               {item.title}
                             </h3>
                             {/* Consistently aligned metadata line */}
-                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[8.5px] sm:text-[9.5px] font-bold text-slate-500 mt-auto transition-colors duration-300 group-hover:text-slate-600">
-                               {item.author && (
-                                 <span className="truncate max-w-[80px]">{item.author}</span>
-                               )}
-                                
-                               <span className="shrink-0">{formatPublishInfo(item.createdAt).hDate}</span>
-                               <span className="shrink-0">{formatPublishInfo(item.createdAt).mDate}</span>
-                               <span className="shrink-0">{formatPublishInfo(item.createdAt).mTime}</span>
-                                
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[8px] sm:text-[9px] font-bold text-slate-500 mt-auto transition-colors duration-300 group-hover:text-slate-600">
+                               
+                               <span className="shrink-0 dark:text-amber-400">{formatPublishInfo(item.createdAt).hDate}</span>
+                               <span className="shrink-0 dark:text-amber-400">{formatPublishInfo(item.createdAt).mDate}</span>
+                               <span className="shrink-0 dark:text-amber-400">{formatPublishInfo(item.createdAt).mTime}</span>
+                               
                                {/* Views with Red Continuous Pulsing Eye Icon */}
-                               <span className="flex items-center gap-1 shrink-0 mr-auto">
-                                 <Eye className="w-3 h-3 text-red-500 animate-pulse shrink-0"/> 
+                               <span className="flex items-center gap-1 shrink-0 mr-auto dark:text-[#F26522]">
+                                 <Eye className="w-3 h-3 text-red-500 dark:text-[#F26522] animate-pulse shrink-0"/> 
                                  <span>{item.views || 0}</span>
                                </span>
                             </div>

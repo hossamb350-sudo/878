@@ -439,13 +439,16 @@ export function AdminQuranExcerpts() {
       await setDoc(doc(db, "quran_excerpts", id), payload, { merge: true });
       await delIDB("quran_data_cache");
 
-      if (!editingId) {
+      if (!editingId && status === "published") {
+        const cleanTitle = (payload.title || "مقتطف من هدي القرآن").trim().replace(/^مقتطف\s*\|\s*/, '');
+        const notifTitle = `مقتطف | ${cleanTitle}`;
+        const notifBody = (payload.author ? `👤 ${payload.author}` : "") + (payload.source ? (payload.author ? " - " : "") + payload.source : "");
         sendFCMNotification(
-          "مقتطف جديد",
-          payload.title || "مقتطف جديد من هدي القرآن",
+          notifTitle,
+          notifBody || (payload.content || "").substring(0, 100),
           "excerpt",
           id,
-          ""
+          payload.mediaUrl || ""
         );
       }
 
@@ -747,17 +750,14 @@ export function AdminQuranExcerpts() {
                     </select>
                   </div>
 
-                  {/* Media / Image URL */}
+                  {/* Media / Image URL & Upload */}
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 font-cairo">
-                      رابط صورة مرافقة (اختياري)
-                    </label>
-                    <input
-                      type="url"
+                    <ImageUpload
                       value={mediaUrl}
-                      onChange={(e) => setMediaUrl(e.target.value)}
-                      placeholder="https://..."
-                      className="w-full p-2.5 bg-slate-50 dark:bg-stone-950 border border-slate-200 dark:border-stone-800 rounded-xl text-xs sm:text-sm font-cairo dark:text-white focus:outline-none focus:border-amber-500"
+                      onChange={(url) => setMediaUrl(url)}
+                      onRemove={() => setMediaUrl("")}
+                      label="صورة مرافقة للمقتطف (اختياري)"
+                      placeholder="اسحب وأفلت الصورة أو اختر من جهازك أو الصق الرابط"
                     />
                   </div>
                 </div>
