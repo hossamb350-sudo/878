@@ -49,7 +49,7 @@ import { QuranReader } from "../../components/QuranReader";
 import { QuranStats } from "../../components/QuranStats";
 import { QuranKareem } from "../../components/QuranKareem";
 import { IslamicExcerptCard, IslamicOrnamentDivider } from "../../components/AdminQuranExcerpts";
-import { QuranTeardropEmblem, IslamicBannerHeader } from "../../components/QuranTeardropEmblem";
+import { QuranTeardropEmblem, IslamicBannerHeader, SyllabusBannerHeader, ExcerptsBannerHeader } from "../../components/QuranTeardropEmblem";
 import { STATIC_QURAN_SERIES, STATIC_QURAN_LESSONS, processQuranData, sortQuranLessons, formatLessonDisplayTitle } from "../../data/staticQuranData";
 import { loadQuranMetadata, loadLessonContent } from "../../data/importedQuranData";
 
@@ -291,15 +291,12 @@ const SeriesView = ({
                             loading="lazy"
                           />
 
-                          {/* Ambient Bottom Gradient for Title Readability */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
-
-                          {/* Bottom pill container with Series Title */}
-                          <div className="w-full bg-[#0c393e]/90 dark:bg-[#0c393e]/95 backdrop-blur-md rounded-2xl py-2.5 px-2.5 border border-white/15 shadow-lg z-10">
-                            <h3 className="text-white font-bold font-cairo text-xs sm:text-[13px] line-clamp-2 leading-snug">
+                          {/* Series Title and Lessons Count (No background, Dark Navy in light mode, White in dark mode) */}
+                          <div className="w-full py-1.5 px-2 z-10 text-center">
+                            <h3 className="text-[#0B1B3D] dark:text-white font-extrabold font-cairo text-xs sm:text-[13px] line-clamp-2 leading-snug">
                               {series.title}
                             </h3>
-                            <span className="text-[10px] text-teal-200/90 font-cairo font-medium mt-0.5 block">
+                            <span className="text-[10.5px] sm:text-[11px] text-[#152E5A] dark:text-white/90 font-cairo font-bold mt-0.5 block">
                               {formatLessonCount(count)}
                             </span>
                           </div>
@@ -316,26 +313,7 @@ const SeriesView = ({
         {/* 2. قسم مقرر الدروس (Syllabuses Section) */}
         {/* ======================================================== */}
         <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between px-1" dir="rtl">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-500/20">
-                <BookOpenCheck className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
-                  مقرر الدروس
-                </h3>
-                <p className="text-[10.5px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium font-cairo">
-                  المقررات الدراسية المعتمدة والبرامج الثقافية
-                </p>
-              </div>
-            </div>
-            {activeSyllabuses.length > 0 && (
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-cairo">
-                {activeSyllabuses.length} مقرر
-              </span>
-            )}
-          </div>
+          <SyllabusBannerHeader className="mb-2" />
 
           {activeSyllabuses.length === 0 ? (
             <div className="p-8 text-center bg-white dark:bg-[#0D1A33] rounded-2xl border border-slate-200/60 dark:border-[#1E355B] text-slate-400 font-bold font-cairo text-xs">
@@ -439,26 +417,7 @@ const SeriesView = ({
         {/* 3. قسم المقتطفات (Excerpts Section) */}
         {/* ======================================================== */}
         <div className="space-y-3 pt-2">
-          <div className="flex items-center justify-between px-1" dir="rtl">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center border border-teal-500/20">
-                <Quote className="w-4 h-4" />
-              </div>
-              <div>
-                <h3 className="font-extrabold text-[14px] sm:text-[15px] text-slate-900 dark:text-white font-cairo leading-tight">
-                  المقتطفات من هدي القرآن
-                </h3>
-                <p className="text-[10.5px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium font-cairo">
-                  مقتطفات نورانية ودرر من هدي القرآن الكريم
-                </p>
-              </div>
-            </div>
-            {excerptsList.length > 0 && (
-              <span className="text-[10.5px] sm:text-[11px] font-bold text-teal-600 dark:text-teal-400 bg-teal-50 dark:bg-teal-950/40 border border-teal-500/20 px-2.5 py-0.5 rounded-full font-cairo">
-                {excerptsList.length} مقتطف
-              </span>
-            )}
-          </div>
+          <ExcerptsBannerHeader className="mb-2" />
 
           {excerptsList.length === 0 ? (
             <div className="p-8 text-center bg-white dark:bg-[#0D1A33] rounded-2xl border border-slate-200/60 dark:border-[#1E355B] text-slate-400 font-bold font-cairo text-xs">

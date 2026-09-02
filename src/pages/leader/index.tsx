@@ -3,7 +3,7 @@ import { collection, query, orderBy, getDocs, onSnapshot } from "firebase/firest
 import { db } from "../../firebase";
 import { LeaderContent } from "../../types";
 import { SEO } from "../../components/SEO";
-import { Search } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { LeaderFilterBar } from "../../components/leader/LeaderFilterBar";
 import { LeaderVideoCard } from "../../components/leader/LeaderVideoCard";
@@ -113,7 +113,24 @@ export function Leader() {
         path={window.location.pathname}
       />
       <div className="max-w-4xl mx-auto w-full">
-        
+        {/* Section Header with Icon & Divider Line (Matching Home Page) */}
+        <div className="border-b border-slate-200/60 dark:border-slate-800/60 pb-2 mb-3">
+          <div className="flex items-center gap-2 px-1 sm:px-2 my-1 select-none" dir="rtl">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-taiz-royal to-taiz-sky dark:from-transparent dark:to-transparent dark:bg-[#F26522]/15 dark:border dark:border-[#F26522]/40 flex items-center justify-center shadow-sm shrink-0 transition-colors">
+              <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white dark:text-[#F26522]" />
+            </div>
+            <div className="flex flex-col">
+              <h3 className="font-bold text-[13px] sm:text-[14px] text-slate-800 dark:text-white font-cairo leading-tight">
+                مكتبة السيد القائد
+              </h3>
+              <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">
+                الخطابات والكلمات والمحاضرات الهدائية
+              </p>
+            </div>
+            <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-4"></div>
+          </div>
+        </div>
+
         {/* Unified Search Bar */}
         <LeaderFilterBar
           searchQuery={searchQuery}
@@ -127,19 +144,19 @@ export function Leader() {
             {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="w-full h-32 sm:h-36 rounded-[18px] bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-slate-700 p-4 shadow-soft animate-pulse flex flex-col justify-between"
+                className="w-full h-32 sm:h-36 rounded-[14px] sm:rounded-[18px] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-4 shadow-soft animate-pulse flex flex-col justify-between"
               >
                 <div className="flex justify-between items-center">
-                  <div className="h-5 w-28 bg-slate-200 dark:bg-slate-700 rounded-md" />
-                  <div className="h-5 w-20 bg-slate-200 dark:bg-slate-700 rounded-md" />
+                  <div className="h-5 w-28 bg-slate-200 dark:bg-slate-800 rounded-md" />
+                  <div className="h-5 w-20 bg-slate-200 dark:bg-slate-800 rounded-md" />
                 </div>
                 <div className="space-y-2 my-auto">
-                  <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-700 rounded-md" />
-                  <div className="h-3.5 w-1/2 bg-slate-100 dark:bg-slate-800 rounded-md" />
+                  <div className="h-4 w-3/4 bg-slate-200 dark:bg-slate-800 rounded-md" />
+                  <div className="h-3.5 w-1/2 bg-slate-100 dark:bg-slate-800/60 rounded-md" />
                 </div>
-                <div className="flex justify-between items-center pt-2.5 border-t border-slate-100 dark:border-slate-700">
-                  <div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-700 rounded" />
-                  <div className="h-3.5 w-20 bg-slate-200 dark:bg-slate-700 rounded" />
+                <div className="flex justify-between items-center pt-2.5 border-t border-slate-200/80 dark:border-slate-800">
+                  <div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-800 rounded" />
+                  <div className="h-3.5 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
                 </div>
               </div>
             ))}
@@ -149,15 +166,15 @@ export function Leader() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="text-center py-14 px-6 bg-surface-card rounded-[20px] border border-dashed border-slate-300 dark:border-slate-700 shadow-soft text-slate-400 space-y-3"
+            className="text-center py-14 px-6 bg-white dark:bg-slate-900 rounded-[14px] sm:rounded-[18px] border border-dashed border-slate-300 dark:border-slate-800 shadow-soft text-slate-400 space-y-3"
           >
             <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center mx-auto text-taiz-sky">
               <Search className="w-7 h-7" />
             </div>
-            <h3 className="text-sm sm:text-base font-bold text-text-primary">
+            <h3 className="text-sm sm:text-base font-bold text-slate-800 dark:text-white">
               لم يتم العثور على أي نتائج
             </h3>
-            <p className="text-xs text-text-muted max-w-sm mx-auto">
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               جرب تغيير عبارة البحث أو التبديل بين أقسام الخطابات المرئية والمحاضرات المكتوبة.
             </p>
             {searchQuery && (
@@ -171,13 +188,13 @@ export function Leader() {
           </motion.div>
         ) : (
           /* Cards List with spacing matching news cards */
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
             <AnimatePresence mode="popLayout">
               {filteredAndSortedContent.map((item, index) => {
                 const isFavorited = favorites.includes(item.id);
 
                 return (
-                  <div key={item.id} className="w-full relative after:content-[''] after:absolute after:-bottom-2.5 after:left-[10%] after:right-[10%] after:h-px after:bg-gradient-to-r after:from-transparent after:via-slate-200 dark:after:via-slate-800 after:to-transparent last:after:hidden">
+                  <div key={item.id} className="w-full relative after:content-[''] after:absolute after:-bottom-2 after:left-[10%] after:right-[10%] after:h-px after:bg-gradient-to-r after:from-transparent after:via-slate-200 dark:after:via-slate-700 after:to-transparent last:after:hidden">
                     {item.type === "video" ? (
                       <LeaderVideoCard
                         item={item}

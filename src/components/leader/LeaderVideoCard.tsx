@@ -59,10 +59,14 @@ export const LeaderVideoCard: React.FC<LeaderVideoCardProps> = ({
     >
       <Link
         to={itemSlug}
-        className="group relative w-full rounded-[16px] sm:rounded-[20px] overflow-hidden bg-surface-card border border-border-light hover:border-taiz-sky/50 shadow-soft hover:shadow-medium flex flex-col md:flex-row items-stretch transition-all duration-300 block"
+        className="group relative w-full rounded-[14px] sm:rounded-[18px] overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-red-500 dark:hover:border-red-500 hover:shadow-[0_4px_18px_rgba(239,68,68,0.12)] hover:-translate-y-0.5 active:scale-[0.98] shadow-soft flex flex-col md:flex-row items-stretch transition-all duration-300 block"
       >
+        {/* Transparent Hover Gradient Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-l from-red-500/[0.09] via-red-500/[0.03] to-red-500/[0.01] pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100 z-20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-red-500/[0.06] via-transparent to-transparent pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100 z-20" />
+
         {/* THUMBNAIL ZONE */}
-        <div className="relative w-full md:w-[42%] shrink-0 aspect-video md:aspect-auto min-h-[175px] sm:min-h-[200px] overflow-hidden bg-slate-900 border-b md:border-b-0 md:border-l border-border-light flex items-center justify-center">
+        <div className="relative w-full md:w-[42%] shrink-0 aspect-video md:aspect-auto min-h-[175px] sm:min-h-[200px] overflow-hidden bg-slate-900 border-b md:border-b-0 md:border-l border-slate-200/80 dark:border-slate-800 flex items-center justify-center">
           {item.thumbnailUrl ? (
             <img
               src={item.thumbnailUrl}
@@ -106,20 +110,20 @@ export const LeaderVideoCard: React.FC<LeaderVideoCardProps> = ({
         <div className="relative flex-1 p-3.5 sm:p-4.5 flex flex-col justify-between overflow-hidden z-10">
           {/* Header Row: Hijri date */}
           {hDate && (
-            <div className="flex items-center justify-end text-text-muted text-[11px] mb-1">
-              <span className="text-slate-500 dark:text-amber-400 font-medium text-[10.5px] sm:text-[11px]">{hDate}</span>
+            <div className="flex items-center justify-end text-[11px] mb-1">
+              <span className="text-slate-500 dark:text-amber-400 font-medium text-[10.5px] sm:text-[11px] font-cairo">{hDate}</span>
             </div>
           )}
 
           {/* Title */}
           <div className="my-auto py-1">
-            <h2 className="text-text-primary text-xs sm:text-sm md:text-base font-bold leading-snug sm:leading-relaxed group-hover:text-taiz-sky transition-colors font-cairo line-clamp-2">
+            <h2 className="text-slate-900 dark:text-gray-100 text-xs sm:text-sm md:text-base font-bold leading-snug sm:leading-relaxed group-hover:text-red-600 dark:group-hover:text-taiz-sky transition-colors font-cairo line-clamp-2">
               {item.title}
             </h2>
           </div>
 
           {/* Footer Metadata Row */}
-          <div className="flex items-center justify-between text-text-muted text-[10px] sm:text-[11px] font-medium pt-2.5 border-t border-border-light mt-2">
+          <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-medium pt-2.5 border-t border-slate-200/80 dark:border-slate-800 mt-2">
             {/* Gregorian Date */}
             <span className="flex items-center gap-1 text-slate-500 dark:text-amber-400">
               <Calendar className="w-3.5 h-3.5 text-slate-400 dark:text-amber-400" />

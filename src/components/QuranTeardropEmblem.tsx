@@ -103,3 +103,57 @@ export const IslamicBannerHeader = ({
     </div>
   );
 };
+
+export const SyllabusBannerHeader = ({
+  title = "مقرر الدروس",
+  className = "",
+}: {
+  title?: string;
+  className?: string;
+}) => {
+  return (
+    <div className={`relative flex items-center justify-center my-2 sm:my-3 ${className}`} dir="rtl">
+      {/* Light Mode Banner Artwork */}
+      <img
+        src="/Moqa1.webp"
+        alt={title}
+        className="w-full max-w-[280px] sm:max-w-[330px] md:max-w-[360px] h-auto object-contain block dark:hidden select-none drop-shadow-xs hover:scale-[1.02] transition-transform duration-300"
+        loading="eager"
+      />
+      {/* Dark Mode Banner Artwork */}
+      <img
+        src="/Moqa2.webp"
+        alt={title}
+        className="w-full max-w-[280px] sm:max-w-[330px] md:max-w-[360px] h-auto object-contain hidden dark:block select-none drop-shadow-xs hover:scale-[1.02] transition-transform duration-300"
+        loading="eager"
+      />
+    </div>
+  );
+};
+
+export const ExcerptsBannerHeader = ({
+  title = "المقتطفات من هدي القرآن",
+  className = "",
+}: {
+  title?: string;
+  className?: string;
+}) => {
+  return (
+    <div className={`relative flex items-center justify-center my-2 sm:my-3 ${className}`} dir="rtl">
+      {/* Light Mode Banner Artwork */}
+      <img
+        src="/Mqttaf1.webp"
+        alt={title}
+        className="w-full max-w-[280px] sm:max-w-[330px] md:max-w-[360px] h-auto object-contain block dark:hidden select-none drop-shadow-xs hover:scale-[1.02] transition-transform duration-300"
+        loading="eager"
+      />
+      {/* Dark Mode Banner Artwork */}
+      <img
+        src="/Mqttaf2.webp"
+        alt={title}
+        className="w-full max-w-[280px] sm:max-w-[330px] md:max-w-[360px] h-auto object-contain hidden dark:block select-none drop-shadow-xs hover:scale-[1.02] transition-transform duration-300"
+        loading="eager"
+      />
+    </div>
+  );
+};
