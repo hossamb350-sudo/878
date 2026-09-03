@@ -4,20 +4,21 @@ import { routes } from '../utils/routes';
 
 interface SEOProps {
   title?: string;
+  ogTitle?: string;
   description?: string;
   imageUrl?: string;
   type?: 'website' | 'article' | 'video.other';
   path?: string;
 }
 
-export function SEO({ title, description, imageUrl, type = 'website', path }: SEOProps) {
+export function SEO({ title, ogTitle: customOgTitle, description, imageUrl, type = 'website', path }: SEOProps) {
   const siteName = "منصة تعز الإعلامية";
   
   // For the browser tab (standard title)
   const tabTitle = title && title !== siteName ? `${title} | ${siteName}` : siteName;
   
   // For Open Graph Title (as required for Facebook/WhatsApp preview)
-  const ogTitle = title && title !== siteName ? `${siteName} | ${title}` : siteName;
+  const ogTitle = customOgTitle || (title && title !== siteName ? `${siteName} | ${title}` : siteName);
   
   const absoluteUrl = path ? routes.absolute(path) : undefined;
 

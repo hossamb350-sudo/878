@@ -126,11 +126,6 @@ export function OfflineNotificationSyncHandler() {
               <h4 className="font-bold text-sm text-white">
                 {isOnline ? "تمت استعادة الاتصال بالإنترنت" : "أنت الآن غير متصل بالإنترنت"}
               </h4>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {isOnline
-                  ? "جاري التحقق من وجود إشعارات معلقة وتسليمها..."
-                  : "سيتم الاحتفاظ بالإشعارات وتسليمها فور عودة الاتصال."}
-              </p>
             </div>
             <button
               onClick={() => setShowNetworkStatusToast(false)}

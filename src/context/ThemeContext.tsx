@@ -23,7 +23,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch (e) {
       console.warn("Failed to read theme preference from storage", e);
     }
-    return "dark";
+    return "light";
   });
 
   const [systemIsDark, setSystemIsDark] = useState<boolean>(() => {

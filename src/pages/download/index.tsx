@@ -52,8 +52,9 @@ export function DownloadPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 font-cairo flex flex-col selection:bg-taiz-sky selection:text-white relative overflow-hidden" dir="rtl">
       {/* Dynamic SEO & Meta preview */}
       <SEO
-        title="تحميل تطبيق منصة تعز الإعلامية - نسخة الأندرويد"
-        description="تغطية إخبارية شاملة، وبث مباشر للقنوات الفضائية والإذاعات المحلية، ومحتوى مرئي متجدد، إلى جانب محاضرات وكلمات ودروس قائد الثورة، ودروس هدى القرآن الكريم، ومصحف إلكتروني مقروء ومسموع بصوت الشيخ المنشاوي؛ كل ذلك في تطبيق واحد، ليبقى الخبر والمعرفة والوعي بين يديك"
+        title="منصة تعز الإعلامية"
+        ogTitle="منصة تعز الإعلامية"
+        description="حمل الآن أحدث نسخة من تطبيق منصة تعز الإعلامية"
         imageUrl={imageUrl}
         path={routes.download()}
       />
