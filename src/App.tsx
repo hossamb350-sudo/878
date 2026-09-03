@@ -33,6 +33,7 @@ import { LiveStreamProvider } from "./context/LiveStreamContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { TextSizeProvider } from "./context/TextSizeContext";
 import { OnboardingWizard, ONBOARDING_STORAGE_KEY } from "./components/OnboardingWizard";
+import { InteractiveTour, TOUR_STORAGE_KEY } from "./components/InteractiveTour";
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { GoogleAuth } from "@southdevs/capacitor-google-auth";
@@ -87,8 +88,18 @@ export default function App() {
       return false;
     }
   });
+  const [showInteractiveTour, setShowInteractiveTour] = useState(false);
   const [versionConfig, setVersionConfig] = useState<AppVersionConfig | null>(null);
   const [isOutdated, setIsOutdated] = useState(false);
+
+  // Event listener to allow reopening Interactive Tour manually from User Profile or Settings
+  useEffect(() => {
+    const handleReopen = () => {
+      setShowInteractiveTour(true);
+    };
+    window.addEventListener("reopen_interactive_tour", handleReopen);
+    return () => window.removeEventListener("reopen_interactive_tour", handleReopen);
+  }, []);
 
   // Real-time Firestore check for app version settings
   useEffect(() => {
@@ -259,9 +270,25 @@ export default function App() {
                 </AnimatePresence>
                 <AnimatePresence>
                   {!showSplash && showOnboarding && (
-                    <OnboardingWizard onComplete={() => setShowOnboarding(false)} />
+                    <OnboardingWizard
+                      onComplete={() => {
+                        setShowOnboarding(false);
+                        try {
+                          const completed = localStorage.getItem(TOUR_STORAGE_KEY);
+                          if (completed !== "true") {
+                            setShowInteractiveTour(true);
+                          }
+                        } catch {
+                          setShowInteractiveTour(true);
+                        }
+                      }}
+                    />
                   )}
                 </AnimatePresence>
+                <InteractiveTour
+                  isOpen={!showSplash && !showOnboarding && showInteractiveTour}
+                  onClose={() => setShowInteractiveTour(false)}
+                />
               </div>
             </QuranAudioProvider>
           </LiveStreamProvider>

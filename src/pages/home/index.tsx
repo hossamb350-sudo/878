@@ -722,6 +722,7 @@ export function Home() {
       path="/" 
     />
     <motion.div 
+      id="home-main-section"
       initial={{ opacity: 0 }} 
       animate={{ opacity: 1 }} 
       exit={{ opacity: 0 }} 

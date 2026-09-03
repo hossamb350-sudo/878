@@ -228,7 +228,7 @@ export const HeaderWidgets: React.FC = () => {
   }, [apiHijriDate, time]);
 
   return (
-    <div className="w-full max-w-[760px] mx-auto select-none bg-transparent" dir="rtl">
+    <div id="tour-top-header" className="w-full max-w-[760px] mx-auto select-none bg-transparent" dir="rtl">
       {/* 
         Master Header
       */}

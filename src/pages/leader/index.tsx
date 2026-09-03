@@ -105,7 +105,7 @@ export function Leader() {
   };
 
   return (
-    <div className="min-h-screen bg-surface-main text-text-primary py-3 sm:py-5 px-3 sm:px-4 md:px-6 font-cairo transition-colors duration-300" dir="rtl">
+    <div id="leader-main-section" className="min-h-screen bg-surface-main text-text-primary py-3 sm:py-5 px-3 sm:px-4 md:px-6 font-cairo transition-colors duration-300" dir="rtl">
       <SEO 
         title="مكتبة السيد القائد"
         description="خطابات ومحاضرات وكلمات السيد القائد عبدالملك بدرالدين الحوثي"

@@ -664,7 +664,7 @@ export function Layout({ children }: { children?: React.ReactNode }) {
       <PrayerAdhanPopup />
 
       {/* Navigation for All Devices */}
-      <nav className={`fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-[#0A1324]/95 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)] border-t border-slate-100 dark:border-[#1E355B]/80 z-40 pb-safe transition-transform duration-300 h-[62px] sm:h-[66px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
+      <nav id="tour-bottom-nav" className={`fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-[#0A1324]/95 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_25px_rgba(0,0,0,0.5)] border-t border-slate-100 dark:border-[#1E355B]/80 z-40 pb-safe transition-transform duration-300 h-[62px] sm:h-[66px] ${isKeyboardVisible ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'}`}>
         <div className="grid grid-cols-6 w-full max-w-2xl mx-auto h-full px-0.5 relative">
           {[
             { to: routes.home(), icon: NewsNavIcon, label: "الرئيسية" },

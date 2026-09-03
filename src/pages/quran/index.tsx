@@ -2233,6 +2233,7 @@ export function Quran() {
 
   return (
     <div
+      id="quran-main-section"
       className="flex-1 w-full flex flex-col bg-surface-main text-text-primary font-sans rtl relative overflow-hidden"
       dir="rtl"
     >

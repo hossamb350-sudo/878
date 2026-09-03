@@ -575,8 +575,8 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
               </div>
             </div>
 
-            {/* 3. Re-run Onboarding Wizard Banner */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+            {/* 3. Re-run Onboarding Wizard Banner & Interactive Tour */}
+            <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
               <div className="p-5 rounded-2xl bg-gradient-to-br from-[#D9A441]/10 via-slate-50 to-transparent dark:from-[#D9A441]/15 dark:via-slate-800/40 dark:to-transparent border border-[#D9A441]/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -597,6 +597,32 @@ export function UserProfileSection({ profile, logout, hideHeaderLogout = false, 
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span>إعادة تشغيل المعالج</span>
+                </button>
+              </div>
+
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-slate-50 to-transparent dark:from-emerald-500/15 dark:via-slate-800/40 dark:to-transparent border border-emerald-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-500" />
+                    <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-cairo">
+                      الجولة التعريفية التفاعلية (Interactive Tour)
+                    </h4>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
+                    استعراض الشرح التفاعلي لأهم أقسام ووظائف المنصة وشريط التنقل والهيدر العلوي.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent("reopen_interactive_tour"));
+                    showToast("جاري بدء الجولة التعريفية...");
+                  }}
+                  className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-emerald-600/25 hover:brightness-105 active:scale-95 transition-all cursor-pointer flex items-center gap-2 shrink-0"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span>بدء الجولة التعريفية</span>
                 </button>
               </div>
             </div>

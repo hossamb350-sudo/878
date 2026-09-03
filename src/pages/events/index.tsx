@@ -375,7 +375,7 @@ export function Events() {
 
   return (
     <PullToRefresh onRefresh={handleRefresh}>
-      <div className="max-w-7xl mx-auto w-full p-4 sm:p-6 pb-24 space-y-12 font-ibm" dir="rtl">
+      <div id="events-main-section" className="max-w-7xl mx-auto w-full p-4 sm:p-6 pb-24 space-y-12 font-ibm" dir="rtl">
         
         {/* ==================== 1. ACTIVITIES SECTION (قسم الأنشطة) ==================== */}
         <section className="space-y-6">

@@ -537,7 +537,7 @@ export function Watch() {
         type="website"
         path={window.location.pathname}
       />
-      <div className="min-h-screen bg-white dark:bg-[#070F1E] font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
+      <div id="watch-main-section" className="min-h-screen bg-white dark:bg-[#070F1E] font-cairo px-2 sm:px-3 pt-3 pb-24 text-right transition-colors" dir="rtl" ref={activeVideoRef}>
         <div className="max-w-[760px] mx-auto space-y-3.5">
 
           {/* 0. HEADER & TAB SWITCHER (MOVED TO TOP) */}
