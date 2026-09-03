@@ -48,6 +48,7 @@ export const routes = {
   calendar: (month?: number, year?: number) => month && year ? `/calendar/${month}/${year}` : "/calendar",
   topic: (slugOrId: string) => `/topic/${slugOrId}`,
   admin: () => "/admin",
+  download: () => "/download",
   // Absolute URLs for sharing
   absolute: (path: string) => `${BASE_URL}${path.startsWith('/') ? path : `/${path}`}`
 };

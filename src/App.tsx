@@ -45,6 +45,7 @@ import { CategoryService } from "./services/CategoryService";
 import { AlertTriangle, Download } from "lucide-react";
 
 import NotFound from "./pages/NotFound";
+import { DownloadPage } from "./pages/download";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -72,6 +73,7 @@ function AnimatedRoutes() {
         <Route path="calendar/:month/:year" element={<CalendarDetail />} />
         <Route path="topic/:slug" element={<TopicDetail />} />
         <Route path="admin" element={<Admin />} />
+        <Route path="download" element={<DownloadPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
@@ -153,8 +155,8 @@ export default function App() {
     }
   }, []);
 
-  // Check if we should block access (outdated app & not on admin panel)
-  const isBlocked = isOutdated && !window.location.pathname.startsWith("/admin");
+  // Check if we should block access (outdated app & not on admin panel or download page)
+  const isBlocked = isOutdated && !window.location.pathname.startsWith("/admin") && !window.location.pathname.startsWith("/download");
 
   if (isBlocked) {
     return (

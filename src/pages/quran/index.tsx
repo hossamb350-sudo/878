@@ -2257,6 +2257,7 @@ export function Quran() {
             <div className="w-full flex items-center justify-between gap-3">
               {/* Right side: Sidebar Trigger (Icon-only, beautiful circle) */}
               <button
+                id="tour-quran-drawer-btn"
                 onClick={() => setIsSidebarOpen(true)}
                 title="القائمة الرئيسية"
                 className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-slate-100 hover:bg-slate-200/80 dark:bg-[#0D1A33] dark:hover:bg-[#14274B] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-[#1E355B] shadow-xs active:scale-95 transition-all flex items-center justify-center shrink-0 group cursor-pointer"
@@ -2265,7 +2266,7 @@ export function Quran() {
               </button>
 
               {/* Middle: Dual Segmented Switcher ("الدروس" على اليمين | "القرآن الكريم" على اليسار) */}
-              <div className="flex-1 bg-slate-100 dark:bg-[#0D1A33] p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-[#1E355B] grid grid-cols-2 gap-1 shadow-inner select-none">
+              <div id="tour-quran-tabs" className="flex-1 bg-slate-100 dark:bg-[#0D1A33] p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-[#1E355B] grid grid-cols-2 gap-1 shadow-inner select-none">
                 {/* Segment 1 (Right): الدروس */}
                 <button
                   onClick={() => setActiveView("series")}

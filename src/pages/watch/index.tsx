@@ -544,7 +544,7 @@ export function Watch() {
           <div className="pt-1.5 pb-2 px-0 bg-white/95 dark:bg-[#070F1E]/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-[#1E355B] shadow-soft mb-2 -mx-2 sm:-mx-3 px-2 sm:px-3">
             <div className="max-w-[760px] mx-auto w-full px-1">
               {/* Premium Segmented Switcher Pills (Full Width) */}
-              <div className="w-full bg-slate-100 dark:bg-[#0D1A33] p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-[#1E355B] grid grid-cols-2 gap-1 shadow-inner select-none">
+              <div id="tour-watch-channels" className="w-full bg-slate-100 dark:bg-[#0D1A33] p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-[#1E355B] grid grid-cols-2 gap-1 shadow-inner select-none">
                 {/* Tab 1: قنوات التلفزيون */}
                 <button
                   type="button"

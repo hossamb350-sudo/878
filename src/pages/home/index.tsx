@@ -769,7 +769,7 @@ export function Home() {
             <div className="pt-1.5 pb-2 px-2 sm:px-3 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200/80 dark:border-slate-800 shadow-soft">
               <div className="max-w-[760px] mx-auto w-full px-1">
                 {/* Premium Segmented Switcher Pills (Full Width) */}
-                <div className="w-full bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 grid grid-cols-2 gap-1 shadow-inner select-none">
+                <div id="tour-home-tabs" className="w-full bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl sm:rounded-2xl border border-slate-200/90 dark:border-slate-700/80 grid grid-cols-2 gap-1 shadow-inner select-none">
                   {/* News Tab (Active) */}
                   <Link
                     to="/"
