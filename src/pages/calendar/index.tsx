@@ -543,18 +543,26 @@ export default function CalendarDetail() {
   }, [calendarData]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F0F8F3] via-[#E6F4EA] to-[#DCF0E3] pb-16 pt-2 px-3 sm:px-6 select-none font-sans" dir="rtl">
+    <div className="min-h-screen bg-gradient-to-b from-[#F0F8F3] via-[#E6F4EA] to-[#DCF0E3] dark:from-[#050C19] dark:via-[#071022] dark:to-[#050C19] pb-16 pt-2 px-3 sm:px-6 select-none font-sans" dir="rtl">
       {/* Centered Mobile/Tablet Container matching Weather & Events page width */}
       <div className="max-w-md md:max-w-xl mx-auto space-y-3.5 sm:space-y-4">
 
-
+        {/* SECTION HEADER */}
+        <div className="space-y-1 text-right pt-2 pb-1">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-cairo">
+            التقويم الهجري
+          </h2>
+          <p className="text-xs sm:text-sm font-bold text-[#015028] dark:text-amber-400 font-cairo">
+            محدث ومتزامن مع المناسبات الدينية والوطنية
+          </p>
+        </div>
 
         {/* 2. MAIN HERO ISLAMIC CARD */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.35 }}
-          className="relative rounded-[28px] sm:rounded-[36px] p-4 sm:p-5 text-white shadow-[0_12px_36px_rgba(1,80,40,0.3)] border-2 border-[#E5A921]/60 overflow-hidden bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B]"
+          className="relative rounded-[28px] sm:rounded-[36px] p-4 sm:p-5 text-white shadow-[0_12px_36px_rgba(1,80,40,0.3)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.5)] border-2 border-[#E5A921]/60 dark:border-[#E5A921]/40 overflow-hidden bg-gradient-to-br from-[#0B6B3D] via-[#054E29] to-[#00341B] dark:from-[#0D1A33] dark:via-[#09152B] dark:to-[#050C19]"
         >
           {/* Background Atmosphere Lighting Texture */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-300/20 via-transparent to-black/50 pointer-events-none" />
@@ -573,7 +581,7 @@ export default function CalendarDetail() {
                 <span className="text-[#FCE185]">{hijriYear} هـ</span>
               </h2>
 
-              <p className="text-xs sm:text-sm font-bold font-cairo text-emerald-100/90">
+              <p className="text-xs sm:text-sm font-bold font-cairo text-emerald-100/90 dark:text-slate-300/90">
                 المقابل الميلادي: {formattedGregorianDate} ({selectedDayWeekdayName})
               </p>
             </div>
@@ -584,35 +592,35 @@ export default function CalendarDetail() {
           </div>
 
           {/* BOTTOM OVERLAY INSIDE HERO CARD: 4 FROSTED METRIC CARDS */}
-          <div className="relative z-10 grid grid-cols-4 gap-1.5 sm:gap-2 mt-2 pt-3 border-t border-[#E5A921]/25">
+          <div className="relative z-10 grid grid-cols-4 gap-1.5 sm:gap-2 mt-2 pt-3 border-t border-[#E5A921]/25 dark:border-[#1E355B]/60">
             
             {/* Metric 1: اليوم */}
-            <div className="bg-[#002814]/50 backdrop-blur-md border border-[#E5A921]/30 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 transition-colors">
-              <span className="text-[10px] sm:text-xs text-emerald-100/80 font-bold font-cairo">اليوم</span>
+            <div className="bg-[#002814]/50 dark:bg-[#061021]/70 backdrop-blur-md border border-[#E5A921]/30 dark:border-[#1E355B] rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 dark:hover:bg-[#091730] transition-colors">
+              <span className="text-[10px] sm:text-xs text-emerald-100/80 dark:text-slate-400 font-bold font-cairo">اليوم</span>
               <span className="text-xs sm:text-sm font-black font-cairo tracking-tight text-white">
                 {selectedDayWeekdayName}
               </span>
             </div>
 
             {/* Metric 2: الشهر */}
-            <div className="bg-[#002814]/50 backdrop-blur-md border border-[#E5A921]/30 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 transition-colors">
-              <span className="text-[10px] sm:text-xs text-emerald-100/80 font-bold font-cairo">الشهر</span>
+            <div className="bg-[#002814]/50 dark:bg-[#061021]/70 backdrop-blur-md border border-[#E5A921]/30 dark:border-[#1E355B] rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 dark:hover:bg-[#091730] transition-colors">
+              <span className="text-[10px] sm:text-xs text-emerald-100/80 dark:text-slate-400 font-bold font-cairo">الشهر</span>
               <span className="text-xs sm:text-sm font-black font-cairo tracking-tight text-[#F3B927]">
                 {currentMonthName}
               </span>
             </div>
 
             {/* Metric 3: عدد الأيام */}
-            <div className="bg-[#002814]/50 backdrop-blur-md border border-[#E5A921]/30 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 transition-colors">
-              <span className="text-[10px] sm:text-xs text-emerald-100/80 font-bold font-cairo">أيام الشهر</span>
+            <div className="bg-[#002814]/50 dark:bg-[#061021]/70 backdrop-blur-md border border-[#E5A921]/30 dark:border-[#1E355B] rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 dark:hover:bg-[#091730] transition-colors">
+              <span className="text-[10px] sm:text-xs text-emerald-100/80 dark:text-slate-400 font-bold font-cairo">أيام الشهر</span>
               <span className="text-xs sm:text-sm font-black font-cairo tracking-tight text-white">
                 {calendarData.length || 29} يوماً
               </span>
             </div>
 
             {/* Metric 4: المناسبات */}
-            <div className="bg-[#002814]/50 backdrop-blur-md border border-[#E5A921]/30 rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 transition-colors">
-              <span className="text-[10px] sm:text-xs text-emerald-100/80 font-bold font-cairo">المناسبات</span>
+            <div className="bg-[#002814]/50 dark:bg-[#061021]/70 backdrop-blur-md border border-[#E5A921]/30 dark:border-[#1E355B] rounded-2xl p-2 sm:p-2.5 flex flex-col items-center justify-center text-center space-y-0.5 hover:bg-[#002814]/70 dark:hover:bg-[#091730] transition-colors">
+              <span className="text-[10px] sm:text-xs text-emerald-100/80 dark:text-slate-400 font-bold font-cairo">المناسبات</span>
               <span className="text-xs sm:text-sm font-black font-cairo tracking-tight text-[#FFF2A8]">
                 {currentMonthEvents.length} مناسبة
               </span>
@@ -629,18 +637,18 @@ export default function CalendarDetail() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-[#EEFAF2] via-[#E0F5E8] to-[#CDEDD8] border border-[#0B6B3D]/30 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between overflow-hidden"
+            className="bg-gradient-to-br from-[#EEFAF2] via-[#E0F5E8] to-[#CDEDD8] dark:from-[#0D1A33] dark:via-[#09152B] dark:to-[#070F1E] border border-[#0B6B3D]/30 dark:border-emerald-800/40 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between overflow-hidden"
           >
             <div className="flex flex-col space-y-0.5">
-              <span className="text-xs font-bold text-[#015028] font-cairo">
+              <span className="text-xs font-bold text-[#015028] dark:text-emerald-400 font-cairo">
                 بداية الشهر
               </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900 font-cairo tracking-tight">
+              <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-cairo tracking-tight">
                 {firstDayName} (1 {currentMonthName})
               </span>
             </div>
 
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#0B6B3D] text-[#FFF2A8] flex items-center justify-center shrink-0 border border-[#E5A921]/40 shadow-xs">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#0B6B3D] dark:bg-[#132549] text-[#FFF2A8] flex items-center justify-center shrink-0 border border-[#E5A921]/40 shadow-xs">
               <Moon className="w-4 h-4 fill-[#FFF2A8]" />
             </div>
           </motion.div>
@@ -650,18 +658,18 @@ export default function CalendarDetail() {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="bg-gradient-to-br from-[#FFFDF5] via-[#FEF5D9] to-[#FDE8A5] border border-[#E5A921]/50 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between overflow-hidden"
+            className="bg-gradient-to-br from-[#FFFDF5] via-[#FEF5D9] to-[#FDE8A5] dark:from-[#1F1905] dark:via-[#261E08] dark:to-[#171303] border border-[#E5A921]/50 dark:border-amber-700/40 rounded-2xl sm:rounded-3xl p-3 sm:p-3.5 shadow-xs flex items-center justify-between overflow-hidden"
           >
             <div className="flex flex-col space-y-0.5">
-              <span className="text-xs font-bold text-[#A36A00] font-cairo">
+              <span className="text-xs font-bold text-[#A36A00] dark:text-amber-400 font-cairo">
                 نهاية الشهر
               </span>
-              <span className="text-xs sm:text-sm font-black text-slate-900 font-cairo tracking-tight">
+              <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white font-cairo tracking-tight">
                 {lastDayName} ({calendarData.length || 29} {currentMonthName})
               </span>
             </div>
 
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#0B6B3D] text-[#FFF2A8] flex items-center justify-center shrink-0 border border-[#E5A921]/40 shadow-xs">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#0B6B3D] dark:bg-[#132549] text-[#FFF2A8] flex items-center justify-center shrink-0 border border-[#E5A921]/40 shadow-xs">
               <Moon className="w-4 h-4 fill-[#FFF2A8]" />
             </div>
           </motion.div>
@@ -673,13 +681,13 @@ export default function CalendarDetail() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white/90 backdrop-blur-md rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 border border-[#0B6B3D]/20 shadow-[0_8px_30px_rgba(1,80,40,0.06)] overflow-hidden space-y-3"
+          className="bg-white/90 dark:bg-[#0D1A33] backdrop-blur-md rounded-[24px] sm:rounded-[32px] p-3.5 sm:p-5 border border-[#0B6B3D]/20 dark:border-[#1E355B] shadow-[0_8px_30px_rgba(1,80,40,0.06)] overflow-hidden space-y-3"
         >
           {/* Month Selector Capsule */}
-          <div className="relative bg-gradient-to-r from-[#015028] via-[#0B6B3D] to-[#015028] rounded-full px-3 py-1.5 sm:py-2 shadow-[0_4px_20px_rgba(1,80,40,0.25)] border-2 border-[#E5A921]/70 flex items-center justify-between text-white">
+          <div className="relative bg-gradient-to-r from-[#015028] via-[#0B6B3D] to-[#015028] dark:from-[#0A162C] dark:via-[#132549] dark:to-[#0A162C] rounded-full px-3 py-1.5 sm:py-2 shadow-[0_4px_20px_rgba(1,80,40,0.25)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] border-2 border-[#E5A921]/70 dark:border-[#E5A921]/50 flex items-center justify-between text-white">
             <button 
               onClick={() => changeMonth(1)}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-[#E5A921]/30 border border-[#E5A921]/40 text-amber-200 flex items-center justify-center transition-colors shrink-0 active:scale-95 cursor-pointer"
+              className="w-8 h-8 rounded-full bg-white/20 dark:bg-white/10 hover:bg-[#E5A921]/30 border border-[#E5A921]/40 text-amber-200 dark:text-amber-300 flex items-center justify-center transition-colors shrink-0 active:scale-95 cursor-pointer"
               title="الشهر التالي"
             >
               <ChevronRight className="w-4 h-4 stroke-[2.5]" />
@@ -699,7 +707,7 @@ export default function CalendarDetail() {
 
             <button 
               onClick={() => changeMonth(-1)}
-              className="w-8 h-8 rounded-full bg-white/20 hover:bg-[#E5A921]/30 border border-[#E5A921]/40 text-amber-200 flex items-center justify-center transition-colors shrink-0 active:scale-95 cursor-pointer"
+              className="w-8 h-8 rounded-full bg-white/20 dark:bg-white/10 hover:bg-[#E5A921]/30 border border-[#E5A921]/40 text-amber-200 dark:text-amber-300 flex items-center justify-center transition-colors shrink-0 active:scale-95 cursor-pointer"
               title="الشهر السابق"
             >
               <ChevronLeft className="w-4 h-4 stroke-[2.5]" />

@@ -124,7 +124,7 @@ export function Leader() {
                 مكتبة السيد القائد
               </h3>
               <p className="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-500 font-medium font-cairo">
-                الخطابات والكلمات والمحاضرات الهدائية
+                خطابات وكلمات ومحاضرات قائد الثورة
               </p>
             </div>
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-slate-200 dark:via-slate-700 to-transparent ml-2 mr-4"></div>

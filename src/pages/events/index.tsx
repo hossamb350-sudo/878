@@ -383,8 +383,8 @@ export function Events() {
           <div className="bg-gradient-to-r from-[#015028]/10 via-[#015028]/5 to-transparent dark:from-emerald-950/30 dark:via-emerald-950/10 p-5 sm:p-6 rounded-3xl border border-[#015028]/20 dark:border-emerald-800/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#015028] dark:bg-emerald-400 animate-pulse"></span>
-                <span className="text-xs font-black text-[#015028] dark:text-emerald-400 font-cairo uppercase tracking-wider">أنشطة وفعاليات محافظة تعز</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500 dark:bg-amber-400 animate-pulse shadow-[0_0_6px_rgba(245,158,11,0.6)]"></span>
+                <span className="text-xs font-black text-amber-500 dark:text-amber-400 font-cairo uppercase tracking-wider">أنشطة وفعاليات محافظة تعز</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-cairo">
                 الأنشطة والفعاليات
@@ -534,7 +534,15 @@ export function Events() {
         </section>
 
         {/* ==================== 2. CALENDAR / OCCASIONS SECTION (قسم التاريخ الهجري) ==================== */}
-        <section className="space-y-6 pt-8 border-t border-slate-200/80 dark:border-[#14274B]">
+        <section className="space-y-4 pt-8 border-t border-slate-200/80 dark:border-[#14274B]">
+          <div className="max-w-md md:max-w-xl mx-auto space-y-1 text-right">
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white font-cairo">
+              التقويم الهجري
+            </h2>
+            <p className="text-xs sm:text-sm font-bold text-[#015028] dark:text-amber-400 font-cairo">
+              محدث ومتزامن مع المناسبات الدينية والوطنية
+            </p>
+          </div>
           <HijriCalendarWidget onSelectEvent={(id) => setSelectedEventId(id)} />
         </section>
 

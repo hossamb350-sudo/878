@@ -201,7 +201,7 @@ export function OnboardingWizard({ onComplete, isManualReopen = false }: Onboard
                     اختيار مظهر المنصة
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                    حدد المظهر الذي يناسبك لتصفح مريح للمحتوى الإخباري والثقافي والمرئي.
+                    حدد المظهر الذي يناسبك لتصفح مريح للمحتوى
                   </p>
                 </div>
 
@@ -220,7 +220,7 @@ export function OnboardingWizard({ onComplete, isManualReopen = false }: Onboard
                     {
                       id: "dark" as ThemeMode,
                       title: "المظهر الداكن (Dark Navy)",
-                      desc: "درجات كحلية ملكية عميقة مريحة للعينين وموفرة للبطارية",
+                      desc: "درجات كحلية مريحة للعينين وموفرة للبطارية",
                       icon: Moon,
                       badge: "كحلي ليلي",
                       badgeColor: "bg-indigo-100 text-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-300",
@@ -229,7 +229,7 @@ export function OnboardingWizard({ onComplete, isManualReopen = false }: Onboard
                     {
                       id: "system" as ThemeMode,
                       title: "المظهر الافتراضي للنظام",
-                      desc: "يتكيف تلقائياً مع إعدادات هاتفك (داكن ليلاً وفاتح نهاراً)",
+                      desc: "يتكيف تلقائياً مع إعدادات هاتفك",
                       icon: Smartphone,
                       badge: "تلقائي",
                       badgeColor: "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-300",
