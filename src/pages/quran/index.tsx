@@ -1189,14 +1189,18 @@ const Sidebar = ({
             >
               <X className="w-5 h-5 text-text-secondary" />
             </button>
-            <div className="w-20 h-20 mb-4 rounded-full bg-white shadow-sm flex items-center justify-center overflow-hidden border-2 border-border-light">
-              <User className="w-12 h-12 text-red-600 translate-y-1.5" />
+            <div className="w-28 h-28 mb-4 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border-3 border-taiz-sky/40 dark:border-amber-500/40 shrink-0">
+              <img
+                src="/AlsayedHussin.webp"
+                alt="الشهيد القائد السيد حسين بدر الدين الحوثي"
+                className="w-full h-full object-cover object-top"
+              />
             </div>
             <h3 className="text-lg font-black text-text-primary font-cairo">
-              هدي القرآن الكَريم
+              هدي القرآن الكريم
             </h3>
-            <p className="text-text-secondary text-xs font-bold mt-1 text-center">
-              الشهيد القائد السيد حسين بدرالدين الحوثي
+            <p className="text-text-secondary text-xs font-bold mt-1 text-center font-cairo">
+              الشهيد القائد السيد حسين بدر الدين الحوثي
             </p>
           </div>
 
@@ -1288,8 +1292,12 @@ const LeaderView = ({ scrollRef }: any) => (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-b from-transparent via-surface-main/30 to-transparent pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col items-center mb-12">
-          <div className="w-20 h-20 bg-taiz-royal/10 text-taiz-royal rounded-full flex items-center justify-center mb-6 shadow-inner">
-            <Shield className="w-10 h-10" />
+          <div className="w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 mb-6 rounded-full bg-white dark:bg-slate-800 shadow-2xl flex items-center justify-center overflow-hidden border-4 border-taiz-royal/30 dark:border-amber-500/40 p-1 ring-4 ring-taiz-royal/10 shrink-0">
+            <img
+              src="/AlsayedHussin1.webp"
+              alt="الشهيد القائد السيد حسين بدر الدين الحوثي"
+              className="w-full h-full object-cover object-top rounded-full"
+            />
           </div>
           <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-taiz-royal text-center leading-tight md:leading-snug max-w-3xl font-cairo">
             ماذا يعني الحديث عن السيد القائد الشهيد حسين بن بدر الدين الحوثي ؟
